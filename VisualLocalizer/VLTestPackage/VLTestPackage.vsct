@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--  This is the file that defines the actual layout and type of the commands.
+        It is divided in different sections (e.g. command definition, command
+        placement, ...), with each defining a specific set of properties.
+        See the comment before each section for more details about how to
+        use it. -->
+
+  <!--  The VSCT compiler (the tool that translates this file into the binary 
+        format that VisualStudio will consume) has the ability to run a preprocessor 
+        on the vsct file; this preprocessor is (usually) the C++ preprocessor, so 
+        it is possible to define includes and macros with the same syntax used 
+        in C++ files. Using this ability of the compiler here, we include some files 
+        defining some of the constants that we will use inside the file. -->
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h"/>
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h"/>
+
+  <!--Definition of some VSCT specific constants. In this sample we use it for the IDs inside the guidOfficeIcon group. -->
+  <Extern href="msobtnid.h"/>
+
+
+
+  
+  <!--The Commands section is where we the commands, menus and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidTestPackagePkg">
+    <!-- Inside this section we have different sub-sections: one for the menus, another  
+    for the menu groups, one for the buttons (the actual commands), one for the combos 
+    and the last one for the bitmaps used. Each element is identified by a command id that  
+    is a unique pair of guid and numeric identifier; the guid part of the identifier is usually  
+    called "command set" and is used to group different command inside a logically related  
+    group; your package should define its own command set in order to avoid collisions  
+    with command ids defined by other packages. -->
+
+    
+    <!-- In this section you can define new menu groups. A menu group is a container for 
+         other menus or buttons (commands); from a visual point of view you can see the 
+         group as the part of a menu contained between two lines. The parent of a group 
+         must be a menu. -->
+    <Groups>
+
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerTopMenuGroup" priority="0x404">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIITEM"/>
+      </Group>
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerTopMenuGroup" priority="0x404">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+      </Group>
+     
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerTopMenuGroup" priority="0x104">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
+      </Group>
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerTopMenuGroup" priority="0x804">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>                
+      </Group>         
+
+      <Group guid="guidTestPackageCmdSet" id="solutionExpSubmenuGroup" priority="0x001">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerTopMenu"/>
+      </Group>
+
+      
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerCodeMenuGroup" priority="0x104">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+      <Group guid="guidTestPackageCmdSet" id="visualLocalizerCodeSubMenuGroup" priority="0x100">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerCodeMenu"/>
+      </Group>
+    </Groups>
+
+    <Buttons>      
+      <Button guid="guidTestPackageCmdSet" id="batchMoveMenuItem" type="Button">        
+        <Parent guid="guidTestPackageCmdSet" id="solutionExpSubmenuGroup"></Parent>        
+        <Strings>
+          <CommandName>Batch move</CommandName>
+          <ButtonText>Batch move</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidTestPackageCmdSet" id="moveMenuItem" type="Button">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>Move</CommandName>
+          <ButtonText>Move</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidTestPackageCmdSet" id="inlineMenuItem" type="Button">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>Inline</CommandName>
+          <ButtonText>Inline</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+    
+    <Menus>
+      <Menu guid="guidTestPackageCmdSet" id="visualLocalizerTopMenu" type="Menu">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerTopMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>        
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>
+      </Menu>
+
+      <Menu guid="guidTestPackageCmdSet" id="visualLocalizerCodeMenu" type="Menu">
+        <Parent guid="guidTestPackageCmdSet" id="visualLocalizerCodeMenuGroup"></Parent>
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+  </Commands>
+
+
+  <Symbols>
+    <GuidSymbol name="guidTestPackagePkg" value="{30953d59-c1c2-412d-81c2-69741d1e4e2a}" />
+    
+    <GuidSymbol name="guidTestPackageCmdSet" value="{38610212-3734-4c45-85fe-25d54b598c3f}">
+      <IDSymbol name="visualLocalizerTopMenuGroup" value="0x0001" />
+      <IDSymbol name="visualLocalizerTopMenu" value="0x0005" />
+
+      <IDSymbol name="solutionExpSubmenuGroup" value="0x0004" />            
+      <IDSymbol name="batchMoveMenuItem" value="0x0003" />
+
+      <IDSymbol name="moveMenuItem" value="0x0007" />
+      <IDSymbol name="inlineMenuItem" value="0x0008" />
+      <IDSymbol name="visualLocalizerCodeMenu" value="0x0009" />
+      <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
+      <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
+    </GuidSymbol>    
+           
+  </Symbols>
+  
+</CommandTable>
