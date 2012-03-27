@@ -10,6 +10,7 @@ using Microsoft.Win32;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using EnvDTE;
 
 namespace OndrejStumpf.VLTestingPackage
 {
@@ -38,9 +39,10 @@ namespace OndrejStumpf.VLTestingPackage
     // package needs to have a valid load key (it can be requested at 
     // http://msdn.microsoft.com/vstudio/extend/). This attributes tells the shell that this 
     // package has a load key embedded in its resources.
-    [ProvideLoadKey("Standard", "1.0", "Visual Localizer Testing Package", "Ondrej Stumpf", 1)]
+    [ProvideLoadKey("Standard", "1.0", "Visual Localizer Testing Package", "Ondrej Stumpf", 113)]
     // This attribute is needed to let the shell know that this package exposes some menus.
     [ProvideMenuResource(1000, 1)]
+    [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [Guid(GuidList.guidVLTestingPackagePkgString)]
     public sealed class VLTestingPackagePackage : Package
     {
@@ -53,19 +55,11 @@ namespace OndrejStumpf.VLTestingPackage
         /// </summary>
         public VLTestingPackagePackage()
         {
-            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));            
         }
+        private EnvDTE.DTE ideObject;
+        private EnvDTE.UIHierarchy uih;
 
-
-
-        /////////////////////////////////////////////////////////////////////////////
-        // Overriden Package Implementation
-        #region Package Members
-
-        /// <summary>
-        /// Initialization of the package; this method is called right after the package is sited, so this is the place
-        /// where you can put all the initilaization code that rely on services provided by VisualStudio.
-        /// </summary>
         protected override void Initialize()
         {
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
@@ -75,6 +69,9 @@ namespace OndrejStumpf.VLTestingPackage
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if ( null != mcs )
             {
+                ideObject = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
+                uih = (UIHierarchy)ideObject.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
+
                 CommandID batchMoveCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.batchMoveMenuItem);
                 OleMenuCommand batchMenuItem = new OleMenuCommand(MenuItemCallback, batchMoveCommand);
                 mcs.AddCommand(batchMenuItem);
@@ -87,21 +84,26 @@ namespace OndrejStumpf.VLTestingPackage
 
                 CommandID codeMenuCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.visualLocalizerCodeMenu);
                 OleMenuCommand codeMenu = new OleMenuCommand(null, codeMenuCommand);
+                codeMenu.BeforeQueryStatus += new EventHandler(codeMenu_BeforeQueryStatus);
                 mcs.AddCommand(codeMenu);
             }
         }
-        #endregion
 
+        void codeMenu_BeforeQueryStatus(object sender, EventArgs e) {
+            (sender as OleMenuCommand).Visible = ideObject.ActiveDocument.Name.ToLowerInvariant().EndsWith("cs");
+        }
+       
         void topMenu_BeforeQueryStatus(object sender, EventArgs e) {
-            EnvDTE.UIHierarchy uih = (UIHierarchy)ideObject.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
-
             Array selectedItems = (Array)uih.SelectedItems;
             bool ok = true;
             foreach (UIHierarchyItem o in selectedItems) {
                 if (o.Object is ProjectItem) {
                     ProjectItem item = (ProjectItem)o.Object;
                     for (short i = 0; i < item.FileCount; i++)
-                        ok = ok && item.get_FileNames(i).EndsWith(".cs");
+                        ok = ok && item.get_FileNames(i).ToLowerInvariant().EndsWith(".cs");
+                } else if (o.Object is Project) {
+                    Project proj = (Project)o.Object;
+                    ok = ok && proj.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
                 }
                 Trace.WriteLine(Microsoft.VisualBasic.Information.TypeName(o.Object));
             }

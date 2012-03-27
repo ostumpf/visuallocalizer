@@ -127,6 +127,8 @@
 
       <Menu guid="guidVLTestingPackageCmdSet" id="visualLocalizerCodeMenu" type="Menu">
         <Parent guid="guidVLTestingPackageCmdSet" id="visualLocalizerCodeMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <CommandName>Visual Localizer</CommandName>
           <ButtonText>Visual Localizer</ButtonText>

@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Visual Localizer Testing Package")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Ondrej Stumpf")]
+[assembly: AssemblyCompany("Ondřej Štumpf")]
 [assembly: AssemblyProduct("Visual Localizer Testing Package")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
