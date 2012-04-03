@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OndrejStumpf.VLTestingPackage</RootNamespace>
     <AssemblyName>VLTestingPackage</AssemblyName>
-    <SignAssembly>False</SignAssembly>
+    <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ProjectGuid>{422347DE-A74C-4FBB-854D-6F9BA8BDA069}</ProjectGuid>

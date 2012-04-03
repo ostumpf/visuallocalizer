@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
+using System.Reflection;
 
 namespace OndrejStumpf.VLTestingPackage
 {
@@ -122,11 +123,13 @@ namespace OndrejStumpf.VLTestingPackage
             IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
             Guid clsid = Guid.Empty;
             int result;
+            
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(uiShell.ShowMessageBox(
                        0,
                        ref clsid,
                        "Visual Localizer Testing Package",
-                       string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.ToString()),
+                       string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback(), coming from GAC: {1}", 
+                        this.ToString(), Assembly.GetExecutingAssembly().GlobalAssemblyCache),
                        string.Empty,
                        0,
                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
