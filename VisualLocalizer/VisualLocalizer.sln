@@ -3,15 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualLocalizer", "VisualLocalizer\VisualLocalizer.csproj", "{2E057DF9-29EA-4F3D-B162-5121C4EC0547}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestWinFormsApp", "VLTestWinFormsApp\VLTestWinFormsApp.csproj", "{F72B5D36-A91E-4A90-A59F-F882425676F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestingPackage", "VLTestingPackage\VLTestingPackage.csproj", "{422347DE-A74C-4FBB-854D-6F9BA8BDA069}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestPackage", "VLTestPackage\VLTestPackage.csproj", "{E25156A0-4581-4687-BDA1-975570978015}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "VLTestSetup", "VLTestSetup\VLTestSetup.vdproj", "{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestSetupCustomActionInst", "VLTestSetupCustomActionInst\VLTestSetupCustomActionInst.csproj", "{1E203BE0-DA79-4B7D-AD96-24D429C718F2}"
 EndProject
 Global
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -21,16 +19,22 @@ Global
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F72B5D36-A91E-4A90-A59F-F882425676F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F72B5D36-A91E-4A90-A59F-F882425676F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F72B5D36-A91E-4A90-A59F-F882425676F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F72B5D36-A91E-4A90-A59F-F882425676F5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E25156A0-4581-4687-BDA1-975570978015}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E25156A0-4581-4687-BDA1-975570978015}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E25156A0-4581-4687-BDA1-975570978015}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E25156A0-4581-4687-BDA1-975570978015}.Release|Any CPU.Build.0 = Release|Any CPU
+		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Debug|Any CPU.ActiveCfg = Debug
+		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Release|Any CPU.ActiveCfg = Release
+		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
 	EndGlobalSection
 EndGlobal
