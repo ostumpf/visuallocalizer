@@ -21,12 +21,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2E66925F395544028A52344A596C21AB"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_4D8334A6131CF2E775845C1A746AE7B8"
         "OwnerKey" = "8:_5FCC1B73EEDF655883E136593D7D0C27"
         "MsmSig" = "8:_UNDEFINED"
@@ -34,13 +28,13 @@
         "Entry"
         {
         "MsmKey" = "8:_4D8334A6131CF2E775845C1A746AE7B8"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_4D8334A6131CF2E775845C1A746AE7B8"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -52,13 +46,13 @@
         "Entry"
         {
         "MsmKey" = "8:_5FCC1B73EEDF655883E136593D7D0C27"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_5FCC1B73EEDF655883E136593D7D0C27"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -70,13 +64,13 @@
         "Entry"
         {
         "MsmKey" = "8:_65B449F7B456909A7A2CEAC7521414E7"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_65B449F7B456909A7A2CEAC7521414E7"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -88,19 +82,13 @@
         "Entry"
         {
         "MsmKey" = "8:_676048CC8946DBD2426DD6E6F0B0E519"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_676048CC8946DBD2426DD6E6F0B0E519"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
-        "OwnerKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -112,13 +100,13 @@
         "Entry"
         {
         "MsmKey" = "8:_7C2325FA7A63ED46C451BEBAC32071A5"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_7C2325FA7A63ED46C451BEBAC32071A5"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -141,20 +129,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "MsmKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_99BA92ABFE4CC9D237455F7319B6B7D9"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_99BA92ABFE4CC9D237455F7319B6B7D9"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -195,14 +183,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_A4EE087B1E8EC0D22298E0DC165311FC"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "MsmKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_A4EE087B1E8EC0D22298E0DC165311FC"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A4EE087B1E8EC0D22298E0DC165311FC"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -220,13 +214,19 @@
         "Entry"
         {
         "MsmKey" = "8:_B87AC97127DBC0B88617BA72444DCF75"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_B87AC97127DBC0B88617BA72444DCF75"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C79A11E61ADF4290A84029651FB9B874"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -244,25 +244,25 @@
         "Entry"
         {
         "MsmKey" = "8:_D787DC3730D0D7A2F7573696057804EF"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_D787DC3730D0D7A2F7573696057804EF"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_D7E0AB27FFE863AC06614168DCE1729E"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_D7E0AB27FFE863AC06614168DCE1729E"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -274,13 +274,13 @@
         "Entry"
         {
         "MsmKey" = "8:_FA19B9B2512A00F3D7DFB47035D158DF"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_FA19B9B2512A00F3D7DFB47035D158DF"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -310,13 +310,19 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_8EEF0FE552D24356A33293AD9609D276"
+        "OwnerKey" = "8:_C79A11E61ADF4290A84029651FB9B874"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_796FF49769DF46E0AB95CEFBBA7CECDF"
+        "OwnerKey" = "8:_A26390B91E1D41ACAF4BB602D6F6CD5C"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_9694B31FC0724BD29F308DC372A280D1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -383,12 +389,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_99BA92ABFE4CC9D237455F7319B6B7D9"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2E66925F395544028A52344A596C21AB"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -473,19 +473,33 @@
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_DA340BE0ABD945B2A7A375530B0282D7"
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_1CEA2F1796F847D5B443819BA31129D4"
             {
-            "Name" = "8:Primary output from VLTestSetupCustomActionInst (Release Any CPU)"
+            "Name" = "8:Run devenv /setup"
             "Condition" = "8:"
-            "Object" = "8:_2E66925F395544028A52344A596C21AB"
+            "Object" = "8:_C79A11E61ADF4290A84029651FB9B874"
             "FileType" = "3:1"
             "InstallAction" = "3:1"
             "Arguments" = "8:"
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
-            "Identifier" = "8:_DCC78126_A292_43CB_9BB6_07E0E3C98F78"
+            "Identifier" = "8:_AF2134CE_A95B_4FBC_9C1D_85CB628883A8"
             "InstallerClass" = "11:TRUE"
-            "CustomActionData" = "8:/CHECKBOX2008=\"[CHECKBOX2008]\" /CHECKBOX2010=\"[CHECKBOX2010]\" /CHECKBOX2011=\"[CHECKBOX2011]\" /CHECKBOX2008EXP=\"[CHECKBOX2008EXP]\" /CHECKBOX2010EXP=\"[CHECKBOX2010EXP]\" /CHECKBOX2011EXP=\"[CHECKBOX2011EXP]\""
+            "CustomActionData" = "8:/checkbox2008=\"[CHECKBOX2008]\" /checkbox2010=\"[CHECKBOX2010]\" /checkbox2011=\"[CHECKBOX2011]\" /checkbox2008exp=\"[CHECKBOX2008EXP]\" /checkbox2010exp=\"[CHECKBOX2010EXP]\" /checkbox2011exp=\"[CHECKBOX2011EXP]\""
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_A6C47EF718A443768A1D66307E3FC6F8"
+            {
+            "Name" = "8:Run devenv /setup"
+            "Condition" = "8:"
+            "Object" = "8:_C79A11E61ADF4290A84029651FB9B874"
+            "FileType" = "3:1"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_510FBAF3_73F7_41D7_A475_88BD1FC9B73D"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
             }
         }
         "DefaultFeature"
@@ -959,7 +973,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Visual Localizer Test"
         "ProductCode" = "8:{38491C91-5B35-4B6D-996A-2A6FF107B174}"
-        "PackageCode" = "8:{B324BF64-4DF3-4D4F-8B8D-DD32AD1A3CB4}"
+        "PackageCode" = "8:{A4EE40BF-F00C-4A16-8047-628F659389C4}"
         "UpgradeCode" = "8:{F12A2A7B-9E77-484F-8478-CB406581CDB6}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
@@ -1002,10 +1016,10 @@
                             "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_56FEE997A22D49F0BE1DD727B8D0E58E"
                             {
                             "Name" = "8:[Manufacturer]"
-                            "Condition" = "8:1=0"
+                            "Condition" = "8:"
                             "AlwaysCreate" = "11:FALSE"
                             "DeleteAtUninstall" = "11:TRUE"
-                            "Transitive" = "11:FALSE"
+                            "Transitive" = "11:TRUE"
                                 "Keys"
                                 {
                                 }
@@ -1013,11 +1027,11 @@
                                 {
                                     "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_FAB2E8F3950F4A129398FA62EE8C9CE5"
                                     {
-                                    "Name" = "8:pozdrav"
+                                    "Name" = "8:Version"
                                     "Condition" = "8:"
                                     "Transitive" = "11:FALSE"
                                     "ValueTypes" = "3:1"
-                                    "Value" = "8:Ahoj!"
+                                    "Value" = "8:1.0"
                                     }
                                 }
                             }
@@ -1030,740 +1044,6 @@
                             "Transitive" = "11:FALSE"
                                 "Keys"
                                 {
-                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_34B84BC2311E43FFBDB744FE5544942B"
-                                    {
-                                    "Name" = "8:VCSExpress"
-                                    "Condition" = "8:"
-                                    "AlwaysCreate" = "11:FALSE"
-                                    "DeleteAtUninstall" = "11:FALSE"
-                                    "Transitive" = "11:FALSE"
-                                        "Keys"
-                                        {
-                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_12724D31C382435CA0BAD25B44AA33F3"
-                                            {
-                                            "Name" = "8:9.0"
-                                            "Condition" = "8:"
-                                            "AlwaysCreate" = "11:FALSE"
-                                            "DeleteAtUninstall" = "11:FALSE"
-                                            "Transitive" = "11:FALSE"
-                                                "Keys"
-                                                {
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_0A02DA7D5E6D423D92B533E68A47B95F"
-                                                    {
-                                                    "Name" = "8:InstalledProducts"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_E1A2D426D1F74EF08DB2D7F7CB272DB1"
-                                                            {
-                                                            "Name" = "8:VLTestingPackagePackage"
-                                                            "Condition" = "8:CHECKBOX2008EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_043A9FB2F3EE4033BB9013B74BB64233"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##110"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_0AD7EA7739C6415BAAE621654551606D"
-                                                                    {
-                                                                    "Name" = "8:ProductDetails"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##112"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_48EC8507850F4095811808BD6066CE48"
-                                                                    {
-                                                                    "Name" = "8:LogoID"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##400"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_67A3607C994441718C7902BC5ABBA9E5"
-                                                                    {
-                                                                    "Name" = "8:PID"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_9447F598FBCA44ACBB5681097B11AED7"
-                                                                    {
-                                                                    "Name" = "8:Package"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_166820CC196B4777A25D95441C8FB746"
-                                                    {
-                                                    "Name" = "8:Menus"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                        }
-                                                        "Values"
-                                                        {
-                                                            "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_76CC75DFA40B452F8846FE2BB686AC30"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2008EXP=1"
-                                                            "Transitive" = "11:TRUE"
-                                                            "ValueTypes" = "3:1"
-                                                            "Value" = "8:, 1000, 1"
-                                                            }
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_19ABCF9D65C2465A8DAE9A33A68E4B34"
-                                                    {
-                                                    "Name" = "8:AutoLoadPackages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_FB25FBAA245C4865907FAA2F66ABD33D"
-                                                            {
-                                                            "Name" = "8:{f1536ef8-92ec-443c-9ed7-fdadf150da82}"
-                                                            "Condition" = "8:CHECKBOX2008EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_C85987BF2D274955B3E6B0EE849AA600"
-                                                                    {
-                                                                    "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_4AA18E8A729E465DAB03666A9075CC36"
-                                                    {
-                                                    "Name" = "8:Packages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_D12E9BF4662B4256976BDF31193BE5C3"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2008EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_1287AEEFE7B04229A17576325E01ABF2"
-                                                                    {
-                                                                    "Name" = "8:MinEdition"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Standard"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_2575F715B1C24E56AA4C3510AB69AC17"
-                                                                    {
-                                                                    "Name" = "8:ProductName"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Visual Localizer Testing Package"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_3CDACEFB4A9D41D5B997952A8D3EC956"
-                                                                    {
-                                                                    "Name" = "8:ID"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:113"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_592305A9CF96421DB3979BC15BD1407D"
-                                                                    {
-                                                                    "Name" = "8:CodeBase"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[TARGETDIR]VLTestingPackage.dll"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_6A624B65016F4C64BC756117344E0AD1"
-                                                                    {
-                                                                    "Name" = "8:CompanyName"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Ondrej Stumpf"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_9EF168EC23864AA8909936EC6A9A334F"
-                                                                    {
-                                                                    "Name" = "8:Class"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_DA9B9D15EBA54703813AD0612699ED0F"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage, VLTestingPackage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_E72125F138CA4BE8B513250A3E6223AB"
-                                                                    {
-                                                                    "Name" = "8:ProductVersion"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_EEFDF84336DE4F3190B98DE3A45B3776"
-                                                                    {
-                                                                    "Name" = "8:InprocServer32"
-                                                                    "Condition" = "8:CHECKBOX2008EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[SystemFolder]MSCOREE.DLL"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                }
-                                                "Values"
-                                                {
-                                                }
-                                            }
-                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_2150FA55D91146DDA584CCF43768D870"
-                                            {
-                                            "Name" = "8:11.0"
-                                            "Condition" = "8:"
-                                            "AlwaysCreate" = "11:FALSE"
-                                            "DeleteAtUninstall" = "11:FALSE"
-                                            "Transitive" = "11:FALSE"
-                                                "Keys"
-                                                {
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_21A8D3A0446F4BF9819B0D75147DD2C7"
-                                                    {
-                                                    "Name" = "8:Packages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_8B816C142E5D4F0EB3BB02F1013EBA53"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2011EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_072FA8A906CD4788BA9420162C77CC63"
-                                                                    {
-                                                                    "Name" = "8:CodeBase"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[TARGETDIR]VLTestingPackage.dll"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_5633C4922DAD4BE8B0977A744F0AE629"
-                                                                    {
-                                                                    "Name" = "8:ID"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:113"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_5FCFFD9E885F4D7BB3603F6891E7A999"
-                                                                    {
-                                                                    "Name" = "8:ProductName"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Visual Localizer Testing Package"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8362329809464AEC97BEE7F0D1C134FD"
-                                                                    {
-                                                                    "Name" = "8:CompanyName"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Ondrej Stumpf"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8BAD427EE234467291A4F267F817F61A"
-                                                                    {
-                                                                    "Name" = "8:InprocServer32"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[SystemFolder]MSCOREE.DLL"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_952051B624AE45888A2C73736AFC2DA9"
-                                                                    {
-                                                                    "Name" = "8:Class"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_9A75B4DE49234B4B9788701D72403701"
-                                                                    {
-                                                                    "Name" = "8:ProductVersion"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_C91C2F379A7F439B95F3C3DFAEC4E9EC"
-                                                                    {
-                                                                    "Name" = "8:MinEdition"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Standard"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_E163497FF3AB4A2D900B84368A5A8224"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage, VLTestingPackage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_3F071B6507BB40389F8A2DEB0ABDA08E"
-                                                    {
-                                                    "Name" = "8:InstalledProducts"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_744F8D191B484E16BDA356635CA556BA"
-                                                            {
-                                                            "Name" = "8:VLTestingPackagePackage"
-                                                            "Condition" = "8:CHECKBOX2011EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_089D1BBC4C4641FFAD57A51FE73203CB"
-                                                                    {
-                                                                    "Name" = "8:PID"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_38639FD6AFED43B2A7AD716974132F69"
-                                                                    {
-                                                                    "Name" = "8:Package"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_6713FBC3364748F79EA5912ACDC7C634"
-                                                                    {
-                                                                    "Name" = "8:LogoID"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##400"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_C4C796C02C374A5AA34B7A0430203D65"
-                                                                    {
-                                                                    "Name" = "8:ProductDetails"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##112"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_DC64EBE7B9DB47228581BC6139E2F36F"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##110"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_499F492C97A344E182C69899697BE443"
-                                                    {
-                                                    "Name" = "8:Menus"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                        }
-                                                        "Values"
-                                                        {
-                                                            "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_11E882082C68471D8F3656A02878DE81"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2011EXP=1"
-                                                            "Transitive" = "11:TRUE"
-                                                            "ValueTypes" = "3:1"
-                                                            "Value" = "8:, 1000, 1"
-                                                            }
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_CFBD002739384E42B279F151B9E48346"
-                                                    {
-                                                    "Name" = "8:AutoLoadPackages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_44C96955C4E342F4920F06A3881E96F0"
-                                                            {
-                                                            "Name" = "8:{f1536ef8-92ec-443c-9ed7-fdadf150da82}"
-                                                            "Condition" = "8:CHECKBOX2011EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8B7D7135FDCB4992932AD8E1C3CAF547"
-                                                                    {
-                                                                    "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    "Condition" = "8:CHECKBOX2011EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                }
-                                                "Values"
-                                                {
-                                                }
-                                            }
-                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_FE680BBBFD37439892E59FEA0B649EB1"
-                                            {
-                                            "Name" = "8:10.0"
-                                            "Condition" = "8:"
-                                            "AlwaysCreate" = "11:FALSE"
-                                            "DeleteAtUninstall" = "11:FALSE"
-                                            "Transitive" = "11:FALSE"
-                                                "Keys"
-                                                {
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_1C81677B83C4486BAF1692BA0E9EBCC6"
-                                                    {
-                                                    "Name" = "8:Packages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_475859110AD54E6B862DB9E11281B7BB"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2010EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_08B9C539E85E4906A8B95523AFEE8E7C"
-                                                                    {
-                                                                    "Name" = "8:ID"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:113"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_1446BEA5A0724408A4444612315BCA78"
-                                                                    {
-                                                                    "Name" = "8:MinEdition"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Standard"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8484AD763A74430D9850B05F795F1005"
-                                                                    {
-                                                                    "Name" = "8:CodeBase"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[TARGETDIR]VLTestingPackage.dll"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8BCBA693F07C4665BAE1B0FA0807243F"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage, VLTestingPackage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_A1C667642F264FB08B083AC51D51CDBD"
-                                                                    {
-                                                                    "Name" = "8:Class"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_ABCF868E70A247BFAEAED8E40D733210"
-                                                                    {
-                                                                    "Name" = "8:CompanyName"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Ondrej Stumpf"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_D883EC0FBABD4BBD9C9F4001DBD8F014"
-                                                                    {
-                                                                    "Name" = "8:ProductName"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:Visual Localizer Testing Package"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_DB6B1A060A30499890CD55BD30553EB7"
-                                                                    {
-                                                                    "Name" = "8:InprocServer32"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:[SystemFolder]MSCOREE.DLL"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F20F4A372A204BB08B2FE70E5C13EF09"
-                                                                    {
-                                                                    "Name" = "8:ProductVersion"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_64EDBA332BFF49FFB9D442E5C8488132"
-                                                    {
-                                                    "Name" = "8:AutoLoadPackages"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_6806E3FE0D544BD4900BE52E31C67832"
-                                                            {
-                                                            "Name" = "8:{f1536ef8-92ec-443c-9ed7-fdadf150da82}"
-                                                            "Condition" = "8:CHECKBOX2010EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8D2DA42C9F44466B919E7EBF5D902802"
-                                                                    {
-                                                                    "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:3"
-                                                                    "Value" = "3:0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_8689A2ADE3C14417A40BFE9A2BD4D1A9"
-                                                    {
-                                                    "Name" = "8:InstalledProducts"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_DD3A1DF561D246A283DE68A0AF0E0B4F"
-                                                            {
-                                                            "Name" = "8:VLTestingPackagePackage"
-                                                            "Condition" = "8:CHECKBOX2010EXP=1"
-                                                            "AlwaysCreate" = "11:FALSE"
-                                                            "DeleteAtUninstall" = "11:TRUE"
-                                                            "Transitive" = "11:TRUE"
-                                                                "Keys"
-                                                                {
-                                                                }
-                                                                "Values"
-                                                                {
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_265A40FDDF5B493F92018A91C1B745EC"
-                                                                    {
-                                                                    "Name" = "8:"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##110"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_36F14675251944E5B7C2FDCA121CBE06"
-                                                                    {
-                                                                    "Name" = "8:LogoID"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##400"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_4D9CD6C557DE4DB1A57D1C0023B15BB5"
-                                                                    {
-                                                                    "Name" = "8:Package"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_B0992BF1C5E24D4A96D073D33035F477"
-                                                                    {
-                                                                    "Name" = "8:ProductDetails"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:##112"
-                                                                    }
-                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_C827E70449674845A7E2C6C39C803F00"
-                                                                    {
-                                                                    "Name" = "8:PID"
-                                                                    "Condition" = "8:CHECKBOX2010EXP=1"
-                                                                    "Transitive" = "11:TRUE"
-                                                                    "ValueTypes" = "3:1"
-                                                                    "Value" = "8:1.0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        "Values"
-                                                        {
-                                                        }
-                                                    }
-                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_A3C998951BDC4606B41DAFD1A2AC4141"
-                                                    {
-                                                    "Name" = "8:Menus"
-                                                    "Condition" = "8:"
-                                                    "AlwaysCreate" = "11:FALSE"
-                                                    "DeleteAtUninstall" = "11:FALSE"
-                                                    "Transitive" = "11:FALSE"
-                                                        "Keys"
-                                                        {
-                                                        }
-                                                        "Values"
-                                                        {
-                                                            "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_38DD12DC00384686B0EED92924FDB1BF"
-                                                            {
-                                                            "Name" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
-                                                            "Condition" = "8:CHECKBOX2010EXP=1"
-                                                            "Transitive" = "11:TRUE"
-                                                            "ValueTypes" = "3:1"
-                                                            "Value" = "8:, 1000, 1"
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                "Values"
-                                                {
-                                                }
-                                            }
-                                        }
-                                        "Values"
-                                        {
-                                        }
-                                    }
                                     "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_8582D945955E4C8CB2884FED372A0A7D"
                                     {
                                     "Name" = "8:VisualStudio"
@@ -1932,6 +1212,74 @@
                                                                     "Transitive" = "11:TRUE"
                                                                     "ValueTypes" = "3:1"
                                                                     "Value" = "8:OndrejStumpf.VLTestingPackage.VLTestingPackagePackage"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        "Values"
+                                                        {
+                                                        }
+                                                    }
+                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_9414471AA62947219CCC458668FBD233"
+                                                    {
+                                                    "Name" = "8:OutputWindow"
+                                                    "Condition" = "8:"
+                                                    "AlwaysCreate" = "11:FALSE"
+                                                    "DeleteAtUninstall" = "11:FALSE"
+                                                    "Transitive" = "11:FALSE"
+                                                        "Keys"
+                                                        {
+                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_8F7FDC554EF7460E9C55470C15F97CDF"
+                                                            {
+                                                            "Name" = "8:{3C0449B5-A3E7-4c3b-9B34-FC51E133B830}"
+                                                            "Condition" = "8:CHECKBOX2010=1"
+                                                            "AlwaysCreate" = "11:FALSE"
+                                                            "DeleteAtUninstall" = "11:TRUE"
+                                                            "Transitive" = "11:TRUE"
+                                                                "Keys"
+                                                                {
+                                                                }
+                                                                "Values"
+                                                                {
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_0A4888EC9A744F4897665DFEFD4BF666"
+                                                                    {
+                                                                    "Name" = "8:Name"
+                                                                    "Condition" = "8:CHECKBOX2010=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:VL"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_1BDC77894A844E39B77E7F9CF135042E"
+                                                                    {
+                                                                    "Name" = "8:InitiallyInvisible"
+                                                                    "Condition" = "8:CHECKBOX2010=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:0"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_7B4917C223874826935B6635AD89DCE1"
+                                                                    {
+                                                                    "Name" = "8:ClearWithSolution"
+                                                                    "Condition" = "8:CHECKBOX2010=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:1"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8E946549D1DF4D3089558D4B7D7AAA03"
+                                                                    {
+                                                                    "Name" = "8:"
+                                                                    "Condition" = "8:CHECKBOX2010=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:##111"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F167544899FD47C0B92B33D295657E11"
+                                                                    {
+                                                                    "Name" = "8:Package"
+                                                                    "Condition" = "8:CHECKBOX2010=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
                                                                     }
                                                                 }
                                                             }
@@ -2148,6 +1496,74 @@
                                                         {
                                                         }
                                                     }
+                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_BCC3FA4B02F7499EB3E5AC06EABFB087"
+                                                    {
+                                                    "Name" = "8:OutputWindow"
+                                                    "Condition" = "8:"
+                                                    "AlwaysCreate" = "11:FALSE"
+                                                    "DeleteAtUninstall" = "11:FALSE"
+                                                    "Transitive" = "11:FALSE"
+                                                        "Keys"
+                                                        {
+                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_6882FC26C0FD481B8F38AFEEE35BA78D"
+                                                            {
+                                                            "Name" = "8:{3C0449B5-A3E7-4c3b-9B34-FC51E133B830}"
+                                                            "Condition" = "8:CHECKBOX2008=1"
+                                                            "AlwaysCreate" = "11:FALSE"
+                                                            "DeleteAtUninstall" = "11:TRUE"
+                                                            "Transitive" = "11:TRUE"
+                                                                "Keys"
+                                                                {
+                                                                }
+                                                                "Values"
+                                                                {
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_1A3328773ED04F979FBBEEF5779AFF7B"
+                                                                    {
+                                                                    "Name" = "8:InitiallyInvisible"
+                                                                    "Condition" = "8:CHECKBOX2008=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:0"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_63A202CF2E0E4F0E972328246B5CD131"
+                                                                    {
+                                                                    "Name" = "8:ClearWithSolution"
+                                                                    "Condition" = "8:CHECKBOX2008=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:1"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_68DB1E5E641841BD87D89D4D428AEF8E"
+                                                                    {
+                                                                    "Name" = "8:Package"
+                                                                    "Condition" = "8:CHECKBOX2008=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_CDE254F09BCC4717A6008663E250CB5F"
+                                                                    {
+                                                                    "Name" = "8:Name"
+                                                                    "Condition" = "8:CHECKBOX2008=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:VL"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F1F6DEF21F8442FD8B9E05B7FA2D886A"
+                                                                    {
+                                                                    "Name" = "8:"
+                                                                    "Condition" = "8:CHECKBOX2008=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:##111"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        "Values"
+                                                        {
+                                                        }
+                                                    }
                                                     "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_DEC503E046CD4DF7B25ECE9CCC04425D"
                                                     {
                                                     "Name" = "8:Packages"
@@ -2282,6 +1698,74 @@
                                                             "ValueTypes" = "3:1"
                                                             "Value" = "8:, 1000, 1"
                                                             }
+                                                        }
+                                                    }
+                                                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_71AEA590DD024E12BB3DD7295777CA61"
+                                                    {
+                                                    "Name" = "8:OutputWindow"
+                                                    "Condition" = "8:"
+                                                    "AlwaysCreate" = "11:FALSE"
+                                                    "DeleteAtUninstall" = "11:FALSE"
+                                                    "Transitive" = "11:FALSE"
+                                                        "Keys"
+                                                        {
+                                                            "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_1D7B84CCD0254EF788E0B49BFEEC32D1"
+                                                            {
+                                                            "Name" = "8:{3C0449B5-A3E7-4c3b-9B34-FC51E133B830}"
+                                                            "Condition" = "8:CHECKBOX2011=1"
+                                                            "AlwaysCreate" = "11:FALSE"
+                                                            "DeleteAtUninstall" = "11:TRUE"
+                                                            "Transitive" = "11:TRUE"
+                                                                "Keys"
+                                                                {
+                                                                }
+                                                                "Values"
+                                                                {
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_1BCEACB75DD74C039C255AA04D8C86DE"
+                                                                    {
+                                                                    "Name" = "8:InitiallyInvisible"
+                                                                    "Condition" = "8:CHECKBOX2011=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:0"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_2A5D93936C8D45909BD1EF348DB5DDFB"
+                                                                    {
+                                                                    "Name" = "8:ClearWithSolution"
+                                                                    "Condition" = "8:CHECKBOX2011=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:3"
+                                                                    "Value" = "3:1"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_6CD69FAF04114183AB432D8FF43F5059"
+                                                                    {
+                                                                    "Name" = "8:Package"
+                                                                    "Condition" = "8:CHECKBOX2011=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:{4d84a08f-4147-4224-8a05-96b47e9d5f6a}"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_8AA798CE8B8F43D7A712E48591B055A1"
+                                                                    {
+                                                                    "Name" = "8:Name"
+                                                                    "Condition" = "8:CHECKBOX2011=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:VL"
+                                                                    }
+                                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F64F8F1B12654CE7AD65F44F0E77D51E"
+                                                                    {
+                                                                    "Name" = "8:"
+                                                                    "Condition" = "8:CHECKBOX2011=1"
+                                                                    "Transitive" = "11:TRUE"
+                                                                    "ValueTypes" = "3:1"
+                                                                    "Value" = "8:##111"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        "Values"
+                                                        {
                                                         }
                                                     }
                                                     "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_A417231AF2BE4C99963F46DF651B30B4"
@@ -2491,6 +1975,46 @@
                                                 }
                                                 "Values"
                                                 {
+                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_0459AD7E58F5416BA6CF82B875BD072B"
+                                                    {
+                                                    "Name" = "8:ClearWithSolution"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "ValueTypes" = "3:3"
+                                                    "Value" = "3:1"
+                                                    }
+                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_BDB290DE6EEA4F0696E6B21EF9B13424"
+                                                    {
+                                                    "Name" = "8:InitiallyInvisible"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "ValueTypes" = "3:3"
+                                                    "Value" = "3:0"
+                                                    }
+                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_E3B636F1BC264723A7C4A8D0A4C8AA09"
+                                                    {
+                                                    "Name" = "8:Package"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "ValueTypes" = "3:1"
+                                                    "Value" = "8:"
+                                                    }
+                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F7A1C86D1BEB4780BA6BF5548F167606"
+                                                    {
+                                                    "Name" = "8:Name"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "ValueTypes" = "3:1"
+                                                    "Value" = "8:Visual Localizer Output"
+                                                    }
+                                                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_F9D9D30930DA4760ACC8D19059632104"
+                                                    {
+                                                    "Name" = "8:"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "ValueTypes" = "3:1"
+                                                    "Value" = "8:#111"
+                                                    }
                                                 }
                                             }
                                         }
@@ -2854,7 +2378,7 @@
                     }
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_F86BF0B614A4411D92C0560F2C1DAE56"
                     {
-                    "Sequence" = "3:200"
+                    "Sequence" = "3:300"
                     "DisplayName" = "8:Checkboxes   (My)"
                     "UseDynamicProperties" = "11:TRUE"
                     "IsDependency" = "11:FALSE"
@@ -3102,7 +2626,7 @@
                             "ContextData" = "8:1;True=1;False=0"
                             "Attributes" = "3:0"
                             "Setting" = "3:0"
-                            "Value" = "3:1"
+                            "Value" = "3:0"
                             "DefaultValue" = "3:1"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -3154,7 +2678,7 @@
                             "ContextData" = "8:1;True=1;False=0"
                             "Attributes" = "3:0"
                             "Setting" = "3:0"
-                            "Value" = "3:1"
+                            "Value" = "3:0"
                             "DefaultValue" = "3:1"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -3206,7 +2730,7 @@
                             "ContextData" = "8:1;True=1;False=0"
                             "Attributes" = "3:0"
                             "Setting" = "3:0"
-                            "Value" = "3:1"
+                            "Value" = "3:0"
                             "DefaultValue" = "3:1"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -3327,35 +2851,7 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2E66925F395544028A52344A596C21AB"
-            {
-            "SourcePath" = "8:..\\VLTestSetupCustomActionInst\\obj\\Release\\VLTestSetupCustomActionInst.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_784856F0DBAD4301A140144B8A782FD6"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:Release|Any CPU"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{1E203BE0-DA79-4B7D-AD96-24D429C718F2}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_796FF49769DF46E0AB95CEFBBA7CECDF"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_9694B31FC0724BD29F308DC372A280D1"
             {
             "SourcePath" = "8:..\\VLTestingPackage\\obj\\Release\\VLTestingPackage.dll"
             "TargetName" = "8:"
@@ -3383,7 +2879,7 @@
                 {
                 }
             }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_8EEF0FE552D24356A33293AD9609D276"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_A26390B91E1D41ACAF4BB602D6F6CD5C"
             {
             "SourcePath" = "8:..\\VLTestingPackage\\obj\\Release\\VLTestingPackage.dll"
             "TargetName" = "8:"
@@ -3406,6 +2902,34 @@
             "OutputConfiguration" = "8:Release|Any CPU"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{422347DE-A74C-4FBB-854D-6F9BA8BDA069}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_C79A11E61ADF4290A84029651FB9B874"
+            {
+            "SourcePath" = "8:..\\VLSetupFinalizer\\obj\\Release\\VLSetupFinalizer.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_784856F0DBAD4301A140144B8A782FD6"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:Release|Any CPU"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{994C8555-6F48-4FCB-8545-65FE371FAFA3}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

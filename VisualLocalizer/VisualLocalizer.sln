@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestingPackage", "VLTesti
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "VLTestSetup", "VLTestSetup\VLTestSetup.vdproj", "{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestSetupCustomActionInst", "VLTestSetupCustomActionInst\VLTestSetupCustomActionInst.csproj", "{1E203BE0-DA79-4B7D-AD96-24D429C718F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLSetupFinalizer", "VLSetupFinalizer\VLSetupFinalizer.csproj", "{994C8555-6F48-4FCB-8545-65FE371FAFA3}"
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -29,10 +29,10 @@ Global
 		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Debug|Any CPU.ActiveCfg = Debug
 		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Release|Any CPU.ActiveCfg = Release
-		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1E203BE0-DA79-4B7D-AD96-24D429C718F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

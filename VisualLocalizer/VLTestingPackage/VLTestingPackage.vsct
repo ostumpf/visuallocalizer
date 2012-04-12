@@ -139,11 +139,6 @@
   </Commands>
 
 
-  
-
-
-
-
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidVLTestingPackagePkg" value="{4d84a08f-4147-4224-8a05-96b47e9d5f6a}" />
