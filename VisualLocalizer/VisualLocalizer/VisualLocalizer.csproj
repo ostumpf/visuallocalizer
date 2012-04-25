@@ -6,10 +6,10 @@
     <SchemaVersion>2.0</SchemaVersion>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OndrejStumpf.VisualLocalizer</RootNamespace>
+    <RootNamespace>VisualLocalizer</RootNamespace>
     <AssemblyName>VisualLocalizer</AssemblyName>
-    <SignAssembly>False</SignAssembly>
-    <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>vlkey.pfx</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ProjectGuid>{2E057DF9-29EA-4F3D-B162-5121C4EC0547}</ProjectGuid>
   </PropertyGroup>
@@ -49,22 +49,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Guids.cs" />
-    <Compile Include="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="VisualLocalizerPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <SubType>Designer</SubType>
@@ -72,6 +61,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Package.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vlkey.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VLlib\VLlib.csproj">
+      <Project>{3B87EC9A-D56C-4225-9323-CA157901244F}</Project>
+      <Name>VLlib</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <!--

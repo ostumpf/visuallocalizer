@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.Shell;
 
-namespace OndrejStumpf.VLTestingPackage {
+namespace VisualLocalizer.Library.Attributes {
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-    class ProvideMarkerAttribute : RegistrationAttribute {        
+    public class ProvideMarkerAttribute : RegistrationAttribute {        
 
         public override void Register(RegistrationAttribute.RegistrationContext context) {
             Key key = null;

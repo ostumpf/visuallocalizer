@@ -31,6 +31,7 @@ namespace OndrejStumpf.VLTestingPackage {
         public int GetTextMarkerType(ref Guid pguidMarker, out IVsPackageDefinedTextMarkerType ppMarkerType) {
             ppMarkerType = null;
             if (pguidMarker.ToString("D") == GuidList.guidVLTestingPackageMarker.ToLower()) {
+                
                 Trace.WriteLine("get text marker type");
                 ppMarkerType = FormatMarker;
                 return VSConstants.S_OK;    

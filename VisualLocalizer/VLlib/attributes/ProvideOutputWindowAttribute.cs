@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.VisualStudio.Shell;
 
-namespace OndrejStumpf.VLTestingPackage {
+namespace VisualLocalizer.Library.Attributes {
+    
     [AttributeUsage(AttributeTargets.Class, AllowMultiple=true,Inherited=true)]
-    internal sealed class ProvideOutputWindowAttribute : RegistrationAttribute {
+    public sealed class ProvideOutputWindowAttribute : RegistrationAttribute {
 
         public override void Register(RegistrationContext context) {
             Key key = null;

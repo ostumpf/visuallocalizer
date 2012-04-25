@@ -110,6 +110,13 @@
         </Strings>
       </Button>
 
+      <Button guid="guidVLTestingPackageCmdSet" id="showToolWindowItem" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"></Parent>
+        <Strings>
+          <CommandName>View.VisualLocalizerToolWindow</CommandName>
+          <ButtonText>Visual Localizer Tool Window</ButtonText>
+        </Strings>
+      </Button>
 
 
     </Buttons>
@@ -138,6 +145,10 @@
  
   </Commands>
 
+  <KeyBindings>
+    <KeyBinding guid="guidVLTestingPackageCmdSet" id="showToolWindowItem" editor="guidVSStd97"
+                key1="v" mod1="Control Alt" key2="v"/>
+  </KeyBindings>
 
   <Symbols>
     <!-- This is the package guid. -->
@@ -157,6 +168,9 @@
       <IDSymbol name="visualLocalizerCodeMenu" value="0x0009" />
       <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
       <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
+      
+      <IDSymbol name="visualLocalizerToolWindowGroup" value="0x0012" />
+      <IDSymbol name="showToolWindowItem" value="0x0013" />
     </GuidSymbol>
     
     

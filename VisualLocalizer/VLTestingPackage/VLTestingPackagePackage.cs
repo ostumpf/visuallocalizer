@@ -10,43 +10,23 @@ using Microsoft.Win32;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using EnvDTE;
 using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.IO;
 using System.Security.AccessControl;
+using VisualLocalizer.Library.Attributes;
+using EnvDTE;
+using Microsoft.VisualStudio.Package;
 
 namespace OndrejStumpf.VLTestingPackage
 {
-    /// <summary>
-    /// This is the class that implements the package exposed by this assembly.
-    ///
-    /// The minimum requirement for a class to be considered a valid package for Visual Studio
-    /// is to implement the IVsPackage interface and register itself with the shell.
-    /// This package uses the helper classes defined inside the Managed Package Framework (MPF)
-    /// to do it: it derives from the Package class that provides the implementation of the 
-    /// IVsPackage interface and uses the registration attributes defined in the framework to 
-    /// register itself and its components with the shell.
-    /// </summary>
-    // This attribute tells the registration utility (regpkg.exe) that this class needs
-    // to be registered as package.
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    // A Visual Studio component can be registered under different regitry roots; for instance
-    // when you debug your package you want to register it in the experimental hive. This
-    // attribute specifies the registry root to use if no one is provided to regpkg.exe with
-    // the /root switch.
     [DefaultRegistryRoot("Software\\Microsoft\\VisualStudio\\9.0")]
-    // This attribute is used to register the informations needed to show the this package
-    // in the Help/About dialog of Visual Studio.
     [InstalledProductRegistration(false, "#110", "#112", "1.0", IconResourceID = 400)]
-    // In order be loaded inside Visual Studio in a machine that has not the VS SDK installed, 
-    // package needs to have a valid load key (it can be requested at 
-    // http://msdn.microsoft.com/vstudio/extend/). This attributes tells the shell that this 
-    // package has a load key embedded in its resources.
     [ProvideLoadKey("Standard", "1.0", "Visual Localizer Testing Package", "Ondrej Stumpf", 113)]
-    // This attribute is needed to let the shell know that this package exposes some menus.
+    
     [ProvideMenuResource(1000, 1)]
     [ProvideOutputWindow(ClearWithSolution = true, InitiallyInvisible = false, Name = "VL",
         ShowOutputFromText = "#111", Package = typeof(VLTestingPackagePackage), 
@@ -57,9 +37,17 @@ namespace OndrejStumpf.VLTestingPackage
     [ProvideMarker(DisplayName="VL testing marker",Package=typeof(VLTestingPackagePackage),
         Service=typeof(MarkerService),MarkerGuid=GuidList.guidVLTestingPackageMarker)]
 
+    [ProvideEditorFactory(typeof(MyEditorFactory), 200, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]
+    [ProvideEditorExtension(typeof(MyEditorFactory), ".resx", 100)]
+    [ProvideEditorLogicalView(typeof(MyEditorFactory), GuidList.guidVLTestingPackageLogicalView)]
+
+    [ProvideToolWindow(typeof(MyToolWindow),Style=VsDockStyle.Tabbed,Orientation=ToolWindowOrientation.Bottom,Window=ToolWindowGuids.Outputwindow)]
+  //  [ProvideToolWindowVisibility(typeof(MyToolWindow),"")]
+
     [Guid("4d84a08f-4147-4224-8a05-96b47e9d5f6a")]
-    public sealed class VLTestingPackagePackage : Package
+    public sealed class VLTestingPackagePackage : Package,IVsSelectionEvents
     {
+        
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -75,15 +63,16 @@ namespace OndrejStumpf.VLTestingPackage
         }
         private EnvDTE.DTE ideObject;
         private EnvDTE.UIHierarchy uih;
-        private CommandEvents cmdPaste;
+        private EnvDTE.CommandEvents cmdPaste;
         private MarkerService markerService;
+        private MyEditorFactory editor;
 
         protected override void Initialize()
         {
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
-
+            
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 
@@ -98,23 +87,30 @@ namespace OndrejStumpf.VLTestingPackage
             int hr = textManager.GetRegisteredMarkerTypeID(ref guid, out markerTypeID);
             markerService.FormatMarker.Id = markerTypeID;
 
-
+            
             if ( null != mcs )
             {
 
                 ideObject = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
                 uih = (UIHierarchy)ideObject.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
 
-           
-                // MUST BE SAVED, OR GC EATS IT!!!
-                Command pastecmd = ideObject.Commands.Item("Edit.Paste", -1);
-                cmdPaste = ideObject.Events.get_CommandEvents(pastecmd.Guid, pastecmd.ID);
-                cmdPaste.BeforeExecute += new _dispCommandEvents_BeforeExecuteEventHandler(cmdPaste_BeforeExecute);
+                // track tab change
+                IVsMonitorSelection s = GetService(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection;
                 
-                
+                uint u;
+                s.AdviseSelectionEvents(this, out u);
 
-                CommandID batchMoveCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.batchMoveMenuItem);
-                OleMenuCommand batchMenuItem = new OleMenuCommand(MenuItemCallback, batchMoveCommand);
+               editor = new MyEditorFactory();
+                RegisterEditorFactory(editor);
+   
+                // MUST BE SAVED, OR GC EATS IT!!!
+                Command pastecmd = ideObject.Commands.Item("Edit.Paste", -1);                
+                cmdPaste = ideObject.Events.get_CommandEvents(pastecmd.Guid, pastecmd.ID);                
+                cmdPaste.BeforeExecute += new _dispCommandEvents_BeforeExecuteEventHandler(cmdPaste_BeforeExecute);                                
+
+                CommandID batchMoveCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.batchMoveMenuItem);                
+                OleMenuCommand batchMenuItem = new OleMenuCommand(MenuItemCallback, batchMoveCommand);     
+                  
                 mcs.AddCommand(batchMenuItem);
 
                 CommandID topMenuCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.visualLocalizerTopMenu);
@@ -131,44 +127,45 @@ namespace OndrejStumpf.VLTestingPackage
                 codeMenu.BeforeQueryStatus += new EventHandler(codeMenu_BeforeQueryStatus);
                 mcs.AddCommand(codeMenu);
 
-                
+                CommandID showToolCommand = new CommandID(GuidList.guidVLTestingPackageCmdSet, (int)PkgCmdIDList.showToolWindowItem);
+                OleMenuCommand showToolItem = new OleMenuCommand(ShowCallback, showToolCommand);
+                mcs.AddCommand(showToolItem);
 
             }
+
+          
         }
-    
+
+
+        private void ShowCallback(object sender, EventArgs e) {
+            ToolWindowPane pane=FindToolWindow(typeof(MyToolWindow), 0, true);
+            
+            if (pane != null && pane.Frame != null) {
+                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_IsWindowTabbed, true);
+                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_FrameMode,VSFRAMEMODE.VSFM_Dock);
+                ((IVsWindowFrame)pane.Frame).Show();                
+            }
+        }
+
         void cmdPaste_BeforeExecute(string Guid, int ID, object CustomIn, object CustomOut, ref bool CancelDefault) {
             Trace.WriteLine(Clipboard.GetText());
-            outputWrite(Clipboard.GetText());
+
+            VisualLocalizer.Library.OutputWindow.Build.OutputTaskItemString("moje zprava",
+                VSTASKPRIORITY.TP_HIGH, VSTASKCATEGORY.CAT_MISC, "", 0, "", 10, "nejaky text");
+            
+
+            VisualLocalizer.Library.OutputWindow.GetActivatedPane(GuidList.guidVLTestingPackageOutputWindow).
+                OutputString("PASTE: "+Clipboard.GetText()+"\n");
         }
 
 
         void codeMenu_BeforeQueryStatus(object sender, EventArgs e) {
             TextSelection selection = (TextSelection)ideObject.ActiveDocument.Selection;
-          
-            (sender as OleMenuCommand).Visible = ideObject.ActiveDocument.Name.ToLowerInvariant().EndsWith("cs");
-        }
-
-        void outputWriteGeneral(string text) {
-            var outputWindow = GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
             
-            IVsOutputWindowPane pane;
-            Guid guidGeneralPane =
-                VSConstants.GUID_OutWindowGeneralPane;
-            outputWindow.GetPane(ref guidGeneralPane, out pane);            
-            if (pane != null) {
-                
-                pane.OutputString(text);
-            }
+            (sender as OleMenuCommand).Supported = ideObject.ActiveDocument.Name.ToLowerInvariant().EndsWith("cs");
         }
 
-        void outputWrite(string text) {
-            var outputWindow = GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
-            IVsOutputWindowPane outputPane;
-            Guid g=new Guid(GuidList.guidVLTestingPackageOutputWindow);
-            outputWindow.GetPane(ref g, out outputPane);
-            outputPane.Activate();
-            outputPane.OutputString(text+"\n");            
-        }
+      
 
         string type(object o) {
             return Microsoft.VisualBasic.Information.TypeName(o);
@@ -211,7 +208,7 @@ namespace OndrejStumpf.VLTestingPackage
                                             spans[0].iEndIndex,
                                             null,
                                             null);
-
+            
             // adding to the list
            /* Project p = ideObject.ActiveDocument.ProjectItem.ContainingProject;
             string projectDirectory=Path.GetDirectoryName(p.FileName);
@@ -260,7 +257,24 @@ namespace OndrejStumpf.VLTestingPackage
         }
 
 
+
+
+        public int OnCmdUIContextChanged(uint dwCmdUICookie, int fActive) {
+            
+
+            return VSConstants.S_OK;
+        }
+
+        public int OnElementValueChanged(uint elementid, object varValueOld, object varValueNew) {
+          //  Trace.WriteLine("Tab changed");
+            return VSConstants.S_OK;
+        }
+
+        public int OnSelectionChanged(IVsHierarchy pHierOld, uint itemidOld, IVsMultiItemSelect pMISOld, ISelectionContainer pSCOld, IVsHierarchy pHierNew, uint itemidNew, IVsMultiItemSelect pMISNew, ISelectionContainer pSCNew) {
+            
+            return VSConstants.S_OK;
+        }
     }
 
-    
+   
 }
