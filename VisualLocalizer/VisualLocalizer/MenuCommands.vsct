@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h"/>
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="VLPackageGuid">
+    <Groups>
+    
+      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+      </Group>
+      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
+      </Group>
+      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+      </Group>
+
+      <Group guid="VLCommandSetGuid" id="solutionExpSubmenuGroup" priority="0x001">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenu"/>
+      </Group>
+
+      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup" priority="0x001">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
+      </Group>
+
+    </Groups>
+    
+    <Buttons>
+
+      <Button guid="VLCommandSetGuid" id="batchMoveMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>        
+        <Strings>
+          <CommandName>Batch move</CommandName>
+          <ButtonText>Batch move to resources...</ButtonText>
+        </Strings>
+      </Button>
+
+      
+      
+      <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>MoveTo</CommandName>
+          <ButtonText>Move to resources...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>Inline</CommandName>
+          <ButtonText>Inline</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchMoveCodeMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchMoveTo</CommandName>
+          <ButtonText>Batch move to resources...</ButtonText>
+        </Strings>
+      </Button>
+      
+      
+      <Button guid="VLCommandSetGuid" id="showToolWindowItem" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"></Parent>
+        <Strings>
+          <CommandName>View.VisualLocalizerToolWindow</CommandName>
+          <ButtonText>Visual Localizer Tool Window</ButtonText>
+        </Strings>
+      </Button>
+
+    </Buttons>
+
+    <Menus>
+      <Menu guid="VLCommandSetGuid" id="visualLocalizerTopMenu" type="Menu">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>
+      </Menu>
+
+      <Menu guid="VLCommandSetGuid" id="visualLocalizerCodeMenu" type="Menu">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+ 
+  </Commands>
+
+  <KeyBindings>
+    <KeyBinding guid="VLCommandSetGuid" id="showToolWindowItem" editor="guidVSStd97"
+                key1="v" mod1="Control Alt" key2="v"/>
+  </KeyBindings>
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="VLPackageGuid" value="{68c95c48-9295-49a0-a2ed-81da6e651374}" />
+    
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="VLCommandSetGuid" value="{42b49eb8-7690-46f2-8267-52939c5e642f}">
+
+      <IDSymbol name="visualLocalizerTopMenuGroup" value="0x0001" />
+      <IDSymbol name="visualLocalizerTopMenu" value="0x0005" />
+
+      <IDSymbol name="solutionExpSubmenuGroup" value="0x0004" />
+      <IDSymbol name="batchMoveMenuItem" value="0x0003" />
+
+      <IDSymbol name="moveMenuItem" value="0x0007" />
+      <IDSymbol name="inlineMenuItem" value="0x0008" />
+      <IDSymbol name="visualLocalizerCodeMenu" value="0x0009" />
+      <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
+      <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
+      
+      <IDSymbol name="visualLocalizerToolWindowGroup" value="0x0012" />
+      <IDSymbol name="showToolWindowItem" value="0x0013" />
+      <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
+    </GuidSymbol>
+    
+    
+    
+   
+  </Symbols>
+
+</CommandTable>

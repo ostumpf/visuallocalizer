@@ -57,9 +57,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="components\ActivityLogger.cs" />
     <Compile Include="components\Editor.cs">
     </Compile>
     <Compile Include="components\OutputWindow.cs" />
+    <Compile Include="components\OutputWindowPane.cs" />
     <Compile Include="ErrorReporter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="attributes\ProvideMarkerAttribute.cs" />

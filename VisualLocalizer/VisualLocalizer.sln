@@ -1,15 +1,15 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualLocalizer", "VisualLocalizer\VisualLocalizer.csproj", "{2E057DF9-29EA-4F3D-B162-5121C4EC0547}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLTestingPackage", "VLTestingPackage\VLTestingPackage.csproj", "{422347DE-A74C-4FBB-854D-6F9BA8BDA069}"
-EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "VLTestSetup", "VLTestSetup\VLTestSetup.vdproj", "{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{994C8555-6F48-4FCB-8545-65FE371FAFA3} = {994C8555-6F48-4FCB-8545-65FE371FAFA3}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLSetupFinalizer", "VLSetupFinalizer\VLSetupFinalizer.csproj", "{994C8555-6F48-4FCB-8545-65FE371FAFA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLlib", "VLlib\VLlib.csproj", "{3B87EC9A-D56C-4225-9323-CA157901244F}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{7EC1E79C-D1D1-495A-ADED-A1EB72204C97}"
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -25,12 +25,6 @@ Global
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E057DF9-29EA-4F3D-B162-5121C4EC0547}.Release|Any CPU.Build.0 = Release|Any CPU
-		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{422347DE-A74C-4FBB-854D-6F9BA8BDA069}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Debug|Any CPU.ActiveCfg = Debug
-		{C0B53EFE-4CD5-44BB-948E-27413FEB8F4E}.Release|Any CPU.ActiveCfg = Release
 		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{994C8555-6F48-4FCB-8545-65FE371FAFA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,6 +33,8 @@ Global
 		{3B87EC9A-D56C-4225-9323-CA157901244F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B87EC9A-D56C-4225-9323-CA157901244F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B87EC9A-D56C-4225-9323-CA157901244F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EC1E79C-D1D1-495A-ADED-A1EB72204C97}.Debug|Any CPU.ActiveCfg = Debug
+		{7EC1E79C-D1D1-495A-ADED-A1EB72204C97}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

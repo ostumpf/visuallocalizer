@@ -32,6 +32,11 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\EnvDTE.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Microsoft.VisualStudio.OLE.Interop" />
     <Reference Include="Microsoft.VisualStudio.Shell.Interop" />
     <Reference Include="Microsoft.VisualStudio.Shell.Interop.8.0" />
@@ -47,13 +52,45 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="VSLangProj, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\VSLangProj.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\InlineCommand.cs" />
+    <Compile Include="Commands\MoveToResourcesCommand.cs" />
+    <Compile Include="Components\ResXEditor.cs" />
+    <Compile Include="Components\ResXEditorControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Components\ResXEditorControl.Designer.cs">
+      <DependentUpon>ResXEditorControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Components\ResXFileHandler.cs" />
+    <Compile Include="Components\SelectResourceFileForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Components\SelectResourceFileForm.Designer.cs">
+      <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Components\Utils.cs" />
+    <Compile Include="Components\VLOutputWindow.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Commands\MenuManager.cs" />
     <Compile Include="VisualLocalizerPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <VSCTCompile Include="MenuCommands.vsct">
+      <ResourceName>1000</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Components\SelectResourceFileForm.resx">
+      <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <SubType>Designer</SubType>

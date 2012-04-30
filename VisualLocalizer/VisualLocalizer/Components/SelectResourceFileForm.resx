@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,20 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="110" xml:space="preserve">
-    <value>Visual Localizer</value>
-  </data>
-  <data name="111" xml:space="preserve">
-    <value>KDH8CPQ1JEIZZMC8EIHMAKHRKPQDCTEKKRM9I9ZDKDIKCMHRPRI1KMR0MZZMQDR2IJIDJCM0IJJ3Z9R8M0KHCDEKJMETCHD1D9RAEAQRRPDZJMJZRQI0AKA9CIMMQ3QE</value>
-  </data>
-  <data name="112" xml:space="preserve">
-    <value>Advanced editor of localized resources.</value>
-  </data>
-  <data name="113" xml:space="preserve">
-    <value>Visual Localizer ResX Editor</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Package.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
 </root>

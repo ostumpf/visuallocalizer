@@ -1,12 +1,22 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
-namespace OndrejStumpf.VisualLocalizer
+namespace VisualLocalizer
 {
-    static class GuidList
-    {
-        public const string guidVisualLocalizerPkgString = "74b8212c-0d66-4fee-99e3-ab64a2d30e50";
-        public const string guidVisualLocalizerCmdSetString = "7b8f6fd3-f366-4fdb-8278-0a3c4395b13e";
+    public static class Guids {
 
-        public static readonly Guid guidVisualLocalizerCmdSet = new Guid(guidVisualLocalizerCmdSetString);
-    };
+        [Guid("E839DED2-9BB7-4f84-9453-C22CBD0C46E9")]
+        public static class VisualLocalizerWindowPane { }
+
+        [Guid("42b49eb8-7690-46f2-8267-52939c5e642f")]
+        public static class VLCommandSet { }
+    
+    }
+
+    public static class PackageCommandIDs {
+       public const int CodeMenu= 0x0009;
+       public const int SolExpMenu = 0x0005;
+
+       public const int MoveCodeMenuItem = 0x0007;
+    }
 }

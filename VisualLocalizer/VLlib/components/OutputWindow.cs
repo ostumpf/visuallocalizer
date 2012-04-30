@@ -7,41 +7,56 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Library {
-    public static class OutputWindow {
+    public class OutputWindow {
 
-        private static IVsOutputWindow outputWindowService;
+        protected static IVsOutputWindow outputWindowService;
+        protected static Dictionary<Guid, OutputWindowPane> cache;
 
-        static OutputWindow() {
-            outputWindowService=Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
-            if (outputWindowService != null) {
-                Build = getStandardPane(VSConstants.GUID_BuildOutputWindowPane);
-                General = getStandardPane(VSConstants.GUID_OutWindowGeneralPane);
-                Debug = getStandardPane(VSConstants.GUID_OutWindowDebugPane);
-            } else throw new Exception("Cannot consume SVsOutputWindow service.");
+        public OutputWindow() { }
+
+        static OutputWindow() {            
+            cache = new Dictionary<Guid, OutputWindowPane>();
+            outputWindowService = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+            if (outputWindowService == null) 
+                throw new Exception("Cannot consume SVsOutputWindow service.");            
         }
 
-        private static IVsOutputWindowPane getStandardPane(Guid paneGuid) {
+        protected static OutputWindowPane getStandardPane(Guid paneGuid) {
             IVsOutputWindowPane pane = null;
             int hr=outputWindowService.GetPane(ref paneGuid, out pane);
-            if (hr != VSConstants.S_OK || pane==null)
+            if (hr != VSConstants.S_OK || pane==null)                
                 throw new Exception(String.Format("Error retrieving standard output window pane {0}.",paneGuid.ToString("B")));
 
-            return pane;
+            OutputWindowPane owpane = new OutputWindowPane(pane);
+
+            return owpane;
         }
 
-        public static IVsOutputWindowPane Build {
-            get;
-            private set;
+        public static OutputWindowPane Build {
+            get {
+                if (!cache.ContainsKey(VSConstants.GUID_BuildOutputWindowPane))
+                    cache.Add(VSConstants.GUID_BuildOutputWindowPane, getStandardPane(VSConstants.GUID_BuildOutputWindowPane));
+
+                return cache[VSConstants.GUID_BuildOutputWindowPane];
+            }
         }
 
-        public static IVsOutputWindowPane General {
-            get;
-            private set;
+        public static OutputWindowPane General {
+            get {
+                if (!cache.ContainsKey(VSConstants.GUID_OutWindowGeneralPane))
+                    cache.Add(VSConstants.GUID_OutWindowGeneralPane, getStandardPane(VSConstants.GUID_OutWindowGeneralPane));
+
+                return cache[VSConstants.GUID_OutWindowGeneralPane];
+            }
         }
 
-        public static IVsOutputWindowPane Debug {
-            get;
-            private set;
+        public static OutputWindowPane Debug {
+            get {
+                if (!cache.ContainsKey(VSConstants.GUID_OutWindowDebugPane))
+                    cache.Add(VSConstants.GUID_OutWindowDebugPane, getStandardPane(VSConstants.GUID_OutWindowDebugPane));
+
+                return cache[VSConstants.GUID_OutWindowDebugPane];
+            }
         }
 
         public static void CreatePane(Guid paneGuid,string name,bool clearWithSolution,bool initiallyVisible) {
@@ -57,6 +72,9 @@ namespace VisualLocalizer.Library {
         }
 
         public static void DeletePane(Guid paneGuid) {
+            if (cache.ContainsKey(paneGuid))
+                cache.Remove(paneGuid);
+
             int hr = outputWindowService.DeletePane(ref paneGuid);
             
             if (hr != VSConstants.S_OK)
@@ -64,31 +82,26 @@ namespace VisualLocalizer.Library {
         }
 
 
-        public static IVsOutputWindowPane GetPane(string paneGuid) {
+        public static OutputWindowPane GetPane(string paneGuid) {
             return GetPane(new Guid(paneGuid));
         }        
 
-        public static IVsOutputWindowPane GetPane(Guid paneGuid) {
-            IVsOutputWindowPane pane=null;
-            int hr=outputWindowService.GetPane(ref paneGuid, out pane);
-            
-            if (hr != VSConstants.S_OK || pane==null)
-                throw new Exception(String.Format("Error retrieving output window pane {0}.", paneGuid.ToString("B")));
-                            
-            return pane;
-        }
+        public static OutputWindowPane GetPane(Guid paneGuid) {
+            if (cache.ContainsKey(paneGuid)) {
+                return cache[paneGuid];
+            } else {
+                IVsOutputWindowPane pane = null;
+                int hr = outputWindowService.GetPane(ref paneGuid, out pane);
 
-        public static IVsOutputWindowPane GetActivatedPane(string paneGuid) {
-            IVsOutputWindowPane pane = GetPane(new Guid(paneGuid));
-            pane.Activate();
-            return pane;
-        }
+                if (hr != VSConstants.S_OK || pane == null)
+                    throw new Exception(String.Format("Error retrieving output window pane {0}.", paneGuid.ToString("B")));
 
-        public static IVsOutputWindowPane GetActivatedPane(Guid paneGuid) {
-            IVsOutputWindowPane pane = GetPane(paneGuid);
-            pane.Activate();
-            return pane;
-        }
+                OutputWindowPane owpane = new OutputWindowPane(pane);
+                cache.Add(paneGuid, owpane);
+
+                return owpane;
+            }
+        }       
 
       
     }
