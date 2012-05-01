@@ -6,10 +6,12 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell;
 using System.Diagnostics;
 using EnvDTE;
-using VisualLocalizer.Components;
+using VisualLocalizer.Editor;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Windows.Forms;
 using System.IO;
+using System.Text.RegularExpressions;
+using VisualLocalizer.Gui;
 
 namespace VisualLocalizer.Commands {
     internal class MoveToResourcesCommand {
@@ -72,10 +74,9 @@ namespace VisualLocalizer.Commands {
         private void ResolveReference(string oldValue,out bool canceled, out string newKey, out string newValue, out ResXProjectItem resourceItem) {
             if (oldValue.StartsWith("@")) oldValue = oldValue.Substring(1);
             oldValue = oldValue.Substring(1, oldValue.Length - 2);
-
-            Projects allProjects = package.DTE.Solution.Projects;
+            
             Project project=package.DTE.ActiveDocument.ProjectItem.ContainingProject;
-            List<ResXProjectItem> resourceFiles = Utils.GetResourceFilesOf(allProjects,project);
+            List<ResXProjectItem> resourceFiles = Utils.GetResourceFilesOf(project);
             string key = Utils.CreateKeyFromValue(oldValue);
 
             SelectResourceFileForm f = new SelectResourceFileForm();
@@ -98,82 +99,124 @@ namespace VisualLocalizer.Commands {
             int lineLength;
             textLines.GetLengthOfLine(selectionSpan.iStartLine, out lineLength);
             textLines.GetLineText(selectionSpan.iStartLine, 0, selectionSpan.iStartLine, lineLength, out lineText);
-
+            
             selectionSpan = TrimSpan(selectionSpan, lineText);
-          
+            int spanLength = selectionSpan.iEndIndex - selectionSpan.iStartIndex;
+
             if (selectionSpan.iStartLine != selectionSpan.iEndLine)
-                throw new Exception("This selection cannot be referenced!");                
+                throw new NotReferencableException(selectionSpan,lineText);
 
-            int newStartIndex = GetNewStartIndex(selectionSpan.iStartIndex,lineText);               
-            if (newStartIndex < 0)
-                throw new Exception("This selection cannot be referenced!");
+            int newStartIndex = 0, newEndIndex = 0;
+            if (spanLength <= 0) {
+                if (selectionSpan.iStartIndex > 0 && lineText[selectionSpan.iStartIndex - 1] == '@') 
+                    selectionSpan.iStartIndex++;
 
-            int newEndIndex = GetNewEndIndex(selectionSpan.iEndIndex,lineText);                                
-            if (newEndIndex >= lineLength)
-                throw new Exception("This selection cannot be referenced!");
+                int rightCount = countAposRight(lineText, selectionSpan.iStartIndex, out newEndIndex);
+                newEndIndex++;
+                int leftCount = countAposLeft(lineText, selectionSpan.iStartIndex, out newStartIndex);
+                
+                if (rightCount % 2 == 0 || leftCount%2==0)
+                    throw new NotReferencableException(selectionSpan, lineText);
+            } else {
+                if (selectionSpan.iStartIndex > 0 && lineText[selectionSpan.iStartIndex - 1] == '@')
+                    selectionSpan.iStartIndex--;
+
+                int rightCount = countAposRight(lineText, selectionSpan.iEndIndex, out newEndIndex);
+                int leftCount = countAposLeft(lineText, selectionSpan.iStartIndex, out newStartIndex);
+
+                if (rightCount % 2 == 0 && leftCount % 2 == 0) {
+                    string text = GetTextOfSpan(textView, selectionSpan);
+                    if ((text.StartsWith("\"") || text.StartsWith("@\"")) && text.EndsWith("\"") && !text.EndsWith("\\\"")) {
+                        newEndIndex = selectionSpan.iEndIndex;
+                        newStartIndex = selectionSpan.iStartIndex;
+                    } else throw new NotReferencableException(selectionSpan, lineText);
+                } else if (rightCount % 2 != 0 && leftCount % 2 != 0) {
+                    newEndIndex++;
+                } else throw new NotReferencableException(selectionSpan, lineText);
+            }
+
             
             TextSpan span = new TextSpan();
             span.iStartLine = selectionSpan.iStartLine;
             span.iEndLine = selectionSpan.iStartLine;
             span.iStartIndex = newStartIndex;
-            span.iEndIndex = newEndIndex+1;
+            span.iEndIndex = newEndIndex;
 
             return span;
                      
         }
 
-        private TextSpan TrimSpan(TextSpan selectionSpan, string textLine) {
-            while (selectionSpan.iEndIndex>0 && char.IsWhiteSpace(textLine, selectionSpan.iEndIndex-1)) 
-                selectionSpan.iEndIndex--;
+        private int countAposRight(string text,int beginIndex, out int firstIndex) {
+            int count = 0;
+            firstIndex = -1;            
 
-            while (selectionSpan.iStartIndex < textLine.Length && char.IsWhiteSpace(textLine, selectionSpan.iStartIndex))
-                selectionSpan.iStartIndex++;
+            int p = beginIndex;
 
-            return selectionSpan;            
-        }
+            char prevChar = (p - 1 >= 0 ? text[p - 1] : '?');
+            char currentChar = text[p];
 
-        private int GetNewEndIndex(int p, string lineText) {
-            p--;
-            char prevChar = (p > 0 ? lineText[p - 1] : '?');
-            char currentChar = lineText[p];
-            while (p < lineText.Length) {
-                if (currentChar == '\"' && prevChar != '\\') {                    
-                    return p;
+            while (p < text.Length) {
+                if (currentChar == '"' && prevChar != '\\') {
+                    if (count == 0) {
+                        firstIndex = p;
+                    }
+                    count++;
                 }
-                
+
                 p++;
-                if (p >= lineText.Length) break;
+                if (p >= text.Length) break;
 
                 prevChar = currentChar;
-                currentChar = lineText[p];
+                currentChar = text[p];
             }
-            return lineText.Length;                
+
+            return count;
         }
 
-        private int GetNewStartIndex(int p, string lineText) {
-            char prevChar = (p<lineText.Length-1 ? lineText[p+1]:'?');
-            char currentChar = lineText[p];
+        private int countAposLeft(string text, int beginIndex, out int firstIndex) {
+            int count = 0;
+            firstIndex = -1;
 
-            while (p >= 0) {                
-                if (currentChar == '"' && p == 0)
-                    return 0;
+            int p = beginIndex-1;
+            if (p <= 0) return 0;
 
+            char prevChar = text[p];
+            char currentChar = (p - 1 >= 0 ? text[p - 1] : '?');
+            p--;
+
+            while (p >= 0) {
                 if (currentChar != '\\' && prevChar == '\"') {
-                    if (currentChar == '@')
-                        return p;
-                    else
-                        return p + 1;
+                    if (count == 0) {
+                        if (currentChar == '@')
+                            firstIndex = p;
+                        else
+                            firstIndex = p+1;
+                    }
+                    count++;
                 }
-                
-                p--;
-                if (p < 0) break;
 
+                p--;                
                 prevChar = currentChar;
-                currentChar = lineText[p];
+
+                if (p >= 0)
+                    currentChar = text[p];
+                else if (p == -1)
+                    currentChar = '?';
+                else break;
             }
-            return -1;            
+
+            return count;
         }
 
+        private TextSpan TrimSpan(TextSpan span, string textLine) {
+            while (span.iEndIndex>0 && char.IsWhiteSpace(textLine, span.iEndIndex-1)) 
+                span.iEndIndex--;
+
+            while (span.iStartIndex < textLine.Length && char.IsWhiteSpace(textLine, span.iStartIndex))
+                span.iStartIndex++;
+
+            return span;            
+        }   
        
     }
 }

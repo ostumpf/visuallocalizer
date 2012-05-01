@@ -5,7 +5,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
 
-namespace VisualLocalizer.Components {
+namespace VisualLocalizer.Editor {
     [Guid("163D9FB6-68C6-4801-9CA0-3C53241D7855")]
     internal class ResXEditorFactory : EditorFactory<ResXEditor,ResXEditorControl> {
     }

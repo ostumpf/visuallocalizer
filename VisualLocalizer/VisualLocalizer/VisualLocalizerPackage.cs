@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Library.Attributes;
-using VisualLocalizer.Components;
+using VisualLocalizer.Editor;
 using VisualLocalizer.Library;
 using EnvDTE;
 using VisualLocalizer.Commands;
@@ -52,7 +52,7 @@ namespace VisualLocalizer
                 RegisterEditorFactory(new ResXEditorFactory());
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
-                //VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
+                VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
                 System.Windows.Forms.MessageBox.Show(ex.Message,ex.GetType().Name);
             }

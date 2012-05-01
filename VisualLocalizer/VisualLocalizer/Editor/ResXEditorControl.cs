@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-namespace VisualLocalizer.Components {
+namespace VisualLocalizer.Editor {
     internal sealed partial class ResXEditorControl : UserControl {
         public ResXEditorControl() {
             InitializeComponent();

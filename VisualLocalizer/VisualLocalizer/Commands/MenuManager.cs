@@ -6,7 +6,8 @@ using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Design;
 using EnvDTE;
 using VisualLocalizer.Commands;
-using VisualLocalizer.Components;
+using VisualLocalizer.Editor;
+using VSLangProj;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
@@ -27,6 +28,10 @@ namespace VisualLocalizer.Commands {
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.MoveCodeMenuItem,
                 new EventHandler(moveToResourcesClick),null);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.InlineCodeMenuItem,
+                new EventHandler(inlineClick), null);
         }
 
         internal void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,EventHandler queryStatusHandler) {            
@@ -40,6 +45,8 @@ namespace VisualLocalizer.Commands {
 
         private void codeMenuQueryStatus(object sender, EventArgs args) {
             bool ok = package.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(".cs");
+            ok = ok && package.DTE.ActiveDocument.ProjectItem != null;
+            ok = ok && package.DTE.ActiveDocument.ProjectItem.ContainingProject != null;
             ok = ok && package.DTE.ActiveDocument.ProjectItem.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
             (sender as OleMenuCommand).Supported = ok;
         }
@@ -68,8 +75,12 @@ namespace VisualLocalizer.Commands {
             try {
                 MoveToResourcesCommand.Handle(package);
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Exception while processing command: {0}",ex.Message);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}",ex.GetType().Name,ex.Message);
             }
+        }
+
+        private void inlineClick(object sender, EventArgs args) {
+            
         }
     }
 }

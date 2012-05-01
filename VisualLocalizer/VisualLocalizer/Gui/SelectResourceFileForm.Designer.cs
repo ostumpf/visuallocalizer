@@ -1,4 +1,4 @@
-﻿namespace VisualLocalizer.Components {
+﻿namespace VisualLocalizer.Gui {
     partial class SelectResourceFileForm {
         /// <summary>
         /// Required designer variable.
@@ -33,6 +33,7 @@
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.cancelButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
+            this.errorLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
@@ -40,9 +41,9 @@
             // tableLayoutPanel1
             // 
             this.tableLayoutPanel1.ColumnCount = 3;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 158F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 40F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 60F));
             this.tableLayoutPanel1.Controls.Add(this.label3, 2, 0);
             this.tableLayoutPanel1.Controls.Add(this.label1, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.label2, 1, 0);
@@ -50,6 +51,7 @@
             this.tableLayoutPanel1.Controls.Add(this.valueBox, 1, 1);
             this.tableLayoutPanel1.Controls.Add(this.comboBox, 2, 1);
             this.tableLayoutPanel1.Controls.Add(this.flowLayoutPanel1, 2, 2);
+            this.tableLayoutPanel1.Controls.Add(this.errorLabel, 0, 2);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -64,9 +66,9 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label3.Location = new System.Drawing.Point(326, 0);
+            this.label3.Location = new System.Drawing.Point(359, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(326, 25);
+            this.label3.Size = new System.Drawing.Size(293, 25);
             this.label3.TabIndex = 0;
             this.label3.Text = "Resource File";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -77,7 +79,7 @@
             this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label1.Location = new System.Drawing.Point(3, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(145, 25);
+            this.label1.Size = new System.Drawing.Size(152, 25);
             this.label1.TabIndex = 1;
             this.label1.Text = "Key";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -86,9 +88,9 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label2.Location = new System.Drawing.Point(154, 0);
+            this.label2.Location = new System.Drawing.Point(161, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(166, 25);
+            this.label2.Size = new System.Drawing.Size(192, 25);
             this.label2.TabIndex = 2;
             this.label2.Text = "Value";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -99,17 +101,17 @@
             this.keyBox.Location = new System.Drawing.Point(4, 29);
             this.keyBox.Margin = new System.Windows.Forms.Padding(4);
             this.keyBox.Name = "keyBox";
-            this.keyBox.Size = new System.Drawing.Size(143, 20);
+            this.keyBox.Size = new System.Drawing.Size(150, 20);
             this.keyBox.TabIndex = 1;
             this.keyBox.TextChanged += new System.EventHandler(this.keyBox_TextChanged);
             // 
             // valueBox
             // 
             this.valueBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.valueBox.Location = new System.Drawing.Point(155, 29);
+            this.valueBox.Location = new System.Drawing.Point(162, 29);
             this.valueBox.Margin = new System.Windows.Forms.Padding(4);
             this.valueBox.Name = "valueBox";
-            this.valueBox.Size = new System.Drawing.Size(164, 20);
+            this.valueBox.Size = new System.Drawing.Size(190, 20);
             this.valueBox.TabIndex = 3;
             // 
             // comboBox
@@ -117,11 +119,12 @@
             this.comboBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.comboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox.FormattingEnabled = true;
-            this.comboBox.Location = new System.Drawing.Point(327, 29);
+            this.comboBox.Location = new System.Drawing.Point(360, 29);
             this.comboBox.Margin = new System.Windows.Forms.Padding(4);
             this.comboBox.Name = "comboBox";
-            this.comboBox.Size = new System.Drawing.Size(324, 21);
+            this.comboBox.Size = new System.Drawing.Size(291, 21);
             this.comboBox.TabIndex = 4;
+            this.comboBox.SelectedIndexChanged += new System.EventHandler(this.comboBox_SelectedIndexChanged);
             // 
             // flowLayoutPanel1
             // 
@@ -155,6 +158,19 @@
             this.okButton.Text = "OK";
             this.okButton.UseVisualStyleBackColor = true;
             // 
+            // errorLabel
+            // 
+            this.errorLabel.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.errorLabel, 2);
+            this.errorLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.errorLabel.ForeColor = System.Drawing.Color.Red;
+            this.errorLabel.Location = new System.Drawing.Point(30, 56);
+            this.errorLabel.Margin = new System.Windows.Forms.Padding(30, 0, 3, 0);
+            this.errorLabel.Name = "errorLabel";
+            this.errorLabel.Size = new System.Drawing.Size(323, 38);
+            this.errorLabel.TabIndex = 6;
+            this.errorLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // SelectResourceFileForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -184,5 +200,6 @@
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button okButton;
+        private System.Windows.Forms.Label errorLabel;
     }
 }

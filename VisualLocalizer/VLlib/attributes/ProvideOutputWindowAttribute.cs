@@ -19,7 +19,8 @@ namespace VisualLocalizer.Library.Attributes {
             Key key = null;
             try {
                 key = context.CreateKey(String.Format(@"OutputWindow\{0}", OutputWindowGuid.GUID.ToString("B")));
-                key.SetValue("Name", Name);
+                if (!string.IsNullOrEmpty(Name)) 
+                    key.SetValue("Name", Name);
                 key.SetValue("Package", Package.GUID.ToString("B"));
                 key.SetValue("InitiallyInvisible", InitiallyInvisible ? 1:0);
                 key.SetValue("ClearWithSolution", ClearWithSolution? 1:0);

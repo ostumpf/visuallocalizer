@@ -1,4 +1,4 @@
-﻿namespace VisualLocalizer.Components {
+﻿namespace VisualLocalizer.Editor {
     partial class ResXEditorControl {
         /// <summary> 
         /// Required designer variable.

@@ -9,7 +9,7 @@
     <RootNamespace>VisualLocalizer</RootNamespace>
     <AssemblyName>VisualLocalizer</AssemblyName>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>vlkey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>vlkey.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ProjectGuid>{2E057DF9-29EA-4F3D-B162-5121C4EC0547}</ProjectGuid>
   </PropertyGroup>
@@ -60,18 +60,20 @@
   <ItemGroup>
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
-    <Compile Include="Components\ResXEditor.cs" />
-    <Compile Include="Components\ResXEditorControl.cs">
+    <Compile Include="Components\NotReferencableException.cs" />
+    <Compile Include="Editor\ResXEditor.cs" />
+    <Compile Include="Editor\ResXEditorControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Components\ResXEditorControl.Designer.cs">
+    <Compile Include="Editor\ResXEditorControl.Designer.cs">
       <DependentUpon>ResXEditorControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Components\ResXFileHandler.cs" />
-    <Compile Include="Components\SelectResourceFileForm.cs">
+    <Compile Include="Components\ResXProjectItem.cs" />
+    <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Components\SelectResourceFileForm.Designer.cs">
+    <Compile Include="Gui\SelectResourceFileForm.Designer.cs">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Components\Utils.cs" />
@@ -87,7 +89,7 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Components\SelectResourceFileForm.resx">
+    <EmbeddedResource Include="Gui\SelectResourceFileForm.resx">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -100,7 +102,7 @@
     <Content Include="Resources\Package.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="vlkey.pfx" />
+    <None Include="vlkey.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VLlib\VLlib.csproj">

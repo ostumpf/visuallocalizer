@@ -18,5 +18,6 @@ namespace VisualLocalizer
        public const int SolExpMenu = 0x0005;
 
        public const int MoveCodeMenuItem = 0x0007;
+       public const int InlineCodeMenuItem = 0x0008;
     }
 }
