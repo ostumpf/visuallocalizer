@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Design;
-using EnvDTE;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Editor;
 using VSLangProj;
+using EnvDTE;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
@@ -65,7 +65,7 @@ namespace VisualLocalizer.Commands {
                 } else if (o.Object is Project) {
                     Project proj = (Project)o.Object;
                     ok = ok && proj.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
-                }                
+                } else throw new Exception("Unexpected project item type: "+Utils.TypeOf(o.Object));               
             }
 
             (sender as OleMenuCommand).Visible = ok;
@@ -73,7 +73,8 @@ namespace VisualLocalizer.Commands {
 
         private void moveToResourcesClick(object sender, EventArgs args) {
             try {
-                MoveToResourcesCommand.Handle(package);
+                MoveToResourcesCommand cmd = new MoveToResourcesCommand(package);                
+                cmd.Process();
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}",ex.GetType().Name,ex.Message);
             }

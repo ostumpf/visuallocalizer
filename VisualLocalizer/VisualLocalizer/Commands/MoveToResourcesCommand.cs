@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System  ;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,89 +12,60 @@ using System.Windows.Forms;
 using System.IO;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Gui;
+using EnvDTE80;
 
 namespace VisualLocalizer.Commands {
-    internal class MoveToResourcesCommand {
+    internal class MoveToResourcesCommand : AbstractCommand {
 
-        private static MoveToResourcesCommand instance;
-        private IVsTextManager textManager;
-        private VisualLocalizerPackage package;
-
-        private MoveToResourcesCommand(VisualLocalizerPackage package) {
-            this.package = package;
+        public MoveToResourcesCommand(VisualLocalizerPackage package)
+            : base(package) {
         }
 
-        public static void Handle(VisualLocalizerPackage package) {
-            if (instance == null)
-                instance = new MoveToResourcesCommand(package);
-
-            instance.ProcessCommand();
-        }
-
-        internal void ProcessCommand() {
-            if (textManager==null)
-                textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
-
-            IVsTextView textView;
-            textManager.GetActiveView(1, null, out textView);
-
-            TextSpan replaceSpan = GetReplaceSpan(textView);
-            string referenceValue = GetTextOfSpan(textView,replaceSpan);
-
-            string newKey, newValue;
-            ResXProjectItem resxItem;
-            bool canceled;
-            ResolveReference(referenceValue, out canceled, out newKey, out newValue, out resxItem);
-
-            if (!canceled) {
-                string resourceRoot = Path.GetFileNameWithoutExtension(resxItem.ProjectItem.Name);
-                string reference = resourceRoot + "." + newKey;
-
+        public override void Process() {
+            TextSpan replaceSpan = GetReplaceSpan();
+            string referenceValue = GetTextOfSpan(replaceSpan);
+            referenceValue = GetReferencedValue(referenceValue);
+            
+            Project project = package.DTE.ActiveDocument.ProjectItem.ContainingProject;
+            List<ResXProjectItem> resourceFiles = Utils.GetResourceFilesOf(project);
+          
+            SelectResourceFileForm f = new SelectResourceFileForm();
+            f.SetData(Utils.CreateKeyFromValue(referenceValue), referenceValue, resourceFiles);          
+            DialogResult result = f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
+            
+            if (result==DialogResult.OK) {
                 textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                replaceSpan.iEndIndex - replaceSpan.iStartIndex, reference, reference.Length);
+                replaceSpan.iEndIndex - replaceSpan.iStartIndex, f.ReferenceText, f.ReferenceText.Length);
 
                 textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                    replaceSpan.iEndLine, replaceSpan.iStartIndex + reference.Length);
+                    replaceSpan.iEndLine, replaceSpan.iStartIndex + f.ReferenceText.Length);
 
-                ResXFileHandler.AddString(newKey, newValue, resxItem);
+                ResXFileHandler.AddString(f.Key, f.Value, f.SelectedItem);
+
+                if (!f.UsingFullName) {
+                    AddUsingBlock(f.Namespace);
+                }
             }
+        }                
+
+        private string GetReferencedValue(string value) {
+            if (value.StartsWith("@")) value = value.Substring(1);
+            return value.Substring(1, value.Length - 2);
         }
 
-        private string GetTextOfSpan(IVsTextView textView,TextSpan replaceSpan) {
-            IVsTextLines textLines;
-            textView.GetBuffer(out textLines);
-
+        private string GetTextOfSpan(TextSpan span) {
             string str;
-            textLines.GetLineText(replaceSpan.iStartLine,replaceSpan.iStartIndex,
-                replaceSpan.iEndLine,replaceSpan.iEndIndex,out str);
+            textLines.GetLineText(span.iStartLine,span.iStartIndex,
+                span.iEndLine,span.iEndIndex,out str);
 
             return str;
-        }
+        }        
 
-        private void ResolveReference(string oldValue,out bool canceled, out string newKey, out string newValue, out ResXProjectItem resourceItem) {
-            if (oldValue.StartsWith("@")) oldValue = oldValue.Substring(1);
-            oldValue = oldValue.Substring(1, oldValue.Length - 2);
-            
-            Project project=package.DTE.ActiveDocument.ProjectItem.ContainingProject;
-            List<ResXProjectItem> resourceFiles = Utils.GetResourceFilesOf(project);
-            string key = Utils.CreateKeyFromValue(oldValue);
-
-            SelectResourceFileForm f = new SelectResourceFileForm();
-            f.SetData(key, oldValue, resourceFiles);
-            DialogResult result=f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
-
-            canceled = result == DialogResult.Cancel;
-            f.GetData(out newKey, out newValue, out resourceItem);           
-        }       
-
-        private TextSpan GetReplaceSpan(IVsTextView textView) {
+        private TextSpan GetReplaceSpan() {
             TextSpan[] spans = new TextSpan[1];
             textView.GetSelectionSpan(spans);
             TextSpan selectionSpan = spans[0];
-
-            IVsTextLines textLines;
-            textView.GetBuffer(out textLines);
-
+          
             string lineText;
             int lineLength;
             textLines.GetLengthOfLine(selectionSpan.iStartLine, out lineLength);
@@ -125,7 +96,7 @@ namespace VisualLocalizer.Commands {
                 int leftCount = countAposLeft(lineText, selectionSpan.iStartIndex, out newStartIndex);
 
                 if (rightCount % 2 == 0 && leftCount % 2 == 0) {
-                    string text = GetTextOfSpan(textView, selectionSpan);
+                    string text = GetTextOfSpan(selectionSpan);
                     if ((text.StartsWith("\"") || text.StartsWith("@\"")) && text.EndsWith("\"") && !text.EndsWith("\\\"")) {
                         newEndIndex = selectionSpan.iEndIndex;
                         newStartIndex = selectionSpan.iStartIndex;

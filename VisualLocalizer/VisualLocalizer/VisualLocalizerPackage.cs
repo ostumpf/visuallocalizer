@@ -10,7 +10,6 @@ using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Library.Attributes;
 using VisualLocalizer.Editor;
 using VisualLocalizer.Library;
-using EnvDTE;
 using VisualLocalizer.Commands;
 
 namespace VisualLocalizer
@@ -34,22 +33,19 @@ namespace VisualLocalizer
     {
         internal MenuManager menuManager;
         internal EnvDTE.DTE DTE;
-        internal UIHierarchy UIHierarchy;
+        internal EnvDTE.UIHierarchy UIHierarchy;
         internal OleMenuCommandService menuService;
         internal IVsUIShell uiShell;
-
-        public VisualLocalizerPackage() {
-            ActivityLogger.Source = "Visual Localizer";
-        }
 
         protected override void Initialize() {                    
             base.Initialize();
             try {
+                ActivityLogger.Source = "Visual Localizer";
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
 
                 InitBaseServices();
                 menuManager = new MenuManager(this);
-                RegisterEditorFactory(new ResXEditorFactory());
+                //RegisterEditorFactory(new ResXEditorFactory());
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
@@ -59,8 +55,8 @@ namespace VisualLocalizer
         }
 
         private void InitBaseServices() {
-            DTE = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
-            UIHierarchy = (UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
+            DTE = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));            
+            UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
         }

@@ -41,13 +41,16 @@ namespace VisualLocalizer.Editor {
 
             foreach (ProjectItem item in items) {
                 string type = string.Empty;
-                
+                string tool = string.Empty;
                 try {
                     type = item.Properties.Item("ItemType").Value.ToString();
+                    tool = item.Properties.Item("CustomTool").Value.ToString();
                 } catch (Exception) { }
 
                 if (item.FileCount == 1 && item.ProjectItems.Count <= 1
-                    && item.Name.ToLowerInvariant().EndsWith(".resx") && type == "EmbeddedResource") {
+                    && item.Name.ToLowerInvariant().EndsWith(".resx") 
+                    && type == "EmbeddedResource"
+                    && tool!=string.Empty) {
                     list.Add(new ResXProjectItem(item, path + "/" + item.Name));
                 } else if (item.ProjectItems.Count > 0) {
                     list.AddRange(GetResourceFilesOf(path + "/" + item.Name, item.ProjectItems));
@@ -61,10 +64,13 @@ namespace VisualLocalizer.Editor {
             List<ResXProjectItem> list = new List<ResXProjectItem>();
             List<Project> referenced = GetReferencedProjects(project);
 
-            list.AddRange(GetResourceFilesOf(project.Name,project.ProjectItems));
+            List<ResXProjectItem> ownRes = GetResourceFilesOf(project.Name, project.ProjectItems);
+            ownRes.Reverse();
+            list.AddRange(ownRes);
             foreach (Project proj in referenced) {
                 if (proj.Kind == VSLangProj.PrjKind.prjKindCSharpProject && proj.UniqueName != project.UniqueName) {
                     List<ResXProjectItem> l = GetResourceFilesOf(proj.Name, proj.ProjectItems);
+                    l.Reverse();
                     list.AddRange(l);
                 }
             }
