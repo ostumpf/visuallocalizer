@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.VisualStudio.Shell.Interop;
 using VisualLocalizer.Library;
 
-namespace VisualLocalizer.Editor {
+namespace VisualLocalizer.Components {
     internal sealed class VLOutputWindow : OutputWindow {
 
         static VLOutputWindow() {            

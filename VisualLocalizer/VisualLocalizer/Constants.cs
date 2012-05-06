@@ -14,10 +14,21 @@ namespace VisualLocalizer
     }
 
     public static class PackageCommandIDs {
-       public const int CodeMenu= 0x0009;
-       public const int SolExpMenu = 0x0005;
+        public const int CodeMenu= 0x0009;
+        public const int SolExpMenu = 0x0005;
 
-       public const int MoveCodeMenuItem = 0x0007;
-       public const int InlineCodeMenuItem = 0x0008;
+        public const int MoveCodeMenuItem = 0x0007;
+        public const int InlineCodeMenuItem = 0x0008;
+        public const int BatchMoveCodeMenuItem = 0x0014;
+
+        public const int BatchMoveSolExpMenuItem = 0x0003;
+    }
+
+    public static class StringConstants {
+        public const string ResXExtension = ".resx";
+        public const string PublicResXTool = "PublicResXFileCodeGenerator";
+        public const string InternalResXTool = "ResXFileCodeGenerator";
+        public const string UsingStatement = "using";
+        public const string CsExtension = ".cs";
     }
 }

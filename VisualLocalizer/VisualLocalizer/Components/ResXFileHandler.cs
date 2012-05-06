@@ -8,8 +8,9 @@ using System.Collections;
 using VSLangProj;
 using System.Diagnostics;
 using System.IO;
+using VisualLocalizer.Components;
 
-namespace VisualLocalizer.Editor {
+namespace VisualLocalizer.Components {
     internal static class ResXFileHandler {
 
         public static void AddString(string key, string value, ResXProjectItem item) {
@@ -37,7 +38,32 @@ namespace VisualLocalizer.Editor {
 
             item.RunCustomTool();
         }
+
+        public static void RemoveKey(string key, ResXProjectItem item) {
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Removing \"{0}\" from \"{1}\"", key, item.DisplayName);            
+            string path = item.ProjectItem.Properties.Item("FullPath").Value.ToString();
+
+            ResXResourceReader reader = new ResXResourceReader(path);
+            reader.BasePath = Path.GetDirectoryName(path);
+
+            Hashtable content = new Hashtable();
+            foreach (DictionaryEntry entry in reader) {
+                content.Add(entry.Key, entry.Value);
+            }
+            reader.Close();
+
+            ResXResourceWriter writer = new ResXResourceWriter(path);
+            foreach (DictionaryEntry entry in content) {
+                if (entry.Key.ToString()!=key) 
+                    writer.AddResource(entry.Key.ToString(), entry.Value);
+            }            
+            writer.Close();
+
+            item.RunCustomTool();
+        }
       
+
+
         public static List<string> GetKeys(ResXProjectItem item) {
             List<string> list = new List<string>();
             string path = item.ProjectItem.Properties.Item("FullPath").Value.ToString();            

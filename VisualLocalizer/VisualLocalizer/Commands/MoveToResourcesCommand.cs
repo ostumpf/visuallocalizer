@@ -13,53 +13,77 @@ using System.IO;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Gui;
 using EnvDTE80;
+using Microsoft.VisualStudio.OLE.Interop;
+using VisualLocalizer.Components;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
-    internal class MoveToResourcesCommand : AbstractCommand {
+    internal sealed class MoveToResourcesCommand : AbstractCommand {
 
         public MoveToResourcesCommand(VisualLocalizerPackage package)
             : base(package) {
         }
 
         public override void Process() {
+            doc = package.DTE.ActiveDocument;
+
             TextSpan replaceSpan = GetReplaceSpan();
-            string referenceValue = GetTextOfSpan(replaceSpan);
+            string referenceValue = GetTextOfSpan(replaceSpan);            
             referenceValue = GetReferencedValue(referenceValue);
             
             Project project = package.DTE.ActiveDocument.ProjectItem.ContainingProject;
-            List<ResXProjectItem> resourceFiles = Utils.GetResourceFilesOf(project);
-          
+            List<ProjectItem> items = project.GetFilesOf(ResXProjectItem.IsItemResX);
+            List<ResXProjectItem> resourceFiles = items.ConvertAll<ResXProjectItem>(ResXProjectItem.ConvertFrom);
+            foreach (ResXProjectItem item in resourceFiles)
+                item.SetRelationTo(project);
+
             SelectResourceFileForm f = new SelectResourceFileForm();
             f.SetData(Utils.CreateKeyFromValue(referenceValue), referenceValue, resourceFiles);          
             DialogResult result = f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
             
             if (result==DialogResult.OK) {
-                textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                replaceSpan.iEndIndex - replaceSpan.iStartIndex, f.ReferenceText, f.ReferenceText.Length);
-
-                textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                    replaceSpan.iEndLine, replaceSpan.iStartIndex + f.ReferenceText.Length);
-
-                ResXFileHandler.AddString(f.Key, f.Value, f.SelectedItem);
+                string referenceText;
+                bool addNamespace = false;
 
                 if (!f.UsingFullName) {
-                    AddUsingBlock(f.Namespace);
+                    string usedAlias;
+                    bool alreadyUsed = IsNamespaceUsed(f.Namespace, out usedAlias);
+                    if (alreadyUsed) {
+                        referenceText = (usedAlias == string.Empty ? string.Empty : usedAlias + ".") + f.ReferenceText;
+                    } else {
+                        addNamespace = true;                        
+                        referenceText = f.ReferenceText;
+                    }
+                } else {
+                    referenceText = f.ReferenceText;
                 }
-            }
-        }                
+                
+                textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
+                replaceSpan.iEndIndex - replaceSpan.iStartIndex, referenceText, referenceText.Length);                
 
+                textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
+                    replaceSpan.iEndLine, replaceSpan.iStartIndex + referenceText.Length);
+
+                ResXFileHandler.AddString(f.Key, f.Value, f.SelectedItem);                
+                
+                if (addNamespace)
+                    AddUsingBlock(f.Namespace);
+
+                CreateMoveToResourcesUndoUnit(f.Key, referenceValue, f.SelectedItem,addNamespace);
+            }
+        }
+
+        private void CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace) {
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            MoveToResourcesUndoUnit newUnit = new MoveToResourcesUndoUnit(key, value, resXProjectItem);
+            newUnit.AppendUnits.AddRange(units);
+            undoManager.Add(newUnit);
+        }        
+        
         private string GetReferencedValue(string value) {
             if (value.StartsWith("@")) value = value.Substring(1);
             return value.Substring(1, value.Length - 2);
-        }
-
-        private string GetTextOfSpan(TextSpan span) {
-            string str;
-            textLines.GetLineText(span.iStartLine,span.iStartIndex,
-                span.iEndLine,span.iEndIndex,out str);
-
-            return str;
-        }        
+        }                
 
         private TextSpan GetReplaceSpan() {
             TextSpan[] spans = new TextSpan[1];
@@ -177,17 +201,7 @@ namespace VisualLocalizer.Commands {
             }
 
             return count;
-        }
-
-        private TextSpan TrimSpan(TextSpan span, string textLine) {
-            while (span.iEndIndex>0 && char.IsWhiteSpace(textLine, span.iEndIndex-1)) 
-                span.iEndIndex--;
-
-            while (span.iStartIndex < textLine.Length && char.IsWhiteSpace(textLine, span.iStartIndex))
-                span.iStartIndex++;
-
-            return span;            
-        }   
+        }        
        
     }
 }

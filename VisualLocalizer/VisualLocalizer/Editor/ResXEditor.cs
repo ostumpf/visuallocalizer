@@ -12,7 +12,7 @@ namespace VisualLocalizer.Editor {
 
     internal sealed class ResXEditor : MonoEditor<ResXEditorControl> {
         public override string Extension {
-            get { return ".resx"; }
+            get { return StringConstants.ResXExtension; }
         }
 
         public override Guid EditorFactoryGuid {

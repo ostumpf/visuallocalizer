@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using VisualLocalizer.Editor;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Gui {
     internal partial class SelectResourceFileForm : Form {
@@ -90,6 +91,25 @@ namespace VisualLocalizer.Gui {
                 errorLabel.Text = errorText;
         }
 
+        private bool ctrlDown = false;
+        private void SelectResourceFileForm_KeyDown(object sender, KeyEventArgs e) {
+            if (e.KeyCode == Keys.Escape) {
+                e.Handled = true;
+                cancelButton.PerformClick();                
+            }
+
+            if ((e.KeyCode == Keys.Enter) && ctrlDown) {
+                e.Handled = true;
+                okButton.PerformClick();                
+            }
+
+            if (e.KeyCode == Keys.ControlKey) ctrlDown = true;
+        }
+
+
+        private void SelectResourceFileForm_KeyUp(object sender, KeyEventArgs e) {
+            if (e.KeyCode == Keys.ControlKey) ctrlDown = false;
+        }
 
         public string Key {
             get;
@@ -144,7 +164,6 @@ namespace VisualLocalizer.Gui {
                 return obj.GetHashCode();
             }
         }
-
         
     }
 }

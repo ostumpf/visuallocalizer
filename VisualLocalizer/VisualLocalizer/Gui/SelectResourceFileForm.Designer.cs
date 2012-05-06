@@ -221,11 +221,14 @@
             this.ClientSize = new System.Drawing.Size(655, 133);
             this.Controls.Add(this.tableLayoutPanel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.KeyPreview = true;
             this.Name = "SelectResourceFileForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Select destination file";
             this.Load += new System.EventHandler(this.SelectResourceFileForm_Load);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.SelectResourceFileForm_KeyUp);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SelectResourceFileForm_FormClosing);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SelectResourceFileForm_KeyDown);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.flowLayoutPanel1.ResumeLayout(false);

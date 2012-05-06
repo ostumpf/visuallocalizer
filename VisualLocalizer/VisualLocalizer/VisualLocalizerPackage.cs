@@ -11,6 +11,7 @@ using VisualLocalizer.Library.Attributes;
 using VisualLocalizer.Editor;
 using VisualLocalizer.Library;
 using VisualLocalizer.Commands;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer
 {
@@ -25,17 +26,17 @@ namespace VisualLocalizer
         "#110",
         ClearWithSolution=true,InitiallyInvisible=false)]
     [ProvideEditorFactory(typeof(ResXEditorFactory), 113, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]
-    [ProvideEditorExtension(typeof(ResXEditorFactory), ".resx", 100)]
+    [ProvideEditorExtension(typeof(ResXEditorFactory), StringConstants.ResXExtension, 100)]
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
 
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
     {
         internal MenuManager menuManager;
-        internal EnvDTE.DTE DTE;
+        internal EnvDTE80.DTE2 DTE;
         internal EnvDTE.UIHierarchy UIHierarchy;
         internal OleMenuCommandService menuService;
-        internal IVsUIShell uiShell;
+        internal IVsUIShell uiShell;        
 
         protected override void Initialize() {                    
             base.Initialize();
@@ -55,10 +56,10 @@ namespace VisualLocalizer
         }
 
         private void InitBaseServices() {
-            DTE = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));            
+            DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));                        
         }
        
     }

@@ -63,9 +63,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\AbstractCommand.cs" />
+    <Compile Include="Commands\BatchMoveCommand.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
+    <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
     <Compile Include="Components\NotReferencableException.cs" />
+    <Compile Include="Components\ResXProjectItem.cs" />
+    <Compile Include="Components\TabPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Editor\ResXEditor.cs" />
     <Compile Include="Editor\ResXEditorControl.cs">
       <SubType>UserControl</SubType>
@@ -74,7 +80,6 @@
       <DependentUpon>ResXEditorControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Components\ResXFileHandler.cs" />
-    <Compile Include="Components\ResXProjectItem.cs" />
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -94,6 +99,10 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Editor\ResXEditorControl.resx">
+      <DependentUpon>ResXEditorControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Gui\SelectResourceFileForm.resx">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>

@@ -4,14 +4,18 @@ using System.Linq;
 using System.Text;
 
 namespace VisualLocalizer.Commands {
-    internal sealed class InlineCommand : AbstractCommand {
+    internal sealed class BatchMoveCommand : AbstractCommand {
 
-        public InlineCommand(VisualLocalizerPackage package)
+        public BatchMoveCommand(VisualLocalizerPackage package)
             : base(package) {
         }
 
         public override void Process() {
-        
+            
+        }
+
+        public void Process(Array selectedItems) {
+
         }
     }
 }
