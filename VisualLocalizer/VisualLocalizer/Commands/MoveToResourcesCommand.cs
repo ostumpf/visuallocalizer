@@ -16,6 +16,7 @@ using EnvDTE80;
 using Microsoft.VisualStudio.OLE.Interop;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library;
+using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MoveToResourcesCommand : AbstractCommand {
@@ -25,8 +26,6 @@ namespace VisualLocalizer.Commands {
         }
 
         public override void Process() {
-            doc = package.DTE.ActiveDocument;
-
             TextSpan replaceSpan = GetReplaceSpan();
             string referenceValue = GetTextOfSpan(replaceSpan);            
             referenceValue = GetReferencedValue(referenceValue);
@@ -58,13 +57,14 @@ namespace VisualLocalizer.Commands {
                     referenceText = f.ReferenceText;
                 }
                 
+               
                 textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                 replaceSpan.iEndIndex - replaceSpan.iStartIndex, referenceText, referenceText.Length);                
 
                 textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                     replaceSpan.iEndLine, replaceSpan.iStartIndex + referenceText.Length);
 
-                ResXFileHandler.AddString(f.Key, f.Value, f.SelectedItem);                
+                ResXFileHandler.AddString(f.Key, referenceValue, f.SelectedItem);
                 
                 if (addNamespace)
                     AddUsingBlock(f.Namespace);
@@ -73,7 +73,7 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace) {
+        private void CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace) {            
             List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
             MoveToResourcesUndoUnit newUnit = new MoveToResourcesUndoUnit(key, value, resXProjectItem);
             newUnit.AppendUnits.AddRange(units);

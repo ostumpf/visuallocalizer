@@ -86,7 +86,7 @@ namespace VisualLocalizer.Commands {
                 MoveToResourcesCommand cmd = new MoveToResourcesCommand(package);                
                 cmd.Process();
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}",ex.GetType().Name,ex.Message);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
             }
         }
 

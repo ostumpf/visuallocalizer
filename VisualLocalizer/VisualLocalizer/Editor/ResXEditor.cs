@@ -10,7 +10,7 @@ namespace VisualLocalizer.Editor {
     internal class ResXEditorFactory : EditorFactory<ResXEditor,ResXEditorControl> {
     }
 
-    internal sealed class ResXEditor : MonoEditor<ResXEditorControl> {
+    internal sealed class ResXEditor : AbstractSingleViewEditor<ResXEditorControl> {
         public override string Extension {
             get { return StringConstants.ResXExtension; }
         }

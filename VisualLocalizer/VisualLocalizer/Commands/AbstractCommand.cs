@@ -31,6 +31,7 @@ namespace VisualLocalizer.Commands {
             textManager.GetActiveView(1, null, out textView);
             textView.GetBuffer(out textLines);            
             textLines.GetUndoManager(out undoManager);
+            doc = package.DTE.ActiveDocument;
         }
 
         protected bool IsNamespaceUsed(string newNamespace, out string alias) {

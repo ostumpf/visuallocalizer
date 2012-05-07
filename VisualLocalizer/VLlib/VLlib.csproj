@@ -67,7 +67,7 @@
   <ItemGroup>
     <Compile Include="components\AbstractUndoUnit.cs" />
     <Compile Include="components\ActivityLogger.cs" />
-    <Compile Include="components\Editor.cs">
+    <Compile Include="components\AbstractEditor.cs">
     </Compile>
     <Compile Include="extensions\IOleUndoManagerEx.cs" />
     <Compile Include="components\OutputWindow.cs" />

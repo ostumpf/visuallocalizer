@@ -46,7 +46,7 @@ namespace VisualLocalizer
 
                 InitBaseServices();
                 menuManager = new MenuManager(this);
-                //RegisterEditorFactory(new ResXEditorFactory());
+                RegisterEditorFactory(new ResXEditorFactory());
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");

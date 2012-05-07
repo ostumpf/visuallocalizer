@@ -15,7 +15,7 @@ using System.Diagnostics;
 namespace VisualLocalizer.Library {
    
     public abstract class EditorFactory<EditorType, ControlType> : IVsEditorFactory
-        where EditorType : MonoEditor<ControlType>,new()
+        where EditorType : AbstractSingleViewEditor<ControlType>,new()
         where ControlType : UserControl, new()
          {    
 
@@ -73,7 +73,7 @@ namespace VisualLocalizer.Library {
 
     }
 
-    public abstract class MonoEditor<T> :
+    public abstract class AbstractSingleViewEditor<T> :
         WindowPane, 
         IOleCommandTarget, 
         IVsPersistDocData,
@@ -86,7 +86,7 @@ namespace VisualLocalizer.Library {
         private Timer reloadTimer;
         protected uint formatIndex = 0;
 
-        public MonoEditor()
+        public AbstractSingleViewEditor()
             : base(null) {
             
             UIControl = new T();
