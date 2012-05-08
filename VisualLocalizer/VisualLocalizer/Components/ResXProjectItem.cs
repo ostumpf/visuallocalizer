@@ -13,10 +13,11 @@ namespace VisualLocalizer.Components {
 
         private string _Namespace,_Class;
 
-        public ResXProjectItem(ProjectItem projectItem, string displayName) {
+        public ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
             this.DisplayName = displayName;
             this.ProjectItem = projectItem;
-            DesignerItem = ProjectItem.ProjectItems.Item(ProjectItem.Properties.Item("CustomToolOutput").Value);
+            this.DesignerItem = ProjectItem.ProjectItems.Item(ProjectItem.Properties.Item("CustomToolOutput").Value);
+            this.InternalInReferenced = internalInReferenced;
         }
 
         public ProjectItem ProjectItem {
@@ -61,31 +62,7 @@ namespace VisualLocalizer.Components {
         public ProjectItem DesignerItem {
             get;
             private set;
-        }
-
-        public void SetRelationTo(Project homeProject) {
-            bool referenced = homeProject.UniqueName != ProjectItem.ContainingProject.UniqueName;
-            bool inter = ProjectItem.Properties.Item("CustomTool").Value.ToString() != StringConstants.PublicResXTool;
-
-            InternalInReferenced = inter && referenced;
-        }
-
-        private void resolveNamespaceClass() {
-            CodeElement nmspcElemet = null;
-            foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
-                _Namespace = element.FullName;
-                nmspcElemet = element;
-                break;
-            }
-            if (nmspcElemet != null) {
-                foreach (CodeElement child in nmspcElemet.Children) {
-                    if (child.Kind==vsCMElement.vsCMElementClass) {
-                        _Class = child.Name;
-                        break;
-                    }
-                }
-            }
-        }
+        }        
 
         public static bool IsItemResX(ProjectItem item) {
             string customTool = null, customToolOutput = null, extension = null;
@@ -105,14 +82,37 @@ namespace VisualLocalizer.Components {
                 return false;
         }
 
-        public static ResXProjectItem ConvertFrom(ProjectItem item) {
+        public static ResXProjectItem ConvertToResXItem(ProjectItem item,Project relationProject) {
             Uri projectUri = new Uri(item.ContainingProject.FileName);
             Uri itemUri = new Uri(item.Properties.Item("FullPath").Value.ToString());
             string path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();
 
-            ResXProjectItem resxitem = new ResXProjectItem(item, path);                       
+            bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;
+            bool inter = item.Properties.Item("CustomTool").Value.ToString() != StringConstants.PublicResXTool;
+
+            bool internalInReferenced = inter && referenced;
+
+            ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);                       
 
             return resxitem;
+        }
+
+
+        private void resolveNamespaceClass() {
+            CodeElement nmspcElemet = null;
+            foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
+                _Namespace = element.FullName;
+                nmspcElemet = element;
+                break;
+            }
+            if (nmspcElemet != null) {
+                foreach (CodeElement child in nmspcElemet.Children) {
+                    if (child.Kind == vsCMElement.vsCMElementClass) {
+                        _Class = child.Name;
+                        break;
+                    }
+                }
+            }
         }
 
         public override string ToString() {

@@ -26,12 +26,13 @@ namespace VisualLocalizer.Library {
         private static List<IOleUndoUnit> RemoveTop(IOleUndoManager undoManager,IEnumOleUndoUnits enumerator, int count) {            
             List<IOleUndoUnit> list = new List<IOleUndoUnit>();
             List<IOleUndoUnit> returnList = new List<IOleUndoUnit>();
+            int hr;
 
             if (count > 0) {
                 uint returned = 1;
                 while (returned > 0) {
                     IOleUndoUnit[] units = new IOleUndoUnit[10];
-                    enumerator.Next((uint)units.Length, units, out returned);
+                    enumerator.Next((uint)units.Length, units, out returned);                    
 
                     if (returned == 10) {
                         list.AddRange(units);

@@ -41,6 +41,14 @@ namespace VisualLocalizer.Commands {
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveSolExpMenuItem,
                 new EventHandler(batchMoveSolExpClick), null);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.BatchInlineCodeMenuItem,
+                new EventHandler(batchInlineCodeClick), null);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.BatchInlineSolExpMenuItem,
+                new EventHandler(batchInlineSolExpClick), null);
         }
 
         internal void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,EventHandler queryStatusHandler) {            
@@ -112,6 +120,22 @@ namespace VisualLocalizer.Commands {
             try {
                 BatchMoveCommand cmd = new BatchMoveCommand(package);
                 cmd.Process(package.UIHierarchy.SelectedItems as Array);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+            }
+        }
+
+        private void batchInlineCodeClick(object sender, EventArgs args) {
+            try {
+               
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+            }
+        }
+
+        private void batchInlineSolExpClick(object sender, EventArgs args) {
+            try {
+
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
             }

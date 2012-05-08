@@ -12,6 +12,7 @@ using VisualLocalizer.Editor;
 using VisualLocalizer.Library;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Components;
+using Microsoft.VisualStudio;
 
 namespace VisualLocalizer
 {
@@ -41,6 +42,7 @@ namespace VisualLocalizer
         protected override void Initialize() {                    
             base.Initialize();
             try {
+                
                 ActivityLogger.Source = "Visual Localizer";
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
 
@@ -50,7 +52,7 @@ namespace VisualLocalizer
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
-            } catch (Exception ex) {
+            } catch (Exception ex) {                
                 System.Windows.Forms.MessageBox.Show(ex.Message,ex.GetType().Name);
             }
         }
@@ -59,7 +61,10 @@ namespace VisualLocalizer
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));                        
+            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+
+            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null)
+                throw new Exception("Error during initialization of base services.");
         }
        
     }

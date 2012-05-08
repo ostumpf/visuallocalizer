@@ -41,7 +41,7 @@ namespace VisualLocalizer.Library {
             return list;
         }        
 
-        private static List<Project> GetReferencedProjects(this Project project) {
+        public static List<Project> GetReferencedProjects(this Project project) {
             List<Project> list = new List<Project>();
             VSProject proj = project.Object as VSProject;
             foreach (Reference r in proj.References)

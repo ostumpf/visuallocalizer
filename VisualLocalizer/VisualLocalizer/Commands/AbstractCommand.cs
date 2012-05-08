@@ -7,6 +7,8 @@ using VisualLocalizer.Components;
 using Microsoft.VisualStudio.OLE.Interop;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Commands {
     internal abstract class AbstractCommand {
@@ -16,29 +18,40 @@ namespace VisualLocalizer.Commands {
         protected IVsTextLines textLines;
         protected IVsTextView textView;
         protected IOleUndoManager undoManager;
-        protected Document doc;
+        protected Document currentDocument;
 
         public AbstractCommand(VisualLocalizerPackage package) {
             this.package = package;
 
-            InitTextView();
+            InitDocumentData();
         }
 
-        private void InitTextView() {
+        private void InitDocumentData() {            
+            textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
             if (textManager == null)
-                textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
+                throw new Exception("Cannot initialize IVsTextManager.");
 
-            textManager.GetActiveView(1, null, out textView);
-            textView.GetBuffer(out textLines);            
-            textLines.GetUndoManager(out undoManager);
-            doc = package.DTE.ActiveDocument;
+            int hr = textManager.GetActiveView(1, null, out textView);
+            Marshal.ThrowExceptionForHR(hr);
+
+            hr = textView.GetBuffer(out textLines);
+            Marshal.ThrowExceptionForHR(hr);
+            
+            hr = textLines.GetUndoManager(out undoManager);
+            Marshal.ThrowExceptionForHR(hr);
+
+            currentDocument = package.DTE.ActiveDocument;
+            if (currentDocument == null)
+                throw new Exception("No active document.");
         }
 
         protected bool IsNamespaceUsed(string newNamespace, out string alias) {
             alias = string.Empty;
 
-            TextSelection selection = doc.Selection as TextSelection;
-            FileCodeModel2 model = doc.ProjectItem.FileCodeModel as FileCodeModel2;
+            TextSelection selection = currentDocument.Selection as TextSelection;
+            FileCodeModel2 model = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
+            if (model==null)
+                throw new Exception("Current document has no CodeModel.");
 
             CodeElement selectionNamespace = model.CodeElementFromPoint(selection.ActivePoint, vsCMElement.vsCMElementNamespace);
             string currentNamespace = selectionNamespace.FullName;
@@ -60,8 +73,10 @@ namespace VisualLocalizer.Commands {
         }
 
         protected CodeImport AddUsingBlock(string newNamespace) {                        
-            FileCodeModel2 model = doc.ProjectItem.FileCodeModel as FileCodeModel2;
-            
+            FileCodeModel2 model = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
+            if (model == null)
+                throw new Exception("Current document has no CodeModel.");
+
             return model.AddImport(newNamespace, 0, string.Empty);
         }      
 
@@ -69,7 +84,9 @@ namespace VisualLocalizer.Commands {
             alias = string.Empty;
 
             string text;
-            textLines.GetLineText(start.Line - 1, start.DisplayColumn - 1, end.Line - 1, end.DisplayColumn - 1, out text);
+            int hr = textLines.GetLineText(start.Line - 1, start.DisplayColumn - 1, end.Line - 1, end.DisplayColumn - 1, out text);
+            Marshal.ThrowExceptionForHR(hr);
+
             text = text.Trim();
             if (!text.StartsWith(StringConstants.UsingStatement) || !text.EndsWith(";"))
                 throw new Exception("Error while parsing using statement: " + text);
@@ -87,8 +104,10 @@ namespace VisualLocalizer.Commands {
         
         protected string GetTextOfSpan(TextSpan span) {
             string str;
-            textLines.GetLineText(span.iStartLine, span.iStartIndex,
+
+            int hr = textLines.GetLineText(span.iStartLine, span.iStartIndex,
                 span.iEndLine, span.iEndIndex, out str);
+            Marshal.ThrowExceptionForHR(hr);
 
             return str;
         }
@@ -101,7 +120,82 @@ namespace VisualLocalizer.Commands {
                 span.iStartIndex++;
 
             return span;
-        }   
+        }       
+
+        protected int countAposRight(string text, int beginIndex, out int firstIndex) {
+            int count = 0;
+            firstIndex = -1;
+
+            int p = beginIndex;
+            if (p >= text.Length) return 0;
+
+            char prevChar = (p - 1 >= 0 ? text[p - 1] : '?');
+            char currentChar = text[p];
+
+            while (p < text.Length) {
+                if (currentChar == '"' && prevChar != '\\') {
+                    if (count == 0) {
+                        firstIndex = p;
+                    }
+                    count++;
+                }
+
+                p++;
+                if (p >= text.Length) break;
+
+                prevChar = currentChar;
+                currentChar = text[p];
+            }
+
+            return count;
+        }
+
+        protected int countAposLeft(string text, int beginIndex, out int firstIndex) {
+            int count = 0;
+            firstIndex = -1;
+
+            int p = beginIndex - 1;
+            if (p <= 0) return 0;
+
+            char prevChar = text[p];
+            char currentChar = (p - 1 >= 0 ? text[p - 1] : '?');
+            p--;
+
+            while (p >= 0) {
+                if (currentChar != '\\' && prevChar == '\"') {
+                    if (count == 0) {
+                        if (currentChar == '@')
+                            firstIndex = p;
+                        else
+                            firstIndex = p + 1;
+                    }
+                    count++;
+                }
+
+                p--;
+                prevChar = currentChar;
+
+                if (p >= 0)
+                    currentChar = text[p];
+                else if (p == -1)
+                    currentChar = '?';
+                else break;
+            }
+
+            return count;
+        }
+
+        protected bool IsInAttribute(TextSpan span) {
+            bool ret = true;
+            try {
+                object point;
+                textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out point);
+                CodeElement el = currentDocument.ProjectItem.FileCodeModel.CodeElementFromPoint(point as TextPoint, vsCMElement.vsCMElementAttribute);
+            } catch (Exception) {
+                ret = false;
+            }
+            return ret;
+        }
 
         public abstract void Process();
     }

@@ -67,7 +67,7 @@ namespace VisualLocalizer.Gui {
                 errorText = "Project does not contain any useable resource files";
             } else {
                 ResXProjectItem item = comboBox.SelectedItem as ResXProjectItem;
-                bool ident = Utils.IsValidIdentifier(keyBox.Text, item, ref errorText);
+                bool ident = Utils.IsValidIdentifier(keyBox.Text, ref errorText);
                 bool exists = existsKey(keyBox.Text, item);
 
                 keyBox.BackColor = (ident ? Color.White : errorColor);

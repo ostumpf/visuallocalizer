@@ -45,7 +45,7 @@ namespace VisualLocalizer.Components {
             return builder.ToString();
         }
         
-        internal static bool IsValidIdentifier(string name, ResXProjectItem selectedItem, ref string errorText) {
+        internal static bool IsValidIdentifier(string name, ref string errorText) {
             if (string.IsNullOrEmpty(name)) {
                 errorText = "Key cannot be empty";
                 return false;

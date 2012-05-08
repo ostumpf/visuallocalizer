@@ -38,13 +38,21 @@
       <Button guid="VLCommandSetGuid" id="batchMoveMenuItem" type="Button">
         <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>        
         <Strings>
-          <CommandName>Batch move</CommandName>
+          <CommandName>BatchMoveSolExp</CommandName>
           <ButtonText>Batch move to resources...</ButtonText>
         </Strings>
       </Button>
 
-      
-      
+      <Button guid="VLCommandSetGuid" id="batchInlineMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline</ButtonText>
+        </Strings>
+      </Button>
+
+
+
       <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
@@ -58,6 +66,14 @@
         <Strings>
           <CommandName>Inline</CommandName>
           <ButtonText>Inline</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchInlineCodeMenuItem" type="Button">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline</ButtonText>
         </Strings>
       </Button>
 
@@ -121,6 +137,7 @@
 
       <IDSymbol name="solutionExpSubmenuGroup" value="0x0004" />
       <IDSymbol name="batchMoveMenuItem" value="0x0003" />
+      <IDSymbol name="batchInlineMenuItem" value="0x0016" />
 
       <IDSymbol name="moveMenuItem" value="0x0007" />
       <IDSymbol name="inlineMenuItem" value="0x0008" />
@@ -131,6 +148,7 @@
       <IDSymbol name="visualLocalizerToolWindowGroup" value="0x0012" />
       <IDSymbol name="showToolWindowItem" value="0x0013" />
       <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
+      <IDSymbol name="batchInlineCodeMenuItem" value="0x0015" />
     </GuidSymbol>
     
     

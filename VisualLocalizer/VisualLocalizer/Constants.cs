@@ -20,8 +20,10 @@ namespace VisualLocalizer
         public const int MoveCodeMenuItem = 0x0007;
         public const int InlineCodeMenuItem = 0x0008;
         public const int BatchMoveCodeMenuItem = 0x0014;
+        public const int BatchInlineCodeMenuItem = 0x0015;
 
         public const int BatchMoveSolExpMenuItem = 0x0003;
+        public const int BatchInlineSolExpMenuItem = 0x0016;
     }
 
     public static class StringConstants {

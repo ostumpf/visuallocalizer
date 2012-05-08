@@ -67,6 +67,7 @@
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
     <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
+    <Compile Include="Components\NotInlineableException.cs" />
     <Compile Include="Components\NotReferencableException.cs" />
     <Compile Include="Components\ResXProjectItem.cs" />
     <Compile Include="Components\TabPanel.cs">
