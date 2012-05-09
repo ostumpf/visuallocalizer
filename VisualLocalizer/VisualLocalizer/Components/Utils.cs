@@ -7,14 +7,34 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.CodeDom.Compiler;
 using VSLangProj;
+using System.Globalization;
 
 namespace VisualLocalizer.Components {
     internal static class Utils {
 
         private static CodeDomProvider csharp = Microsoft.CSharp.CSharpCodeProvider.CreateProvider("C#");
+        private static UnicodeCategory[] validIdentifierCategories = {UnicodeCategory.TitlecaseLetter,
+                                                     UnicodeCategory.UppercaseLetter,
+                                                     UnicodeCategory.LowercaseLetter,
+                                                     UnicodeCategory.ModifierLetter,
+                                                     UnicodeCategory.OtherLetter,
+                                                     UnicodeCategory.LetterNumber,
+                                                     UnicodeCategory.NonSpacingMark,
+                                                     UnicodeCategory.SpacingCombiningMark,
+                                                     UnicodeCategory.DecimalDigitNumber,
+                                                     UnicodeCategory.ConnectorPunctuation,
+                                                     UnicodeCategory.Format
+                                                    };      
 
         internal static string TypeOf(object o) {
             return Microsoft.VisualBasic.Information.TypeName(o);
+        }
+
+        internal static bool isIdentifierChar(char p) {
+            UnicodeCategory charCat = char.GetUnicodeCategory(p);
+            foreach (UnicodeCategory c in validIdentifierCategories)
+                if (c == charCat) return true;
+            return false;
         }
 
         internal static string RemoveWhitespace(string text) {
@@ -24,26 +44,7 @@ namespace VisualLocalizer.Components {
                 if (!char.IsWhiteSpace(c)) b.Append(c);
 
             return b.ToString();
-        }
-
-        internal static string CreateKeyFromValue(string value) {
-            StringBuilder builder = new StringBuilder();
-            bool upper = true;
-
-            foreach (char c in value)
-                if (char.IsLetterOrDigit(c)) {
-                    if (upper) {
-                        builder.Append(char.ToUpperInvariant(c));
-                    } else {
-                        builder.Append(c);
-                    }
-                    upper = false;
-                } else if (char.IsWhiteSpace(c)) {
-                    upper = true;
-                }
-
-            return builder.ToString();
-        }
+        }        
         
         internal static bool IsValidIdentifier(string name, ref string errorText) {
             if (string.IsNullOrEmpty(name)) {

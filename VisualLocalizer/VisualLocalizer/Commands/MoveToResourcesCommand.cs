@@ -29,7 +29,7 @@ namespace VisualLocalizer.Commands {
         public override void Process() {
             TextSpan replaceSpan = GetReplaceSpan();
             bool isInAttribute = IsInAttribute(replaceSpan);
-            if (isInAttribute) throw new NotReferencableException(replaceSpan, null);
+            if (isInAttribute) throw new NotReferencableException("cannot reference strings in attributes");
 
             string referenceValue = GetTextOfSpan(replaceSpan);            
             referenceValue = GetReferencedValue(referenceValue);
@@ -41,7 +41,7 @@ namespace VisualLocalizer.Commands {
                 resxItems.Add(ResXProjectItem.ConvertToResXItem(item, project));
 
             SelectResourceFileForm f = new SelectResourceFileForm();
-            f.SetData(Utils.CreateKeyFromValue(referenceValue), referenceValue, resxItems);          
+            f.SetData(CreateKeySuggestions(replaceSpan,referenceValue), referenceValue, resxItems);          
             DialogResult result = f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
             
             if (result==DialogResult.OK) {
@@ -78,6 +78,62 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        private List<string> CreateKeySuggestions(TextSpan span, string value) {
+            List<string> suggestions = new List<string>();
+
+            StringBuilder builder1 = new StringBuilder();
+            StringBuilder builder2 = new StringBuilder();
+            bool upper = true;
+
+            foreach (char c in value)
+                if (Utils.isIdentifierChar(c)) {
+                    if (upper) {
+                        builder1.Append(char.ToUpperInvariant(c));
+                    } else {
+                        builder1.Append(c);
+                    }
+                    builder2.Append(c);
+                    upper = false;
+                } else {
+                    upper = true;                    
+                    builder2.Append('_');
+                }
+
+            suggestions.Add(builder1.ToString());
+            suggestions.Add(builder2.ToString());
+
+            FileCodeModel model = currentDocument.ProjectItem.FileCodeModel;
+            object o;
+            textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out o);
+            CodeElement namespaceElement = null, classElement = null, methodElement=null;
+            try {
+                namespaceElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementNamespace);
+                classElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementClass);
+                methodElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementFunction);                
+            } catch (Exception) {
+                methodElement = null;
+            }
+
+            if (methodElement != null) {
+                suggestions.Add(methodElement.Name + "_" + builder1.ToString());
+                suggestions.Add(methodElement.Name + "_" + builder2.ToString());
+
+                suggestions.Add(classElement.Name + "_" + methodElement.Name + "_" + builder1.ToString());
+                suggestions.Add(classElement.Name + "_" + methodElement.Name + "_" + builder2.ToString());
+
+                suggestions.Add(namespaceElement.Name + "_" + classElement.Name + "_" + methodElement.Name + "_" + builder1.ToString());
+                suggestions.Add(namespaceElement.Name + "_" + classElement.Name + "_" + methodElement.Name + "_" + builder2.ToString());
+            } else {
+                suggestions.Add(classElement.Name +  "_" + builder1.ToString());
+                suggestions.Add(classElement.Name + "_" + builder2.ToString());
+
+                suggestions.Add(namespaceElement.Name + "_" + classElement.Name + "_" + builder1.ToString());
+                suggestions.Add(namespaceElement.Name + "_" + classElement.Name + "_" + builder2.ToString());
+            }
+
+            return suggestions;
+        }
+
         private void CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace) {            
             List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
             MoveToResourcesUndoUnit newUnit = new MoveToResourcesUndoUnit(key, value, resXProjectItem);
@@ -109,7 +165,7 @@ namespace VisualLocalizer.Commands {
             int spanLength = selectionSpan.iEndIndex - selectionSpan.iStartIndex;
 
             if (selectionSpan.iStartLine != selectionSpan.iEndLine)
-                throw new NotReferencableException(selectionSpan,lineText);
+                throw new NotReferencableException("this selection does not contain one whole string");
 
             if (selectionSpan.iStartIndex > 0 && lineText[selectionSpan.iStartIndex - 1] == '@')
                 selectionSpan.iStartIndex--;
@@ -121,7 +177,7 @@ namespace VisualLocalizer.Commands {
                 int leftCount = countAposLeft(lineText, selectionSpan.iStartIndex, out newStartIndex);
                 
                 if (rightCount % 2 == 0 || leftCount%2==0)
-                    throw new NotReferencableException(selectionSpan, lineText);
+                    throw new NotReferencableException("this selection does not contain one whole string");
             } else {
                 int rightCount = countAposRight(lineText, selectionSpan.iEndIndex, out newEndIndex);
                 int leftCount = countAposLeft(lineText, selectionSpan.iStartIndex, out newStartIndex);
@@ -131,10 +187,10 @@ namespace VisualLocalizer.Commands {
                     if ((text.StartsWith("\"") || text.StartsWith("@\"")) && text.EndsWith("\"") && !text.EndsWith("\\\"")) {
                         newEndIndex = selectionSpan.iEndIndex;
                         newStartIndex = selectionSpan.iStartIndex;
-                    } else throw new NotReferencableException(selectionSpan, lineText);
+                    } else throw new NotReferencableException("this selection does not contain one whole string");
                 } else if (rightCount % 2 != 0 && leftCount % 2 != 0) {
                     newEndIndex++;
-                } else throw new NotReferencableException(selectionSpan, lineText);
+                } else throw new NotReferencableException("this selection does not contain one whole string");
             }
 
             

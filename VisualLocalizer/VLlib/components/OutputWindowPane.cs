@@ -60,8 +60,11 @@ namespace VisualLocalizer.Library {
 
         public void Write(string formatString,params object[] args) {
             if (pane == null) return;
-
-            pane.OutputString(string.Format(formatString,args));
+            if (formatString == null) {
+                pane.OutputString("(null)");
+            } else {
+                pane.OutputString(string.Format(formatString, args));
+            }
         }
 
         public void WriteLine(string formatString, params object[] args) {

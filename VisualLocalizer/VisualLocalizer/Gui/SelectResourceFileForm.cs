@@ -19,13 +19,14 @@ namespace VisualLocalizer.Gui {
             InitializeComponent();
         }
 
-        public void SetData(string key, string value, List<ResXProjectItem> resourceItems) {
-            keyBox.Text = key;
+        public void SetData(List<string> keys, string value, List<ResXProjectItem> resourceItems) {
+            keyBox.Items.AddRange(keys.ToArray());
+            keyBox.SelectedIndex = 0;
             valueBox.Text = value;
             
             usedKeys.Clear();
             foreach (var item in resourceItems)
-                usedKeys.Add(item, ResXFileHandler.GetKeys(item));
+                usedKeys.Add(item, ResXFileHandler.GetAllKeys(item));
 
             comboBox.Items.AddRange(resourceItems.ToArray());
             if (comboBox.Items.Count > 0) 

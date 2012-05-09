@@ -62,9 +62,7 @@ namespace VisualLocalizer.Components {
             item.RunCustomTool();
         }
       
-
-
-        public static List<string> GetKeys(ResXProjectItem item) {
+        public static List<string> GetAllKeys(ResXProjectItem item) {
             List<string> list = new List<string>();
             string path = item.ProjectItem.Properties.Item("FullPath").Value.ToString();            
 
@@ -77,6 +75,24 @@ namespace VisualLocalizer.Components {
             reader.Close();
 
             return list;
+        }
+
+        public static string GetString(string key, ResXProjectItem item) {
+            string path = item.ProjectItem.Properties.Item("FullPath").Value.ToString();
+
+            ResXResourceReader reader = new ResXResourceReader(path);
+            reader.BasePath = Path.GetDirectoryName(path);
+
+            string value = null;
+            foreach (DictionaryEntry entry in reader) {
+                if (entry.Key.ToString() == key) {
+                    value = entry.Value.ToString();
+                    break;
+                }
+            }
+            reader.Close();
+
+            return value;
         }
     }
 }

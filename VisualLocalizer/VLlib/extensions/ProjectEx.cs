@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using EnvDTE;
 using VSLangProj;
+using System.Reflection;
+using System.IO;
+using System.Diagnostics;
 
 namespace VisualLocalizer.Library {
-    public static class PackageEx {
-
+    public static class ProjectEx {
+       
         public static List<ProjectItem> GetFilesOf(this Project project,Predicate<ProjectItem> test) {
             List<ProjectItem> list = new List<ProjectItem>();
             List<Project> referencedProjects = project.GetReferencedProjects();
@@ -50,6 +53,6 @@ namespace VisualLocalizer.Library {
             return list;
         }
 
-
+    
     }
 }

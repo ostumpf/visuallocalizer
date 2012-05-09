@@ -66,6 +66,7 @@
     <Compile Include="Commands\BatchMoveCommand.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
+    <Compile Include="Components\InlineUndoUnit.cs" />
     <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
     <Compile Include="Components\NotInlineableException.cs" />
     <Compile Include="Components\NotReferencableException.cs" />

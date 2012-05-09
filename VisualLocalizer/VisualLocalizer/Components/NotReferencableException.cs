@@ -6,20 +6,8 @@ using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Editor {
     internal sealed class NotReferencableException : Exception {
-        public NotReferencableException(TextSpan span,string line)
-            : base("This selection cannot be referenced (integrity violation).") {
-            this.Text = line;
-            this.Span = span;
-        }
-
-        public string Text {
-            get;
-            private set;
-        }
-
-        public TextSpan Span {
-            get;
-            private set;
-        }
+        public NotReferencableException(string reason)
+            : base(string.Format("This selection cannot be referenced {0}.",reason)) {            
+        }     
     }
 }
