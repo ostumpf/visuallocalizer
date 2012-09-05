@@ -67,6 +67,7 @@
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
     <Compile Include="Components\InlineUndoUnit.cs" />
+    <Compile Include="Components\MoveToResourcesOverwriteUndoUnit.cs" />
     <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
     <Compile Include="Components\NotInlineableException.cs" />
     <Compile Include="Components\NotReferencableException.cs" />
@@ -81,14 +82,12 @@
     <Compile Include="Editor\ResXEditorControl.Designer.cs">
       <DependentUpon>ResXEditorControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Components\ResXFileHandler.cs" />
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Gui\SelectResourceFileForm.Designer.cs">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Components\Utils.cs" />
     <Compile Include="Components\VLOutputWindow.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Commands\MenuManager.cs" />

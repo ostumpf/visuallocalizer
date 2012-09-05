@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
+using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Library {
     public class OutputWindow {
@@ -31,8 +32,9 @@ namespace VisualLocalizer.Library {
         protected static OutputWindowPane getStandardPane(Guid paneGuid) {
             IVsOutputWindowPane pane = null;
             int hr=outputWindowService.GetPane(ref paneGuid, out pane);
-            
-            if (hr != VSConstants.S_OK || pane == null) {
+            Marshal.ThrowExceptionForHR(hr);
+
+            if (pane == null) {
                 return null;
             } else {
                 OutputWindowPane owpane = new OutputWindowPane(pane);
@@ -67,9 +69,7 @@ namespace VisualLocalizer.Library {
 
         public static void CreatePane(Guid paneGuid,string name,bool clearWithSolution,bool initiallyVisible) {
             int hr=outputWindowService.CreatePane(ref paneGuid, name, initiallyVisible ? 1 : 0, clearWithSolution ? 1 : 0);
-
-            if (hr != VSConstants.S_OK)
-                throw new Exception(String.Format("Error creating output window pane {0}.", paneGuid.ToString("B")));
+            Marshal.ThrowExceptionForHR(hr);
         }
 
 
@@ -82,9 +82,7 @@ namespace VisualLocalizer.Library {
                 cache.Remove(paneGuid);
 
             int hr = outputWindowService.DeletePane(ref paneGuid);
-            
-            if (hr != VSConstants.S_OK)
-                throw new Exception(String.Format("Error deleting output window pane {0}.", paneGuid.ToString("B")));
+            Marshal.ThrowExceptionForHR(hr);
         }
 
 
@@ -98,9 +96,7 @@ namespace VisualLocalizer.Library {
             } else {
                 IVsOutputWindowPane pane = null;
                 int hr = outputWindowService.GetPane(ref paneGuid, out pane);
-
-                if (hr != VSConstants.S_OK || pane == null)
-                    throw new Exception(String.Format("Error retrieving output window pane {0}.", paneGuid.ToString("B")));
+                Marshal.ThrowExceptionForHR(hr);
 
                 OutputWindowPane owpane = new OutputWindowPane(pane);
                 cache.Add(paneGuid, owpane);

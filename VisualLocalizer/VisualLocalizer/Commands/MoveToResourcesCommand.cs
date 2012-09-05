@@ -18,6 +18,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MoveToResourcesCommand : AbstractCommand {
@@ -27,66 +28,83 @@ namespace VisualLocalizer.Commands {
         }       
 
         public override void Process() {
-            TextSpan replaceSpan = GetReplaceSpan();
-            bool isInAttribute = IsInAttribute(replaceSpan);
-            if (isInAttribute) throw new NotReferencableException("cannot reference strings in attributes");
+            base.Process();
 
-            string referenceValue = GetTextOfSpan(replaceSpan);            
-            referenceValue = GetReferencedValue(referenceValue);
+            TextSpan replaceSpan = GetReplaceSpan();            
+            if (IsTextSpanInAttribute(replaceSpan)) throw new NotReferencableException("cannot reference strings in attributes");
+
+            string textOfReplaceSpan = GetTextOfSpan(replaceSpan);
+            string referencedCodeText = TrimAtAndApos(textOfReplaceSpan);
+
             
-            Project project = currentDocument.ProjectItem.ContainingProject;
-            List<ProjectItem> items = project.GetFilesOf(ResXProjectItem.IsItemResX);
-            List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
-            foreach (ProjectItem item in items)
-                resxItems.Add(ResXProjectItem.ConvertToResXItem(item, project));
 
-            SelectResourceFileForm f = new SelectResourceFileForm();
-            f.SetData(CreateKeySuggestions(replaceSpan,referenceValue), referenceValue, resxItems);          
+            SelectResourceFileForm f = new SelectResourceFileForm(
+                CreateKeySuggestions(replaceSpan, referencedCodeText), 
+                referencedCodeText, 
+                currentDocument.ProjectItem.ContainingProject
+            );            
             DialogResult result = f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
-            
+                       
             if (result==DialogResult.OK) {
                 string referenceText;
-                bool addNamespace = false;
-
-                if (!f.UsingFullName) {
-                    string usedAlias;
-                    bool alreadyUsed = IsNamespaceUsed(f.Namespace, out usedAlias);
-                    if (alreadyUsed) {
-                        referenceText = (usedAlias == string.Empty ? string.Empty : usedAlias + ".") + f.ReferenceText;
-                    } else {
-                        addNamespace = true;                        
-                        referenceText = f.ReferenceText;
-                    }
-                } else {
-                    referenceText = f.ReferenceText;
-                }
+                bool addNamespace;
+                referenceText = ResolveReferenceTextNamespace(f, replaceSpan, out addNamespace);
 
                 int hr = textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                replaceSpan.iEndIndex - replaceSpan.iStartIndex, referenceText, referenceText.Length);
+                        replaceSpan.iEndIndex - replaceSpan.iStartIndex, referenceText, referenceText.Length);
                 Marshal.ThrowExceptionForHR(hr);
 
                 hr = textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                     replaceSpan.iEndLine, replaceSpan.iStartIndex + referenceText.Length);
                 Marshal.ThrowExceptionForHR(hr);
 
-                ResXFileHandler.AddString(f.Key, referenceValue, f.SelectedItem);
-                
                 if (addNamespace)
-                    AddUsingBlock(f.Namespace);
+                    currentDocument.AddUsingBlock(f.Namespace);
 
-                CreateMoveToResourcesUndoUnit(f.Key, referenceValue, f.SelectedItem,addNamespace);
+                if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {
+                    // DO NOTHING
+                } else if (f.Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE) {
+                    f.SelectedItem.AddString(f.Key, f.Value);
+                    CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addNamespace);
+                } else {
+                    f.SelectedItem.AddString(f.Key, f.Value);    
+                    CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addNamespace);                    
+                }
+            }          
+            
+        }
+
+        private string ResolveReferenceTextNamespace(SelectResourceFileForm f, TextSpan replaceSpan, out bool addNamespace) {
+            string referenceText;
+            addNamespace = false;
+
+            if (!f.UsingFullName) {
+                string usedAlias;
+                object point;
+                textLines.CreateTextPoint(replaceSpan.iStartLine, replaceSpan.iStartIndex, out point);
+
+                bool alreadyUsed = IsWithinNamespace(point as TextPoint, f.Namespace, out usedAlias);
+                if (alreadyUsed) {
+                    referenceText = (usedAlias == string.Empty ? string.Empty : usedAlias + ".") + f.ReferenceText;
+                } else {
+                    addNamespace = true;
+                    referenceText = f.ReferenceText;
+                }
+            } else {
+                referenceText = f.ReferenceText;
             }
+            return referenceText;
         }
 
         private List<string> CreateKeySuggestions(TextSpan span, string value) {
             List<string> suggestions = new List<string>();
-
+            
             StringBuilder builder1 = new StringBuilder();
             StringBuilder builder2 = new StringBuilder();
             bool upper = true;
 
             foreach (char c in value)
-                if (Utils.isIdentifierChar(c)) {
+                if (c.CanBePartOfIdentifier()) {
                     if (upper) {
                         builder1.Append(char.ToUpperInvariant(c));
                     } else {
@@ -101,15 +119,14 @@ namespace VisualLocalizer.Commands {
 
             suggestions.Add(builder1.ToString());
             suggestions.Add(builder2.ToString());
-
-            FileCodeModel model = currentDocument.ProjectItem.FileCodeModel;
+            
             object o;
             textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out o);
             CodeElement namespaceElement = null, classElement = null, methodElement=null;
             try {
-                namespaceElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementNamespace);
-                classElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementClass);
-                methodElement = model.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementFunction);                
+                namespaceElement = currentCodeModel.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementNamespace);
+                classElement = currentCodeModel.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementClass);
+                methodElement = currentCodeModel.CodeElementFromPoint(o as TextPoint, vsCMElement.vsCMElementFunction);                
             } catch (Exception) {
                 methodElement = null;
             }
@@ -139,9 +156,16 @@ namespace VisualLocalizer.Commands {
             MoveToResourcesUndoUnit newUnit = new MoveToResourcesUndoUnit(key, value, resXProjectItem);
             newUnit.AppendUnits.AddRange(units);
             undoManager.Add(newUnit);
-        }        
-        
-        private string GetReferencedValue(string value) {
+        }
+
+        private void CreateMoveToResourcesOverwriteUndoUnit(string key, string newValue,string oldValue, ResXProjectItem resXProjectItem, bool addNamespace) {
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            MoveToResourcesOverwriteUndoUnit newUnit = new MoveToResourcesOverwriteUndoUnit(key, oldValue, newValue, resXProjectItem);
+            newUnit.AppendUnits.AddRange(units);
+            undoManager.Add(newUnit);
+        } 
+
+        private string TrimAtAndApos(string value) {
             if (value.StartsWith("@")) value = value.Substring(1);
             return value.Substring(1, value.Length - 2);
         }                

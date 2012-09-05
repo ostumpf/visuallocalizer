@@ -393,6 +393,7 @@ namespace VisualLocalizer.Library {
             if (0 == numberOfChanges || null == filesChanged || null == typesOfChanges)
                 return VSConstants.E_INVALIDARG;
 
+            
             for (uint i = 0; i < numberOfChanges; i++) {
                 if (!String.IsNullOrEmpty(filesChanged[i]) && String.Compare(filesChanged[i], FileName, true, CultureInfo.CurrentCulture) == 0) {
                   if (0 != (typesOfChanges[i] & (int)(_VSFILECHANGEFLAGS.VSFILECHG_Time | _VSFILECHANGEFLAGS.VSFILECHG_Size))) {
@@ -420,7 +421,7 @@ namespace VisualLocalizer.Library {
 
         private int SetFileChangeNotification(string fileNameToNotify, bool startNotify) {
             int result = VSConstants.E_FAIL;
-
+            
             IVsFileChangeEx vsFileChangeEx = (IVsFileChangeEx)Package.GetGlobalService(typeof(SVsFileChangeEx));
             if (null == vsFileChangeEx)
                 return VSConstants.E_UNEXPECTED;
@@ -556,7 +557,25 @@ namespace VisualLocalizer.Library {
         }
 
         public virtual void FileChangedOutsideVS() {
-            string message = FileName + Environment.NewLine +
+            IVsQueryEditQuerySave2 queryEditQuerySave =
+      (IVsQueryEditQuerySave2)GetService(typeof(SVsQueryEditQuerySave));
+
+            // ---Now call the QueryEdit method to find the edit status of this file
+            string[] documents = { FileName };
+            uint result;
+            uint outFlags;
+
+            int hr = queryEditQuerySave.QueryEditFiles(
+              0, // Flags
+              1, // Number of elements in the array
+              documents, // Files to edit
+              null, // Input flags
+              null, // Input array of VSQEQS_FILE_ATTRIBUTE_DATA
+              out result, // result of the checkout
+              out outFlags // Additional flags
+              );
+
+            /*string message = FileName + Environment.NewLine +
                 Environment.NewLine + "File was changed outside the environment. Do you want to reload it?";
 
             string title = String.Empty;
@@ -580,10 +599,9 @@ namespace VisualLocalizer.Library {
             //if the user selects "Yes", reload the current file
             if (result == (int)DialogResult.Yes) {
                 ((IVsPersistDocData)this).ReloadDocData(0);
-            }
+            }*/
         }
-
-      
+        
     }
 
     public enum COMMAND_STATUS { ENABLED, DISABLED, UNSUPPORTED };

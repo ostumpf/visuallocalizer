@@ -8,37 +8,53 @@ using System.Text;
 using System.Windows.Forms;
 using VisualLocalizer.Editor;
 using VisualLocalizer.Components;
+using VisualLocalizer.Library;
+using EnvDTE;
 
 namespace VisualLocalizer.Gui {
+
+    internal enum SELECT_RESOURCE_FILE_RESULT { OK, OVERWRITE, INLINE }
+
     internal partial class SelectResourceFileForm : Form {
 
         private Color errorColor=Color.FromArgb(254,200,200);
-        private Dictionary<ResXProjectItem, List<string>> usedKeys = new Dictionary<ResXProjectItem, List<string>>();
-
-        public SelectResourceFileForm() {
+      
+        public SelectResourceFileForm(List<string> keys, string value,Project project) {
             InitializeComponent();
-        }
 
-        public void SetData(List<string> keys, string value, List<ResXProjectItem> resourceItems) {
             keyBox.Items.AddRange(keys.ToArray());
             keyBox.SelectedIndex = 0;
-            valueBox.Text = value;
-            
-            usedKeys.Clear();
-            foreach (var item in resourceItems)
-                usedKeys.Add(item, ResXFileHandler.GetAllKeys(item));
+            valueBox.Text = value;            
 
-            comboBox.Items.AddRange(resourceItems.ToArray());
-            if (comboBox.Items.Count > 0) 
+            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
+            List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
+            foreach (ProjectItem item in items) {
+                var resxItem = ResXProjectItem.ConvertToResXItem(item, project);                
+                comboBox.Items.Add(resxItem);
+            }
+
+            if (comboBox.Items.Count > 0)
                 comboBox.SelectedIndex = 0;
+
+            overwriteButton.Visible = false;
+            inlineButton.Visible = false;
+            existingLabel.Visible = false;
+            existingValueLabel.Visible = false;
+            
+            errorLabel.Text = "";
         }
+
 
         private void SelectResourceFileForm_FormClosing(object sender, FormClosingEventArgs e) {
             Key = keyBox.Text;
-            Value = valueBox.Text;
+            Value = valueBox.Text.Replace(Environment.NewLine, "\\" + "n");
             SelectedItem = comboBox.SelectedItem as ResXProjectItem;
             UsingFullName = fullBox.Checked;
             ReferenceText = referenceLabel.Text;
+            OverwrittenValue = existingValueLabel.Text;
+
+            foreach (ResXProjectItem item in comboBox.Items)
+                item.Unload();
         }
 
         private void keyBox_TextChanged(object sender, EventArgs e) {
@@ -46,6 +62,11 @@ namespace VisualLocalizer.Gui {
         }
 
         private void comboBox_SelectedIndexChanged(object sender, EventArgs e) {
+            if (comboBox.SelectedItem != null) {
+                var item = (comboBox.SelectedItem as ResXProjectItem);
+                if (!item.IsLoaded)
+                    item.Load();
+            }
             validate();
         }
 
@@ -68,13 +89,19 @@ namespace VisualLocalizer.Gui {
                 errorText = "Project does not contain any useable resource files";
             } else {
                 ResXProjectItem item = comboBox.SelectedItem as ResXProjectItem;
-                bool ident = Utils.IsValidIdentifier(keyBox.Text, ref errorText);
-                bool exists = existsKey(keyBox.Text, item);
+                bool ident = keyBox.Text.IsValidIdentifier(ref errorText);
+                bool exists = item.ContainsKey(keyBox.Text);
 
-                keyBox.BackColor = (ident ? Color.White : errorColor);
-                if (exists)
+                keyBox.BackColor = (ident ? Color.White : errorColor);                
+                if (exists) {
                     errorText = "Key is already present in the dictionary";
-
+                    existingValueLabel.Text = item.GetString(keyBox.Text);
+                }
+                overwriteButton.Visible = exists;
+                inlineButton.Visible = exists;
+                existingValueLabel.Visible = exists;
+                existingLabel.Visible = exists;
+                
                 ok = ident && !exists;
 
                 Namespace = item.Namespace;
@@ -112,12 +139,34 @@ namespace VisualLocalizer.Gui {
             if (e.KeyCode == Keys.ControlKey) ctrlDown = false;
         }
 
+        private void overwriteButton_Click(object sender, EventArgs e) {
+            Result = SELECT_RESOURCE_FILE_RESULT.OVERWRITE;
+        }
+
+        private void inlineButton_Click(object sender, EventArgs e) {
+            Result = SELECT_RESOURCE_FILE_RESULT.INLINE;
+        }
+
+        private void okButton_Click(object sender, EventArgs e) {
+            Result = SELECT_RESOURCE_FILE_RESULT.OK;
+        }
+
+        public SELECT_RESOURCE_FILE_RESULT Result {
+            get;
+            private set;
+        }
+
         public string Key {
             get;
             private set;
         }
 
         public string Value {
+            get;
+            private set;
+        }
+
+        public string OverwrittenValue {
             get;
             private set;
         }
@@ -140,11 +189,7 @@ namespace VisualLocalizer.Gui {
         public string ReferenceText {
             get;
             private set;
-        }
-        
-        private bool existsKey(string key, ResXProjectItem item) {
-            return usedKeys[item].Contains(key, CaseInsensitiveComparer.Instance);
-        }        
+        }                
                
         private class CaseInsensitiveComparer : IEqualityComparer<string> {
 
@@ -165,6 +210,6 @@ namespace VisualLocalizer.Gui {
                 return obj.GetHashCode();
             }
         }
-        
+
     }
 }

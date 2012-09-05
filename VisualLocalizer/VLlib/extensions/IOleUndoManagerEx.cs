@@ -10,17 +10,31 @@ namespace VisualLocalizer.Library {
     public static class IOleUndoManagerEx {
 
         public static List<IOleUndoUnit> RemoveTopFromUndoStack(this IOleUndoManager undoManager, int count) {
+            if (undoManager == null)
+                throw new ArgumentNullException("undoManager");
+            if (count < 0)
+                throw new ArgumentException("Count must be greater than or equal to zero.");
+
             IEnumOleUndoUnits enumerator;
             undoManager.EnumUndoable(out enumerator);
+            if (enumerator == null)
+                throw new InvalidOperationException("Undo manager seems to be incorrectly implemented.");
 
             return RemoveTop(undoManager, enumerator, count);
         }
 
-        public static List<IOleUndoUnit> RemoveTopFromRedoStack(this IOleUndoManager undoManager, int count) {
-            IEnumOleUndoUnits enumerator;
-            undoManager.EnumRedoable(out enumerator);
+        public static List<IOleUndoUnit> RemoveTopFromRedoStack(this IOleUndoManager redoManager, int count) {
+            if (redoManager == null)
+                throw new ArgumentNullException("redoManager");
+            if (count < 0)
+                throw new ArgumentException("Count must be greater than or equal to zero.");
 
-            return RemoveTop(undoManager, enumerator, count);
+            IEnumOleUndoUnits enumerator;
+            redoManager.EnumRedoable(out enumerator);
+            if (enumerator == null)
+                throw new InvalidOperationException("Redo manager seems to be incorrectly implemented.");
+
+            return RemoveTop(redoManager, enumerator, count);
         }
 
         private static List<IOleUndoUnit> RemoveTop(IOleUndoManager undoManager,IEnumOleUndoUnits enumerator, int count) {            

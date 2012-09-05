@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio;
+using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Library {
     public class OutputWindowPane {
@@ -16,26 +17,26 @@ namespace VisualLocalizer.Library {
         
         public void Activate() {
             if (pane == null) return;
-            if (pane.Activate() != VSConstants.S_OK)
-                throw new Exception("Unexpected return code.");
+            int hr = pane.Activate();
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public void Clear() {
             if (pane == null) return;
-            if (pane.Clear() != VSConstants.S_OK)
-                throw new Exception("Unexpected return code.");
+            int hr = pane.Clear();
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public void FlushToTaskList() {
             if (pane == null) return;
-            if (pane.FlushToTaskList() != VSConstants.S_OK)
-                throw new Exception("Unexpected return code.");
+            int hr = pane.FlushToTaskList();
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public void Hide() {
             if (pane == null) return;
-            if (pane.Hide() != VSConstants.S_OK)
-                throw new Exception("Unexpected return code.");
+            int hr = pane.Hide();
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public string Name {
@@ -44,27 +45,28 @@ namespace VisualLocalizer.Library {
                     return "BLACKHOLE";
 
                 string name = string.Empty;
-                int hr=pane.GetName(ref name);
-                if (hr != VSConstants.S_OK)
-                    throw new Exception("Unexpected return code.");
+                int hr=pane.GetName(ref name);                
+                Marshal.ThrowExceptionForHR(hr);
+
                 return name;
             }
             set {
                 if (pane == null) return;
 
-                int hr = pane.SetName(value);
-                if (hr != VSConstants.S_OK)
-                    throw new Exception("Unexpected return code.");
+                int hr = pane.SetName(value);                
+                Marshal.ThrowExceptionForHR(hr);
             }
         }
 
         public void Write(string formatString,params object[] args) {
             if (pane == null) return;
+            int hr;
             if (formatString == null) {
-                pane.OutputString("(null)");
+                hr = pane.OutputString("(null)");
             } else {
-                pane.OutputString(string.Format(formatString, args));
-            }
+                hr = pane.OutputString(string.Format(formatString, args));
+            }            
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public void WriteLine(string formatString, params object[] args) {
@@ -78,14 +80,16 @@ namespace VisualLocalizer.Library {
             int bitmap,string filename,uint linenum,string taskItemText) {
             if (pane == null) return;
 
-            pane.OutputTaskItemString(text, priority, category, subcategory, bitmap, filename, linenum, taskItemText);            
+            int hr = pane.OutputTaskItemString(text, priority, category, subcategory, bitmap, filename, linenum, taskItemText);
+            Marshal.ThrowExceptionForHR(hr);
         }
 
         public void WriteTaskItem(string text, VSTASKPRIORITY priority, VSTASKCATEGORY category, string subcategory,
                     int bitmap, string filename, uint linenum, string taskItemText,string lookupKwd) {
             if (pane == null) return;
 
-            pane.OutputTaskItemStringEx(text, priority, category, subcategory, bitmap, filename, linenum, taskItemText,lookupKwd);
+            int hr = pane.OutputTaskItemStringEx(text, priority, category, subcategory, bitmap, filename, linenum, taskItemText, lookupKwd);
+            Marshal.ThrowExceptionForHR(hr);
         }
     }
 }

@@ -37,23 +37,25 @@ namespace VisualLocalizer
         internal EnvDTE80.DTE2 DTE;
         internal EnvDTE.UIHierarchy UIHierarchy;
         internal OleMenuCommandService menuService;
-        internal IVsUIShell uiShell;        
+        internal IVsUIShell uiShell;
+        internal IVsRunningDocumentTable ivsRunningDocumentTable;
 
         protected override void Initialize() {                    
             base.Initialize();
             try {
                 
-                ActivityLogger.Source = "Visual Localizer";
+                ActivityLogger.Source = "Visual Localizer";                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
 
                 InitBaseServices();
                 menuManager = new MenuManager(this);
-                RegisterEditorFactory(new ResXEditorFactory());
+               // RegisterEditorFactory(new ResXEditorFactory());
 
+                RDTManager.IVsRunningDocumentTable = ivsRunningDocumentTable;
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
-            } catch (Exception ex) {                
-                System.Windows.Forms.MessageBox.Show(ex.Message,ex.GetType().Name);
+            } catch (Exception ex) {
+                MessageBox.ShowError(string.Format("Error during initialization: {0}", ex.Message));
             }
         }
 
@@ -62,6 +64,7 @@ namespace VisualLocalizer
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
 
             if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null)
                 throw new Exception("Error during initialization of base services.");

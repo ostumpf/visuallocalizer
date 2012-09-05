@@ -9,57 +9,56 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
     internal abstract class AbstractCommand {
 
-        protected VisualLocalizerPackage package;
+        protected VisualLocalizerPackage package;        
         protected IVsTextManager textManager;
+        
         protected IVsTextLines textLines;
         protected IVsTextView textView;
-        protected IOleUndoManager undoManager;
+        protected IOleUndoManager undoManager;        
         protected Document currentDocument;
+        protected FileCodeModel2 currentCodeModel;
 
         public AbstractCommand(VisualLocalizerPackage package) {
             this.package = package;
 
-            InitDocumentData();
-        }
-
-        private void InitDocumentData() {            
             textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
             if (textManager == null)
                 throw new Exception("Cannot initialize IVsTextManager.");
+        }
+
+        public virtual void Process() {
+            currentDocument = package.DTE.ActiveDocument;
+            if (currentDocument == null)
+                throw new Exception("No selected document");
+            currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
+            if (currentCodeModel == null)
+                throw new Exception("Current document has no CodeModel.");
 
             int hr = textManager.GetActiveView(1, null, out textView);
             Marshal.ThrowExceptionForHR(hr);
 
             hr = textView.GetBuffer(out textLines);
             Marshal.ThrowExceptionForHR(hr);
-            
-            hr = textLines.GetUndoManager(out undoManager);
-            Marshal.ThrowExceptionForHR(hr);
 
-            currentDocument = package.DTE.ActiveDocument;
-            if (currentDocument == null)
-                throw new Exception("No active document.");
+            hr = textLines.GetUndoManager(out undoManager);
+            Marshal.ThrowExceptionForHR(hr);           
         }
 
-        protected bool IsNamespaceUsed(string newNamespace, out string alias) {
-            alias = string.Empty;
+        protected bool IsWithinNamespace(TextPoint point, string newNamespace, out string alias) {
+            alias = string.Empty;            
 
-            TextSelection selection = currentDocument.Selection as TextSelection;
-            FileCodeModel2 model = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
-            if (model==null)
-                throw new Exception("Current document has no CodeModel.");
-
-            CodeElement selectionNamespace = model.CodeElementFromPoint(selection.ActivePoint, vsCMElement.vsCMElementNamespace);
+            CodeElement selectionNamespace = currentCodeModel.CodeElementFromPoint(point, vsCMElement.vsCMElementNamespace);
             string currentNamespace = selectionNamespace.FullName;
 
             if (currentNamespace == newNamespace) return true;
 
             bool alreadyUsing = false;
-            foreach (CodeElement t in model.CodeElements)
+            foreach (CodeElement t in currentCodeModel.CodeElements)
                 if (t.Kind == vsCMElement.vsCMElementImportStmt) {
                     string usingAlias, usingNmsName;
                     ParseUsing(t.StartPoint, t.EndPoint, out usingNmsName, out usingAlias);
@@ -72,15 +71,7 @@ namespace VisualLocalizer.Commands {
             return alreadyUsing;
         }
 
-        protected CodeImport AddUsingBlock(string newNamespace) {                        
-            FileCodeModel2 model = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
-            if (model == null)
-                throw new Exception("Current document has no CodeModel.");
-
-            return model.AddImport(newNamespace, 0, string.Empty);
-        }      
-
-        protected void ParseUsing(TextPoint start, TextPoint end,out string namespc,out string alias) {
+        protected void ParseUsing(TextPoint start, TextPoint end, out string namespc, out string alias) {
             alias = string.Empty;
 
             string text;
@@ -92,16 +83,16 @@ namespace VisualLocalizer.Commands {
                 throw new Exception("Error while parsing using statement: " + text);
 
             text = text.Substring(StringConstants.UsingStatement.Length, text.LastIndexOf(';') - StringConstants.UsingStatement.Length);
-            text = Utils.RemoveWhitespace(text);
+            text = text.RemoveWhitespace();
             int eqIndex = text.IndexOf('=');
             if (eqIndex > 0) {
                 alias = text.Substring(0, eqIndex);
                 namespc = text.Substring(eqIndex + 1);
             } else {
                 namespc = text;
-            }            
+            }
         }
-        
+
         protected string GetTextOfSpan(TextSpan span) {
             string str;
 
@@ -185,18 +176,17 @@ namespace VisualLocalizer.Commands {
             return count;
         }
 
-        protected bool IsInAttribute(TextSpan span) {
+        protected bool IsTextSpanInAttribute(TextSpan span) {
             bool ret = true;
             try {
                 object point;
-                textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out point);
-                CodeElement el = currentDocument.ProjectItem.FileCodeModel.CodeElementFromPoint(point as TextPoint, vsCMElement.vsCMElementAttribute);
+                
+                textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out point);                
+                currentCodeModel.CodeElementFromPoint(point as TextPoint, vsCMElement.vsCMElementAttribute);
             } catch (Exception) {
                 ret = false;
             }
             return ret;
-        }
-
-        public abstract void Process();
+        }        
     }
 }

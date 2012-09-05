@@ -9,14 +9,19 @@ using VisualLocalizer.Editor;
 using VSLangProj;
 using EnvDTE;
 using VisualLocalizer.Components;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
 
         private VisualLocalizerPackage package;
-        
+        private MoveToResourcesCommand moveToResourcesCommand;
+        private InlineCommand inlineCommand;
+
         public MenuManager(VisualLocalizerPackage package) {
-            this.package = package;            
+            this.package = package;
+            this.moveToResourcesCommand = new MoveToResourcesCommand(package);
+            this.inlineCommand = new InlineCommand(package);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.CodeMenu, null,
@@ -58,8 +63,6 @@ namespace VisualLocalizer.Commands {
             package.menuService.AddCommand(cmd);
         }
 
-
-
         private void codeMenuQueryStatus(object sender, EventArgs args) {
             bool ok = package.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(StringConstants.CsExtension);
             ok = ok && package.DTE.ActiveDocument.ProjectItem != null;
@@ -82,7 +85,7 @@ namespace VisualLocalizer.Commands {
                 } else if (o.Object is Project) {
                     Project proj = (Project)o.Object;
                     ok = ok && proj.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
-                } else throw new Exception("Unexpected project item type: "+Utils.TypeOf(o.Object));               
+                } else throw new Exception("Unexpected project item type: "+o.Object.GetVisualBasicType());               
             }
 
             (sender as OleMenuCommand).Visible = ok;
@@ -91,37 +94,45 @@ namespace VisualLocalizer.Commands {
 
         private void moveToResourcesClick(object sender, EventArgs args) {
             try {
-                MoveToResourcesCommand cmd = new MoveToResourcesCommand(package);                
-                cmd.Process();
+                moveToResourcesCommand.Process();
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text=string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
 
         private void inlineClick(object sender, EventArgs args) {
             try {
-                InlineCommand cmd = new InlineCommand(package);
-                cmd.Process();
+                inlineCommand.Process();
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
 
         private void batchMoveCodeClick(object sender, EventArgs args) {
             try {
-                BatchMoveCommand cmd = new BatchMoveCommand(package);
-                cmd.Process();
+                
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
 
         private void batchMoveSolExpClick(object sender, EventArgs args) {
             try {
-                BatchMoveCommand cmd = new BatchMoveCommand(package);
-                cmd.Process(package.UIHierarchy.SelectedItems as Array);
+                
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
 
@@ -129,7 +140,10 @@ namespace VisualLocalizer.Commands {
             try {
                
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
 
@@ -137,7 +151,10 @@ namespace VisualLocalizer.Commands {
             try {
 
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
             }
         }
     }

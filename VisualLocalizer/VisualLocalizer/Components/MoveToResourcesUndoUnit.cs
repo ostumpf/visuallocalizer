@@ -17,19 +17,19 @@ namespace VisualLocalizer.Components {
         }
 
         public override void Undo() {
-            ResXFileHandler.RemoveKey(key, item);                      
+            item.RemoveKey(key);
         }
 
         public override void Redo() {
-            ResXFileHandler.AddString(key, value, item);        
+            item.AddString(key, value);
         }
 
         public override string GetUndoDescription() {
-            return String.Format("Move {0} to resources", key);
+            return String.Format("Move \"{0}\" to resources", value);
         }
 
         public override string GetRedoDescription() {
-            return String.Format("Move {0} to resources", key);
+            return String.Format("Move \"{0}\" to resources", value);
         }
     }
 }

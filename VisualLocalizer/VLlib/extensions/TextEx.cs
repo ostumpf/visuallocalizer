@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EnvDTE;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.CodeDom.Compiler;
-using VSLangProj;
 using System.Globalization;
 
-namespace VisualLocalizer.Components {
-    internal static class Utils {
+namespace VisualLocalizer.Library {
+    public static class TextEx {
 
         private static CodeDomProvider csharp = Microsoft.CSharp.CSharpCodeProvider.CreateProvider("C#");
-        private static UnicodeCategory[] validIdentifierCategories = {UnicodeCategory.TitlecaseLetter,
+        private static UnicodeCategory[] validIdentifierCategories = {
+                                                     UnicodeCategory.TitlecaseLetter,
                                                      UnicodeCategory.UppercaseLetter,
                                                      UnicodeCategory.LowercaseLetter,
                                                      UnicodeCategory.ModifierLetter,
@@ -26,39 +23,34 @@ namespace VisualLocalizer.Components {
                                                      UnicodeCategory.Format
                                                     };      
 
-        internal static string TypeOf(object o) {
-            return Microsoft.VisualBasic.Information.TypeName(o);
+        public static bool IsValidIdentifier(this string text, ref string errorText) {
+            if (string.IsNullOrEmpty(text)) {
+                errorText = "Key cannot be empty";
+                return false;
+            }
+            if (!csharp.IsValidIdentifier(text)) {
+                errorText = "Key is not valid C# identifier";
+                return false;
+            }
+
+            return true;
         }
 
-        internal static bool isIdentifierChar(char p) {
+        public static string RemoveWhitespace(this string text) {
+            if (text == null) return null;
+
+            StringBuilder b = new StringBuilder();
+            foreach (char c in text)
+                if (!char.IsWhiteSpace(c)) b.Append(c);
+
+            return b.ToString();
+        }
+
+        public static bool CanBePartOfIdentifier(this char p) {
             UnicodeCategory charCat = char.GetUnicodeCategory(p);
             foreach (UnicodeCategory c in validIdentifierCategories)
                 if (c == charCat) return true;
             return false;
         }
-
-        internal static string RemoveWhitespace(string text) {
-            StringBuilder b = new StringBuilder();
-
-            foreach (char c in text)
-                if (!char.IsWhiteSpace(c)) b.Append(c);
-
-            return b.ToString();
-        }        
-        
-        internal static bool IsValidIdentifier(string name, ref string errorText) {
-            if (string.IsNullOrEmpty(name)) {
-                errorText = "Key cannot be empty";
-                return false;
-            }
-            if (!csharp.IsValidIdentifier(name)) {
-                errorText = "Key is not valid C# identifier";
-                return false;
-            }
-          
-            return true;
-        }
     }
-
-    
 }

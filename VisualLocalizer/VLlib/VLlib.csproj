@@ -41,6 +41,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\EnvDTE.dll</HintPath>
     </Reference>
+    <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\EnvDTE80.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.Shell.9.0, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Shell.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
@@ -69,11 +74,16 @@
     <Compile Include="components\ActivityLogger.cs" />
     <Compile Include="components\AbstractEditor.cs">
     </Compile>
+    <Compile Include="components\MessageBox.cs" />
+    <Compile Include="components\RDTManager.cs" />
+    <Compile Include="extensions\DocumentEx.cs" />
     <Compile Include="extensions\IOleUndoManagerEx.cs" />
     <Compile Include="components\OutputWindow.cs" />
     <Compile Include="components\OutputWindowPane.cs" />
     <Compile Include="ErrorReporter.cs" />
+    <Compile Include="extensions\ObjectEx.cs" />
     <Compile Include="extensions\ProjectEx.cs" />
+    <Compile Include="extensions\TextEx.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="attributes\ProvideMarkerAttribute.cs" />
     <Compile Include="attributes\ProvideOutputWindowAttribute.cs" />
