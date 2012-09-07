@@ -14,6 +14,7 @@ using VisualLocalizer.Library;
 using Microsoft.VisualStudio.OLE.Interop;
 
 namespace VisualLocalizer.Commands {
+   
     internal sealed class InlineCommand : AbstractCommand {          
 
         public InlineCommand(VisualLocalizerPackage package)
@@ -29,12 +30,13 @@ namespace VisualLocalizer.Commands {
             CheckIsIdentifier(referenceText);
             
             string key;
-            string value = string.Format("\"{0}\"", GetValueFor(inlineSpan, referenceText, currentDocument.ProjectItem.ContainingProject, out key));
+            string resxText = GetValueFor(inlineSpan, referenceText, currentDocument.ProjectItem.ContainingProject, out key);
+            string value = string.Format(" \"{0}\"", resxText);
 
             textLines.ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
                 Marshal.StringToBSTR(value), value.Length, null);
-            
-            textView.SetSelection(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iStartLine,
+
+            textView.SetSelection(inlineSpan.iStartLine, inlineSpan.iStartIndex + 1, inlineSpan.iStartLine,
                 inlineSpan.iStartIndex + value.Length);
 
             CreateInlineUndoUnit(key);            
@@ -61,21 +63,25 @@ namespace VisualLocalizer.Commands {
                 throw new NotInlineableException("selection is not valid reference to a key");            
         }
 
-        private string GetValueFor(TextSpan inlineSpan, string referenceText,Project parentProject,out string key) {            
+        private string GetValueFor(TextSpan inlineSpan, string referenceText,Project parentProject,out string key) {
             string value = null;
-            List<string> possibleFullNames = GetPossibleFullNames(inlineSpan, referenceText, out key);
+            key = null;
+            string propertyName;
+            List<string> possibleFullNames = GetPossibleFullNames(inlineSpan, referenceText, out propertyName);
+
             List<ProjectItem> items = parentProject.GetFiles(ResXProjectItem.IsItemResX, true);
             foreach (ProjectItem item in items) {
                 ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(item, parentProject);
                 foreach (string fullName in possibleFullNames) {
-                    if (resxItem.Namespace + "." + resxItem.Class==fullName) {
+                    if (resxItem.Namespace + "." + resxItem.Class == fullName) {
+                        key = resxItem.GetKeyForPropertyName(propertyName);
                         value = resxItem.GetString(key);
                         if (value == null) {
                             throw new NotInlineableException(String.Format("{0} does not contain definition for {1}", Path.GetFileName(fullName), key));
                         } else {
-                            VLOutputWindow.VisualLocalizerPane.WriteLine("\"{0}\" inlined from \"{1}\"", key, resxItem.InternalProjectItem.Name);    
-                        }                        
-                        
+                            VLOutputWindow.VisualLocalizerPane.WriteLine("\"{0}\" inlined from \"{1}\"", key, resxItem.InternalProjectItem.Name);
+                        }
+
                         break;
                     }
                 }
@@ -86,48 +92,101 @@ namespace VisualLocalizer.Commands {
             return value;
         }
 
-        private List<string> GetPossibleFullNames(TextSpan inlineSpan, string referenceText, out string key) {
+        private List<string> GetPossibleFullNames(TextSpan inlineSpan, string referenceText, out string propertyName) {
             string[] tokens = referenceText.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
             int numberOfDots = tokens.Length - 1;
 
+            List<string> possibleFullNames = new List<string>();
+            string currentNamespace = GetCurrentNamespace(inlineSpan);
+            
             string className = null;
             string namespaceName = null;
             if (numberOfDots == 1) {
-                key = tokens[1];
+                propertyName = tokens[1];
                 className = tokens[0];
             } else if (numberOfDots > 1) {
-                key = tokens[numberOfDots];
+                propertyName = tokens[numberOfDots];
                 className = tokens[numberOfDots - 1];
                 namespaceName = "";
                 for (int i = 0; i < numberOfDots - 1; i++)
                     namespaceName += (i > 0 ? "." : "") + tokens[i];
             } else throw new NotInlineableException("selection is not reference to a resource key");
-            
-
-            string currentNamespace = GetCurrentNamespace(inlineSpan);
-            
-            List<string> possibleFullNames = new List<string>();
-            possibleFullNames.Add(currentNamespace + "." + className);
-
-            if (namespaceName != null) {
+                                               
+            if (currentNamespace == namespaceName) {
                 possibleFullNames.Add(namespaceName + "." + className);
-            }
-            
+            } else {
+                string[] nmspcParts = currentNamespace.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                bool usesAlias = false;
 
-            foreach (CodeElement nmspcElement in currentCodeModel.CodeElements)
+                if (namespaceName == null) {                    
+                    ExploreNamespaces(currentCodeModel.CodeElements, nmspcParts, 0, className, possibleFullNames);                    
+                } else {
+                    usesAlias = FindAlias(currentCodeModel.CodeElements, nmspcParts, 0, namespaceName, className, possibleFullNames);
+                }
+
+                if (!usesAlias) {
+                    string t = "";
+                    foreach (string part in nmspcParts) {
+                        if (t == "") {
+                            t = part;
+                        } else {
+                            t = t + "." + part;
+                        }
+                        possibleFullNames.Add(t + "." + className);
+                    }
+
+                    possibleFullNames.Reverse();
+                }
+            }
+            /*
+            foreach (string s in possibleFullNames)
+                VLOutputWindow.VisualLocalizerPane.WriteLine(s);*/
+
+            return possibleFullNames;
+        }
+
+        private bool FindAlias(CodeElements codeElements, string[] parts, int index, string aliasName,string className, List<string> possibleFullNames) {
+            foreach (CodeElement nmspcElement in codeElements) {
                 if (nmspcElement.Kind == vsCMElement.vsCMElementImportStmt) {
                     string usingAlias, usingNmsName;
                     ParseUsing(nmspcElement.StartPoint, nmspcElement.EndPoint, out usingNmsName, out usingAlias);
 
-                    if (usingAlias != string.Empty && namespaceName==usingAlias) {
-                        possibleFullNames.Clear();
+                    if (usingAlias==aliasName) {
                         possibleFullNames.Add(usingNmsName + "." + className);
-                        break;
-                    } else if (usingAlias == string.Empty) {
+                        string t = "";
+                        foreach (string part in parts) {
+                            if (t == "") {
+                                t = part;
+                            } else {
+                                t = t + "." + part;
+                            }
+                            possibleFullNames.Add(t + "." + usingNmsName + "." + className);
+                        }
+
+                        return true;
+                    }
+                }
+                if (nmspcElement.Kind == vsCMElement.vsCMElementNamespace && index < parts.Length && nmspcElement.Name == parts[index]) {
+                    return FindAlias(nmspcElement.Children, parts, index + 1, aliasName, className, possibleFullNames);
+                }
+            }
+            return false;
+        }
+
+        private void ExploreNamespaces(CodeElements codeElements,string[] parts,int index, string className, List<string> possibleFullNames) {           
+            foreach (CodeElement nmspcElement in codeElements) {
+                if (nmspcElement.Kind == vsCMElement.vsCMElementImportStmt) {
+                    string usingAlias, usingNmsName;
+                    ParseUsing(nmspcElement.StartPoint, nmspcElement.EndPoint, out usingNmsName, out usingAlias);
+
+                    if (string.IsNullOrEmpty(usingAlias)) {
                         possibleFullNames.Add(usingNmsName + "." + className);
                     }
                 }
-            return possibleFullNames;
+                if (nmspcElement.Kind == vsCMElement.vsCMElementNamespace && index<parts.Length && nmspcElement.Name == parts[index]) {
+                    ExploreNamespaces(nmspcElement.Children, parts, index + 1, className, possibleFullNames);
+                }
+            }
         }
 
         private TextSpan GetInlineSpan() {

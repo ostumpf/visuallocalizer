@@ -8,8 +8,8 @@ using VisualLocalizer.Library;
 namespace VisualLocalizer.Components {
     internal sealed class VLOutputWindow : OutputWindow {
 
-        static VLOutputWindow() {            
-            cache.Add(typeof(Guids.VisualLocalizerWindowPane).GUID, getStandardPane(typeof(Guids.VisualLocalizerWindowPane).GUID));
+        static VLOutputWindow() {
+            cache.Add(typeof(Guids.VisualLocalizerWindowPane).GUID, getStandardPane(typeof(Guids.VisualLocalizerWindowPane).GUID));            
         }
 
         public static OutputWindowPane VisualLocalizerPane {

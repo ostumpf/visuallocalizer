@@ -13,6 +13,7 @@ using VisualLocalizer.Library;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Components;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer
 {
@@ -29,7 +30,7 @@ namespace VisualLocalizer
     [ProvideEditorFactory(typeof(ResXEditorFactory), 113, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]
     [ProvideEditorExtension(typeof(ResXEditorFactory), StringConstants.ResXExtension, 100)]
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
-
+    
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
     {
@@ -42,20 +43,19 @@ namespace VisualLocalizer
 
         protected override void Initialize() {                    
             base.Initialize();
-            try {
-                
+            try {                
                 ActivityLogger.Source = "Visual Localizer";                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
-
+                            
                 InitBaseServices();
+                                
                 menuManager = new MenuManager(this);
                // RegisterEditorFactory(new ResXEditorFactory());
-
-                RDTManager.IVsRunningDocumentTable = ivsRunningDocumentTable;
+                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
-                MessageBox.ShowError(string.Format("Error during initialization: {0}", ex.Message));
+                MessageBox.ShowError(string.Format("{1} during initialization: {0}\n{2}", ex.Message, ex.GetType(), ex.StackTrace));
             }
         }
 

@@ -5,70 +5,58 @@ using System.Text;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.TextManager.Interop;
+using System.IO;
+using System.Threading;
+using System.Diagnostics;
 
 namespace VisualLocalizer.Library {
     public static class RDTManager {
 
-        public static IVsRunningDocumentTable IVsRunningDocumentTable;
-        private static Dictionary<string, IntPtr> lockedFiles;
-        private static Dictionary<string, uint> lockedCookies;
+        private static IVsRunningDocumentTable IVsRunningDocumentTable;
+        private static EnvDTE80.DTE2 DTE;
+        private static IVsTextManager textManager;
 
         static RDTManager() {
-            lockedFiles = new Dictionary<string, IntPtr>();
-            lockedCookies = new Dictionary<string, uint>();
+            IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
+            DTE = (EnvDTE80.DTE2)Package.GetGlobalService(typeof(EnvDTE.DTE));
+            textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));             
         }
 
-        public static void SetIgnoreFileChanges(string path, bool ignore,int timeout) {
-            if (IVsRunningDocumentTable == null)
-                throw new InvalidOperationException("RDTManager class has not been initialized - set IVsRunningDocumentTable instance.");
+        public static void SilentlyModifyFile(string path, Action<string> modify) {
+            bool saved = IsFileSaved(path);
+            SilentlySaveFile(path);
+            SetIgnoreFileChanges(path, true);
 
-            if (timeout > 0) {
-                System.Threading.ThreadPool.QueueUserWorkItem(new System.Threading.WaitCallback((object o) => {
-                    System.Threading.Thread.Sleep(timeout);
-                    SetIgnoreFileChanges(path, ignore, 0);
-                }), null);
-            } else {
+            modify(path);
+
+            SilentlyReloadFile(path); 
+            SetFileSaved(path, saved);
+            SetIgnoreFileChanges(path, false);            
+        }
+
+        public static void SetIgnoreFileChanges(string path, bool ignore) {
+            IVsHierarchy ppHier;
+            uint pitemid;
+            IntPtr pPunkDocData;
+            uint pdwCookie;
+            IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
+                out ppHier, out pitemid, out pPunkDocData, out pdwCookie);
+            if (pPunkDocData != IntPtr.Zero) {
+                IVsFileChangeEx fileChange = (IVsFileChangeEx)Package.GetGlobalService(typeof(SVsFileChangeEx));
+                IVsDocDataFileChangeControl changeControl = (IVsDocDataFileChangeControl)Marshal.GetObjectForIUnknown(pPunkDocData);
+
                 if (ignore) {
-                    IVsHierarchy ppHier;
-                    uint pitemid;
-                    IntPtr pPunkDocData;
-                    uint pdwCookie;
-                    IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
-                        out ppHier, out pitemid, out pPunkDocData, out pdwCookie);
-                   
-                    if (pPunkDocData != IntPtr.Zero) {
-                        IVsDocDataFileChangeControl c = (IVsDocDataFileChangeControl)Marshal.GetObjectForIUnknown(pPunkDocData);
-                        int hResult = c.IgnoreFileChanges(1);
-                        Marshal.ThrowExceptionForHR(hResult);
-
-                        if (!lockedFiles.ContainsKey(path)) {
-                            lockedFiles.Add(path, pPunkDocData);
-                            lockedCookies.Add(path, pdwCookie);
-                        }
-                    } else {
-                        IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie);                        
-                    }
+                    fileChange.IgnoreFile(0, path, 1);                    
+                    changeControl.IgnoreFileChanges(1);
                 } else {
-                    if (lockedFiles.ContainsKey(path)) {
-                        IntPtr pPunkDocData = lockedFiles[path];
-                        IVsDocDataFileChangeControl c = (IVsDocDataFileChangeControl)Marshal.GetObjectForIUnknown(pPunkDocData);
-                        int hResult = c.IgnoreFileChanges(0);
-                        Marshal.ThrowExceptionForHR(hResult);
-
-                        IVsRunningDocumentTable.NotifyDocumentChanged(lockedCookies[path], (uint)__VSRDTATTRIB.RDTA_DocDataIsDirty);                        
-                        IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, lockedCookies[path]);                        
-
-                        lockedFiles.Remove(path);
-                        lockedCookies.Remove(path);
-                    }
+                    fileChange.IgnoreFile(0, path, 0);
+                    changeControl.IgnoreFileChanges(0);                    
                 }
-            }
-        }
+            }             
+        }   
 
         public static void SilentlySaveFile(string path) {
-            if (IVsRunningDocumentTable == null)
-                throw new InvalidOperationException("RDTManager class has not been initialized - set IVsRunningDocumentTable instance.");
-
             IVsHierarchy ppHier;
             uint pitemid;
             IntPtr pPunkDocData;
@@ -83,14 +71,9 @@ namespace VisualLocalizer.Library {
                 int hResult = d.SaveDocData(VSSAVEFLAGS.VSSAVE_SilentSave, out s, out cancelled);
                 Marshal.ThrowExceptionForHR(hResult);
             }
-
-            IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie);            
         }
 
         public static void SilentlyReloadFile(string path) {
-            if (IVsRunningDocumentTable == null)
-                throw new InvalidOperationException("RDTManager class has not been initialized - set IVsRunningDocumentTable instance.");
-
             IVsHierarchy ppHier;
             uint pitemid;
             IntPtr pPunkDocData;
@@ -105,6 +88,17 @@ namespace VisualLocalizer.Library {
             }
 
             IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie);            
+        }
+
+        public static bool IsFileSaved(string path) {
+            bool open = DTE.get_IsOpenFile(null, path);
+            return !open || DTE.Documents.Item(path).Saved;
+        }
+
+        public static void SetFileSaved(string path,bool saved) {
+            bool open = DTE.get_IsOpenFile(null, path);            
+            if (open)
+                DTE.Documents.Item(path).Saved = saved;
         }
     }
 }

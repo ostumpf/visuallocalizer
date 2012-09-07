@@ -8,7 +8,6 @@ using System.Diagnostics;
 using EnvDTE;
 using VisualLocalizer.Editor;
 using Microsoft.VisualStudio.Shell.Interop;
-using System.Windows.Forms;
 using System.IO;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Gui;
@@ -35,57 +34,52 @@ namespace VisualLocalizer.Commands {
 
             string textOfReplaceSpan = GetTextOfSpan(replaceSpan);
             string referencedCodeText = TrimAtAndApos(textOfReplaceSpan);
-
-            
-
+           
             SelectResourceFileForm f = new SelectResourceFileForm(
                 CreateKeySuggestions(replaceSpan, referencedCodeText), 
                 referencedCodeText, 
                 currentDocument.ProjectItem.ContainingProject
-            );            
-            DialogResult result = f.ShowDialog(Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
-                       
-            if (result==DialogResult.OK) {
-                string referenceText;
-                bool addNamespace;
-                referenceText = ResolveReferenceTextNamespace(f, replaceSpan, out addNamespace);
+            );
+            System.Windows.Forms.DialogResult result = f.ShowDialog(System.Windows.Forms.Form.FromHandle(new IntPtr(package.DTE.MainWindow.HWnd)));
 
+            if (result == System.Windows.Forms.DialogResult.OK) {
+                string referenceText;
+                bool addNamespace;                
+
+                referenceText = ResolveReferenceTextNamespace(f, replaceSpan, out addNamespace);                
                 int hr = textView.ReplaceTextOnLine(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                         replaceSpan.iEndIndex - replaceSpan.iStartIndex, referenceText, referenceText.Length);
-                Marshal.ThrowExceptionForHR(hr);
-
+                                
                 hr = textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                     replaceSpan.iEndLine, replaceSpan.iStartIndex + referenceText.Length);
-                Marshal.ThrowExceptionForHR(hr);
-
+                
                 if (addNamespace)
                     currentDocument.AddUsingBlock(f.Namespace);
-
+                
                 if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {
                     // DO NOTHING
                 } else if (f.Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE) {
                     f.SelectedItem.AddString(f.Key, f.Value);
                     CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addNamespace);
                 } else {
-                    f.SelectedItem.AddString(f.Key, f.Value);    
-                    CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addNamespace);                    
-                }
-            }          
-            
+                    f.SelectedItem.AddString(f.Key, f.Value);
+                    CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addNamespace);
+                }                
+            }                       
         }
 
         private string ResolveReferenceTextNamespace(SelectResourceFileForm f, TextSpan replaceSpan, out bool addNamespace) {
             string referenceText;
             addNamespace = false;
-
+            
             if (!f.UsingFullName) {
                 string usedAlias;
                 object point;
                 textLines.CreateTextPoint(replaceSpan.iStartLine, replaceSpan.iStartIndex, out point);
 
                 bool alreadyUsed = IsWithinNamespace(point as TextPoint, f.Namespace, out usedAlias);
-                if (alreadyUsed) {
-                    referenceText = (usedAlias == string.Empty ? string.Empty : usedAlias + ".") + f.ReferenceText;
+                if (alreadyUsed) {                    
+                    referenceText = (string.IsNullOrEmpty(usedAlias) ? string.Empty : (usedAlias + ".")) + f.ReferenceText;
                 } else {
                     addNamespace = true;
                     referenceText = f.ReferenceText;

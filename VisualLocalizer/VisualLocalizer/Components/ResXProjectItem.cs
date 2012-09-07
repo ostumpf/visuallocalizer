@@ -8,6 +8,8 @@ using System.Collections;
 using System.IO;
 using System.Resources;
 using VisualLocalizer.Library;
+using EnvDTE80;
+using System.Text.RegularExpressions;
 
 namespace VisualLocalizer.Components {
     
@@ -77,77 +79,75 @@ namespace VisualLocalizer.Components {
             /*   foreach (Property prop in item.ProjectItem.Properties)
                    VLOutputWindow.VisualLocalizerPane.WriteLine(prop.Name+":"+prop.Value);*/
 
-            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();
-            RDTManager.SilentlySaveFile(path);
 
-            ResXResourceReader reader = new ResXResourceReader(path);
-            reader.BasePath = Path.GetDirectoryName(path);
+            RDTManager.SilentlyModifyFile(InternalProjectItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+                ResXResourceReader reader = new ResXResourceReader(p);
+                reader.BasePath = Path.GetDirectoryName(p);
 
-            Hashtable content = new Hashtable();
-            foreach (DictionaryEntry entry in reader) {
-                content.Add(entry.Key, entry.Value);
-            }
-            reader.Close();
+                Hashtable content = new Hashtable();
+                foreach (DictionaryEntry entry in reader) {
+                    content.Add(entry.Key, entry.Value);
+                }
+                reader.Close();
 
-            bool overwritten = false;
-            if (content.ContainsKey(key)) {
-                content[key] = value;
+                bool overwritten = false;
+                if (content.ContainsKey(key)) {
+                    content[key] = value;
 
-                if (IsLoaded) {
-                    data[key] = value;
+                    if (IsLoaded) {
+                        data[key] = value;
+                    }
+
+                    overwritten = true;
+                } else {
+                    if (IsLoaded) {
+                        data.Add(key, value);
+                    }
                 }
 
-                overwritten = true;
-            } else {
-                if (IsLoaded) {
-                    data.Add(key, value);
+                ResXResourceWriter writer = new ResXResourceWriter(p);
+                foreach (DictionaryEntry entry in content) {
+                    writer.AddResource(entry.Key.ToString(), entry.Value);
                 }
-            }
+                if (!overwritten) writer.AddResource(key, value);
+                writer.Close();
+            });
 
-            RDTManager.SetIgnoreFileChanges(path, true, 0);
-            ResXResourceWriter writer = new ResXResourceWriter(path);            
-            foreach (DictionaryEntry entry in content) {
-                writer.AddResource(entry.Key.ToString(), entry.Value);
-            }            
-            if (!overwritten) writer.AddResource(key, value);
-            writer.Close();            
-
-            RunCustomTool();
-
-            RDTManager.SilentlyReloadFile(path);
-            RDTManager.SetIgnoreFileChanges(path, false, 1000);            
+            RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+                RunCustomTool();
+            });
         }
 
         public void RemoveKey(string key) {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Removing \"{0}\" from \"{1}\"", key, DisplayName);
-            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();
-            RDTManager.SilentlySaveFile(path);
+          
+            RDTManager.SilentlyModifyFile(InternalProjectItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
 
-            ResXResourceReader reader = new ResXResourceReader(path);
-            reader.BasePath = Path.GetDirectoryName(path);
+                ResXResourceReader reader = new ResXResourceReader(p);
+                reader.BasePath = Path.GetDirectoryName(p);
 
-            Hashtable content = new Hashtable();
-            foreach (DictionaryEntry entry in reader) {
-                content.Add(entry.Key, entry.Value);
-            }
-            reader.Close();
+                Hashtable content = new Hashtable();
+                foreach (DictionaryEntry entry in reader) {
+                    content.Add(entry.Key, entry.Value);
+                }
+                reader.Close();
 
-            RDTManager.SetIgnoreFileChanges(path, true, 0);
-            ResXResourceWriter writer = new ResXResourceWriter(path);
-            foreach (DictionaryEntry entry in content) {
-                if (entry.Key.ToString() != key)
-                    writer.AddResource(entry.Key.ToString(), entry.Value);
-            }
-            writer.Close();
+                ResXResourceWriter writer = new ResXResourceWriter(p);
+                foreach (DictionaryEntry entry in content) {
+                    if (entry.Key.ToString() != key)
+                        writer.AddResource(entry.Key.ToString(), entry.Value);
+                }
+                writer.Close();
 
-            if (IsLoaded) {
-                data.Remove(key);
-            }
+                if (IsLoaded) {
+                    data.Remove(key);
+                }
+            });
 
-            RunCustomTool();
+            RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+                RunCustomTool();
+            });
 
-            RDTManager.SilentlyReloadFile(path);
-            RDTManager.SetIgnoreFileChanges(path, false, 1000);  
         }
        
         public string GetString(string key) {
@@ -206,6 +206,45 @@ namespace VisualLocalizer.Components {
             IsLoaded = false;
         }
 
+        public string GetKeyForPropertyName(string propertyName) {
+            CodeNamespace nmspcElement = null;
+            foreach (CodeElement e in DesignerItem.FileCodeModel.CodeElements)
+                if (e.Kind == vsCMElement.vsCMElementNamespace && e.FullName == Namespace) {
+                    nmspcElement = (CodeNamespace)e;
+                    break;
+                }
+            if (nmspcElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+
+            CodeClass classElement = null;
+            foreach (CodeElement e in nmspcElement.Children)
+                if (e.Kind == vsCMElement.vsCMElementClass && e.Name == Class) {
+                    classElement = (CodeClass)e;
+                    break;
+                }
+            if (classElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+
+            CodeProperty propertyElement = null;
+            foreach (CodeElement e in classElement.Children)
+                if (e.Kind == vsCMElement.vsCMElementProperty && e.Name == propertyName) {
+                    propertyElement = (CodeProperty)e;
+                    break;
+                }
+            if (propertyElement == null) throw new InvalidOperationException(string.Format("Cannot find property {0}.", propertyName));
+
+            TextPoint startPoint = propertyElement.Getter.StartPoint;
+            TextPoint endPoint = propertyElement.Getter.EndPoint;
+            string getterText = startPoint.CreateEditPoint().GetText(endPoint);                       
+            if (getterText == null) throw new InvalidOperationException(string.Format("Cannot read getter of property {0}.", propertyName));
+
+            Match matchResult = Regex.Match(getterText, @"^\s*get\s*\{\s*return\s*\w+\.GetString\((.*),\s*\w+\);\s*\}\s*$");
+            if (matchResult.Groups.Count != 2) throw new InvalidOperationException(string.Format("Cannot match getter of property {0}.",propertyName));
+
+            string groupValue = matchResult.Groups[1].Value;
+            string key = groupValue.Substring(1, groupValue.Length - 2);
+
+            return key;
+        }
+
         public static bool IsItemResX(ProjectItem item) {
             string customTool = null, customToolOutput = null, extension = null;
             foreach (Property prop in item.Properties) {
@@ -256,6 +295,8 @@ namespace VisualLocalizer.Components {
 
         public override string ToString() {
             return (MarkedInternalInReferencedProject ? "(internal) ":"")+DisplayName;
-        }        
+        }
+
+       
     }
 }

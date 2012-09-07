@@ -24,11 +24,7 @@ namespace VisualLocalizer.Commands {
         protected FileCodeModel2 currentCodeModel;
 
         public AbstractCommand(VisualLocalizerPackage package) {
-            this.package = package;
-
-            textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
-            if (textManager == null)
-                throw new Exception("Cannot initialize IVsTextManager.");
+            this.package = package;            
         }
 
         public virtual void Process() {
@@ -39,9 +35,11 @@ namespace VisualLocalizer.Commands {
             if (currentCodeModel == null)
                 throw new Exception("Current document has no CodeModel.");
 
+            textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
+
             int hr = textManager.GetActiveView(1, null, out textView);
             Marshal.ThrowExceptionForHR(hr);
-
+            
             hr = textView.GetBuffer(out textLines);
             Marshal.ThrowExceptionForHR(hr);
 
@@ -50,7 +48,7 @@ namespace VisualLocalizer.Commands {
         }
 
         protected bool IsWithinNamespace(TextPoint point, string newNamespace, out string alias) {
-            alias = string.Empty;            
+            alias = null;            
 
             CodeElement selectionNamespace = currentCodeModel.CodeElementFromPoint(point, vsCMElement.vsCMElementNamespace);
             string currentNamespace = selectionNamespace.FullName;
@@ -72,7 +70,7 @@ namespace VisualLocalizer.Commands {
         }
 
         protected void ParseUsing(TextPoint start, TextPoint end, out string namespc, out string alias) {
-            alias = string.Empty;
+            alias = null;
 
             string text;
             int hr = textLines.GetLineText(start.Line - 1, start.DisplayColumn - 1, end.Line - 1, end.DisplayColumn - 1, out text);
