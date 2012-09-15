@@ -6,10 +6,55 @@
 
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h"/>
-
-  <Commands package="VLPackageGuid">
+  <Commands>
     <Groups>
+      <Group guid="BatchToolbarCmdSet" id="BatchToolbarGroupID" priority="0x0000">
+        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarID"/>
+      </Group>
+    </Groups>
+
+    <Menus>
+      <Menu guid="BatchToolbarCmdSet" id="BatchToolbarID" type="ToolWindowToolbar">
+        <CommandFlag>AlwaysCreate</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Batch Tool Window Toolbar</ButtonText>
+          <CommandName>Batch Tool Window Toolbar</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Combos>
+      <Combo guid="BatchToolbarCmdSet" id="BatchToolbarModeID" priority="1" type="DropDownCombo" idCommandList="BatchToolbarModesListID" defaultWidth="290">        
+        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarGroupID"/>
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>CaseSensitive</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings>
+          <ButtonText>Namespace policy:</ButtonText>        
+        </Strings>
+      </Combo>
+    </Combos>
     
+    <Buttons>      
+      <Button guid="BatchToolbarCmdSet" id="BatchToolbarRunID" priority="2" type="Button">
+        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarGroupID"/>
+        <Icon guid="guidImages" id="runPng"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveToResourcesRun</CommandName>
+          <ButtonText>Run</ButtonText>
+          <ToolTipText>Run</ToolTipText>          
+        </Strings>        
+      </Button>
+    </Buttons>
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\run.png"/>
+    </Bitmaps>
+  </Commands>
+  
+  <Commands package="VLPackageGuid">
+    <Groups>    
       <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
       </Group>
@@ -30,7 +75,6 @@
       <Group guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup" priority="0x001">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
       </Group>
-
     </Groups>
     
     <Buttons>
@@ -115,9 +159,8 @@
           <CommandName>Visual Localizer</CommandName>
           <ButtonText>Visual Localizer</ButtonText>
         </Strings>
-      </Menu>
-    </Menus>
- 
+      </Menu>          
+    </Menus>    
   </Commands>
 
   <KeyBindings>
@@ -150,10 +193,18 @@
       <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
       <IDSymbol name="batchInlineCodeMenuItem" value="0x0015" />
     </GuidSymbol>
-    
-    
-    
-   
+
+    <GuidSymbol name="BatchToolbarCmdSet" value="{41896b92-0335-4522-b75f-35dc0a64d5a3}">
+      <IDSymbol name="BatchToolbarID" value="0x1001" />
+      <IDSymbol name="BatchToolbarGroupID" value="0x1002" />
+      <IDSymbol name="BatchToolbarRunID" value="0x1003" />
+      <IDSymbol name="BatchToolbarModesListID" value="0x1004" />
+      <IDSymbol name="BatchToolbarModeID" value="0x1005" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >
+      <IDSymbol name="runPng" value="1" />
+    </GuidSymbol>
   </Symbols>
 
 </CommandTable>

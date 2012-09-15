@@ -10,13 +10,20 @@ using System.Resources;
 using VisualLocalizer.Library;
 using EnvDTE80;
 using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TextManager.Interop;
+using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.OLE.Interop;
 
 namespace VisualLocalizer.Components {
     
     public class ResXProjectItem {
 
         private string _Namespace,_Class;
-        private Dictionary<string, object> data;
+        private Dictionary<string, object> data;        
+        private IVsTextLines textLines;
+        private bool dataChangedInBatchMode;
 
         public ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
             this.DisplayName = displayName;
@@ -70,131 +77,157 @@ namespace VisualLocalizer.Components {
             private set;
         }
 
+        public bool IsInBatchMode {
+            get;
+            private set;
+        }
+
         public void RunCustomTool() {
             (InternalProjectItem.Object as VSProjectItem).RunCustomTool();
         }
 
-        public void AddString(string key, string value) {
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Adding \"{0}\":\"{1}\" to \"{2}\"", key, value, DisplayName);
-            /*   foreach (Property prop in item.ProjectItem.Properties)
-                   VLOutputWindow.VisualLocalizerPane.WriteLine(prop.Name+":"+prop.Value);*/
+        public void BeginBatch() {
+            IsInBatchMode = true;
+            dataChangedInBatchMode = false;
+        }
 
+        public void EndBatch() {            
+            Flush();
+            IsInBatchMode = false;
+        }
 
-            RDTManager.SilentlyModifyFile(InternalProjectItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
-                ResXResourceReader reader = new ResXResourceReader(p);
-                reader.BasePath = Path.GetDirectoryName(p);
+        private void Flush() {
+            if (!dataChangedInBatchMode && IsInBatchMode) return;
+            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();  
+            ResXResourceWriter writer = null;
 
-                Hashtable content = new Hashtable();
-                foreach (DictionaryEntry entry in reader) {
-                    content.Add(entry.Key, entry.Value);
-                }
-                reader.Close();
-
-                bool overwritten = false;
-                if (content.ContainsKey(key)) {
-                    content[key] = value;
-
-                    if (IsLoaded) {
-                        data[key] = value;
+            if (RDTManager.IsFileOpen(path)) {
+                MemoryStream stream = null;
+                try {
+                    stream = new MemoryStream();
+                    writer = new ResXResourceWriter(stream);
+                    foreach (var pair in data) {
+                        writer.AddResource(pair.Key, pair.Value);
                     }
+                    writer.Generate();
+                    writer.Close();
 
-                    overwritten = true;
-                } else {
-                    if (IsLoaded) {
-                        data.Add(key, value);
+                    byte[] buffer = stream.ToArray();
+                    string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3); 
+
+                    int lastLine, lastLineIndex;
+                    int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    TextSpan[] spans = null;
+                    hr = textLines.ReplaceLines(0, 0, lastLine, lastLineIndex, Marshal.StringToBSTR(text), text.Length, spans);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    IOleUndoManager manager;
+                    hr = textLines.GetUndoManager(out manager);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    manager.RemoveTopFromUndoStack(1);
+                } finally {
+                    if (stream != null) stream.Close();
+                }
+            } else {                
+                try {
+                    writer = new ResXResourceWriter(path);
+                    foreach (var pair in data) {
+                        writer.AddResource(pair.Key, pair.Value);
                     }
+                    writer.Generate();
+                } finally {
+                    if (writer != null) writer.Close();
                 }
-
-                ResXResourceWriter writer = new ResXResourceWriter(p);
-                foreach (DictionaryEntry entry in content) {
-                    writer.AddResource(entry.Key.ToString(), entry.Value);
-                }
-                if (!overwritten) writer.AddResource(key, value);
-                writer.Close();
-            });
+            }
 
             RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
                 RunCustomTool();
             });
+        }
+
+        public void AddString(string key, string value) {
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Adding \"{0}\":\"{1}\" to \"{2}\"", key, value, DisplayName);            
+
+            if (!IsLoaded) Load();
+            if (data.ContainsKey(key)) {
+                data[key] = value;
+            } else {
+                data.Add(key, value);
+            }
+
+            if (IsInBatchMode) {
+                dataChangedInBatchMode = true;
+            } else {
+                Flush();
+            }
         }
 
         public void RemoveKey(string key) {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Removing \"{0}\" from \"{1}\"", key, DisplayName);
-          
-            RDTManager.SilentlyModifyFile(InternalProjectItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+            if (!IsLoaded) Load();
+            
+            data.Remove(key);             
 
-                ResXResourceReader reader = new ResXResourceReader(p);
-                reader.BasePath = Path.GetDirectoryName(p);
-
-                Hashtable content = new Hashtable();
-                foreach (DictionaryEntry entry in reader) {
-                    content.Add(entry.Key, entry.Value);
-                }
-                reader.Close();
-
-                ResXResourceWriter writer = new ResXResourceWriter(p);
-                foreach (DictionaryEntry entry in content) {
-                    if (entry.Key.ToString() != key)
-                        writer.AddResource(entry.Key.ToString(), entry.Value);
-                }
-                writer.Close();
-
-                if (IsLoaded) {
-                    data.Remove(key);
-                }
-            });
-
-            RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
-                RunCustomTool();
-            });
-
+            if (IsInBatchMode) {
+                dataChangedInBatchMode = true;
+            } else {
+                Flush();
+            }
         }
        
         public string GetString(string key) {
-            string value = null;
-
-            if (IsLoaded) {
-                value = data[key].ToString();
-            } else {
-                string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();
-
-                ResXResourceReader reader = new ResXResourceReader(path);
-                reader.BasePath = Path.GetDirectoryName(path);
-                
-                foreach (DictionaryEntry entry in reader) {
-                    if (entry.Key.ToString() == key) {
-                        value = entry.Value.ToString();
-                        break;
-                    }
-                }
-                reader.Close();
-            }
-            return value;
+            if (!IsLoaded) Load();
+               
+            return data[key].ToString();
         }
 
         public bool ContainsKey(string key) {
-            if (IsLoaded) {
-                return data.ContainsKey(key);
-            } else {
-                Load();
-                bool result = data.ContainsKey(key);
-                Unload();
+            if (!IsLoaded) Load();
 
-                return result;
-            }
+            return data.ContainsKey(key);
         }
 
         public void Load() {
+            if (IsLoaded) return;
+
             data = new Dictionary<string, object>();
             string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();
+            ResXResourceReader reader = null;
+            MemoryStream stream = null;
 
-            ResXResourceReader reader = new ResXResourceReader(path);
-            reader.BasePath = Path.GetDirectoryName(path);
+            try {
+                if (RDTManager.IsFileOpen(path)) {                    
+                    textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
 
-            foreach (DictionaryEntry entry in reader) {
-                data.Add(entry.Key.ToString(), entry.Value);
+                    int lastLine, lastLineIndex;
+                    int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    string textBuffer = "";
+                    hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out textBuffer);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    stream = new MemoryStream();
+                    byte[] byteBuffer = Encoding.UTF8.GetBytes(textBuffer);
+                    stream.Write(byteBuffer, 0, byteBuffer.Length);
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    reader = new ResXResourceReader(stream);
+                } else {
+                    reader = new ResXResourceReader(path);
+                    reader.BasePath = Path.GetDirectoryName(path);
+                }
+
+                foreach (DictionaryEntry entry in reader) {
+                    data.Add(entry.Key.ToString(), entry.Value);
+                }                
+            } finally {
+                if (reader != null) reader.Close();
+                if (stream != null) stream.Close();
             }
-            reader.Close();
             IsLoaded = true;
         }
 
@@ -277,6 +310,9 @@ namespace VisualLocalizer.Components {
 
 
         private void resolveNamespaceClass() {
+            if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) {
+                RunCustomTool();
+            }
             CodeElement nmspcElemet = null;
             foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
                 _Namespace = element.FullName;
@@ -293,10 +329,20 @@ namespace VisualLocalizer.Components {
             }
         }
 
-        public override string ToString() {
-            return (MarkedInternalInReferencedProject ? "(internal) ":"")+DisplayName;
+        public string ToStringValue {
+            get {
+                return (MarkedInternalInReferencedProject ? "(internal) " : "") + DisplayName;
+            }
         }
 
+        public override string ToString() {
+            return ToStringValue;
+        }
+
+        public override bool Equals(object obj) {
+            return ReferenceEquals(this, obj);
+        }
        
     }
+   
 }

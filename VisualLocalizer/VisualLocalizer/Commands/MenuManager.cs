@@ -10,69 +10,89 @@ using VSLangProj;
 using EnvDTE;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library;
+using Microsoft.VisualStudio.Shell.Interop;
+using VisualLocalizer.Gui;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
 
-        private VisualLocalizerPackage package;
         private MoveToResourcesCommand moveToResourcesCommand;
         private InlineCommand inlineCommand;
+        private BatchMoveCommand batchMoveCommand;
 
-        public MenuManager(VisualLocalizerPackage package) {
-            this.package = package;
-            this.moveToResourcesCommand = new MoveToResourcesCommand(package);
-            this.inlineCommand = new InlineCommand(package);
+        public MenuManager() {            
+            this.moveToResourcesCommand = new MoveToResourcesCommand();
+            this.inlineCommand = new InlineCommand();
+            this.batchMoveCommand = new BatchMoveCommand();
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.CodeMenu, null,
-                new EventHandler(codeMenuQueryStatus));
+                new EventHandler(codeMenuQueryStatus),VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.SolExpMenu, null,
-                new EventHandler(solExpMenuQueryStatus));
+                new EventHandler(solExpMenuQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.MoveCodeMenuItem,
-                new EventHandler(moveToResourcesClick),null);
+                new EventHandler(moveToResourcesClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.InlineCodeMenuItem,
-                new EventHandler(inlineClick), null);
+                new EventHandler(inlineClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveCodeMenuItem,
-                new EventHandler(batchMoveCodeClick), null);
+                new EventHandler(batchMoveCodeClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveSolExpMenuItem,
-                new EventHandler(batchMoveSolExpClick), null);
+                new EventHandler(batchMoveSolExpClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineCodeMenuItem,
-                new EventHandler(batchInlineCodeClick), null);
+                new EventHandler(batchInlineCodeClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineSolExpMenuItem,
-                new EventHandler(batchInlineSolExpClick), null);
+                new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.ShowToolWindowItem,
+                new EventHandler(showToolWindowClick), null, VisualLocalizerPackage.Instance.menuService);            
         }
 
-        internal void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,EventHandler queryStatusHandler) {            
+        internal static void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,
+            EventHandler queryStatusHandler, OleMenuCommandService menuService) {   
+         
             CommandID cmdid = new CommandID(guid, id);
             OleMenuCommand cmd = new OleMenuCommand(invokeHandler, cmdid);
             cmd.BeforeQueryStatus += queryStatusHandler;
-            package.menuService.AddCommand(cmd);
+            menuService.AddCommand(cmd);
+        }
+
+        internal BatchMoveToResourcesToolWindow ShowToolWindow() {
+            BatchMoveToResourcesToolWindow pane = (BatchMoveToResourcesToolWindow)VisualLocalizerPackage.Instance.FindToolWindow(typeof(BatchMoveToResourcesToolWindow), 0, true);
+
+            if (pane != null && pane.Frame != null) {
+                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_IsWindowTabbed, true);
+                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_FrameMode, VSFRAMEMODE.VSFM_Dock);
+                ((IVsWindowFrame)pane.Frame).Show();
+            }
+
+            return pane;
         }
 
         private void codeMenuQueryStatus(object sender, EventArgs args) {
-            bool ok = package.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(StringConstants.CsExtension);
-            ok = ok && package.DTE.ActiveDocument.ProjectItem != null;
-            ok = ok && package.DTE.ActiveDocument.ProjectItem.ContainingProject != null;
-            ok = ok && package.DTE.ActiveDocument.ProjectItem.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
+            bool ok = VisualLocalizerPackage.Instance.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(StringConstants.CsExtension);
+            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem != null;
+            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject != null;
+            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
             (sender as OleMenuCommand).Supported = ok;
         }
 
         private void solExpMenuQueryStatus(object sender, EventArgs args) {
-            Array selectedItems = (Array)package.UIHierarchy.SelectedItems;
+            Array selectedItems = (Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems;
             bool ok = selectedItems.Length > 0;
 
             foreach (UIHierarchyItem o in selectedItems) {
@@ -91,6 +111,9 @@ namespace VisualLocalizer.Commands {
             (sender as OleMenuCommand).Visible = ok;
         }
 
+        private void showToolWindowClick(object sender, EventArgs args) {
+            ShowToolWindow();
+        }
 
         private void moveToResourcesClick(object sender, EventArgs args) {
             try {
@@ -116,7 +139,11 @@ namespace VisualLocalizer.Commands {
 
         private void batchMoveCodeClick(object sender, EventArgs args) {
             try {
-                
+                batchMoveCommand.Process();
+                BatchMoveToResourcesToolWindow win = ShowToolWindow();
+                if (win != null) {
+                    win.SetData(batchMoveCommand.Results); 
+                } else throw new Exception("Unable to display tool window.");
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -127,7 +154,11 @@ namespace VisualLocalizer.Commands {
 
         private void batchMoveSolExpClick(object sender, EventArgs args) {
             try {
-                
+                batchMoveCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
+                BatchMoveToResourcesToolWindow win = ShowToolWindow();
+                if (win != null) {
+                    win.SetData(batchMoveCommand.Results); 
+                } else throw new Exception("Unable to display tool window.");
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

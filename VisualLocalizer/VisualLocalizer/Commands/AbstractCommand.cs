@@ -14,7 +14,6 @@ using VisualLocalizer.Library;
 namespace VisualLocalizer.Commands {
     internal abstract class AbstractCommand {
 
-        protected VisualLocalizerPackage package;        
         protected IVsTextManager textManager;
         
         protected IVsTextLines textLines;
@@ -22,13 +21,9 @@ namespace VisualLocalizer.Commands {
         protected IOleUndoManager undoManager;        
         protected Document currentDocument;
         protected FileCodeModel2 currentCodeModel;
-
-        public AbstractCommand(VisualLocalizerPackage package) {
-            this.package = package;            
-        }
-
+     
         public virtual void Process() {
-            currentDocument = package.DTE.ActiveDocument;
+            currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
             currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
@@ -45,29 +40,7 @@ namespace VisualLocalizer.Commands {
 
             hr = textLines.GetUndoManager(out undoManager);
             Marshal.ThrowExceptionForHR(hr);           
-        }
-
-        protected bool IsWithinNamespace(TextPoint point, string newNamespace, out string alias) {
-            alias = null;            
-
-            CodeElement selectionNamespace = currentCodeModel.CodeElementFromPoint(point, vsCMElement.vsCMElementNamespace);
-            string currentNamespace = selectionNamespace.FullName;
-
-            if (currentNamespace == newNamespace) return true;
-
-            bool alreadyUsing = false;
-            foreach (CodeElement t in currentCodeModel.CodeElements)
-                if (t.Kind == vsCMElement.vsCMElementImportStmt) {
-                    string usingAlias, usingNmsName;
-                    ParseUsing(t.StartPoint, t.EndPoint, out usingNmsName, out usingAlias);
-                    if (usingNmsName == newNamespace) {
-                        alreadyUsing = true;
-                        alias = usingAlias;
-                        break;
-                    }
-                }
-            return alreadyUsing;
-        }
+        }       
 
         protected void ParseUsing(TextPoint start, TextPoint end, out string namespc, out string alias) {
             alias = null;

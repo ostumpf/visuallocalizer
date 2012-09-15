@@ -14,6 +14,7 @@ using VisualLocalizer.Commands;
 using VisualLocalizer.Components;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.TextManager.Interop;
+using VisualLocalizer.Gui;
 
 namespace VisualLocalizer
 {
@@ -30,6 +31,8 @@ namespace VisualLocalizer
     [ProvideEditorFactory(typeof(ResXEditorFactory), 113, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]
     [ProvideEditorExtension(typeof(ResXEditorFactory), StringConstants.ResXExtension, 100)]
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
+    [ProvideToolWindow(typeof(BatchMoveToResourcesToolWindow),MultiInstances=false,
+        Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
     
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
@@ -40,16 +43,19 @@ namespace VisualLocalizer
         internal OleMenuCommandService menuService;
         internal IVsUIShell uiShell;
         internal IVsRunningDocumentTable ivsRunningDocumentTable;
+        private static VisualLocalizerPackage instance;
 
-        protected override void Initialize() {                    
+        protected override void Initialize() {
+            instance = this;
+
             base.Initialize();
             try {                
                 ActivityLogger.Source = "Visual Localizer";                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
-                            
+                           
                 InitBaseServices();
-                                
-                menuManager = new MenuManager(this);
+                
+                menuManager = new MenuManager();
                // RegisterEditorFactory(new ResXEditorFactory());
                 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
@@ -65,10 +71,15 @@ namespace VisualLocalizer
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
             ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
-
-            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null)
+            
+            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable==null)
                 throw new Exception("Error during initialization of base services.");
         }
        
+        public static VisualLocalizerPackage Instance {
+            get {
+                return instance;
+            }
+        }
     }
 }

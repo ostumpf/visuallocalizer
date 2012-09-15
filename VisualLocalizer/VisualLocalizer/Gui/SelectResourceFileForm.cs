@@ -47,10 +47,9 @@ namespace VisualLocalizer.Gui {
 
         private void SelectResourceFileForm_FormClosing(object sender, FormClosingEventArgs e) {
             Key = keyBox.Text;
-            Value = valueBox.Text.Replace(Environment.NewLine, "\\" + "n");
+            Value = valueBox.Text;
             SelectedItem = comboBox.SelectedItem as ResXProjectItem;
             UsingFullName = fullBox.Checked;
-            ReferenceText = referenceLabel.Text;
             OverwrittenValue = existingValueLabel.Text;
 
             foreach (ResXProjectItem item in comboBox.Items)
@@ -61,12 +60,7 @@ namespace VisualLocalizer.Gui {
             validate();
         }
 
-        private void comboBox_SelectedIndexChanged(object sender, EventArgs e) {
-            if (comboBox.SelectedItem != null) {
-                var item = (comboBox.SelectedItem as ResXProjectItem);
-                if (!item.IsLoaded)
-                    item.Load();
-            }
+        private void comboBox_SelectedIndexChanged(object sender, EventArgs e) {            
             validate();
         }
 
@@ -104,7 +98,6 @@ namespace VisualLocalizer.Gui {
                 
                 ok = ident && !exists;
 
-                Namespace = item.Namespace;
                 if (!usingBox.Checked) {
                     referenceLabel.Text = item.Namespace + "." + item.Class + "." + keyBox.Text;
                 } else
@@ -156,6 +149,7 @@ namespace VisualLocalizer.Gui {
             private set;
         }
 
+
         public string Key {
             get;
             private set;
@@ -170,12 +164,7 @@ namespace VisualLocalizer.Gui {
             get;
             private set;
         }
-
-        public string Namespace {
-            get;
-            private set;
-        }
-
+       
         public ResXProjectItem SelectedItem {
             get;
             private set;
@@ -184,12 +173,7 @@ namespace VisualLocalizer.Gui {
         public bool UsingFullName {
             get;
             private set;
-        }
-
-        public string ReferenceText {
-            get;
-            private set;
-        }                
+        }             
                
         private class CaseInsensitiveComparer : IEqualityComparer<string> {
 

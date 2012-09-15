@@ -66,6 +66,12 @@
     <Compile Include="Commands\BatchMoveCommand.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
+    <Compile Include="Components\CodeStringLookuper.cs" />
+    <Compile Include="Gui\BatchMoveToResourcesToolPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Gui\BatchMoveToResourcesToolWindow.cs">
+    </Compile>
     <Compile Include="Components\InlineUndoUnit.cs" />
     <Compile Include="Components\MoveToResourcesOverwriteUndoUnit.cs" />
     <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
@@ -115,6 +121,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Package.ico" />
+    <Content Include="Resources\run.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vlkey.snk" />

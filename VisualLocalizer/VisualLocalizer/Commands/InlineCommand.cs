@@ -17,10 +17,6 @@ namespace VisualLocalizer.Commands {
    
     internal sealed class InlineCommand : AbstractCommand {          
 
-        public InlineCommand(VisualLocalizerPackage package)
-            : base(package) {
-        }
-
         public override void Process() {
             base.Process();
 

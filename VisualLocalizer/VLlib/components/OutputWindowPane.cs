@@ -64,7 +64,11 @@ namespace VisualLocalizer.Library {
             if (formatString == null) {
                 hr = pane.OutputString("(null)");
             } else {
-                hr = pane.OutputString(string.Format(formatString, args));
+                if (args == null || args.Length == 0) {
+                    hr = pane.OutputString(formatString);
+                } else {
+                    hr = pane.OutputString(string.Format(formatString, args));
+                }
             }            
             Marshal.ThrowExceptionForHR(hr);
         }
