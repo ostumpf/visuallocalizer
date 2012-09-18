@@ -62,11 +62,25 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\AbstractBatchCommand.cs" />
     <Compile Include="Commands\AbstractCommand.cs" />
+    <Compile Include="Commands\BatchInlineCommand.cs" />
     <Compile Include="Commands\BatchMoveCommand.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
-    <Compile Include="Components\CodeStringLookuper.cs" />
+    <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
+    <Compile Include="Components\Code\CodeReferenceLookuper.cs" />
+    <Compile Include="Components\Code\CodeResultItems.cs" />
+    <Compile Include="Components\Code\CodeStringLookuper.cs" />
+    <Compile Include="Extensions\ResXItemsEx.cs" />
+    <Compile Include="Gui\AbstractCodeToolWindow.cs" />
+    <Compile Include="Gui\AbstractCodeToolWindowPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Gui\BatchInlineToolPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Gui\BatchInlineToolWindow.cs" />
     <Compile Include="Gui\BatchMoveToResourcesToolPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -88,6 +102,7 @@
     <Compile Include="Editor\ResXEditorControl.Designer.cs">
       <DependentUpon>ResXEditorControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gui\DataGridViewCheckBoxHeaderCell.cs" />
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>

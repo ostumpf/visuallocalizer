@@ -6,27 +6,59 @@
 
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h"/>
+
   <Commands>
     <Groups>
-      <Group guid="BatchToolbarCmdSet" id="BatchToolbarGroupID" priority="0x0000">
-        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarID"/>
+      <Group guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID" priority="0x0000">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarID"/>
       </Group>
     </Groups>
 
     <Menus>
-      <Menu guid="BatchToolbarCmdSet" id="BatchToolbarID" type="ToolWindowToolbar">
+      <Menu guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarID" type="ToolWindowToolbar">
         <CommandFlag>AlwaysCreate</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Batch Tool Window Toolbar</ButtonText>
-          <CommandName>Batch Tool Window Toolbar</CommandName>
+          <ButtonText>Batch Inline Tool Window Toolbar</ButtonText>
+          <CommandName>Batch Inline Tool Window Toolbar</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>   
+
+    <Buttons>
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="2" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchInlineRun</CommandName>
+          <ButtonText>Run</ButtonText>
+          <ToolTipText>Run</ToolTipText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+  
+  <Commands>
+    <Groups>
+      <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID" priority="0x0000">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID"/>
+      </Group>
+    </Groups>
+
+    <Menus>
+      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID" type="ToolWindowToolbar">
+        <CommandFlag>AlwaysCreate</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Batch Move Tool Window Toolbar</ButtonText>
+          <CommandName>Batch Move Tool Window Toolbar</CommandName>
         </Strings>
       </Menu>
     </Menus>
 
     <Combos>
-      <Combo guid="BatchToolbarCmdSet" id="BatchToolbarModeID" priority="1" type="DropDownCombo" idCommandList="BatchToolbarModesListID" defaultWidth="290">        
-        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarGroupID"/>
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="1" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>CaseSensitive</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
@@ -37,8 +69,8 @@
     </Combos>
     
     <Buttons>      
-      <Button guid="BatchToolbarCmdSet" id="BatchToolbarRunID" priority="2" type="Button">
-        <Parent guid="BatchToolbarCmdSet" id="BatchToolbarGroupID"/>
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="2" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
         <Icon guid="guidImages" id="runPng"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
@@ -91,7 +123,7 @@
         <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>
         <Strings>
           <CommandName>BatchInline</CommandName>
-          <ButtonText>Batch inline</ButtonText>
+          <ButtonText>Batch inline...</ButtonText>
         </Strings>
       </Button>
 
@@ -117,7 +149,7 @@
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
           <CommandName>BatchInline</CommandName>
-          <ButtonText>Batch inline</ButtonText>
+          <ButtonText>Batch inline...</ButtonText>
         </Strings>
       </Button>
 
@@ -128,16 +160,7 @@
           <ButtonText>Batch move to resources...</ButtonText>
         </Strings>
       </Button>
-      
-      
-      <Button guid="VLCommandSetGuid" id="showToolWindowItem" type="Button">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"></Parent>
-        <Strings>
-          <CommandName>View.VisualLocalizerToolWindow</CommandName>
-          <ButtonText>Visual Localizer Tool Window</ButtonText>
-        </Strings>
-      </Button>
-
+           
     </Buttons>
 
     <Menus>
@@ -163,11 +186,6 @@
     </Menus>    
   </Commands>
 
-  <KeyBindings>
-    <KeyBinding guid="VLCommandSetGuid" id="showToolWindowItem" editor="guidVSStd97"
-                key1="v" mod1="Control Alt" key2="v"/>
-  </KeyBindings>
-
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="VLPackageGuid" value="{68c95c48-9295-49a0-a2ed-81da6e651374}" />
@@ -188,18 +206,22 @@
       <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
       <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
       
-      <IDSymbol name="visualLocalizerToolWindowGroup" value="0x0012" />
-      <IDSymbol name="showToolWindowItem" value="0x0013" />
       <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
       <IDSymbol name="batchInlineCodeMenuItem" value="0x0015" />
     </GuidSymbol>
 
-    <GuidSymbol name="BatchToolbarCmdSet" value="{41896b92-0335-4522-b75f-35dc0a64d5a3}">
-      <IDSymbol name="BatchToolbarID" value="0x1001" />
-      <IDSymbol name="BatchToolbarGroupID" value="0x1002" />
-      <IDSymbol name="BatchToolbarRunID" value="0x1003" />
-      <IDSymbol name="BatchToolbarModesListID" value="0x1004" />
-      <IDSymbol name="BatchToolbarModeID" value="0x1005" />
+    <GuidSymbol name="BatchMoveToolbarCmdSet" value="{41896b92-0335-4522-b75f-35dc0a64d5a3}">
+      <IDSymbol name="BatchMoveToolbarID" value="0x1001" />
+      <IDSymbol name="BatchMoveToolbarGroupID" value="0x1002" />
+      <IDSymbol name="BatchMoveToolbarRunID" value="0x1003" />
+      <IDSymbol name="BatchMoveToolbarModesListID" value="0x1004" />
+      <IDSymbol name="BatchMoveToolbarModeID" value="0x1005" />
+    </GuidSymbol>
+
+    <GuidSymbol name="BatchInlineToolbarCmdSet" value="{F2983E9C-E545-4d2f-A5F2-D04683356AD0}">
+      <IDSymbol name="BatchInlineToolbarID" value="0x2001" />
+      <IDSymbol name="BatchInlineToolbarGroupID" value="0x2003" />
+      <IDSymbol name="BatchInlineToolbarRunID" value="0x2002" />      
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >

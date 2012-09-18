@@ -33,7 +33,9 @@ namespace VisualLocalizer
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
     [ProvideToolWindow(typeof(BatchMoveToResourcesToolWindow),MultiInstances=false,
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
-    
+    [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false,
+        Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
+
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
     {

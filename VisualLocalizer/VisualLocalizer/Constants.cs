@@ -12,7 +12,10 @@ namespace VisualLocalizer
         public static class VLCommandSet { }
 
         [Guid("41896b92-0335-4522-b75f-35dc0a64d5a3")]
-        public static class VLBatchToolbarCommandSet { }
+        public static class VLBatchMoveToolbarCommandSet { }
+
+        [Guid("F2983E9C-E545-4d2f-A5F2-D04683356AD0")]
+        public static class VLBatchInlineToolbarCommandSet { }
     }
 
     public static class PackageCommandIDs {
@@ -27,12 +30,13 @@ namespace VisualLocalizer
         public const int BatchMoveSolExpMenuItem = 0x0003;
         public const int BatchInlineSolExpMenuItem = 0x0016;
 
-        public const int ShowToolWindowItem = 0x0013;
+        public const int BatchMoveToolbarID = 0x1001;        
+        public const int BatchMoveToolbarRunID = 0x1003;
+        public const int BatchMoveToolbarModesListID = 0x1004;
+        public const int BatchMoveToolbarModeID = 0x1005;
 
-        public const int BatchToolbarID = 0x1001;        
-        public const int BatchToolbarRunID = 0x1003;
-        public const int BatchToolbarModesListID = 0x1004;
-        public const int BatchToolbarModeID = 0x1005;
+        public const int BatchInlineToolbarID = 0x2001;
+        public const int BatchInlineToolbarRunID = 0x2002;
     }
 
     public static class StringConstants {

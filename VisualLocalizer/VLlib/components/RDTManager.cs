@@ -67,6 +67,7 @@ namespace VisualLocalizer.Library {
 
         public static void ReleaseLocks() {
             lockedDocuments.ForEach((path) => { SetFileReadonly(path, false); });
+            lockedDocumentsWaiting.Clear();
         }
 
         public static void SilentlyModifyFile(string path, Action<string> modify) {

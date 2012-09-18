@@ -68,7 +68,6 @@ namespace VisualLocalizer.Library {
 
             return list;
         }
-
-    
+        
     }
 }

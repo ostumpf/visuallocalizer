@@ -102,33 +102,33 @@ namespace VisualLocalizer.Library {
             }            
         }
 
-        public static List<CodeUsing> GetUsedNamespaces(this CodeNamespace codeNamespace,ProjectItem item) {
-            List<CodeUsing> list = new List<CodeUsing>();
+        public static Dictionary<string,string> GetUsedNamespaces(this CodeNamespace codeNamespace,ProjectItem item) {
+            Dictionary<string, string> list = new Dictionary<string, string>();
+            GetUsedNamespacesInternal(codeNamespace, item, list);
+            return list;
+        }
+
+        private static void GetUsedNamespacesInternal(CodeNamespace codeNamespace, ProjectItem item, Dictionary<string, string> list) {
             if (codeNamespace != null) {
-                list.Add(new CodeUsing() { Alias = null, Namespace = codeNamespace.FullName });
+                list.Add(codeNamespace.FullName, null);
 
                 AddUsedNamespacesToList(codeNamespace.Children, list);
 
                 CodeNamespace parent = GetNamespace(codeNamespace as CodeElement);
-                list.AddRange(GetUsedNamespaces(parent, item));
+                GetUsedNamespacesInternal(parent, item, list);
             } else {
                 AddUsedNamespacesToList(item.FileCodeModel.CodeElements, list);
             }
-            return list;
         }
 
-        private static void AddUsedNamespacesToList(CodeElements elements, List<CodeUsing> list) {
+        private static void AddUsedNamespacesToList(CodeElements elements, Dictionary<string, string> list) {
             foreach (CodeElement2 element in elements) {
                 if (element.Kind == vsCMElement.vsCMElementImportStmt) {
                     CodeImport codeImport = (CodeImport)element;
-                    list.Add(new CodeUsing() { Alias = codeImport.Alias, Namespace = codeImport.Namespace });
+                    list.Add(codeImport.Namespace, codeImport.Alias);
                 }
             }
         }
     }
-
-    public sealed class CodeUsing {
-        public string Alias { get; set; }
-        public string Namespace { get; set; }
-    }
+   
 }

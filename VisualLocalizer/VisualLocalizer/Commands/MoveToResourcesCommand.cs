@@ -42,21 +42,19 @@ namespace VisualLocalizer.Commands {
                 if (result == System.Windows.Forms.DialogResult.OK) {
                     string referenceText;
                     bool addNamespace;
-
-                    List<CodeUsing> usedNamespaces = resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem);
+                    
                     if (f.UsingFullName) {
                         referenceText = f.SelectedItem.Namespace + "." + f.SelectedItem.Class + "." + f.Key;
                         addNamespace = false;
                     } else {
+                        Dictionary<string, string> usedNamespaces = resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem);
                         referenceText = f.SelectedItem.Class + "." + f.Key;
                         addNamespace = true;
-                        foreach (CodeUsing c in usedNamespaces) {
-                            if (c.Namespace == f.SelectedItem.Namespace) {
-                                addNamespace = false;
-                                if (!string.IsNullOrEmpty(c.Alias)) referenceText = c.Alias + "." + referenceText;                                
-                                break;
-                            }
-                        }
+                        if (usedNamespaces.ContainsKey(f.SelectedItem.Namespace)) {
+                            addNamespace = false;
+                            string alias = usedNamespaces[f.SelectedItem.Namespace];
+                            if (!string.IsNullOrEmpty(alias)) referenceText = alias + "." + referenceText;  
+                        }                     
                     }
                     
                     int hr=textLines.ReplaceLines(replaceSpan.iStartLine, replaceSpan.iStartIndex, replaceSpan.iEndLine, replaceSpan.iEndIndex,
@@ -103,57 +101,14 @@ namespace VisualLocalizer.Commands {
         }
 
         private CodeStringResultItem GetReplaceStringItem() {
-            TextSpan[] spans = new TextSpan[1];
-            int hr = textView.GetSelectionSpan(spans);
-            Marshal.ThrowExceptionForHR(hr);
-
-            TextSpan selectionSpan = spans[0];
-            object o;
-            hr = textLines.CreateTextPoint(selectionSpan.iStartLine, selectionSpan.iStartIndex, out o);
-            Marshal.ThrowExceptionForHR(hr);
-            TextPoint selectionPoint = (TextPoint)o;
-
-            TextPoint startPoint = null;
-            string text = null;
-            bool ok = false;
+            string text;
+            TextPoint startPoint;
+            string codeFunctionName;
+            string codeVariableName;
+            CodeElement2 codeClass;
+            TextSpan selectionSpan;
+            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass,out selectionSpan);
             CodeStringResultItem result = null;
-            string codeFunctionName = null;
-            string codeVariableName = null;
-            CodeElement2 codeClass = null;
-
-            try {
-                CodeFunction2 codeFunction = (CodeFunction2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementFunction);
-                codeFunctionName = codeFunction.Name;
-                codeClass = codeFunction.GetClass();
-
-                startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
-                text = codeFunction.GetText();
-                ok = true;
-            } catch (Exception) {
-                try {
-                    CodeProperty codeProperty = (CodeProperty)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementProperty);
-                    codeFunctionName = codeProperty.Name;
-                    codeClass = codeProperty.GetClass();
-
-                    startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
-                    text = codeProperty.GetText();
-                    ok = true;
-                } catch (Exception) {
-                    CodeVariable2 codeVariable = (CodeVariable2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementVariable);
-                    if (codeVariable.ConstKind != vsCMConstKind.vsCMConstKindConst &&
-                        codeVariable.Type.TypeKind == vsCMTypeRef.vsCMTypeRefString &&
-                        codeVariable.InitExpression != null) {
-
-                        codeVariableName = codeVariable.Name;
-                        text = codeVariable.GetText();
-                        startPoint = codeVariable.StartPoint;
-                        codeClass = codeVariable.GetClass();
-                        if (codeClass.Kind == vsCMElement.vsCMElementClass)
-                            ok = true;
-                    }
-                }
-                
-            }
 
             if (ok) {
                 CodeStringLookuper lookuper = new CodeStringLookuper(text, startPoint.Line, startPoint.LineCharOffset, startPoint.AbsoluteCharOffset,
@@ -172,7 +127,6 @@ namespace VisualLocalizer.Commands {
             return result;
              
         }
-
-               
+       
     }
 }

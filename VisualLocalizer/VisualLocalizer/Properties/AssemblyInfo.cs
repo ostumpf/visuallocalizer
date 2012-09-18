@@ -20,4 +20,3 @@ using System.Runtime.InteropServices;
 [assembly: NeutralResourcesLanguage("en-US")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("VLUnitTest,PublicKey=61ff7f8571d9a32f")]

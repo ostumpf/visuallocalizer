@@ -21,38 +21,45 @@ using System.IO;
 namespace VisualLocalizer.Gui {
 
     [Guid("121B8FE4-5358-49c2-B1BC-6EC56FFB3B33")]
-    internal sealed class BatchMoveToResourcesToolWindow : ToolWindowPane {
-
-        private BatchMoveToResourcesToolPanel panel;
+    internal sealed class BatchMoveToResourcesToolWindow : AbstractCodeToolWindow<BatchMoveToResourcesToolPanel> {
+        
         private readonly string[] NAMESPACE_POLICY_ITEMS = { "Add using block if neccessary", "Use full class name" };
         private string currentNamespacePolicy;
-        
-        public BatchMoveToResourcesToolWindow():base(null) {
+        private CommandID runCommandID;
+        private OleMenuCommandService menuService;
+
+        public BatchMoveToResourcesToolWindow() {
             this.Caption = "Batch Move to Resources - Visual Localizer";
             this.currentNamespacePolicy = NAMESPACE_POLICY_ITEMS[0];
-            this.ToolBar = new CommandID(typeof(VisualLocalizer.Guids.VLBatchToolbarCommandSet).GUID, PackageCommandIDs.BatchToolbarID);
+            this.ToolBar = new CommandID(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarID);
             this.ToolBarLocation = (int)VSTWT_LOCATION.VSTWT_TOP;
-            panel = new BatchMoveToResourcesToolPanel();
-            panel.ItemHighlightRequired += new EventHandler<CodeStringResultItemEventArgs>(panel_ItemHighlightRequired);
 
-            OleMenuCommandService menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));            
-
-            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchToolbarCommandSet).GUID, PackageCommandIDs.BatchToolbarRunID,
+            menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
+            runCommandID = new CommandID(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRunID);
+            
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRunID,
                 new EventHandler(runClick), null, menuService);
 
-            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchToolbarCommandSet).GUID, PackageCommandIDs.BatchToolbarModeID,
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarModeID,
                 new EventHandler(handleNamespacePolicyCommand), null, menuService);
 
-            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchToolbarCommandSet).GUID, PackageCommandIDs.BatchToolbarModesListID,
-                new EventHandler(getNamespacePolicyItems), null, menuService);            
-        }
-        
-        public void SetData(List<CodeStringResultItem> value){
-            panel.SetData(value);                        
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarModesListID,
+                new EventHandler(getNamespacePolicyItems), null, menuService);
+
+            panel.HasErrorChanged += new EventHandler(panel_HasErrorChanged);
         }
 
-        public override IWin32Window Window {
-            get { return panel; }
+        private void panel_HasErrorChanged(object sender, EventArgs e) {
+            menuService.FindCommand(runCommandID).Supported = !panel.HasError;
+        }
+        
+        protected override void OnWindowHidden(object sender, EventArgs e) {
+            panel.Unload();
+            RDTManager.ReleaseLocks();
+        }                
+        
+        public void SetData(List<CodeStringResultItem> value){        
+            panel.SetData(value);                        
         }
 
         private void handleNamespacePolicyCommand(object sender, EventArgs e) {
@@ -104,26 +111,7 @@ namespace VisualLocalizer.Gui {
                 }
             }
         }
-
-        private void panel_ItemHighlightRequired(object sender, CodeStringResultItemEventArgs args) {
-            try {
-                IVsTextView view = DocumentViewsManager.GetTextViewForFile(args.Item.SourceItem.Properties.Item("FullPath").Value.ToString(), true, true);
-                if (view == null) throw new Exception("Cannot open document.");
                 
-                TextSpan span=args.Item.ReplaceSpan;
-                int hr = view.SetSelection(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex);
-                Marshal.ThrowExceptionForHR(hr);
-
-                hr = view.EnsureSpanVisible(span);
-                Marshal.ThrowExceptionForHR(hr);
-            } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
-            }
-        }
-
         private void runClick(object sender, EventArgs args) {
             int checkedRows = panel.CheckedRowsCount;
             int rowCount = panel.Rows.Count;
@@ -131,7 +119,7 @@ namespace VisualLocalizer.Gui {
 
             try {
                 bool usingFullName = currentNamespacePolicy == NAMESPACE_POLICY_ITEMS[1];
-                Dictionary<object, List<CodeUsing>> usedNamespacesCache = new Dictionary<object, List<CodeUsing>>();
+                Dictionary<object, Dictionary<string, string>> usedNamespacesCache = new Dictionary<object, Dictionary<string, string>>();
                 Dictionary<ProjectItem, List<string>> addNamespacesPlan = new Dictionary<ProjectItem, List<string>>();
                 Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
                 Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
@@ -141,10 +129,10 @@ namespace VisualLocalizer.Gui {
 
                 while (true) {
                     try {
-                        CodeStringResultItem resultItem = panel.GetNextResultItem();
+                        CodeStringResultItem resultItem = (CodeStringResultItem)panel.GetNextResultItem();
                         if (resultItem == null) break;
 
-                        List<CodeUsing> usedNamespaces = null;
+                        Dictionary<string, string> usedNamespaces = null;
                         if (resultItem.NamespaceElement == null) {
                             if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
                                 usedNamespacesCache.Add(resultItem.SourceItem, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
@@ -167,13 +155,11 @@ namespace VisualLocalizer.Gui {
                         } else {
                             referenceText = resultItem.DestinationItem.Class + "." + resultItem.Key;
                             addNamespace = true;
-                            foreach (CodeUsing c in usedNamespaces) {
-                                if (c.Namespace == resultItem.DestinationItem.Namespace) {
-                                    addNamespace = false;
-                                    if (!string.IsNullOrEmpty(c.Alias)) referenceText = c.Alias + "." + referenceText;
-                                    break;
-                                }
-                            }
+                            if (usedNamespaces.ContainsKey(resultItem.DestinationItem.Namespace)) {
+                                addNamespace = false;
+                                string alias = usedNamespaces[resultItem.DestinationItem.Namespace];
+                                if (!string.IsNullOrEmpty(alias)) referenceText = alias + "." + referenceText;
+                            }     
                         }
                         if (addNamespace) {
                             if (!addNamespacesPlan.ContainsKey(resultItem.SourceItem)) {
@@ -218,9 +204,9 @@ namespace VisualLocalizer.Gui {
                         }
                         resultItem.DestinationItem.AddString(resultItem.Key, resultItem.Value);
 
-                        panel.SetCurrentItemFinished(null, referenceText);
+                        panel.SetCurrentItemFinished(true, referenceText.Length);
                     } catch (Exception ex) {
-                        panel.SetCurrentItemFinished(ex.Message, null);
+                        panel.SetCurrentItemFinished(false, -1);
                         rowErrors++;
                     }
                 }
@@ -235,14 +221,16 @@ namespace VisualLocalizer.Gui {
                         pair.Key.Document.AddUsingBlock(nmspc);
                         undoManagersCache[pair.Key.Properties.Item("FullPath").Value.ToString()].RemoveTopFromUndoStack(1);
                     }
-                }
-                
+                }                                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
-            } finally {                
+            } finally {
+                ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave);
+
+                VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);
             }
         }

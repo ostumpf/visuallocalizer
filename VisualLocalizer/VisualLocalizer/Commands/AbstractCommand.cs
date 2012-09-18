@@ -14,8 +14,7 @@ using VisualLocalizer.Library;
 namespace VisualLocalizer.Commands {
     internal abstract class AbstractCommand {
 
-        protected IVsTextManager textManager;
-        
+        protected IVsTextManager textManager;        
         protected IVsTextLines textLines;
         protected IVsTextView textView;
         protected IOleUndoManager undoManager;        
@@ -40,124 +39,65 @@ namespace VisualLocalizer.Commands {
 
             hr = textLines.GetUndoManager(out undoManager);
             Marshal.ThrowExceptionForHR(hr);           
-        }       
+        }
 
-        protected void ParseUsing(TextPoint start, TextPoint end, out string namespc, out string alias) {
-            alias = null;
-
-            string text;
-            int hr = textLines.GetLineText(start.Line - 1, start.DisplayColumn - 1, end.Line - 1, end.DisplayColumn - 1, out text);
+        protected bool GetCodeBlockFromSelection(out string text, out TextPoint startPoint, out string codeFunctionName, out string codeVariableName, out CodeElement2 codeClass, out TextSpan selectionSpan) {
+            TextSpan[] spans = new TextSpan[1];
+            int hr = textView.GetSelectionSpan(spans);
             Marshal.ThrowExceptionForHR(hr);
 
-            text = text.Trim();
-            if (!text.StartsWith(StringConstants.UsingStatement) || !text.EndsWith(";"))
-                throw new Exception("Error while parsing using statement: " + text);
-
-            text = text.Substring(StringConstants.UsingStatement.Length, text.LastIndexOf(';') - StringConstants.UsingStatement.Length);
-            text = text.RemoveWhitespace();
-            int eqIndex = text.IndexOf('=');
-            if (eqIndex > 0) {
-                alias = text.Substring(0, eqIndex);
-                namespc = text.Substring(eqIndex + 1);
-            } else {
-                namespc = text;
-            }
-        }
-
-        protected string GetTextOfSpan(TextSpan span) {
-            string str;
-
-            int hr = textLines.GetLineText(span.iStartLine, span.iStartIndex,
-                span.iEndLine, span.iEndIndex, out str);
+            selectionSpan = spans[0];
+            object o;
+            hr = textLines.CreateTextPoint(selectionSpan.iStartLine, selectionSpan.iStartIndex, out o);
             Marshal.ThrowExceptionForHR(hr);
+            TextPoint selectionPoint = (TextPoint)o;
 
-            return str;
-        }
+            startPoint = null;
+            text = null;
+            bool ok = false;            
+            codeFunctionName = null;
+            codeVariableName = null;
+            codeClass = null;
 
-        protected TextSpan TrimSpan(TextSpan span, string textLine) {
-            while (span.iEndIndex > 0 && char.IsWhiteSpace(textLine, span.iEndIndex - 1))
-                span.iEndIndex--;
-
-            while (span.iStartIndex < textLine.Length && char.IsWhiteSpace(textLine, span.iStartIndex))
-                span.iStartIndex++;
-
-            return span;
-        }       
-
-        protected int countAposRight(string text, int beginIndex, out int firstIndex) {
-            int count = 0;
-            firstIndex = -1;
-
-            int p = beginIndex;
-            if (p >= text.Length) return 0;
-
-            char prevChar = (p - 1 >= 0 ? text[p - 1] : '?');
-            char currentChar = text[p];
-
-            while (p < text.Length) {
-                if (currentChar == '"' && prevChar != '\\') {
-                    if (count == 0) {
-                        firstIndex = p;
-                    }
-                    count++;
-                }
-
-                p++;
-                if (p >= text.Length) break;
-
-                prevChar = currentChar;
-                currentChar = text[p];
-            }
-
-            return count;
-        }
-
-        protected int countAposLeft(string text, int beginIndex, out int firstIndex) {
-            int count = 0;
-            firstIndex = -1;
-
-            int p = beginIndex - 1;
-            if (p <= 0) return 0;
-
-            char prevChar = text[p];
-            char currentChar = (p - 1 >= 0 ? text[p - 1] : '?');
-            p--;
-
-            while (p >= 0) {
-                if (currentChar != '\\' && prevChar == '\"') {
-                    if (count == 0) {
-                        if (currentChar == '@')
-                            firstIndex = p;
-                        else
-                            firstIndex = p + 1;
-                    }
-                    count++;
-                }
-
-                p--;
-                prevChar = currentChar;
-
-                if (p >= 0)
-                    currentChar = text[p];
-                else if (p == -1)
-                    currentChar = '?';
-                else break;
-            }
-
-            return count;
-        }
-
-        protected bool IsTextSpanInAttribute(TextSpan span) {
-            bool ret = true;
             try {
-                object point;
-                
-                textLines.CreateTextPoint(span.iStartLine, span.iStartIndex, out point);                
-                currentCodeModel.CodeElementFromPoint(point as TextPoint, vsCMElement.vsCMElementAttribute);
+                CodeFunction2 codeFunction = (CodeFunction2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementFunction);
+                codeFunctionName = codeFunction.Name;
+                codeClass = codeFunction.GetClass();
+
+                startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+                text = codeFunction.GetText();
+                ok = true;
             } catch (Exception) {
-                ret = false;
+                try {
+                    CodeProperty codeProperty = (CodeProperty)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementProperty);
+                    codeFunctionName = codeProperty.Name;
+                    codeClass = codeProperty.GetClass();
+
+                    startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
+                    text = codeProperty.GetText();
+                    ok = true;
+                } catch (Exception) {
+                    try {
+                        CodeVariable2 codeVariable = (CodeVariable2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementVariable);
+                        if (codeVariable.ConstKind != vsCMConstKind.vsCMConstKindConst &&
+                            codeVariable.Type.TypeKind == vsCMTypeRef.vsCMTypeRefString &&
+                            codeVariable.InitExpression != null) {
+
+                            codeVariableName = codeVariable.Name;
+                            text = codeVariable.GetText();
+                            startPoint = codeVariable.StartPoint;
+                            codeClass = codeVariable.GetClass();
+                            if (codeClass.Kind == vsCMElement.vsCMElementClass)
+                                ok = true;
+                        }
+                    } catch (Exception) {
+                        return false;
+                    }
+                }
             }
-            return ret;
-        }        
+
+            return ok;
+        }
+      
     }
 }

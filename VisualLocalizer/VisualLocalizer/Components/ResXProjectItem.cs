@@ -62,6 +62,11 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        public Dictionary<string, string> AllReferences {
+            get;
+            private set;
+        }
+
         public bool MarkedInternalInReferencedProject {
             get;
             private set;
@@ -237,45 +242,51 @@ namespace VisualLocalizer.Components {
                 data = null;
             }
             IsLoaded = false;
+            designerNamespaceElement = null;
+            designerClassElement = null;
         }
 
-        public string GetKeyForPropertyName(string propertyName) {
-            CodeNamespace nmspcElement = null;
-            foreach (CodeElement e in DesignerItem.FileCodeModel.CodeElements)
-                if (e.Kind == vsCMElement.vsCMElementNamespace && e.FullName == Namespace) {
-                    nmspcElement = (CodeNamespace)e;
-                    break;
-                }
-            if (nmspcElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+        public void LoadAllReferences() {
+            AllReferences = new Dictionary<string,string>();
+            if (!IsLoaded) Load();
 
-            CodeClass classElement = null;
-            foreach (CodeElement e in nmspcElement.Children)
-                if (e.Kind == vsCMElement.vsCMElementClass && e.Name == Class) {
-                    classElement = (CodeClass)e;
-                    break;
-                }
-            if (classElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+            foreach (var pair in data) {
+                AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Key), pair.Value.ToString());
+            }            
+        }
+
+        private CodeNamespace designerNamespaceElement = null;
+        private CodeClass designerClassElement = null;
+        private string GetPropertyNameForKey(string key) {
+            if (designerNamespaceElement == null || designerClassElement == null) {                
+                foreach (CodeElement e in DesignerItem.FileCodeModel.CodeElements)
+                    if (e.Kind == vsCMElement.vsCMElementNamespace && e.FullName == Namespace) {
+                        designerNamespaceElement = (CodeNamespace)e;
+                        break;
+                    }
+                if (designerNamespaceElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+                
+                foreach (CodeElement e in designerNamespaceElement.Children)
+                    if (e.Kind == vsCMElement.vsCMElementClass && e.Name == Class) {
+                        designerClassElement = (CodeClass)e;
+                        break;
+                    }
+                if (designerClassElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
+            }
 
             CodeProperty propertyElement = null;
-            foreach (CodeElement e in classElement.Children)
-                if (e.Kind == vsCMElement.vsCMElementProperty && e.Name == propertyName) {
+            foreach (CodeElement e in designerClassElement.Children)
+                if (e.Kind == vsCMElement.vsCMElementProperty) {
                     propertyElement = (CodeProperty)e;
-                    break;
+                    string getterText = propertyElement.GetText();
+                    Match matchResult = Regex.Match(getterText, @"^\s*get\s*\{\s*return\s*\w+\.GetString\("""+key+@""",\s*\w+\);\s*\}\s*$");
+                    if (matchResult.Success) {
+                        break;
+                    }                    
                 }
-            if (propertyElement == null) throw new InvalidOperationException(string.Format("Cannot find property {0}.", propertyName));
+            if (propertyElement == null) throw new InvalidOperationException(string.Format("Cannot find property for key {0}.", key));
 
-            TextPoint startPoint = propertyElement.Getter.StartPoint;
-            TextPoint endPoint = propertyElement.Getter.EndPoint;
-            string getterText = startPoint.CreateEditPoint().GetText(endPoint);                       
-            if (getterText == null) throw new InvalidOperationException(string.Format("Cannot read getter of property {0}.", propertyName));
-
-            Match matchResult = Regex.Match(getterText, @"^\s*get\s*\{\s*return\s*\w+\.GetString\((.*),\s*\w+\);\s*\}\s*$");
-            if (matchResult.Groups.Count != 2) throw new InvalidOperationException(string.Format("Cannot match getter of property {0}.",propertyName));
-
-            string groupValue = matchResult.Groups[1].Value;
-            string key = groupValue.Substring(1, groupValue.Length - 2);
-
-            return key;
+            return propertyElement.Name;
         }
 
         public static bool IsItemResX(ProjectItem item) {
@@ -306,8 +317,7 @@ namespace VisualLocalizer.Components {
             ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);                       
 
             return resxitem;
-        }
-
+        }        
 
         private void resolveNamespaceClass() {
             if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) {
@@ -344,5 +354,6 @@ namespace VisualLocalizer.Components {
         }
        
     }
-   
+
+    
 }

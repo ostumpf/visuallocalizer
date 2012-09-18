@@ -12,6 +12,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.Shell.Interop;
 using VisualLocalizer.Gui;
+using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
@@ -19,11 +20,13 @@ namespace VisualLocalizer.Commands {
         private MoveToResourcesCommand moveToResourcesCommand;
         private InlineCommand inlineCommand;
         private BatchMoveCommand batchMoveCommand;
+        private BatchInlineCommand batchInlineCommand;
 
         public MenuManager() {            
             this.moveToResourcesCommand = new MoveToResourcesCommand();
             this.inlineCommand = new InlineCommand();
             this.batchMoveCommand = new BatchMoveCommand();
+            this.batchInlineCommand = new BatchInlineCommand();
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.CodeMenu, null,
@@ -55,11 +58,7 @@ namespace VisualLocalizer.Commands {
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineSolExpMenuItem,
-                new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);
-
-            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
-                PackageCommandIDs.ShowToolWindowItem,
-                new EventHandler(showToolWindowClick), null, VisualLocalizerPackage.Instance.menuService);            
+                new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);     
         }
 
         internal static void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,
@@ -71,17 +70,18 @@ namespace VisualLocalizer.Commands {
             menuService.AddCommand(cmd);
         }
 
-        internal BatchMoveToResourcesToolWindow ShowToolWindow() {
-            BatchMoveToResourcesToolWindow pane = (BatchMoveToResourcesToolWindow)VisualLocalizerPackage.Instance.FindToolWindow(typeof(BatchMoveToResourcesToolWindow), 0, true);
-
+        internal T ShowToolWindow<T>() where T:ToolWindowPane {
+            T pane = (T)VisualLocalizerPackage.Instance.FindToolWindow(typeof(T), 0, true);
+            
             if (pane != null && pane.Frame != null) {
-                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_IsWindowTabbed, true);
-                ((IVsWindowFrame)pane.Frame).SetProperty((int)__VSFPROPID.VSFPROPID_FrameMode, VSFRAMEMODE.VSFM_Dock);
-                ((IVsWindowFrame)pane.Frame).Show();
+                IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                
+                frame.SetProperty((int)__VSFPROPID.VSFPROPID_IsWindowTabbed, true);
+                frame.SetProperty((int)__VSFPROPID.VSFPROPID_FrameMode, VSFRAMEMODE.VSFM_Dock);                
+                frame.Show();                                
             }
 
             return pane;
-        }
+        }      
 
         private void codeMenuQueryStatus(object sender, EventArgs args) {
             bool ok = VisualLocalizerPackage.Instance.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(StringConstants.CsExtension);
@@ -110,11 +110,7 @@ namespace VisualLocalizer.Commands {
 
             (sender as OleMenuCommand).Visible = ok;
         }
-
-        private void showToolWindowClick(object sender, EventArgs args) {
-            ShowToolWindow();
-        }
-
+      
         private void moveToResourcesClick(object sender, EventArgs args) {
             try {
                 moveToResourcesCommand.Process();
@@ -140,10 +136,11 @@ namespace VisualLocalizer.Commands {
         private void batchMoveCodeClick(object sender, EventArgs args) {
             try {
                 batchMoveCommand.Process();
-                BatchMoveToResourcesToolWindow win = ShowToolWindow();
+                BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
-                    win.SetData(batchMoveCommand.Results); 
+                    win.SetData(batchMoveCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
+                batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -155,38 +152,51 @@ namespace VisualLocalizer.Commands {
         private void batchMoveSolExpClick(object sender, EventArgs args) {
             try {
                 batchMoveCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
-                BatchMoveToResourcesToolWindow win = ShowToolWindow();
+                BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
                     win.SetData(batchMoveCommand.Results); 
                 } else throw new Exception("Unable to display tool window.");
+                batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            }
+            } 
         }
 
         private void batchInlineCodeClick(object sender, EventArgs args) {
             try {
-               
-            } catch (Exception ex) {
+                batchInlineCommand.Process();
+                BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
+                if (win != null) {
+                    win.SetData(batchInlineCommand.Results);
+                } else throw new Exception("Unable to display tool window.");
+                batchInlineCommand.Results.Clear();
+            } catch (Exception ex) {                
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            }
+            } 
         }
 
         private void batchInlineSolExpClick(object sender, EventArgs args) {
             try {
-
+                batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
+                BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
+                if (win != null) {
+                    win.SetData(batchInlineCommand.Results);
+                } else throw new Exception("Unable to display tool window.");
+                batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            }
+            } 
         }
     }
+
+   
 }

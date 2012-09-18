@@ -55,6 +55,10 @@ namespace VisualLocalizer.Library {
             return false;
         }
 
+        public static bool IsPrintable(this char c) {
+            return !char.IsControl(c) && c != '\\' && c != '\"';
+        }
+
         public static List<string> CreateKeySuggestions(this string value, string namespaceElement, string classElement, string methodElement) {
             List<string> suggestions = new List<string>();
 
@@ -108,6 +112,33 @@ namespace VisualLocalizer.Library {
                     suggestions[i] = "_" + suggestions[i];
 
             return suggestions;
+        }
+
+        public static string ConvertUnescapeSequences(this string text) {
+            StringBuilder b = new StringBuilder();
+
+            foreach (char c in text) {
+                if (c.IsPrintable()) {
+                    b.Append(c);
+                } else {
+                    switch (c) {
+                        case '\a': b.Append("\\a"); break;
+                        case '\b': b.Append("\\b"); break;
+                        case '\f': b.Append("\\f"); break;
+                        case '\n': b.Append("\\n"); break;
+                        case '\r': b.Append("\\r"); break;
+                        case '\t': b.Append("\\t"); break;
+                        case '\'': b.Append("'"); break;
+                        case '\"': b.Append("\\\""); break;
+                        case '\\': b.Append("\\\\"); break;
+                        default:
+                            b.Append(c.Escape());
+                            break;
+                    }
+                }
+            }
+
+            return b.ToString();
         }
 
         public static string ConvertEscapeSequences(this string text,bool isVerbatim) {
@@ -188,6 +219,10 @@ namespace VisualLocalizer.Library {
             } else {
                 return (hexDec - 'a') + 10;
             }
+        }
+
+        private static string Escape(this char c) {
+            return string.Format("\\x{0:x4}", (int)c);
         }
     }
 }
