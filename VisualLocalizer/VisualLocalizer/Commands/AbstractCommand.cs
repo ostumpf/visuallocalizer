@@ -28,6 +28,8 @@ namespace VisualLocalizer.Commands {
             currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
             if (currentCodeModel == null)
                 throw new Exception("Current document has no CodeModel.");
+            if (currentDocument.ReadOnly)
+                throw new Exception("Cannot perform this operation - active document is readonly");
 
             textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
 

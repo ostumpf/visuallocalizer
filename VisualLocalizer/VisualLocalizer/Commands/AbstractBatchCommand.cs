@@ -21,7 +21,9 @@ namespace VisualLocalizer.Commands {
             if (currentDocument.ProjectItem == null)
                 throw new Exception("Selected document has no corresponding Project Item.");
             if (currentDocument.ProjectItem.ContainingProject == null)
-                throw new Exception("Selected document is not a part of any Project.");
+                throw new Exception("Selected document is not a part of any Project.");                        
+            if (currentDocument.ReadOnly)
+                throw new Exception("Cannot perform this operation - active document is readonly");
             currentlyProcessedItem = currentDocument.ProjectItem;
         }
 
@@ -47,9 +49,13 @@ namespace VisualLocalizer.Commands {
         }
 
         protected virtual void Process(ProjectItems items) {
-            if (items == null) return;
+            if (items == null) return;            
 
             foreach (ProjectItem o in items) {
+                if (RDTManager.IsFileLocked(o.Properties.Item("FullPath").Value.ToString())) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", o.Name);
+                    continue;
+                }
                 bool ok = true;
                 for (short i = 0; i < o.FileCount; i++) {
                     ok = ok && o.get_FileNames(i).ToLowerInvariant().EndsWith(StringConstants.CsExtension);

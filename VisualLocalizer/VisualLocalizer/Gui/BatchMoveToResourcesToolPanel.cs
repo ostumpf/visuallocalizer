@@ -21,7 +21,7 @@ namespace VisualLocalizer.Gui {
 
         public BatchMoveToResourcesToolPanel() {                        
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
-            this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);                                    
+            this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);            
 
             DataGridViewComboBoxColumn keyColumn = new DataGridViewComboBoxColumn();
             keyColumn.MinimumWidth = 150;
@@ -90,7 +90,8 @@ namespace VisualLocalizer.Gui {
             loadedItems.Clear();
             data.Clear();
             ErrorRowsCount = 0;
-            
+            this.SuspendLayout();
+
             foreach (CodeStringResultItem item in value) {
                 CodeDataGridViewRow row = new CodeDataGridViewRow();
                 row.CodeResultItem = item;
@@ -116,7 +117,7 @@ namespace VisualLocalizer.Gui {
                 sourceCell.Value = item.SourceItem.Name;
                 row.Cells.Add(sourceCell);
 
-                DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
+                DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();                
                 destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem.ContainingProject));
                 if (destinationCell.Items.Count > 0)
                     destinationCell.Value = destinationCell.Items[0].ToString();
@@ -128,12 +129,13 @@ namespace VisualLocalizer.Gui {
                 
                 valueCell.ReadOnly = false;
                 sourceCell.ReadOnly = true;
-                validate(row);                             
+                validate(row);
             }
 
             currentItemIndex = null;
             checkHeader.Checked = true;
             CheckedRowsCount = Rows.Count;
+            this.ResumeLayout(true);
         }
 
         private void TrySetValue(string oldKey, string newKey, CodeDataGridViewRow row) {
@@ -240,7 +242,7 @@ namespace VisualLocalizer.Gui {
         private void BatchMoveToResourcesToolPanel_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e) {
             if (CurrentCellAddress.X == 1 && e.Control is ComboBox) {
                 ComboBox box = e.Control as ComboBox;
-                box.DropDownStyle = ComboBoxStyle.DropDown;
+                box.DropDownStyle = ComboBoxStyle.DropDown;                
             }            
         }
 
@@ -275,12 +277,7 @@ namespace VisualLocalizer.Gui {
                 if (!resxItem.IsLoaded) {
                     resxItem.Load();
                     loadedItems.Add(resxItem);
-                }
-                
-                object keyTag=row.Cells["Key"].Tag;
-                TrySetValue(keyTag == null ? null : keyTag.ToString(), key, row);
-                if (keyTag == null) row.Cells["Key"].Tag = key;
-                if (!string.IsNullOrEmpty(row.ErrorText)) return;
+                }                                                
 
                 ok = !resxItem.ContainsKey(key);
                 if (!ok) errorText = "Duplicate key entry - key is already present in resource file";
@@ -291,6 +288,12 @@ namespace VisualLocalizer.Gui {
                 row.ErrorText = null;
             } else {
                 row.ErrorText = errorText;
+            }
+
+            if (ok) {
+                object keyTag = row.Cells["Key"].Tag;
+                TrySetValue(keyTag == null ? null : keyTag.ToString(), key, row);
+                if (keyTag == null) row.Cells["Key"].Tag = key;                
             }
         }
      

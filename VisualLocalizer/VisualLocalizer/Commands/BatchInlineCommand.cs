@@ -22,6 +22,8 @@ namespace VisualLocalizer.Commands {
             base.Process();            
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on active document... ");
+            if (currentlyProcessedItem.Document.ReadOnly)
+                throw new Exception("Cannot perform this operation - active document is readonly");
 
             Results = new List<CodeReferenceResultItem>();
 

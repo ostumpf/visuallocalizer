@@ -36,11 +36,16 @@ namespace VisualLocalizer.Gui {
             destinationColumn.Name = "Destination";
             destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Add(destinationColumn);
+
+            DataGridViewColumn column = new DataGridViewColumn();
+            column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.Columns.Add(column);   
         }   
      
         internal void SetData(List<CodeReferenceResultItem> value) {
             Rows.Clear();
             ErrorRowsCount = 0;
+            this.SuspendLayout();
 
             foreach (var item in value) {
                 CodeDataGridViewRow row = new CodeDataGridViewRow();
@@ -66,6 +71,9 @@ namespace VisualLocalizer.Gui {
                 destinationCell.Value = item.DestinationItem.ToString();
                 row.Cells.Add(destinationCell);
 
+                DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
+                row.Cells.Add(cell);                
+
                 Rows.Add(row);
 
                 referenceCell.ReadOnly = true;
@@ -76,6 +84,7 @@ namespace VisualLocalizer.Gui {
 
             CheckedRowsCount = Rows.Count;
             checkHeader.Checked = true;
+            this.ResumeLayout(true);
         }
 
         protected override AbstractResultItem GetResultItemFromRow(CodeDataGridViewRow row) {

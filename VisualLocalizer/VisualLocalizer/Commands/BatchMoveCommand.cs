@@ -20,7 +20,7 @@ namespace VisualLocalizer.Commands {
         public override void Process() {
             base.Process();
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");            
 
             Results = new List<CodeStringResultItem>();
 

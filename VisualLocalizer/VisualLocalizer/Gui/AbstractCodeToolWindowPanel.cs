@@ -50,6 +50,7 @@ namespace VisualLocalizer.Gui {
             this.AllowUserToResizeRows = true;
             this.AllowUserToResizeColumns = true;
             this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.VerticalScrollBar.Visible = true;            
 
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
             this.CellBeginEdit += new DataGridViewCellCancelEventHandler(OnCellBeginEdit);

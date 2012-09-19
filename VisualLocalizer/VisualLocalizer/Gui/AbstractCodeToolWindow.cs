@@ -24,6 +24,7 @@ namespace VisualLocalizer.Gui {
     internal sealed class AbstractCodeToolWindowEvents : IVsWindowFrameNotify {
 
         public event EventHandler WindowHidden;
+        private int prevfShow=-1;
 
         public int OnDockableChange(int fDockable) {
             return VSConstants.S_OK;
@@ -34,14 +35,15 @@ namespace VisualLocalizer.Gui {
         }
 
         public int OnShow(int fShow) {
-            if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden) {
+            if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow!=(int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
                 if (WindowHidden != null) WindowHidden(this, null);
             }
+            prevfShow = fShow;
             return VSConstants.S_OK;
         }
 
         public int OnSize() {
-            return VSConstants.S_OK;
+            throw new NotImplementedException();
         }
     }
 
@@ -49,7 +51,6 @@ namespace VisualLocalizer.Gui {
 
         protected T panel;
         
-
         public AbstractCodeToolWindow():base(null) {
             this.panel = new T();
             this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(panel_HighlightRequired);            

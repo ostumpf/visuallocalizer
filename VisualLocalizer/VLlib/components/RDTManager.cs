@@ -65,6 +65,10 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        public static bool IsFileLocked(string path) {
+            return lockedDocuments.Contains(path) || lockedDocumentsWaiting.Contains(path);
+        }
+
         public static void ReleaseLocks() {
             lockedDocuments.ForEach((path) => { SetFileReadonly(path, false); });
             lockedDocumentsWaiting.Clear();
