@@ -72,11 +72,19 @@
     <Compile Include="Components\Code\CodeReferenceLookuper.cs" />
     <Compile Include="Components\Code\CodeResultItems.cs" />
     <Compile Include="Components\Code\CodeStringLookuper.cs" />
-    <Compile Include="Extensions\ResXItemsEx.cs" />
-    <Compile Include="Gui\AbstractCodeToolWindow.cs" />
-    <Compile Include="Gui\AbstractCodeToolWindowPanel.cs">
+    <Compile Include="Components\VLDocumentViewsManager.cs" />
+    <Compile Include="Editor\ResXStringGrid.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editor\ResXTabControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Editor\UndoUnits\RenameKeyUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\StringChangeCommentUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\StringChangeValueUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\StringRenameKeyUndoUnit.cs" />
+    <Compile Include="Extensions\ResXItemsEx.cs" />
+    <Compile Include="Gui\AbstractCodeToolWindow.cs" />
     <Compile Include="Gui\BatchInlineToolPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -92,17 +100,10 @@
     <Compile Include="Components\NotInlineableException.cs" />
     <Compile Include="Components\NotReferencableException.cs" />
     <Compile Include="Components\ResXProjectItem.cs" />
-    <Compile Include="Components\TabPanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Editor\ResXEditor.cs" />
     <Compile Include="Editor\ResXEditorControl.cs">
-      <SubType>UserControl</SubType>
+      <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Editor\ResXEditorControl.Designer.cs">
-      <DependentUpon>ResXEditorControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Gui\DataGridViewCheckBoxHeaderCell.cs" />
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -121,10 +122,6 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Editor\ResXEditorControl.resx">
-      <DependentUpon>ResXEditorControl.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Gui\SelectResourceFileForm.resx">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>

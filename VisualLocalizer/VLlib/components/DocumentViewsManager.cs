@@ -8,9 +8,10 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.OLE.Interop;
 
 namespace VisualLocalizer.Library {
-    public static class DocumentViewsManager {
+    public class DocumentViewsManager {
 
         private static DTE2 dte2;
         private static Microsoft.VisualStudio.OLE.Interop.IServiceProvider sp;
@@ -49,26 +50,26 @@ namespace VisualLocalizer.Library {
             return null;
         }
 
-        public static IVsTextLines GetTextLinesForFile(string file, bool forceOpen) {           
-            IVsWindowFrame frame = GetWindowFrameForFile(file, forceOpen);            
+        public static IVsTextLines GetTextLinesForFile(string file, bool forceOpen) {
+            IVsWindowFrame frame = GetWindowFrameForFile(file, forceOpen);
             if (frame != null) {
                 IVsTextLines lines = null;
-                
+
                 object docData;
                 int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
                 Marshal.ThrowExceptionForHR(hr);
-                
-                var buffer = docData as VsTextBuffer;   
-                
+
+                var buffer = docData as VsTextBuffer;
+
                 if (buffer == null) {
                     var bufferProvider = docData as IVsTextBufferProvider;
-                    
-                    if (bufferProvider != null) {                        
-                        hr = bufferProvider.GetTextBuffer(out lines); 
-                        Marshal.ThrowExceptionForHR(hr);  
+
+                    if (bufferProvider != null) {
+                        hr = bufferProvider.GetTextBuffer(out lines);
+                        Marshal.ThrowExceptionForHR(hr);
                     }
                 } else {
-                    lines = (IVsTextLines)buffer;               
+                    lines = (IVsTextLines)buffer;
                 }
 
                 return lines;
@@ -76,5 +77,6 @@ namespace VisualLocalizer.Library {
 
             return null;
         }
+
     }
 }

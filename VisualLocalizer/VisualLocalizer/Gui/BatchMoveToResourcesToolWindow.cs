@@ -55,10 +55,10 @@ namespace VisualLocalizer.Gui {
         
         protected override void OnWindowHidden(object sender, EventArgs e) {
             panel.Unload();
-            RDTManager.ReleaseLocks();
+            VLDocumentViewsManager.ReleaseLocks();
         }                
         
-        public void SetData(List<CodeStringResultItem> value){        
+        public void SetData(List<CodeStringResultItem> value){                 
             panel.SetData(value);                        
         }
 
@@ -125,7 +125,7 @@ namespace VisualLocalizer.Gui {
                 Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
                 Dictionary<string, StringBuilder> filesCache = new Dictionary<string, StringBuilder>();
                 List<ResXProjectItem> modifiedResxItems = new List<ResXProjectItem>();
-                RDTManager.ReleaseLocks();
+                VLDocumentViewsManager.ReleaseLocks();
 
                 while (true) {
                     try {
@@ -204,9 +204,9 @@ namespace VisualLocalizer.Gui {
                         }
                         resultItem.DestinationItem.AddString(resultItem.Key, resultItem.Value);
 
-                        panel.SetCurrentItemFinished(true, referenceText.Length);
+                        panel.SetItemFinished(true, referenceText.Length);
                     } catch (Exception ex) {
-                        panel.SetCurrentItemFinished(false, -1);
+                        panel.SetItemFinished(false, -1);
                         rowErrors++;
                     }
                 }

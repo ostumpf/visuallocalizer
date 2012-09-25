@@ -52,7 +52,7 @@ namespace VisualLocalizer.Commands {
             if (items == null) return;            
 
             foreach (ProjectItem o in items) {
-                if (RDTManager.IsFileLocked(o.Properties.Item("FullPath").Value.ToString())) {
+                if (VLDocumentViewsManager.IsFileLocked(o.Properties.Item("FullPath").Value.ToString())) {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", o.Name);
                     continue;
                 }

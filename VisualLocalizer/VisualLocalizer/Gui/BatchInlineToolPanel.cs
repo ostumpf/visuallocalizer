@@ -4,11 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using VisualLocalizer.Components;
+using VisualLocalizer.Library;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Gui {
-    internal sealed class BatchInlineToolPanel : AbstractCodeToolWindowPanel {
+    internal sealed class BatchInlineToolPanel : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
 
-        public BatchInlineToolPanel() {
+        public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
+
+        protected override void InitializeColumns() {
+            base.InitializeColumns();
+            this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
+
             DataGridViewTextBoxColumn referenceColumn = new DataGridViewTextBoxColumn();
             referenceColumn.MinimumWidth = 200;
             referenceColumn.HeaderText = "Reference Text";
@@ -40,16 +47,24 @@ namespace VisualLocalizer.Gui {
             DataGridViewColumn column = new DataGridViewColumn();
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.Columns.Add(column);   
-        }   
-     
-        internal void SetData(List<CodeReferenceResultItem> value) {
+        }
+
+        private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
+            if (HighlightRequired != null && e.RowIndex >= 0) {
+                HighlightRequired(this, new CodeResultItemEventArgs() { 
+                    Item = (Rows[e.RowIndex] as CodeDataGridViewRow<CodeReferenceResultItem>).DataSourceItem
+                });
+            }
+        }
+
+        public override void SetData(List<CodeReferenceResultItem> value) {
             Rows.Clear();
             ErrorRowsCount = 0;
             this.SuspendLayout();
 
             foreach (var item in value) {
-                CodeDataGridViewRow row = new CodeDataGridViewRow();
-                row.CodeResultItem = item;
+                CodeDataGridViewRow<CodeReferenceResultItem> row = new CodeDataGridViewRow<CodeReferenceResultItem>();
+                row.DataSourceItem = item;
 
                 DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
                 checkCell.Value = item.MoveThisItem;
@@ -83,20 +98,64 @@ namespace VisualLocalizer.Gui {
             }
 
             CheckedRowsCount = Rows.Count;
-            checkHeader.Checked = true;
+            CheckHeader.Checked = true;
             this.ResumeLayout(true);
+            this.OnResize(null);
         }
 
-        protected override AbstractResultItem GetResultItemFromRow(CodeDataGridViewRow row) {
-            CodeReferenceResultItem item = row.CodeResultItem as CodeReferenceResultItem;
-            item.MoveThisItem = (bool)(row.Cells["MoveThisItem"].Value);
+        protected override CodeReferenceResultItem GetResultItemFromRow(CodeDataGridViewRow<CodeReferenceResultItem> row) {
+            CodeReferenceResultItem item = row.DataSourceItem;
+            item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
 
-            row.CodeResultItem = item;
+            row.DataSourceItem = item;
             if (item.MoveThisItem) {                                
                 return item;
             } else {                
                 return GetNextResultItem();
             }
+        }
+
+        public void SetItemFinished(bool ok, int newLength) {
+            if (CurrentItemIndex == null || CurrentItemIndex < 0) throw new ArgumentException("currentItemIndex");
+
+            if (ok) {
+                AbstractResultItem resultItem = (Rows[CurrentItemIndex.Value] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
+                TextSpan currentReplaceSpan = resultItem.ReplaceSpan;
+
+                int diff = currentReplaceSpan.iEndLine - currentReplaceSpan.iStartLine;
+                for (int i = CurrentItemIndex.Value + 1; i < Rows.Count; i++) {
+                    AbstractResultItem item = (Rows[i] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
+                    item.AbsoluteCharOffset += newLength - resultItem.AbsoluteCharLength;
+
+                    if (item.ReplaceSpan.iStartLine > currentReplaceSpan.iEndLine) {
+                        TextSpan newSpan = new TextSpan();
+                        newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
+                        newSpan.iStartIndex = item.ReplaceSpan.iStartIndex;
+                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
+                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
+                        item.ReplaceSpan = newSpan;
+                    } else if (item.ReplaceSpan.iStartLine == currentReplaceSpan.iEndLine) {
+                        TextSpan newSpan = new TextSpan();
+                        newSpan.iStartIndex = currentReplaceSpan.iStartIndex + newLength + item.ReplaceSpan.iStartIndex - currentReplaceSpan.iEndIndex;
+                        if (item.ReplaceSpan.iEndLine == item.ReplaceSpan.iStartLine) {
+                            newSpan.iEndIndex = newSpan.iStartIndex + item.ReplaceSpan.iEndIndex - item.ReplaceSpan.iStartIndex;
+                        } else {
+                            newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
+                        }
+                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
+                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
+                        item.ReplaceSpan = newSpan;
+                    }
+                }
+
+                Rows.RemoveAt(CurrentItemIndex.Value);
+                CheckedRowsCount--;
+                UpdateCheckHeader();
+            }
+        }
+
+        public override string CheckBoxColumnName {
+            get { return "InlineThisItem"; }
         }
     }
 }

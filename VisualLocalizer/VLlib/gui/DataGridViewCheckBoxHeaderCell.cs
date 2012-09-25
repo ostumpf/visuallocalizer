@@ -6,8 +6,8 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Windows.Forms.VisualStyles;
 
-namespace VisualLocalizer.Gui {
-    internal class DataGridViewCheckBoxHeaderCell : DataGridViewColumnHeaderCell {
+namespace VisualLocalizer.Library {
+    public class DataGridViewCheckBoxHeaderCell : DataGridViewColumnHeaderCell {
 
         public event EventHandler CheckBoxClicked;
 

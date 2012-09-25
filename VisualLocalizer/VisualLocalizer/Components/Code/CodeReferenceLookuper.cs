@@ -37,7 +37,6 @@ namespace VisualLocalizer.Components {
             stringStartChar = '?';
             List<CodeReferenceResultItem> list = new List<CodeReferenceResultItem>();
             TrieElement currentElement = Trie.Root; 
-            TrieElement p = null;
             StringBuilder prefixBuilder = new StringBuilder();
             string prefix = null;
             char lastNonWhitespaceChar = '?';
@@ -74,25 +73,25 @@ namespace VisualLocalizer.Components {
                             bool wasAtRoot = currentElement == Trie.Root;
                             currentElement = Trie.Step(currentElement, currentChar);
 
-                            if (wasAtRoot && currentElement != Trie.Root && prefixBuilder.Length>=2) {
-                                if (prefixBuilder[prefixBuilder.Length - 2] == '.') {
-                                    prefix = prefixBuilder.ToString(0, prefixBuilder.Length - 2);
-                                } else {
-                                    prefix = null;
-                                    ReferenceStartIndex = CurrentIndex;
-                                    ReferenceStartLine = CurrentLine;
-                                    ReferenceStartOffset = CurrentAbsoluteOffset;
-                                    AbsoluteReferenceLength = 1;
+                            if (wasAtRoot && currentElement != Trie.Root) {
+                                if (previousChar.CanBePartOfIdentifier()) {
+                                    currentElement = Trie.Root;
+                                } else if (prefixBuilder.Length >= 2) {
+                                    if (prefixBuilder[prefixBuilder.Length - 2] == '.') {
+                                        prefix = prefixBuilder.ToString(0, prefixBuilder.Length - 2);
+                                    } else {
+                                        prefix = null;
+                                        ReferenceStartIndex = CurrentIndex;
+                                        ReferenceStartLine = CurrentLine;
+                                        ReferenceStartOffset = CurrentAbsoluteOffset;
+                                        AbsoluteReferenceLength = 1;
+                                    }
                                 }
                             }
-
-                            p = currentElement;                            
-                            while (p != null) {
-                                if (p.IsTerminal) {
-                                    AddResult(list, p.Word,prefix, p.Tag);
-                                }
-                                p = p.Shortcut;
-                            }
+                            
+                            if (currentElement.IsTerminal && (i == text.Length - 1 || !text[i + 1].CanBePartOfIdentifier())) {
+                                AddResult(list, currentElement.Word, prefix, currentElement.Tag);
+                            }                                                           
                         }
                     } else {
                         currentElement = Trie.Root;

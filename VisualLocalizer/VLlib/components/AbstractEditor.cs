@@ -11,13 +11,16 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Globalization;
 using System.Diagnostics;
+using Microsoft.VisualStudio.TextManager.Interop;
+using EnvDTE;
 
 namespace VisualLocalizer.Library {
    
     public abstract class EditorFactory<EditorType, ControlType> : IVsEditorFactory
         where EditorType : AbstractSingleViewEditor<ControlType>,new()
-        where ControlType : UserControl, new()
-         {    
+        where ControlType : Control, new() {
+
+        private ServiceProvider serviceProvider;
 
         int IVsEditorFactory.Close() {
             return VSConstants.S_OK;
@@ -52,10 +55,11 @@ namespace VisualLocalizer.Library {
         }        
 
         int IVsEditorFactory.SetSite(Microsoft.VisualStudio.OLE.Interop.IServiceProvider psp) {
+            serviceProvider = new ServiceProvider(psp);          
+
             return VSConstants.S_OK;
         }
-
-
+        
         public virtual int MapLogicalView(Guid rguidLogicalView, out string pbstrPhysicalView) {
             pbstrPhysicalView = null;
             // we support only a single physical view
@@ -78,8 +82,9 @@ namespace VisualLocalizer.Library {
         IOleCommandTarget, 
         IVsPersistDocData,
         IPersistFileFormat,
-        IVsFileChangeEvents        
-        where T : UserControl,new() {
+        IVsFileChangeEvents,
+        IExtensibleObject
+        where T : Control,new() {
                          
         private uint vsFileChangeCookie;
         private bool fileChangedTimerSet;
@@ -89,7 +94,7 @@ namespace VisualLocalizer.Library {
         public AbstractSingleViewEditor()
             : base(null) {
             
-            UIControl = new T();
+            UIControl = new T();            
         }        
 
         #region WindowPane members
@@ -111,7 +116,7 @@ namespace VisualLocalizer.Library {
             } else {
                 ok = ExecuteCommand(pguidCmdGroup, nCmdID);
             }
-
+            
             if (ok)
                 return VSConstants.S_OK;
             else
@@ -148,7 +153,7 @@ namespace VisualLocalizer.Library {
 
         #endregion
 
-        #region IPersisFileFormat members
+        #region IPersistFileFormat members
 
         int IPersistFileFormat.GetClassID(out Guid pClassID) {
             return (this as IPersist).GetClassID(out pClassID);
@@ -188,26 +193,21 @@ namespace VisualLocalizer.Library {
 
             Loading = true;
             try {
-                // Show the wait cursor while loading the file
-                IVsUIShell VsUiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-                if (VsUiShell != null) {
-                    VsUiShell.SetWaitCursor();
-                }
-
                 LoadFile(fileToLoad);
-                IsDirty = false; 
-                // IVsTextBuffer buffer = (IVsTextBuffer)snippetCodeWindow.TextLines;
-                // buffer.SetStateFlags(0);
-
+                IsDirty = false;
+                ReadOnly = (File.GetAttributes(fileToLoad) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly;
 
                 // Hook up to file change notifications
-                  if (String.IsNullOrEmpty(FileName) || 0 != String.Compare(FileName, fileToLoad, true, CultureInfo.CurrentCulture)) {
-                      FileName = fileToLoad;
-                      SetFileChangeNotification(FileName, true);
+                if (String.IsNullOrEmpty(FileName) || 0 != String.Compare(FileName, fileToLoad, true, CultureInfo.CurrentCulture)) {
+                    FileName = fileToLoad;
+                    SetFileChangeNotification(FileName, true);
 
-                      // Notify the load or reload
-                      NotifyDocChanged();
-                  }
+                    // Notify the load or reload
+                    NotifyDocChanged();
+                }
+                return VSConstants.S_OK;
+            } catch (Exception ex) {
+                return VSConstants.S_FALSE;
             } finally {
                 // RefreshPropertiesWindow();
                 Loading = false;
@@ -216,44 +216,46 @@ namespace VisualLocalizer.Library {
             // ShowPropertiesWindow();
             
 
-            return VSConstants.S_OK;
+            
         }
 
         int IPersistFileFormat.Save(string pszFilename, int fRemember, uint nFormatIndex) {            
             // --- If file is null or same --> SAVE
-            if (pszFilename == null || pszFilename == FileName) {
-                SetFileChangeNotification(FileName, false);
-                
-                SaveFile(FileName, nFormatIndex);
-                IsDirty = false;
+            try {
+                if (pszFilename == null || pszFilename == FileName) {
+                    SetFileChangeNotification(FileName, false);
 
-                SetFileChangeNotification(FileName, true);
-            } else {
-                // --- If remember --> SaveAs
-                if (fRemember != 0) {
-                    SetFileChangeNotification(pszFilename, false);
-
-                    FileName = pszFilename;
                     SaveFile(FileName, nFormatIndex);
                     IsDirty = false;
 
                     SetFileChangeNotification(FileName, true);
-                } else {// --- Else, Save a Copy As
-                    SetFileChangeNotification(pszFilename, false);
+                } else {
+                    // --- If remember --> SaveAs
+                    if (fRemember != 0) {
+                        SetFileChangeNotification(pszFilename, false);
 
-                    SaveFile(pszFilename, nFormatIndex);
+                        FileName = pszFilename;
+                        SaveFile(FileName, nFormatIndex);
+                        IsDirty = false;
 
-                    SetFileChangeNotification(pszFilename, true);
+                        SetFileChangeNotification(FileName, true);
+                    } else {// --- Else, Save a Copy As
+                        SetFileChangeNotification(pszFilename, false);
+
+                        SaveFile(pszFilename, nFormatIndex);
+
+                        SetFileChangeNotification(pszFilename, true);
+                    }
                 }
-            }            
-
-            return VSConstants.S_OK;
+                return VSConstants.S_OK;
+            } catch (Exception) {                
+                return VSConstants.S_FALSE;
+            }
+            
         }
 
         int IPersistFileFormat.SaveCompleted(string pszFilename) {
-            // TODO            
-           // this.SaveCompleted("",new EventArgs());
-            return VSConstants.S_OK;
+           return VSConstants.S_OK;
         }
 
         int IPersist.GetClassID(out Guid pClassID) {
@@ -494,6 +496,17 @@ namespace VisualLocalizer.Library {
 
         #endregion
 
+        #region IExtensibleObject members
+        public void GetAutomationObject(string Name, IExtensibleObjectSite pParent, out object ppDisp) {
+            if (!string.IsNullOrEmpty(Name) && !Name.Equals("Document", StringComparison.CurrentCultureIgnoreCase)) {
+                ppDisp = null;
+                return;
+            }
+
+            ppDisp = this;
+        }
+        #endregion
+
         public bool IsDirty {
             get;
             set;
@@ -526,7 +539,7 @@ namespace VisualLocalizer.Library {
             return false;
         }
 
-        public virtual bool ExecuteSystemCommand(VSConstants.VSStd97CmdID cmdID) {
+        public virtual bool ExecuteSystemCommand(VSConstants.VSStd97CmdID cmdID) {            
             return false;
         }
 
@@ -546,14 +559,42 @@ namespace VisualLocalizer.Library {
         }
 
         public virtual void LoadFile(string path) {
+            IVsUIShell VsUiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            if (VsUiShell != null) {
+                VsUiShell.SetWaitCursor();
+            }
         }
 
         public virtual void SaveFile(string path, uint format) {
-        }
-
-        public event EventHandler SaveCompleted;
+            IVsUIShell VsUiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            if (VsUiShell != null) {
+                VsUiShell.SetWaitCursor();
+            }
+        }       
 
         public virtual void Close() {
+        }
+
+        protected bool _ReadOnly;
+        public virtual bool ReadOnly {
+            get { return _ReadOnly; }
+            set {
+                _ReadOnly = value;
+
+
+                IVsWindowFrame frame = (IVsWindowFrame)GetService(typeof(SVsWindowFrame));
+                object capt;                
+                int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, out capt);
+                Marshal.ThrowExceptionForHR(hr);
+                string title = (string)capt;
+
+                string readonlyAdd = "[ReadOnly]";
+                if (_ReadOnly && !title.EndsWith(readonlyAdd)) {
+                    frame.SetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, title + readonlyAdd);
+                } else if (!_ReadOnly && title.EndsWith(readonlyAdd)) {
+                    frame.SetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, title.Substring(0, title.Length - readonlyAdd.Length));
+                }
+            }
         }
 
         public virtual void FileChangedOutsideVS() {
@@ -601,7 +642,11 @@ namespace VisualLocalizer.Library {
                 ((IVsPersistDocData)this).ReloadDocData(0);
             }*/
         }
-        
+
+        public virtual void AddUndoUnit(IOleUndoUnit undoUnit) {
+            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
+            undoManager.Add(undoUnit);
+        }
     }
 
     public enum COMMAND_STATUS { ENABLED, DISABLED, UNSUPPORTED };

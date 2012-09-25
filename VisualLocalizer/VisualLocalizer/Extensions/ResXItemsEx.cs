@@ -23,9 +23,8 @@ namespace VisualLocalizer.Extensions {
         public static Trie CreateTrie(this List<ResXProjectItem> resxItems) {
             Trie trie = new Trie();
             foreach (ResXProjectItem item in resxItems) {
-                item.Load();
-                item.LoadAllReferences();
-                foreach (var pair in item.AllReferences) {
+                item.Load();                
+                foreach (var pair in item.GetAllStringReferences()) {
                     trie.Add(pair.Key, new VisualLocalizer.Components.CodeReferenceLookuper.CodeReferenceInfo() { Value = pair.Value, Origin = item });
                 }
             }

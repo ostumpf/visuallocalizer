@@ -43,7 +43,7 @@ namespace VisualLocalizer
         internal EnvDTE80.DTE2 DTE;
         internal EnvDTE.UIHierarchy UIHierarchy;
         internal OleMenuCommandService menuService;
-        internal IVsUIShell uiShell;
+        internal IVsUIShell2 uiShell;
         internal IVsRunningDocumentTable ivsRunningDocumentTable;
         private static VisualLocalizerPackage instance;
 
@@ -58,7 +58,7 @@ namespace VisualLocalizer
                 InitBaseServices();
                 
                 menuManager = new MenuManager();
-               // RegisterEditorFactory(new ResXEditorFactory());
+                RegisterEditorFactory(new ResXEditorFactory());
                 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
@@ -71,7 +71,7 @@ namespace VisualLocalizer
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            uiShell = (IVsUIShell2)GetService(typeof(SVsUIShell));
             ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
             
             if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable==null)

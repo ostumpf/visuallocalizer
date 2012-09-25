@@ -27,7 +27,7 @@ namespace VisualLocalizer.Commands {
             Process(currentlyProcessedItem);
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
-            Results.ForEach((item) => { RDTManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
@@ -39,7 +39,7 @@ namespace VisualLocalizer.Commands {
             base.Process(selectedItems);
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
-            Results.ForEach((item) => { RDTManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
         }

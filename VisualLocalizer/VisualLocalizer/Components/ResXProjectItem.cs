@@ -15,14 +15,17 @@ using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
+using System.Globalization;
+using System.ComponentModel.Design;
 
 namespace VisualLocalizer.Components {
-    
+
+    public enum CONTAINS_KEY_RESULT { EXISTS_WITH_SAME_VALUE, EXISTS_WITH_DIFF_VALUE, DOESNT_EXIST }
+
     public class ResXProjectItem {
 
         private string _Namespace,_Class;
-        private Dictionary<string, object> data;        
-        private IVsTextLines textLines;
+        private Dictionary<string, ResXDataNode> data;                
         private bool dataChangedInBatchMode;
 
         public ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
@@ -61,12 +64,7 @@ namespace VisualLocalizer.Components {
                 return _Class;
             }
         }
-
-        public Dictionary<string, string> AllReferences {
-            get;
-            private set;
-        }
-
+        
         public bool MarkedInternalInReferencedProject {
             get;
             private set;
@@ -101,46 +99,24 @@ namespace VisualLocalizer.Components {
             IsInBatchMode = false;
         }
 
+        public Dictionary<string, ResXDataNode> Data {
+            get {
+                return data;
+            }
+        }
+
         private void Flush() {
             if (!dataChangedInBatchMode && IsInBatchMode) return;
             string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();  
-            ResXResourceWriter writer = null;
-
+            
             if (RDTManager.IsFileOpen(path)) {
-                MemoryStream stream = null;
+                VLDocumentViewsManager.SaveDataToBuffer(data, path);
+            } else {
+                ResXResourceWriter writer = null;
                 try {
-                    stream = new MemoryStream();
-                    writer = new ResXResourceWriter(stream);
+                    writer = new ResXResourceWriter(path);                    
                     foreach (var pair in data) {
-                        writer.AddResource(pair.Key, pair.Value);
-                    }
-                    writer.Generate();
-                    writer.Close();
-
-                    byte[] buffer = stream.ToArray();
-                    string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3); 
-
-                    int lastLine, lastLineIndex;
-                    int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    TextSpan[] spans = null;
-                    hr = textLines.ReplaceLines(0, 0, lastLine, lastLineIndex, Marshal.StringToBSTR(text), text.Length, spans);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    IOleUndoManager manager;
-                    hr = textLines.GetUndoManager(out manager);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    manager.RemoveTopFromUndoStack(1);
-                } finally {
-                    if (stream != null) stream.Close();
-                }
-            } else {                
-                try {
-                    writer = new ResXResourceWriter(path);
-                    foreach (var pair in data) {
-                        writer.AddResource(pair.Key, pair.Value);
+                        writer.AddResource(pair.Value);
                     }
                     writer.Generate();
                 } finally {
@@ -157,10 +133,12 @@ namespace VisualLocalizer.Components {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Adding \"{0}\":\"{1}\" to \"{2}\"", key, value, DisplayName);            
 
             if (!IsLoaded) Load();
+
+            ResXDataNode node = new ResXDataNode(key, value);
             if (data.ContainsKey(key)) {
-                data[key] = value;
+                data[key] = node;
             } else {
-                data.Add(key, value);
+                data.Add(key, node);
             }
 
             if (IsInBatchMode) {
@@ -185,54 +163,46 @@ namespace VisualLocalizer.Components {
        
         public string GetString(string key) {
             if (!IsLoaded) Load();
-               
-            return data[key].ToString();
+
+            return data[key].GetStringValue();
         }
 
-        public bool ContainsKey(string key) {
+        public CONTAINS_KEY_RESULT StringKeyInConflict(string key, string value) {
             if (!IsLoaded) Load();
-
-            return data.ContainsKey(key);
+            if (data.ContainsKey(key)) {
+                if (data[key].HasStringValue()) {
+                    if (string.Compare(data[key].GetStringValue(), value, false, CultureInfo.CurrentCulture) == 0) {
+                        return CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE;
+                    } else {
+                        return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                    }
+                } else return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+            } else return CONTAINS_KEY_RESULT.DOESNT_EXIST;
         }
 
         public void Load() {
             if (IsLoaded) return;
 
-            data = new Dictionary<string, object>();
-            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();
-            ResXResourceReader reader = null;
-            MemoryStream stream = null;
+            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();                        
 
-            try {
-                if (RDTManager.IsFileOpen(path)) {                    
-                    textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
-
-                    int lastLine, lastLineIndex;
-                    int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    string textBuffer = "";
-                    hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out textBuffer);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    stream = new MemoryStream();
-                    byte[] byteBuffer = Encoding.UTF8.GetBytes(textBuffer);
-                    stream.Write(byteBuffer, 0, byteBuffer.Length);
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    reader = new ResXResourceReader(stream);
-                } else {
+            if (RDTManager.IsFileOpen(path)) {
+                VLDocumentViewsManager.LoadDataFromBuffer(ref data, path);
+            } else {
+                ResXResourceReader reader = null;
+                try {
+                    data = new Dictionary<string, ResXDataNode>();
                     reader = new ResXResourceReader(path);
                     reader.BasePath = Path.GetDirectoryName(path);
-                }
+                    reader.UseResXDataNodes = true;
 
-                foreach (DictionaryEntry entry in reader) {
-                    data.Add(entry.Key.ToString(), entry.Value);
-                }                
-            } finally {
-                if (reader != null) reader.Close();
-                if (stream != null) stream.Close();
+                    foreach (DictionaryEntry entry in reader) {
+                        data.Add(entry.Key.ToString(), entry.Value as ResXDataNode);
+                    }
+                } finally {
+                    if (reader != null) reader.Close();
+                }
             }
+
             IsLoaded = true;
         }
 
@@ -246,13 +216,16 @@ namespace VisualLocalizer.Components {
             designerClassElement = null;
         }
 
-        public void LoadAllReferences() {
-            AllReferences = new Dictionary<string,string>();
+        public Dictionary<string, string> GetAllStringReferences() {
+            Dictionary<string, string> AllReferences = new Dictionary<string, string>();
             if (!IsLoaded) Load();
 
             foreach (var pair in data) {
-                AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Key), pair.Value.ToString());
-            }            
+                if (pair.Value.HasStringValue())
+                    AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Key), pair.Value.GetStringValue());
+            }
+
+            return AllReferences;
         }
 
         private CodeNamespace designerNamespaceElement = null;

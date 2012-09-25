@@ -29,7 +29,7 @@ namespace VisualLocalizer.Gui {
         }
 
         protected override void OnWindowHidden(object sender, EventArgs e) {
-            RDTManager.ReleaseLocks();
+            VLDocumentViewsManager.ReleaseLocks();
         }
 
         private void runClick(object sender, EventArgs e) {
@@ -38,7 +38,7 @@ namespace VisualLocalizer.Gui {
             int rowErrors = 0;
 
             try {
-                RDTManager.ReleaseLocks();
+                VLDocumentViewsManager.ReleaseLocks();
 
                 Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
                 Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
@@ -82,9 +82,9 @@ namespace VisualLocalizer.Gui {
                             filesCache[path] = b;
                         }
 
-                        panel.SetCurrentItemFinished(true, text.Length);
+                        panel.SetItemFinished(true, text.Length);
                     } catch (Exception ex) {
-                        panel.SetCurrentItemFinished(false, -1);
+                        panel.SetItemFinished(false, -1);
                         rowErrors++;
                     }
                 }

@@ -75,8 +75,6 @@ namespace VisualLocalizer.Commands {
             
             if (pane != null && pane.Frame != null) {
                 IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                
-                frame.SetProperty((int)__VSFPROPID.VSFPROPID_IsWindowTabbed, true);
-                frame.SetProperty((int)__VSFPROPID.VSFPROPID_FrameMode, VSFRAMEMODE.VSFM_Dock);                
                 frame.Show();                                
             }
 

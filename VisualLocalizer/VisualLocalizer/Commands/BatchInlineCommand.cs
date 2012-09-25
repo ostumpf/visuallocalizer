@@ -32,7 +32,7 @@ namespace VisualLocalizer.Commands {
             foreach (var item in Results)
                 VLOutputWindow.VisualLocalizerPane.WriteLine(item.ToString());
 
-            Results.ForEach((item) => { RDTManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
 
             trieCache.Clear();
             codeUsingsCache.Clear();
@@ -45,7 +45,7 @@ namespace VisualLocalizer.Commands {
 
             base.Process(selectedItems);
 
-            Results.ForEach((item) => { RDTManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
 
             trieCache.Clear();
             codeUsingsCache.Clear();

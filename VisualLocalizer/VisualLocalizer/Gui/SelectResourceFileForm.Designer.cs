@@ -168,6 +168,7 @@
             // 
             this.comboBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.comboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox.DropDownWidth = 350;
             this.comboBox.FormattingEnabled = true;
             this.comboBox.Location = new System.Drawing.Point(396, 4);
             this.comboBox.Margin = new System.Windows.Forms.Padding(4);
@@ -199,6 +200,7 @@
             this.valueBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.valueBox.Size = new System.Drawing.Size(552, 32);
             this.valueBox.TabIndex = 2;
+            this.valueBox.TextChanged += new System.EventHandler(this.valueBox_TextChanged);
             // 
             // flowLayoutPanel1
             // 
@@ -291,10 +293,9 @@
             // 
             this.existingValueLabel.AutoEllipsis = true;
             this.tableLayoutPanel1.SetColumnSpan(this.existingValueLabel, 2);
-            this.existingValueLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.existingValueLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.existingValueLabel.Location = new System.Drawing.Point(90, 105);
-            this.existingValueLabel.MaximumSize = new System.Drawing.Size(250, 60);
+            this.existingValueLabel.MaximumSize = new System.Drawing.Size(250, 30);
             this.existingValueLabel.Name = "existingValueLabel";
             this.existingValueLabel.Size = new System.Drawing.Size(250, 30);
             this.existingValueLabel.TabIndex = 1022;

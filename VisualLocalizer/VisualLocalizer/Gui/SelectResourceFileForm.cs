@@ -17,8 +17,9 @@ namespace VisualLocalizer.Gui {
 
     internal partial class SelectResourceFileForm : Form {
 
-        private Color errorColor=Color.FromArgb(254,200,200);
-      
+        private Color errorColor = Color.FromArgb(255, 200, 200);
+        private Color existingKeyColor = Color.FromArgb(213, 255, 213);
+
         public SelectResourceFileForm(List<string> keys, string value,Project project) {
             InitializeComponent();
 
@@ -54,6 +55,8 @@ namespace VisualLocalizer.Gui {
 
             foreach (ResXProjectItem item in comboBox.Items)
                 item.Unload();
+
+            VLDocumentViewsManager.ReleaseLocks();
         }
 
         private void keyBox_TextChanged(object sender, EventArgs e) {
@@ -61,6 +64,10 @@ namespace VisualLocalizer.Gui {
         }
 
         private void comboBox_SelectedIndexChanged(object sender, EventArgs e) {            
+            validate();
+        }
+
+        private void valueBox_TextChanged(object sender, EventArgs e) {
             validate();
         }
 
@@ -83,20 +90,41 @@ namespace VisualLocalizer.Gui {
                 errorText = "Project does not contain any useable resource files";
             } else {
                 ResXProjectItem item = comboBox.SelectedItem as ResXProjectItem;
-                bool ident = keyBox.Text.IsValidIdentifier(ref errorText);
-                bool exists = item.ContainsKey(keyBox.Text);
-
-                keyBox.BackColor = (ident ? Color.White : errorColor);                
-                if (exists) {
-                    errorText = "Key is already present in the dictionary";
-                    existingValueLabel.Text = item.GetString(keyBox.Text);
+                if (!item.IsLoaded) {
+                    item.Load();
+                    VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);                    
                 }
-                overwriteButton.Visible = exists;
-                inlineButton.Visible = exists;
-                existingValueLabel.Visible = exists;
-                existingLabel.Visible = exists;
-                
-                ok = ident && !exists;
+
+                bool ident = keyBox.Text.IsValidIdentifier(ref errorText);                
+                keyBox.BackColor = (ident ? Color.White : errorColor);
+
+                if (ident) {
+                    CONTAINS_KEY_RESULT keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
+                    Color backColor = Color.White;
+                    switch (keyConflict) {
+                        case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:
+                            backColor = existingKeyColor;
+                            break;
+                        case CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE:
+                            errorText = "Key is already present and has different value";
+                            existingValueLabel.Text = item.GetString(keyBox.Text);
+                            backColor = errorColor;
+                            break;
+                        case CONTAINS_KEY_RESULT.DOESNT_EXIST:
+                            backColor = Color.White;
+                            break;
+                    }
+
+                    overwriteButton.Visible = keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                    inlineButton.Visible = keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                    existingValueLabel.Visible = keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                    existingLabel.Visible = keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+
+                    keyBox.BackColor = backColor;
+                    valueBox.BackColor = backColor;
+                }
+
+                ok = ident && !overwriteButton.Visible;
 
                 if (!usingBox.Checked) {
                     referenceLabel.Text = item.Namespace + "." + item.Class + "." + keyBox.Text;
@@ -195,5 +223,6 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+       
     }
 }
