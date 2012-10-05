@@ -3,329 +3,328 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.ComponentModel;
 using VisualLocalizer.Components;
-using VisualLocalizer.Library;
-using EnvDTE;
-using System.Drawing;
-using System.Windows.Forms.VisualStyles;
-using System.Collections;
-using Microsoft.VisualStudio.TextManager.Interop;
-using System.Runtime.InteropServices;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer.Gui {
-    internal sealed class BatchMoveToResourcesToolPanel : AbstractKeyValueGridView<CodeStringResultItem>, IHighlightRequestSource {
-
+    internal sealed class BatchMoveToResourcesToolPanel : Panel,IHighlightRequestSource {
+        
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
-        private Dictionary<Project, DataGridViewComboBoxCell.ObjectCollection> destinationItemsCache = new Dictionary<Project, DataGridViewComboBoxCell.ObjectCollection>();
-        private Dictionary<string, ResXProjectItem> resxItemsCache = new Dictionary<string, ResXProjectItem>();        
-        private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
-        private bool valueAdded = false;
+        private TableLayoutPanel filterPanel;
+        private Button addRegexpButton;
+        private TableLayoutPanel regexTable;
+        private CheckBox verbatimBox;
+        private CheckBox localizableBox;
+        private CheckBox noLettersBox;
+        private CheckBox capsBox;
+        private CheckBox commentBox;
+        private Label regexLabel;
+        private SplitContainer splitContainer;
+        private bool SplitterMoving;
 
-        public BatchMoveToResourcesToolPanel() {                        
-            this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
-            this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
-            this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
-        }
-
-        #region public members
-
-        public void Unload() {
-            foreach (var item in loadedItems)
-                item.Unload();
-            loadedItems.Clear();
-        }
-
-        public override void SetData(List<CodeStringResultItem> value) {
-            base.SetData(value);
-
-            this.Rows.Clear();
-            destinationItemsCache.Clear();
-            resxItemsCache.Clear();
-            loadedItems.Clear();
-            ErrorRowsCount = 0;
+        public BatchMoveToResourcesToolPanel() {
             this.SuspendLayout();
+            this.Dock = DockStyle.Fill;
 
-            foreach (CodeStringResultItem item in value) {
-                CodeDataGridViewRow<CodeStringResultItem> row = new CodeDataGridViewRow<CodeStringResultItem>();
-                row.DataSourceItem = item;
+            SettingsObject.Instance.SettingsLoaded += new Action(SettingsUpdated);
 
-                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
-                checkCell.Value = item.MoveThisItem;
-                row.Cells.Add(checkCell);
+            ToolGrid = new BatchMoveToResourcesToolGrid();
+            ToolGrid.HighlightRequired += new EventHandler<CodeResultItemEventArgs>(grid_HighlightRequired);
 
-                DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
-                foreach (string key in item.Value.CreateKeySuggestions(item.NamespaceElement == null ? null : (item.NamespaceElement as CodeNamespace).FullName, item.ClassOrStructElementName, item.VariableElementName == null ? item.MethodElementName : item.VariableElementName)) {
-                    keyCell.Items.Add(key);
-                    if (keyCell.Value == null)
-                        keyCell.Value = key;
+            filterPanel = new TableLayoutPanel();
+            InitializeFilterPanel();
+
+            splitContainer = new SplitContainer();
+            splitContainer.Dock = DockStyle.Fill;
+            splitContainer.Orientation = Orientation.Horizontal;            
+
+            splitContainer.Panel1.Controls.Add(filterPanel);
+            splitContainer.Panel2.Controls.Add(ToolGrid);
+            this.Controls.Add(splitContainer);      
+
+            this.ResumeLayout(true);
+
+            FilterVisible = false;
+            SettingsUpdated();
+
+            splitContainer.SplitterMoved += new SplitterEventHandler(splitContainer_SplitterMoved);
+            splitContainer.SplitterMoving += new SplitterCancelEventHandler(splitContainer_SplitterMoving);
+        }
+
+        private void splitContainer_SplitterMoving(object sender, SplitterCancelEventArgs e) {
+            SplitterMoving = true;
+        }
+
+        private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e) {
+            if (SplitterMoving)
+                SettingsObject.Instance.BatchMoveSplitterDistance = splitContainer.SplitterDistance;
+            SplitterMoving = false;
+        }
+
+        private void SettingsUpdated() {
+            verbatimBox.Checked = SettingsObject.Instance.FilterOutVerbatim;
+            capsBox.Checked = SettingsObject.Instance.FilterOutCaps;
+            noLettersBox.Checked = SettingsObject.Instance.FilterOutNoLetters;
+            localizableBox.Checked = SettingsObject.Instance.FilterOutUnlocalizable;
+            commentBox.Checked = SettingsObject.Instance.FilterOutSpecificComment;
+
+            splitContainer.SuspendLayout();
+            regexTable.Controls.Clear();            
+            regexTable.RowStyles.Clear();
+            regexTable.RowCount = 1;
+            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            regexTable.Controls.Add(regexLabel, 0, 0);
+            regexTable.Controls.Add(addRegexpButton, 1, 0);
+
+            foreach (var item in SettingsObject.Instance.FilterRegexps)
+                AddRegexpRow(item);                       
+
+                                    
+            splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
+            splitContainer.ResumeLayout();
+        }   
+
+        private void InitializeFilterPanel() {
+            filterPanel.Dock = DockStyle.Fill;
+            filterPanel.AutoSize = true;
+            filterPanel.AutoScroll = true;
+            filterPanel.Padding = new Padding(0, 0, SystemInformation.VerticalScrollBarWidth, 0);
+
+            filterPanel.ColumnCount = 2;
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); 
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+
+            filterPanel.RowCount = 4;
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            
+            localizableBox = new CheckBox();
+            localizableBox.Text = "Filter out string literals within element decorated with [Localizable(false)]";
+            localizableBox.AutoSize = true;
+            localizableBox.AutoEllipsis = true;
+            localizableBox.Click += new EventHandler(localizableBox_Click);
+            filterPanel.Controls.Add(localizableBox, 0, 0);
+
+            verbatimBox = new CheckBox();
+            verbatimBox.Text = "Filter out verbatim string literals";
+            verbatimBox.AutoSize = true;
+            verbatimBox.AutoEllipsis = true;
+            verbatimBox.Click += new EventHandler(verbatimBox_Click);
+            filterPanel.Controls.Add(verbatimBox, 1, 0);
+
+            noLettersBox = new CheckBox();
+            noLettersBox.Text = "Filter out string literals not containing any letters (e.g. 127.0.0.1)";
+            noLettersBox.AutoSize = true;
+            noLettersBox.AutoEllipsis = true;
+            noLettersBox.Click += new EventHandler(noLettersBox_Click);
+            filterPanel.Controls.Add(noLettersBox, 0, 1);
+
+            capsBox = new CheckBox();
+            capsBox.Text = "Filter out string literals containing only capital letters, symbols and punctuation";
+            capsBox.AutoSize = true;
+            capsBox.AutoEllipsis = true;
+            capsBox.Click += new EventHandler(capsBox_Click);
+            filterPanel.Controls.Add(capsBox, 1, 1);
+
+            commentBox = new CheckBox();
+            commentBox.Text = "Filter out string literals preceded by " + StringConstants.NoLocalizationComment;
+            commentBox.AutoSize = true;
+            commentBox.AutoEllipsis = true;
+            commentBox.Click += new EventHandler(commentBox_Click);
+            filterPanel.Controls.Add(commentBox, 0, 2);
+
+            regexLabel = new Label();
+            regexLabel.Text = "Filter by regular expression:";
+            regexLabel.AutoSize = true;
+           
+            regexTable = new TableLayoutPanel();
+            regexTable.Dock = DockStyle.Fill;
+            regexTable.AutoSize = true;
+            regexTable.ColumnCount = 6;
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            regexTable.RowCount = 1;
+            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            regexTable.Controls.Add(regexLabel, 0, 0);
+
+            addRegexpButton = new Button();
+            addRegexpButton.Text = "Add regular expression";
+            addRegexpButton.Click += new EventHandler(addRegexpButton_Click);
+            regexTable.Controls.Add(addRegexpButton, 1, 0);
+
+            filterPanel.Controls.Add(regexTable, 0, 3);
+            filterPanel.SetColumnSpan(regexTable, 2);
+        }
+
+        private void commentBox_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutSpecificComment = (sender as CheckBox).Checked;
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowMarkedWithUnlocCommentTest, !SettingsObject.Instance.FilterOutSpecificComment);
+        }
+
+        private void capsBox_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutCaps = (sender as CheckBox).Checked;
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowCapitalsTest, !SettingsObject.Instance.FilterOutCaps);
+        }
+
+        private void noLettersBox_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutNoLetters = (sender as CheckBox).Checked;
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowNoLettersTest, !SettingsObject.Instance.FilterOutNoLetters);
+        }
+
+        private void localizableBox_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutUnlocalizable = (sender as CheckBox).Checked;
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowUnlocalizableTest, !SettingsObject.Instance.FilterOutUnlocalizable);
+        }
+
+        private void verbatimBox_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutVerbatim = (sender as CheckBox).Checked;
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowVerbatimTest, !SettingsObject.Instance.FilterOutVerbatim);
+        }
+
+        private void addRegexpButton_Click(object sender, EventArgs e) {
+            filterPanel.SuspendLayout();
+
+            AddRegexpRow("(new regexp)", true);            
+
+            filterPanel.ResumeLayout();
+        }
+
+        private void AddRegexpRow(string regexp, bool mustMatch) {
+            var newInstance = new SettingsObject.RegexpInstance() {
+                MustMatch = mustMatch,
+                Regexp = regexp
+            };
+            
+            SettingsObject.Instance.FilterRegexps.Add(newInstance);
+            SettingsObject.Instance.NotifyPropertyChanged();
+
+            AddRegexpRow(newInstance);
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowMatchingRegexpInstance, newInstance);
+        }
+
+        private void AddRegexpRow(SettingsObject.RegexpInstance instance) {
+            TextBox regexpBox = new TextBox();
+            regexpBox.Text = instance.Regexp;
+            regexpBox.Dock = DockStyle.Top;
+            regexpBox.Tag = instance;
+            regexpBox.LostFocus += new EventHandler(regexpBox_LostFocus);
+
+            RadioButton matchingButton = new RadioButton();
+            matchingButton.Text = "Matching";
+            matchingButton.Checked = instance.MustMatch;
+            matchingButton.Tag = instance;
+            matchingButton.Click += new EventHandler(matchingButton_Click);
+
+            RadioButton notMatchingButton = new RadioButton();
+            notMatchingButton.Text = "Not matching";
+            notMatchingButton.Checked = !instance.MustMatch;
+            notMatchingButton.Tag = instance;
+            notMatchingButton.Click += new EventHandler(notMatchingButton_Click);
+
+            Button removeButton = new Button();
+            removeButton.Click += new EventHandler(removeButton_Click);
+            removeButton.Text = "Remove";
+            removeButton.Tag = instance;
+
+            Button applyButton = new Button();
+            applyButton.Click += new EventHandler(applyButton_Click);
+            applyButton.Tag = instance;
+            applyButton.Text = "Apply"; 
+
+            int currentRow = regexTable.GetRow(addRegexpButton);
+            regexTable.RowCount = currentRow + 2;
+            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            regexTable.SetRow(addRegexpButton, currentRow + 1);
+
+            regexTable.Controls.Add(regexpBox, 1, currentRow);
+            regexTable.Controls.Add(matchingButton, 2, currentRow);
+            regexTable.Controls.Add(notMatchingButton, 3, currentRow);
+            regexTable.Controls.Add(applyButton, 4, currentRow);
+            regexTable.Controls.Add(removeButton, 5, currentRow);
+        }
+
+        private void applyButton_Click(object sender, EventArgs e) {
+            Control senderBox = sender as Control;
+            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
+
+            ToolGrid.CheckByPredicate(ToolGrid.IsRowMatchingRegexpInstance, inst);
+        }
+
+        private void notMatchingButton_Click(object sender, EventArgs e) {
+            Control senderBox = sender as Control;
+            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
+
+            inst.MustMatch = false;
+            SettingsObject.Instance.NotifyPropertyChanged();            
+        }
+
+        private void matchingButton_Click(object sender, EventArgs e) {
+            Control senderBox = sender as Control;
+            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
+
+            inst.MustMatch = true;
+            SettingsObject.Instance.NotifyPropertyChanged();            
+        }
+
+        private void regexpBox_LostFocus(object sender, EventArgs e) {
+            Control senderBox = sender as Control;
+            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
+
+            inst.Regexp = senderBox.Text;
+            SettingsObject.Instance.NotifyPropertyChanged();            
+        }
+
+        private void removeButton_Click(object sender, EventArgs e) {
+            filterPanel.SuspendLayout();
+            regexTable.SuspendLayout();
+
+            Button senderButton = sender as Button;
+            int row = regexTable.GetRow(senderButton);
+
+            for (int i = 1; i < regexTable.ColumnCount; i++)
+                regexTable.Controls.Remove(regexTable.GetControlFromPosition(i, row));
+
+            for (int i = row + 1; i < regexTable.RowCount; i++)
+                for (int j = 1; j < regexTable.ColumnCount; j++) {
+                    Control c=regexTable.GetControlFromPosition(j, i);
+                    if (c != null) regexTable.SetRow(c, i - 1);
                 }
 
-                row.Cells.Add(keyCell);
+            regexTable.RowStyles.RemoveAt(regexTable.RowStyles.Count - 1);
+            regexTable.RowCount--;            
 
-                DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
-                valueCell.Value = item.Value;
-                row.Cells.Add(valueCell);
+            regexTable.ResumeLayout(true);
+            filterPanel.ResumeLayout();
+            filterPanel.PerformLayout();
 
-                DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
-                sourceCell.Value = item.SourceItem.Name;
-                row.Cells.Add(sourceCell);
-
-                DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
-                destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem.ContainingProject));
-                if (destinationCell.Items.Count > 0)
-                    destinationCell.Value = destinationCell.Items[0].ToString();
-                row.Cells.Add(destinationCell);
-
-                DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
-                row.Cells.Add(cell);
-                Rows.Add(row);
-
-                valueCell.ReadOnly = false;
-                sourceCell.ReadOnly = true;
-                Validate(row);
-            }
-
-            CurrentItemIndex = null;
-            CheckHeader.Checked = true;
-            CheckedRowsCount = Rows.Count;
-            this.ResumeLayout();
-            this.OnResize(null);
+            SettingsObject.Instance.FilterRegexps.Remove(senderButton.Tag as SettingsObject.RegexpInstance);
+            SettingsObject.Instance.NotifyPropertyChanged();
         }
 
-        public void SetItemFinished(bool ok, int newLength) {
-            if (CurrentItemIndex == null || CurrentItemIndex < 0) throw new ArgumentException("currentItemIndex");
-
-            if (ok) {
-                AbstractResultItem resultItem = (Rows[CurrentItemIndex.Value] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
-                TextSpan currentReplaceSpan = resultItem.ReplaceSpan;
-
-                int diff = currentReplaceSpan.iEndLine - currentReplaceSpan.iStartLine;
-                for (int i = CurrentItemIndex.Value + 1; i < Rows.Count; i++) {
-                    AbstractResultItem item = (Rows[i] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
-                    item.AbsoluteCharOffset += newLength - resultItem.AbsoluteCharLength;
-
-                    if (item.ReplaceSpan.iStartLine > currentReplaceSpan.iEndLine) {
-                        TextSpan newSpan = new TextSpan();
-                        newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
-                        newSpan.iStartIndex = item.ReplaceSpan.iStartIndex;
-                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
-                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
-                        item.ReplaceSpan = newSpan;
-                    } else if (item.ReplaceSpan.iStartLine == currentReplaceSpan.iEndLine) {
-                        TextSpan newSpan = new TextSpan();
-                        newSpan.iStartIndex = currentReplaceSpan.iStartIndex + newLength + item.ReplaceSpan.iStartIndex - currentReplaceSpan.iEndIndex;
-                        if (item.ReplaceSpan.iEndLine == item.ReplaceSpan.iStartLine) {
-                            newSpan.iEndIndex = newSpan.iStartIndex + item.ReplaceSpan.iEndIndex - item.ReplaceSpan.iStartIndex;
-                        } else {
-                            newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
-                        }
-                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
-                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
-                        item.ReplaceSpan = newSpan;
-                    }
-                }
-
-                Rows.RemoveAt(CurrentItemIndex.Value);
-                CheckedRowsCount--;
-                UpdateCheckHeader();
-            }
+        private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {
+            if (HighlightRequired != null) HighlightRequired(sender, e);
         }
 
-        #endregion
-
-        #region overridable members
-
-        protected override void InitializeColumns() {
-            base.InitializeColumns();
-
-            DataGridViewComboBoxColumn keyColumn = new DataGridViewComboBoxColumn();
-            keyColumn.MinimumWidth = 150;
-            keyColumn.HeaderText = "Resource Key";
-            keyColumn.Name = KeyColumnName;
-            this.Columns.Add(keyColumn);
-
-            DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
-            valueColumn.MinimumWidth = 250;
-            valueColumn.HeaderText = "Resource Value";
-            valueColumn.Name = ValueColumnName;
-            valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(valueColumn);
-
-            DataGridViewTextBoxColumn sourceColumn = new DataGridViewTextBoxColumn();
-            sourceColumn.MinimumWidth = 150;
-            sourceColumn.HeaderText = "Source File";
-            sourceColumn.Name = "SourceItem";
-            this.Columns.Add(sourceColumn);
-
-            DataGridViewComboBoxColumn destinationColumn = new DataGridViewComboBoxColumn();
-            destinationColumn.MinimumWidth = 250;
-            destinationColumn.HeaderText = "Destination File";
-            destinationColumn.Name = "DestinationItem";
-            destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(destinationColumn);
-
-            DataGridViewColumn column = new DataGridViewColumn();
-            column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            this.Columns.Add(column);
-        }
-
-        protected override CodeStringResultItem GetResultItemFromRow(CodeDataGridViewRow<CodeStringResultItem> row) {
-            CodeStringResultItem item = row.DataSourceItem;
-            item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
-            if (item.MoveThisItem) {
-                item.Key = (string)row.Cells[KeyColumnName].Value;
-                item.Value = (string)row.Cells[ValueColumnName].Value;
-                if (string.IsNullOrEmpty(item.Key) || item.Value == null)
-                    throw new InvalidOperationException("Item key and value cannot be null");
-
-                if (!string.IsNullOrEmpty(row.ErrorText))
-                    throw new InvalidOperationException(string.Format("on key \"{0}\": \"{1}\"", item.Key, row.ErrorText));
-
-                string dest = (string)row.Cells["DestinationItem"].Value;
-                if (string.IsNullOrEmpty(dest))
-                    throw new InvalidOperationException(string.Format("on key \"{0}\" - item destination cannot be null", item.Key));
-
-                if (resxItemsCache.ContainsKey(dest)) {
-                    item.DestinationItem = resxItemsCache[dest];
-                } else throw new InvalidOperationException(string.Format("Key \"{0}\" has no specified destination item.", item.Key));
-
-                row.DataSourceItem = item;
-                return item;
-            } else {
-                row.DataSourceItem = item;
-                return GetNextResultItem();
-            }
-        }
-
-        protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
-            if (Columns[e.ColumnIndex].Name == KeyColumnName) {
-                if (valueAdded) {
-                    DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)Rows[e.RowIndex].Cells[KeyColumnName];
-                    cell.Value = cell.Items[0];
-                    valueAdded = false;
-                }
-            }
-            base.OnCellEndEdit(e);
-        }
-
-        protected override void Validate(CodeDataGridViewRow<CodeStringResultItem> row) {
-            object dest = row.Cells["DestinationItem"].Value;
-            bool existsSameValue = false; 
-            string destError = "Destination file not set";
-            if (dest == null) {
-                row.ErrorSet.Add(destError);
-            } else {
-                row.ErrorSet.Remove(destError);
-
-                ResXProjectItem resxItem = resxItemsCache[dest.ToString()];
-                if (!resxItem.IsLoaded) {
-                    resxItem.Load();
-                    VLDocumentViewsManager.SetFileReadonly(resxItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
-                    loadedItems.Add(resxItem);
-                }
-
-                string key = (string)row.Cells[KeyColumnName].Value;
-                string value = (string)row.Cells[ValueColumnName].Value;
-                if (key == null || value == null) return;
-
-                string errorText = "Duplicate key entry - key is already present in resource file with different value";
-                CONTAINS_KEY_RESULT keyConflict = resxItem.StringKeyInConflict(key, value);
-                switch (keyConflict) {
-                    case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:                        
-                        row.ErrorSet.Remove(errorText);
-                        existsSameValue=true;
-                        break;
-                    case CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE:                        
-                        row.ErrorSet.Add(errorText);
-                        break;
-                    case CONTAINS_KEY_RESULT.DOESNT_EXIST:                        
-                        row.ErrorSet.Remove(errorText);
-                        break;
-                }                               
-            }
-
-            base.Validate(row);
-
-            if (row.ErrorSet.Count == 0) {
-                if (existsSameValue) {
-                    row.DefaultCellStyle.BackColor = ExistingKeySameValueColor;
-                } else {
-                    row.DefaultCellStyle.BackColor = Color.White;
-                }
-            }
-        }
-
-        protected override void SetConflictedRows(CodeDataGridViewRow<CodeStringResultItem> row1, CodeDataGridViewRow<CodeStringResultItem> row2, bool p) {
-            object dest1 = row1.Cells["DestinationItem"].Value;
-            object dest2 = row2.Cells["DestinationItem"].Value;
-            p = p && (dest1 == null || dest2 == null || dest1.ToString() == dest2.ToString());
-
-            base.SetConflictedRows(row1, row2, p);
-        }
-
-        #endregion
-
-        private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
-            if (HighlightRequired != null && e.RowIndex >= 0) {
-                HighlightRequired(this, new CodeResultItemEventArgs() {
-                    Item = (Rows[e.RowIndex] as CodeDataGridViewRow<CodeStringResultItem>).DataSourceItem
-                });
-            }
-        }
+        public BatchMoveToResourcesToolGrid ToolGrid { get; private set; }
         
-        private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, Project project) {
-            if (!destinationItemsCache.ContainsKey(project)) {
-                List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
-                DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
-                foreach (ProjectItem projectItem in items) {
-                    var resxItem = ResXProjectItem.ConvertToResXItem(projectItem, project);
-                    resxItems.Add(resxItem.ToString());
-                    resxItemsCache.Add(resxItem.ToStringValue, resxItem);
-                }
-                destinationItemsCache.Add(project, resxItems);
+        private bool _FilterVisible;
+        public bool FilterVisible {
+            get {
+                return _FilterVisible;
             }
-
-            return destinationItemsCache[project];
-        }
-                
-        private void BatchMoveToResourcesToolPanel_CellValidating(object sender, DataGridViewCellValidatingEventArgs e) {
-            valueAdded = false;
-            if (Columns[e.ColumnIndex].Name == KeyColumnName) {
-                var comboBoxCell = Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewComboBoxCell;
-                if (!comboBoxCell.Items.Contains(e.FormattedValue)) {
-                    comboBoxCell.Items.Insert(0, e.FormattedValue);
-                    valueAdded = true;
-                }
+            set {
+                _FilterVisible = value;                
+                splitContainer.Panel1Collapsed = !value;
+                if (value) splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
             }
-        }
-
-        protected override bool ProcessDataGridViewKey(KeyEventArgs e) {
-            if (this.IsCurrentCellInEditMode) {
-                if (e.KeyData == Keys.Left || e.KeyData == Keys.Right || e.KeyData==Keys.Home || e.KeyData==Keys.End) {
-                    return false;
-                } else return base.ProcessDataGridViewKey(e);
-            } else return base.ProcessDataGridViewKey(e);
-        }
-
-        private void BatchMoveToResourcesToolPanel_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e) {
-            if (CurrentCellAddress.X == 1 && e.Control is ComboBox) {
-                ComboBox box = e.Control as ComboBox;
-                box.DropDownStyle = ComboBoxStyle.DropDown;                     
-            }            
-        }
-        
-        public override string CheckBoxColumnName {
-            get { return "MoveThisItem"; }
-        }
-
-        public override string KeyColumnName {
-            get { return "Key"; }
-        }
-
-        public override string ValueColumnName {
-            get { return "Value"; }
         }
     }
-
-    
 }
