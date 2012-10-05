@@ -15,10 +15,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public string OldValue { get; private set; }
         public string NewValue { get; private set; }
         public string Comment { get; private set; }
-        public CodeDataGridViewRow<ResXDataNode> SourceRow { get; private set; }
+        public ResXStringGridRow SourceRow { get; private set; }
         public ResXStringGrid Grid { get; private set; }
 
-        public StringChangeValueUndoUnit(CodeDataGridViewRow<ResXDataNode> sourceRow, ResXStringGrid grid, string key, string oldValue,string newValue, string comment) {
+        public StringChangeValueUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldValue,string newValue, string comment) {
             this.SourceRow = sourceRow;
             this.Grid = grid;
             this.Key = key;
@@ -39,10 +39,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
             string newKey;
             if (!string.IsNullOrEmpty(Key)) {
                 newKey = Key;
-                SourceRow.Tag = null;
+                SourceRow.Status = ResXStringGridRow.STATUS.OK;
             } else {
                 newKey = "A";
-                SourceRow.Tag = ResXStringGrid.NULL_KEY;
+                SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
             }
             SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
             SourceRow.DataSourceItem.Comment = Comment;

@@ -10,9 +10,12 @@ using System.Resources;
 namespace VisualLocalizer.Library {
     public abstract class AbstractKeyValueGridView<ItemType>:AbstractCheckedGridView<ItemType> where ItemType:class {
 
-        private Dictionary<string, CodeDataGridViewRow<ItemType>> RowData = new Dictionary<string, CodeDataGridViewRow<ItemType>>();        
+        private Dictionary<string, CodeDataGridViewRow<ItemType>> RowData = new Dictionary<string, CodeDataGridViewRow<ItemType>>();
 
         protected virtual void TrySetValue(string oldKey, string newKey, CodeDataGridViewRow<ItemType> row) {
+            oldKey = oldKey == null ? null : oldKey.ToLower();
+            newKey = newKey == null ? null : newKey.ToLower(); 
+
             if (oldKey == newKey) {
                 if (!string.IsNullOrEmpty(newKey)) {
                     foreach (CodeDataGridViewRow<ItemType> c in RowData[newKey].RowsWithSameKey) {
@@ -126,7 +129,9 @@ namespace VisualLocalizer.Library {
 
         public override void SetData(List<ItemType> list) {
             RowData.Clear();
+            errorRows.Clear();
         }
+
 
         public abstract string KeyColumnName { get; }
         public abstract string ValueColumnName { get; }

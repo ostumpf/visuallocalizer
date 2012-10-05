@@ -14,10 +14,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public string Key { get; private set; }
         public string OldComment { get; private set; }
         public string NewComment { get; private set; }        
-        public CodeDataGridViewRow<ResXDataNode> SourceRow { get; private set; }
+        public ResXStringGridRow SourceRow { get; private set; }
         public ResXStringGrid Grid { get; private set; }
 
-        public StringChangeCommentUndoUnit(CodeDataGridViewRow<ResXDataNode> sourceRow, ResXStringGrid grid, string key, string oldComment, string newComment) {
+        public StringChangeCommentUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldComment, string newComment) {
             this.SourceRow = sourceRow;
             this.Grid = grid;
             this.Key = key;

@@ -168,7 +168,7 @@ namespace VisualLocalizer.Components {
                     reader = ResXResourceReader.FromFileContents(textBuffer);
                     reader.UseResXDataNodes = true;
                     foreach (DictionaryEntry entry in reader) {
-                        data.Add(entry.Key.ToString(), entry.Value as ResXDataNode);
+                        data.Add(entry.Key.ToString().ToLower(), entry.Value as ResXDataNode);
                     }
                 } finally {
                     if (reader != null) reader.Close();

@@ -15,6 +15,7 @@ using VisualLocalizer.Components;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Gui;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer
 {
@@ -33,9 +34,10 @@ namespace VisualLocalizer
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
     [ProvideToolWindow(typeof(BatchMoveToResourcesToolWindow),MultiInstances=false,
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
-    [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false,
+    [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false, 
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
-
+    [ProvideProfile(typeof(SettingsManager),"BatchMoveFilter","Visual Localizer",114,115,false,DescriptionResourceID=116)]
+  
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
     {
@@ -43,23 +45,24 @@ namespace VisualLocalizer
         internal EnvDTE80.DTE2 DTE;
         internal EnvDTE.UIHierarchy UIHierarchy;
         internal OleMenuCommandService menuService;
-        internal IVsUIShell2 uiShell;
+        internal IVsUIShell uiShell;
         internal IVsRunningDocumentTable ivsRunningDocumentTable;
         private static VisualLocalizerPackage instance;
 
         protected override void Initialize() {
             instance = this;
-
+            
             base.Initialize();
             try {                
                 ActivityLogger.Source = "Visual Localizer";                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
                            
                 InitBaseServices();
-                
+                new SettingsManager().LoadSettingsFromStorage();
+
                 menuManager = new MenuManager();
                 RegisterEditorFactory(new ResXEditorFactory());
-                
+               
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
@@ -71,7 +74,7 @@ namespace VisualLocalizer
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            uiShell = (IVsUIShell2)GetService(typeof(SVsUIShell));
+            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
             ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
             
             if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable==null)
@@ -83,5 +86,31 @@ namespace VisualLocalizer
                 return instance;
             }
         }
+
+        private static VS_VERSION? version = null;
+        public static VS_VERSION VisualStudioVersion {
+            get {
+                if (!version.HasValue) {
+                    IVsShell shell = (IVsShell)Package.GetGlobalService(typeof(SVsShell));
+                    object o;
+                    int hr = shell.GetProperty((int)__VSSPROPID2.VSSPROPID_SqmRegistryRoot, out o);
+                    Marshal.ThrowExceptionForHR(hr);
+                    string registry = o.ToString();
+
+                    if (registry.EndsWith("9.0\\SQM")) {
+                        version = VS_VERSION.VS2008;
+                    } else if (registry.EndsWith("10.0\\SQM")) {
+                        version = VS_VERSION.VS2010;
+                    } else if (registry.EndsWith("11.0\\SQM")) {
+                        version = VS_VERSION.VS2011;
+                    } else {
+                        version = VS_VERSION.UNKNOWN;
+                    }
+                }
+                return version.Value;
+            }
+        }
     }
+
+    public enum VS_VERSION {VS2008,VS2010,VS2011,UNKNOWN}
 }

@@ -42,7 +42,7 @@
     <Groups>
       <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID" priority="0x0000">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID"/>
-      </Group>
+      </Group>     
     </Groups>
 
     <Menus>
@@ -53,32 +53,59 @@
           <ButtonText>Batch Move Tool Window Toolbar</ButtonText>
           <CommandName>Batch Move Tool Window Toolbar</CommandName>
         </Strings>
-      </Menu>
+      </Menu>      
     </Menus>
 
     <Combos>
-      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="1" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="2" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
-        <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>CaseSensitive</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
         <Strings>
           <ButtonText>Namespace policy:</ButtonText>        
         </Strings>
       </Combo>
+
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRememberUncheckedID" priority="5" type="DropDownCombo" idCommandList="BatchMoveToolbarRememberUncheckedListID" defaultWidth="325">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>CaseSensitive</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings>
+          <ButtonText>Remember unchecked strings:</ButtonText>
+        </Strings>
+      </Combo>
     </Combos>
     
     <Buttons>      
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="2" type="Button">
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="1" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>                
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextOnly</CommandFlag>        
+        <Strings>
+          <CommandName>BatchMoveToResourcesShowHideFilter</CommandName>
+          <ButtonText>Show filter</ButtonText>          
+        </Strings>
+      </Button>
+
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="10" type="Button">                
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
-        <Icon guid="guidImages" id="runPng"/>
+        <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchMoveToResourcesRun</CommandName>
-          <ButtonText>Run</ButtonText>
-          <ToolTipText>Run</ToolTipText>          
-        </Strings>        
+          <ButtonText>Run</ButtonText>          
+        </Strings>           
       </Button>
+
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunVerbatimizeUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunMenuGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>        
+        <Strings>
+          <CommandName>BatchMoveToolbarRunVerbatimizeUnchecked</CommandName>
+          <ButtonText>Run &amp;&amp; convert unchecked items to verbatim</ButtonText>
+        </Strings>
+      </Button>
+
     </Buttons>
     <Bitmaps>
       <Bitmap guid="guidImages" href="Resources\run.png"/>
@@ -216,6 +243,14 @@
       <IDSymbol name="BatchMoveToolbarRunID" value="0x1003" />
       <IDSymbol name="BatchMoveToolbarModesListID" value="0x1004" />
       <IDSymbol name="BatchMoveToolbarModeID" value="0x1005" />
+      <IDSymbol name="BatchMoveToolbarShowFilterID" value="0x1006" />
+      <IDSymbol name="BatchMoveToolbarRunVerbatimizeUncheckedID" value="0x1007" />            
+      <IDSymbol name="BatchMoveToolbarRunMenuID" value="0x1009" />
+      <IDSymbol name="BatchMoveToolbarRunMenuGroupID" value="0x1010" />
+      <IDSymbol name="BatchMoveToolbarRunVerbatimizeCheckedID" value="0x1011" />
+
+      <IDSymbol name="BatchMoveToolbarRememberUncheckedListID" value="0x1012" />
+      <IDSymbol name="BatchMoveToolbarRememberUncheckedID" value="0x1013" />
     </GuidSymbol>
 
     <GuidSymbol name="BatchInlineToolbarCmdSet" value="{F2983E9C-E545-4d2f-A5F2-D04683356AD0}">

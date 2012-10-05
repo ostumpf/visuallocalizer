@@ -26,8 +26,10 @@ namespace VisualLocalizer.Commands {
 
             Process(currentlyProcessedItem);
 
-            Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
-            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });            
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+            });
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
@@ -39,19 +41,25 @@ namespace VisualLocalizer.Commands {
             base.Process(selectedItems);
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
-            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+            });
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
         }
 
         protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
-            CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName) {
-            
-            var lookuper = new CodeStringLookuper(functionText, startPoint.Line, startPoint.LineCharOffset,
-                startPoint.AbsoluteCharOffset + startPoint.Line - 2,
-                parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName);
+            CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
+
+            var lookuper = new CodeStringLookuper(functionText, startPoint, parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
             lookuper.SourceItem = currentlyProcessedItem;
-            Results.AddRange(lookuper.LookForStrings());
+
+            var list = lookuper.LookForStrings();
+            EditPoint2 editPoint = (EditPoint2)startPoint.CreateEditPoint();
+            foreach (var item in list)
+                AddContextToItem(item, editPoint);
+
+            Results.AddRange(list);
         }
  
     }

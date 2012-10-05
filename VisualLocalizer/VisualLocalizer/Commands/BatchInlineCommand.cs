@@ -15,7 +15,7 @@ namespace VisualLocalizer.Commands {
             get;
             private set;
         }
-        private Dictionary<Project, Trie> trieCache = new Dictionary<Project, Trie>();
+        private Dictionary<Project, Trie<CodeReferenceTrieElement>> trieCache = new Dictionary<Project, Trie<CodeReferenceTrieElement>>();
         private Dictionary<CodeElement, Dictionary<string, string>> codeUsingsCache = new Dictionary<CodeElement, Dictionary<string, string>>();
 
         public override void Process() {
@@ -29,10 +29,9 @@ namespace VisualLocalizer.Commands {
 
             Process(currentlyProcessedItem);
 
-            foreach (var item in Results)
-                VLOutputWindow.VisualLocalizerPane.WriteLine(item.ToString());
-
-            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+            });
 
             trieCache.Clear();
             codeUsingsCache.Clear();
@@ -45,14 +44,16 @@ namespace VisualLocalizer.Commands {
 
             base.Process(selectedItems);
 
-            Results.ForEach((item) => { VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); });
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+            });
 
             trieCache.Clear();
             codeUsingsCache.Clear();
             VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline completed - found {0} items to be moved", Results.Count);
         }
 
-        private Trie PutResourceFilesInCache() {
+        private Trie<CodeReferenceTrieElement> PutResourceFilesInCache() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
                 var resxItems = currentlyProcessedItem.GetResXItemsAround(false);
                 trieCache.Add(currentlyProcessedItem.ContainingProject, resxItems.CreateTrie());
@@ -74,15 +75,20 @@ namespace VisualLocalizer.Commands {
             }            
         }
 
-        protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName) {
-            Trie trie = PutResourceFilesInCache();
+        protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName,bool isWithinLocFalse) {
+            Trie<CodeReferenceTrieElement> trie = PutResourceFilesInCache();
             Dictionary<string, string> usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);                       
 
-            CodeReferenceLookuper lookuper = new CodeReferenceLookuper(functionText, startPoint.Line, startPoint.LineCharOffset,
-                startPoint.AbsoluteCharOffset + startPoint.Line - 2,
-                trie, usedNamespaces, parentNamespace);
+            CodeReferenceLookuper lookuper = new CodeReferenceLookuper(functionText, startPoint,
+                trie, usedNamespaces, parentNamespace, isWithinLocFalse);
             lookuper.SourceItem = currentlyProcessedItem;
-            Results.AddRange(lookuper.LookForReferences());
+
+            var list = lookuper.LookForReferences();
+            EditPoint2 editPoint = (EditPoint2)startPoint.CreateEditPoint();
+            foreach (var item in list)
+                AddContextToItem(item, editPoint);
+
+            Results.AddRange(list);
         }
     }
 }

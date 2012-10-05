@@ -18,8 +18,11 @@ using VisualLocalizer.Library;
 using Microsoft.VisualStudio;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
+using System.Drawing;
 
 namespace VisualLocalizer.Commands {
+  
     internal sealed class MoveToResourcesCommand : AbstractCommand {
 
         public override void Process() {
@@ -29,8 +32,8 @@ namespace VisualLocalizer.Commands {
 
             if (resultItem != null) {
                 TextSpan replaceSpan = resultItem.ReplaceSpan;
-                string referencedCodeText = resultItem.Value;
-                
+                string referencedCodeText = resultItem.Value;                
+             
                 SelectResourceFileForm f = new SelectResourceFileForm(
                     referencedCodeText.CreateKeySuggestions(resultItem.NamespaceElement == null ? null : (resultItem.NamespaceElement as CodeNamespace).FullName,
                         resultItem.ClassOrStructElementName, resultItem.MethodElementName == null ? resultItem.VariableElementName : resultItem.MethodElementName),
@@ -38,7 +41,7 @@ namespace VisualLocalizer.Commands {
                     currentDocument.ProjectItem.ContainingProject
                 );
                 System.Windows.Forms.DialogResult result = f.ShowDialog(System.Windows.Forms.Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd)));
-
+                
                 if (result == System.Windows.Forms.DialogResult.OK) {
                     string referenceText;
                     bool addNamespace;
@@ -69,7 +72,7 @@ namespace VisualLocalizer.Commands {
                         currentDocument.AddUsingBlock(f.SelectedItem.Namespace);                    
 
                     if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {
-                        // DO NOTHING
+                        CreateMoveToResourcesReferenceUndoUnit(f.Key, addNamespace);
                     } else if (f.Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE) {
                         f.SelectedItem.AddString(f.Key, f.Value);
                         CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addNamespace);
@@ -93,6 +96,13 @@ namespace VisualLocalizer.Commands {
             MoveToResourcesOverwriteUndoUnit newUnit = new MoveToResourcesOverwriteUndoUnit(key, oldValue, newValue, resXProjectItem);
             newUnit.AppendUnits.AddRange(units);
             undoManager.Add(newUnit);
+        }
+
+        private void CreateMoveToResourcesReferenceUndoUnit(string key,bool addNamespace) {
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            MoveToResourcesReferenceUndoUnit newUnit = new MoveToResourcesReferenceUndoUnit(key);
+            newUnit.AppendUnits.AddRange(units);
+            undoManager.Add(newUnit);
         } 
 
         private string TrimAtAndApos(string value) {
@@ -111,8 +121,8 @@ namespace VisualLocalizer.Commands {
             CodeStringResultItem result = null;
 
             if (ok) {
-                CodeStringLookuper lookuper = new CodeStringLookuper(text, startPoint.Line, startPoint.LineCharOffset, startPoint.AbsoluteCharOffset,
-                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName);
+                CodeStringLookuper lookuper = new CodeStringLookuper(text, startPoint,
+                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName, false);
                 List<CodeStringResultItem> items = lookuper.LookForStrings();
 
                 foreach (CodeStringResultItem item in items) {

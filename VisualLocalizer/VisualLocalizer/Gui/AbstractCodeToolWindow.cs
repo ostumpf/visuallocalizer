@@ -35,19 +35,25 @@ namespace VisualLocalizer.Gui {
         }
 
         public int OnShow(int fShow) {
-            if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow!=(int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
-                if (WindowHidden != null) WindowHidden(this, null);
+            if (VisualLocalizerPackage.VisualStudioVersion == VS_VERSION.VS2008) {
+                if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow != (int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
+                    if (WindowHidden != null) WindowHidden(this, null);
+                }
+            } else {
+                if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow == (int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
+                    if (WindowHidden != null) WindowHidden(this, null);
+                }
             }
             prevfShow = fShow;
             return VSConstants.S_OK;
         }
 
         public int OnSize() {
-            throw new NotImplementedException();
+            return VSConstants.S_OK;
         }
     }
 
-    internal abstract class AbstractCodeToolWindow<T> : ToolWindowPane where T : DataGridView,IHighlightRequestSource, new() {
+    internal abstract class AbstractCodeToolWindow<T> : ToolWindowPane where T : Control,IHighlightRequestSource, new() {
 
         protected T panel;
         

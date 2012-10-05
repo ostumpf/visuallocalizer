@@ -11,19 +11,49 @@ using VisualLocalizer.Library;
 using System.IO;
 
 namespace VisualLocalizer.Editor {
+
+    internal sealed class ResXStringGridRow : CodeDataGridViewRow<ResXDataNode> {
+        public enum STATUS { OK, KEY_NULL }
+
+        public ResXStringGridRow() {
+            Status = STATUS.OK;
+        }
+
+        public STATUS Status { get; set; }
+    }
+
     internal sealed class ResXStringGrid : AbstractKeyValueGridView<ResXDataNode> {
 
         public event EventHandler DataChanged;
-        public event Action<CodeDataGridViewRow<ResXDataNode>, string> StringKeyRenamed;
-        public event Action<CodeDataGridViewRow<ResXDataNode>, string, string> StringValueChanged;
-        public event Action<CodeDataGridViewRow<ResXDataNode>, string, string> StringCommentChanged;
-        public static readonly int NULL_KEY = 1;
-
-        public ResXStringGrid() {
+        public event Action<ResXStringGridRow, string> StringKeyRenamed;
+        public event Action<ResXStringGridRow, string, string> StringValueChanged;
+        public event Action<ResXStringGridRow, string, string> StringCommentChanged;
+        
+        public ResXStringGrid(ResXEditorControl editorControl) {
             this.AllowUserToAddRows = true;            
             this.ShowEditingIcon = false;
             this.MultiSelect = true;
             this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
+
+            ResXStringGridRow rowTemplate = new ResXStringGridRow();
+            this.RowTemplate = rowTemplate;
+
+            this.ColumnHeadersHeight = 24;
+        }
+
+        private void editorControl_RemoveRequested(REMOVEKIND flags) {
+            if (!this.Visible) return;
+            if (this.SelectedRows.Count == 0) return;
+            if ((flags | REMOVEKIND.REMOVE) != REMOVEKIND.REMOVE) throw new ArgumentException("Cannot delete or exclude strings.");
+
+            if ((flags & REMOVEKIND.REMOVE) == REMOVEKIND.REMOVE) {
+                foreach (ResXStringGridRow row in SelectedRows) {
+                    TrySetValue(row.DataSourceItem.Name, null, row);
+                    Rows.Remove(row);
+                }
+                NotifyDataChanged();
+            }            
         }
 
         protected override void InitializeColumns() {            
@@ -48,8 +78,8 @@ namespace VisualLocalizer.Editor {
             commentColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Add(commentColumn);
         }
-      
-        private void PopulateRow(CodeDataGridViewRow<ResXDataNode> row, ResXDataNode node) {
+
+        private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
             string name, value, comment;
             if (node.Comment.StartsWith("@@")) {
                 string p = node.Comment.Substring(2);
@@ -84,7 +114,7 @@ namespace VisualLocalizer.Editor {
         public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(RowCount);
 
-            foreach (CodeDataGridViewRow<ResXDataNode> row in Rows) {
+            foreach (ResXStringGridRow row in Rows) {
                 if (!string.IsNullOrEmpty(row.ErrorText)) {
                     if (throwExceptions) {
                         throw new Exception(row.ErrorText);
@@ -93,11 +123,11 @@ namespace VisualLocalizer.Editor {
                             string rndFile = Path.GetRandomFileName();
                             ResXDataNode newNode = new ResXDataNode(rndFile.Replace('@','_'), row.DataSourceItem.GetStringValue());
                             newNode.Comment = string.Format("@@{0}@{1}", row.DataSourceItem.Name, row.DataSourceItem.Comment);
-                            data.Add(newNode.Name, newNode); 
+                            data.Add(newNode.Name.ToLower(), newNode); 
                         }
                     }
                 } else if (row.DataSourceItem != null) { 
-                    data.Add(row.DataSourceItem.Name, row.DataSourceItem); 
+                    data.Add(row.DataSourceItem.Name.ToLower(), row.DataSourceItem); 
                 }
             }
 
@@ -110,14 +140,13 @@ namespace VisualLocalizer.Editor {
             Rows.Clear();            
 
             foreach (var pair in newData) {
-                CodeDataGridViewRow<ResXDataNode> row = new CodeDataGridViewRow<ResXDataNode>();
+                ResXStringGridRow row = new ResXStringGridRow();
                 PopulateRow(row, pair.Value);
                 
                 Rows.Add(row);                
                 Validate(row);
             }
 
-            CurrentItemIndex = null;                        
             this.ResumeLayout();
             this.OnResize(null);
         }
@@ -151,7 +180,7 @@ namespace VisualLocalizer.Editor {
             base.OnCellEndEdit(e);
 
             if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
-                CodeDataGridViewRow<ResXDataNode> row = Rows[e.RowIndex] as CodeDataGridViewRow<ResXDataNode>;
+                ResXStringGridRow row = Rows[e.RowIndex] as ResXStringGridRow;
                 if (row.DataSourceItem == null) row.DataSourceItem = new ResXDataNode("(new)", string.Empty);
                 ResXDataNode node = row.DataSourceItem;
 
@@ -163,9 +192,9 @@ namespace VisualLocalizer.Editor {
 
                         if (!string.IsNullOrEmpty(newKey)) {
                             node.Name = newKey;
-                            row.Tag = null;
+                            row.Status = ResXStringGridRow.STATUS.OK;
                         } else {
-                            row.Tag = NULL_KEY;
+                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
                         }
                     }
                 } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
@@ -178,9 +207,10 @@ namespace VisualLocalizer.Editor {
                         ResXDataNode newNode;
                         if (string.IsNullOrEmpty(key)) {
                             newNode = new ResXDataNode("A", newValue);
-                            row.Tag = NULL_KEY;
+                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
                         } else {
                             newNode = new ResXDataNode(key, newValue);
+                            row.Status = ResXStringGridRow.STATUS.OK;
                         }
 
                         newNode.Comment = (string)row.Cells[CommentColumnName].Value;
@@ -198,7 +228,7 @@ namespace VisualLocalizer.Editor {
             }           
         }
 
-        public void ValidateRow(CodeDataGridViewRow<ResXDataNode> row) {
+        public void ValidateRow(ResXStringGridRow row) {
             Validate(row);
         }
 
@@ -206,15 +236,15 @@ namespace VisualLocalizer.Editor {
             if (DataChanged != null) DataChanged(this, null);
         }
 
-        public void NotifyStringKeyRenamed(CodeDataGridViewRow<ResXDataNode> row, string newKey) {
+        public void NotifyStringKeyRenamed(ResXStringGridRow row, string newKey) {
             if (StringKeyRenamed != null) StringKeyRenamed(row, newKey);
         }
 
-        public void NotifyStringCommentChanged(CodeDataGridViewRow<ResXDataNode> row, string oldComment, string newComment) {
+        public void NotifyStringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
             if (StringCommentChanged != null) StringCommentChanged(row, oldComment, newComment);
         }
 
-        public void NotifyStringValueChanged(CodeDataGridViewRow<ResXDataNode> row, string oldValue, string newValue) {
+        public void NotifyStringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
             if (StringValueChanged != null) StringValueChanged(row, oldValue, newValue);
         }
 

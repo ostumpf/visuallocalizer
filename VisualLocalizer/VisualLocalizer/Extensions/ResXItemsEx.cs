@@ -20,12 +20,13 @@ namespace VisualLocalizer.Extensions {
             return resxItems;
         }
 
-        public static Trie CreateTrie(this List<ResXProjectItem> resxItems) {
-            Trie trie = new Trie();
+        public static Trie<CodeReferenceTrieElement> CreateTrie(this List<ResXProjectItem> resxItems) {
+            Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
             foreach (ResXProjectItem item in resxItems) {
                 item.Load();                
                 foreach (var pair in item.GetAllStringReferences()) {
-                    trie.Add(pair.Key, new VisualLocalizer.Components.CodeReferenceLookuper.CodeReferenceInfo() { Value = pair.Value, Origin = item });
+                    var element = trie.Add(pair.Key);
+                    element.Infos.Add(new CodeReferenceInfo() { Origin = item, Value = pair.Value });
                 }
             }
             trie.CreatePredecessorsAndShortcuts();

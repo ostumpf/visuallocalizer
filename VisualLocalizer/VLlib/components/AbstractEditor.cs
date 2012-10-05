@@ -193,13 +193,13 @@ namespace VisualLocalizer.Library {
 
             Loading = true;
             try {
+                FileName = fileToLoad;
                 LoadFile(fileToLoad);
                 IsDirty = false;
-                ReadOnly = (File.GetAttributes(fileToLoad) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly;
+                ReadOnly = (File.GetAttributes(fileToLoad) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly;                
 
                 // Hook up to file change notifications
-                if (String.IsNullOrEmpty(FileName) || 0 != String.Compare(FileName, fileToLoad, true, CultureInfo.CurrentCulture)) {
-                    FileName = fileToLoad;
+                if (String.IsNullOrEmpty(FileName) || 0 != String.Compare(FileName, fileToLoad, true, CultureInfo.CurrentCulture)) {                    
                     SetFileChangeNotification(FileName, true);
 
                     // Notify the load or reload
@@ -207,7 +207,7 @@ namespace VisualLocalizer.Library {
                 }
                 return VSConstants.S_OK;
             } catch (Exception ex) {
-                return VSConstants.S_FALSE;
+                return VSConstants.E_ABORT;
             } finally {
                 // RefreshPropertiesWindow();
                 Loading = false;
@@ -598,8 +598,7 @@ namespace VisualLocalizer.Library {
         }
 
         public virtual void FileChangedOutsideVS() {
-            IVsQueryEditQuerySave2 queryEditQuerySave =
-      (IVsQueryEditQuerySave2)GetService(typeof(SVsQueryEditQuerySave));
+            IVsQueryEditQuerySave2 queryEditQuerySave = (IVsQueryEditQuerySave2)GetService(typeof(SVsQueryEditQuerySave));
 
             // ---Now call the QueryEdit method to find the edit status of this file
             string[] documents = { FileName };
@@ -616,12 +615,13 @@ namespace VisualLocalizer.Library {
               out outFlags // Additional flags
               );
 
-            /*string message = FileName + Environment.NewLine +
+            string message = FileName + Environment.NewLine +
                 Environment.NewLine + "File was changed outside the environment. Do you want to reload it?";
 
             string title = String.Empty;
             IVsUIShell VsUiShell = (IVsUIShell)Package.GetGlobalService(typeof(SVsUIShell));
-            int result = 0;
+
+            int r = (int)DialogResult.No;
             Guid tempGuid = Guid.Empty;
             if (VsUiShell != null) {
                 //Show up a message box indicating that the file has changed outside of VS environment
@@ -635,17 +635,28 @@ namespace VisualLocalizer.Library {
                                          OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
                                          OLEMSGICON.OLEMSGICON_QUERY,
                                          0,
-                                         out result);
+                                         out r);
             }
             //if the user selects "Yes", reload the current file
-            if (result == (int)DialogResult.Yes) {
+            if (r == (int)DialogResult.Yes) {
                 ((IVsPersistDocData)this).ReloadDocData(0);
-            }*/
+            }
         }
 
         public virtual void AddUndoUnit(IOleUndoUnit undoUnit) {
             IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
             undoManager.Add(undoUnit);
+        }
+
+        public virtual void ClearUndoRedoStack() {
+            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
+            undoManager.Enable(0);
+            undoManager.Enable(1);
+        }
+
+        public void SetUndoManagerEnabled(bool enabled) {
+            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
+            undoManager.Enable(enabled ? 1 : 0);
         }
     }
 

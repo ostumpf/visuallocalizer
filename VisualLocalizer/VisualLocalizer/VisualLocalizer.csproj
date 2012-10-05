@@ -70,9 +70,15 @@
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
     <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
     <Compile Include="Components\Code\CodeReferenceLookuper.cs" />
+    <Compile Include="Components\Code\CodeReferenceTrieElement.cs" />
     <Compile Include="Components\Code\CodeResultItems.cs" />
     <Compile Include="Components\Code\CodeStringLookuper.cs" />
+    <Compile Include="Components\UndoUnits\MarkAsNotLocalizedStringUndoUnit.cs" />
+    <Compile Include="Components\UndoUnits\MoveToResourcesReferenceUndoUnit.cs" />
     <Compile Include="Components\VLDocumentViewsManager.cs" />
+    <Compile Include="Editor\ResXImagesList.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Editor\ResXStringGrid.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -84,19 +90,23 @@
     <Compile Include="Editor\UndoUnits\StringChangeValueUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringRenameKeyUndoUnit.cs" />
     <Compile Include="Extensions\ResXItemsEx.cs" />
+    <Compile Include="Gui\AbstractCheckedGridViewEx.cs" />
     <Compile Include="Gui\AbstractCodeToolWindow.cs" />
     <Compile Include="Gui\BatchInlineToolPanel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Gui\BatchInlineToolWindow.cs" />
+    <Compile Include="Gui\BatchMoveToResourcesToolGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Gui\BatchMoveToResourcesToolPanel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Gui\BatchMoveToResourcesToolWindow.cs">
     </Compile>
-    <Compile Include="Components\InlineUndoUnit.cs" />
-    <Compile Include="Components\MoveToResourcesOverwriteUndoUnit.cs" />
-    <Compile Include="Components\MoveToResourcesUndoUnit.cs" />
+    <Compile Include="Components\UndoUnits\InlineUndoUnit.cs" />
+    <Compile Include="Components\UndoUnits\MoveToResourcesOverwriteUndoUnit.cs" />
+    <Compile Include="Components\UndoUnits\MoveToResourcesUndoUnit.cs" />
     <Compile Include="Components\NotInlineableException.cs" />
     <Compile Include="Components\NotReferencableException.cs" />
     <Compile Include="Components\ResXProjectItem.cs" />
@@ -113,6 +123,10 @@
     <Compile Include="Components\VLOutputWindow.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Commands\MenuManager.cs" />
+    <Compile Include="Settings\SettingsManager.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Settings\Settings.cs" />
     <Compile Include="VisualLocalizerPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

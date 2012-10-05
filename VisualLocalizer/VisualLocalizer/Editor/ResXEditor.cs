@@ -9,6 +9,7 @@ using System.Collections;
 using VSLangProj;
 using EnvDTE;
 using VisualLocalizer.Editor.UndoUnits;
+using System.IO;
 
 namespace VisualLocalizer.Editor {
     [Guid("163D9FB6-68C6-4801-9CA0-3C53241D7855")]
@@ -32,9 +33,11 @@ namespace VisualLocalizer.Editor {
             ResXResourceReader reader = null;
             try {
                 Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>();
-
+                
                 reader = new ResXResourceReader(path);
                 reader.UseResXDataNodes = true;
+                reader.BasePath = Path.GetDirectoryName(path);
+
                 foreach (DictionaryEntry pair in reader) {
                     data.Add(pair.Key.ToString(), pair.Value as ResXDataNode);
                 }
@@ -72,11 +75,12 @@ namespace VisualLocalizer.Editor {
             set {
                 base.ReadOnly = value;
                 UIControl.SetReadOnly(value);
+                SetUndoManagerEnabled(!value);
             }
         }
 
         public override string GetFormatList() {
-            return "Managed Resource File (*.resx)\n*.resx\n";
+            return "Managed Resource File (*.resx)\0*.resx\0";
         }
 
         public override string Extension {            

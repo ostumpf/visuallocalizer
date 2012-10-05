@@ -34,6 +34,11 @@ namespace VisualLocalizer
         public const int BatchMoveToolbarRunID = 0x1003;
         public const int BatchMoveToolbarModesListID = 0x1004;
         public const int BatchMoveToolbarModeID = 0x1005;
+        public const int BatchMoveToolbarShowFilterID = 0x1006;
+        public const int BatchMoveToolbarRunVerbatimizeCheckedID = 0x1011;
+        public const int BatchMoveToolbarRunVerbatimizeUncheckedID = 0x1007;
+        public const int BatchMoveToolbarRememberUncheckedListID = 0x1012;
+        public const int BatchMoveToolbarRememberUncheckedID = 0x1013;
 
         public const int BatchInlineToolbarID = 0x2001;
         public const int BatchInlineToolbarRunID = 0x2002;
@@ -43,7 +48,7 @@ namespace VisualLocalizer
         public const string ResXExtension = ".resx";
         public const string PublicResXTool = "PublicResXFileCodeGenerator";
         public const string InternalResXTool = "ResXFileCodeGenerator";
-        public const string UsingStatement = "using";
         public const string CsExtension = ".cs";
+        public const string NoLocalizationComment = "/*VL_NO_LOC*/";
     }
 }

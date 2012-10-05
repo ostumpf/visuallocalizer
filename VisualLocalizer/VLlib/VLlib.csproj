@@ -85,7 +85,6 @@
     <Compile Include="extensions\IOleUndoManagerEx.cs" />
     <Compile Include="components\OutputWindow.cs" />
     <Compile Include="components\OutputWindowPane.cs" />
-    <Compile Include="ErrorReporter.cs" />
     <Compile Include="extensions\ObjectEx.cs" />
     <Compile Include="extensions\ProjectEx.cs" />
     <Compile Include="extensions\ResXDataNodeEx.cs" />

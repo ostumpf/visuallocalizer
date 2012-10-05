@@ -43,48 +43,47 @@ namespace VisualLocalizer.Gui {
                 Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
                 Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
                 Dictionary<string, StringBuilder> filesCache = new Dictionary<string, StringBuilder>();
+                List<CodeReferenceResultItem> dataList = panel.GetData();
 
-                while (true) {
+                for (int i = dataList.Count - 1; i >= 0; i--) {
                     try {
-                        CodeReferenceResultItem resultItem = (CodeReferenceResultItem)panel.GetNextResultItem();
-                        if (resultItem == null) break;
+                        CodeReferenceResultItem resultItem = dataList[i];
 
-                        TextSpan inlineSpan = resultItem.ReplaceSpan;
-                        string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
+                        if (resultItem.MoveThisItem) {
+                            TextSpan inlineSpan = resultItem.ReplaceSpan;
+                            string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
 
-                        string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
-                        if (RDTManager.IsFileOpen(path)) {
-                            if (!buffersCache.ContainsKey(path)) {
-                                IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
-                                buffersCache.Add(path, textLines);
+                            string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
+                            if (RDTManager.IsFileOpen(path)) {
+                                if (!buffersCache.ContainsKey(path)) {
+                                    IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
+                                    buffersCache.Add(path, textLines);
 
-                                IOleUndoManager m;
-                                int hr = textLines.GetUndoManager(out m);
-                                Marshal.ThrowExceptionForHR(hr);
-                                undoManagersCache.Add(path, m);
+                                    IOleUndoManager m;
+                                    int hr = textLines.GetUndoManager(out m);
+                                    Marshal.ThrowExceptionForHR(hr);
+                                    undoManagersCache.Add(path, m);
+                                }
+
+                                int h = buffersCache[path].ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
+                                Marshal.StringToBSTR(text), text.Length, null);
+                                Marshal.ThrowExceptionForHR(h);
+
+                                List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
+                                InlineUndoUnit newUnit = new InlineUndoUnit(resultItem.ReferenceText);
+                                newUnit.AppendUnits.AddRange(units);
+                                undoManagersCache[path].Add(newUnit);
+                            } else {
+                                if (!filesCache.ContainsKey(path)) {
+                                    filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
+                                }
+                                StringBuilder b = filesCache[path];
+                                b = b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
+                                b = b.Insert(resultItem.AbsoluteCharOffset, text);
+                                filesCache[path] = b;
                             }
-                            
-                            int h = buffersCache[path].ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
-                            Marshal.StringToBSTR(text), text.Length, null);
-                            Marshal.ThrowExceptionForHR(h);
-
-                            List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
-                            InlineUndoUnit newUnit = new InlineUndoUnit(resultItem.ReferenceText);
-                            newUnit.AppendUnits.AddRange(units);
-                            undoManagersCache[path].Add(newUnit);
-                        } else {
-                            if (!filesCache.ContainsKey(path)) {
-                                filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
-                            }
-                            StringBuilder b = filesCache[path];
-                            b = b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
-                            b = b.Insert(resultItem.AbsoluteCharOffset, text);
-                            filesCache[path] = b;
                         }
-
-                        panel.SetItemFinished(true, text.Length);
-                    } catch (Exception ex) {
-                        panel.SetItemFinished(false, -1);
+                    } catch (Exception ex) {                        
                         rowErrors++;
                     }
                 }

@@ -126,19 +126,20 @@ namespace VisualLocalizer.Components {
 
             RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
                 RunCustomTool();
-            });
+            });            
         }
 
         public void AddString(string key, string value) {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Adding \"{0}\":\"{1}\" to \"{2}\"", key, value, DisplayName);            
 
             if (!IsLoaded) Load();
+            string lowerKey = key.ToLower();
 
             ResXDataNode node = new ResXDataNode(key, value);
-            if (data.ContainsKey(key)) {
-                data[key] = node;
+            if (data.ContainsKey(lowerKey)) {
+                data[lowerKey] = node;
             } else {
-                data.Add(key, node);
+                data.Add(lowerKey, node);
             }
 
             if (IsInBatchMode) {
@@ -152,7 +153,7 @@ namespace VisualLocalizer.Components {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Removing \"{0}\" from \"{1}\"", key, DisplayName);
             if (!IsLoaded) Load();
             
-            data.Remove(key);             
+            data.Remove(key.ToLower());             
 
             if (IsInBatchMode) {
                 dataChangedInBatchMode = true;
@@ -164,20 +165,33 @@ namespace VisualLocalizer.Components {
         public string GetString(string key) {
             if (!IsLoaded) Load();
 
-            return data[key].GetStringValue();
+            return data[key.ToLower()].GetStringValue();
         }
 
         public CONTAINS_KEY_RESULT StringKeyInConflict(string key, string value) {
             if (!IsLoaded) Load();
-            if (data.ContainsKey(key)) {
-                if (data[key].HasStringValue()) {
-                    if (string.Compare(data[key].GetStringValue(), value, false, CultureInfo.CurrentCulture) == 0) {
+            string lowerKey = key.ToLower();
+
+            if (data.ContainsKey(lowerKey)) {
+                if (data[lowerKey].HasStringValue()) {
+                    if (string.Compare(data[lowerKey].GetStringValue(), value, false, CultureInfo.CurrentCulture) == 0) {
                         return CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE;
                     } else {
                         return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
                     }
                 } else return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
             } else return CONTAINS_KEY_RESULT.DOESNT_EXIST;
+        }
+
+        public string GetRealKey(string key) {
+            if (!IsLoaded) Load();
+            string lowerKey=key.ToLower();
+            
+            if (data.ContainsKey(lowerKey)) {
+                return data[lowerKey].Name;
+            } else {
+                return key;
+            }
         }
 
         public void Load() {
@@ -196,7 +210,7 @@ namespace VisualLocalizer.Components {
                     reader.UseResXDataNodes = true;
 
                     foreach (DictionaryEntry entry in reader) {
-                        data.Add(entry.Key.ToString(), entry.Value as ResXDataNode);
+                        data.Add(entry.Key.ToString().ToLower(), entry.Value as ResXDataNode);
                     }
                 } finally {
                     if (reader != null) reader.Close();
@@ -222,7 +236,7 @@ namespace VisualLocalizer.Components {
 
             foreach (var pair in data) {
                 if (pair.Value.HasStringValue())
-                    AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Key), pair.Value.GetStringValue());
+                    AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Value.Name), pair.Value.GetStringValue());
             }
 
             return AllReferences;

@@ -53,6 +53,9 @@ namespace VisualLocalizer.Gui {
             UsingFullName = fullBox.Checked;
             OverwrittenValue = existingValueLabel.Text;
 
+            if (Result == SELECT_RESOURCE_FILE_RESULT.INLINE || Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE)
+                Key = SelectedItem.GetRealKey(Key);
+
             foreach (ResXProjectItem item in comboBox.Items)
                 item.Unload();
 
@@ -160,16 +163,22 @@ namespace VisualLocalizer.Gui {
             if (e.KeyCode == Keys.ControlKey) ctrlDown = false;
         }
 
-        private void overwriteButton_Click(object sender, EventArgs e) {
+        private void overwriteButton_Click(object sender, EventArgs e) {            
             Result = SELECT_RESOURCE_FILE_RESULT.OVERWRITE;
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
-        private void inlineButton_Click(object sender, EventArgs e) {
+        private void inlineButton_Click(object sender, EventArgs e) {            
             Result = SELECT_RESOURCE_FILE_RESULT.INLINE;
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
         private void okButton_Click(object sender, EventArgs e) {
             Result = SELECT_RESOURCE_FILE_RESULT.OK;
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
         public SELECT_RESOURCE_FILE_RESULT Result {

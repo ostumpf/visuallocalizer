@@ -14,6 +14,7 @@ namespace VisualLocalizer.Components {
         protected int StringStartLine { get; set; }
         protected int StringStartIndex { get; set; }
         protected int StringStartAbsoluteOffset { get; set; }
+        protected bool IsWithinLocFalse { get; set; }
 
         protected string text;
         protected char currentChar, previousChar, previousPreviousChar, stringStartChar;

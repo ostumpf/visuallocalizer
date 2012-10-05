@@ -11,13 +11,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
     [Guid("A524A5E7-EF67-4b42-BBB1-25706700A1AD")]
     internal sealed class StringRenameKeyUndoUnit : RenameKeyUndoUnit {
 
-        public StringRenameKeyUndoUnit(CodeDataGridViewRow<ResXDataNode> sourceRow, ResXStringGrid grid, string oldKey, string newKey) 
+        public StringRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string oldKey, string newKey) 
             : base(oldKey, newKey) {
             this.SourceRow = sourceRow;
             this.Grid = grid;
         }
 
-        public CodeDataGridViewRow<ResXDataNode> SourceRow { get; private set; }
+        public ResXStringGridRow SourceRow { get; private set; }
         public ResXStringGrid Grid { get; private set; }
 
         public override void Undo() {
@@ -31,9 +31,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
         private void ChangeColumnValue(string from, string to) {
             if (!string.IsNullOrEmpty(to)) {
                 SourceRow.DataSourceItem.Name = to;
-                SourceRow.Tag = null;
+                SourceRow.Status = ResXStringGridRow.STATUS.OK;
             } else {
-                SourceRow.Tag = ResXStringGrid.NULL_KEY;
+                SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
             }
             SourceRow.Cells[Grid.KeyColumnName].Tag = from;
             SourceRow.Cells[Grid.KeyColumnName].Value = to;

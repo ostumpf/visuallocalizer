@@ -61,20 +61,23 @@ namespace VisualLocalizer.Commands {
                 new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);     
         }
 
-        internal static void ConfigureMenuCommand(Guid guid, int id,EventHandler invokeHandler,
+        internal static OleMenuCommand ConfigureMenuCommand(Guid guid, int id, EventHandler invokeHandler,
             EventHandler queryStatusHandler, OleMenuCommandService menuService) {   
          
             CommandID cmdid = new CommandID(guid, id);
             OleMenuCommand cmd = new OleMenuCommand(invokeHandler, cmdid);
+            
             cmd.BeforeQueryStatus += queryStatusHandler;
             menuService.AddCommand(cmd);
+
+            return cmd;
         }
 
-        internal T ShowToolWindow<T>() where T:ToolWindowPane {
+        internal static T ShowToolWindow<T>() where T:ToolWindowPane {
             T pane = (T)VisualLocalizerPackage.Instance.FindToolWindow(typeof(T), 0, true);
             
             if (pane != null && pane.Frame != null) {
-                IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                
+                IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                    
                 frame.Show();                                
             }
 
@@ -113,10 +116,12 @@ namespace VisualLocalizer.Commands {
             try {
                 moveToResourcesCommand.Process();
             } catch (Exception ex) {
-                string text=string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-                
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
+            } finally {
+                VLDocumentViewsManager.ReleaseLocks();
             }
         }
 

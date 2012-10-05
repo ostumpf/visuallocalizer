@@ -9,7 +9,7 @@ using System.Drawing;
 
 namespace VisualLocalizer.Library {
 
-    public sealed class CodeDataGridViewRow<ItemType> : DataGridViewRow {
+    public class CodeDataGridViewRow<ItemType> : DataGridViewRow {
         public CodeDataGridViewRow() {
             this.RowsWithSameKey = new List<CodeDataGridViewRow<ItemType>>();
             this.ConflictRows = new HashSet<CodeDataGridViewRow<ItemType>>();
@@ -37,11 +37,10 @@ namespace VisualLocalizer.Library {
         protected ToolTip ErrorToolTip;
         protected DataGridViewCheckBoxHeaderCell CheckHeader;             
         protected Timer ErrorTimer;
-        protected bool ErrorToolTipVisible;        
-        protected int? CurrentItemIndex = null;        
+        protected bool ErrorToolTipVisible;                
         protected Color ErrorColor = Color.FromArgb(255, 213, 213);
         protected Color ExistingKeySameValueColor = Color.FromArgb(213, 255, 213);
-        private int _ErrorRowsCount;
+        protected HashSet<DataGridViewRow> errorRows = new HashSet<DataGridViewRow>();
         
         public AbstractCheckedGridView() {
             this.EnableHeadersVisualStyles = true;
@@ -83,36 +82,21 @@ namespace VisualLocalizer.Library {
         }
 
         #region public members
-        public int ErrorRowsCount {
-            get { return _ErrorRowsCount; }
-            protected set {
-                _ErrorRowsCount = value;
-                if (HasErrorChanged != null) HasErrorChanged(this, null);
-            }
-        }
+        
 
         public bool HasError {
             get {
-                return ErrorRowsCount > 0;
+                return errorRows.Count > 0;
             }
         }
        
-        public virtual ItemType GetNextResultItem() {
-            if (CurrentItemIndex == null)
-                CurrentItemIndex = Rows.Count;
+        public virtual List<ItemType> GetData() {
+            List<ItemType> list = new List<ItemType>(Rows.Count);
 
-            CurrentItemIndex--;
+            foreach (CodeDataGridViewRow<ItemType> row in Rows)
+                list.Add(GetResultItemFromRow(row));
 
-            if (CurrentItemIndex < 0) {
-                CurrentItemIndex = null;
-                this.ReadOnly = false;
-                Rows.Clear();
-                return null;
-            } else {
-                this.ReadOnly = true;
-                CodeDataGridViewRow<ItemType> row = Rows[CurrentItemIndex.Value] as CodeDataGridViewRow<ItemType>;
-                return GetResultItemFromRow(row);
-            }
+            return list;
         }
 
         public abstract void SetData(List<ItemType> list);
@@ -125,21 +109,37 @@ namespace VisualLocalizer.Library {
             DataGridViewCheckBoxColumn checkColumn = new DataGridViewCheckBoxColumn(false);
             checkColumn.MinimumWidth = 30;
             checkColumn.Width = 30;
-            checkColumn.HeaderText = "";
             checkColumn.Name = CheckBoxColumnName;            
             checkColumn.HeaderCell = CheckHeader;
             this.Columns.Add(checkColumn);
+
+            DataGridViewTextBoxColumn lineColumn = new DataGridViewTextBoxColumn();
+            lineColumn.MinimumWidth = 40;
+            lineColumn.Width = 40;
+            lineColumn.HeaderText = "Line";
+            lineColumn.Name = LineColumnName;
+            lineColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            lineColumn.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.Columns.Add(lineColumn);
+            
+            DataGridViewTextBoxColumn contextColumn = new DataGridViewTextBoxColumn();
+            contextColumn.MinimumWidth = 40;
+            contextColumn.Width = 250;
+            contextColumn.HeaderText = "Context";
+            contextColumn.Name = ContextColumnName;
+            contextColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            this.Columns.Add(contextColumn);
         }
 
         protected virtual void OnCheckHeaderClicked(object sender, EventArgs e) {
-            int errors = 0;
+            errorRows.Clear();
             foreach (DataGridViewRow row in Rows) {
                 row.Cells[CheckBoxColumnName].Value = CheckHeader.Checked == true;
                 row.Cells[CheckBoxColumnName].Tag = CheckHeader.Checked == true;
-                if (!string.IsNullOrEmpty(row.ErrorText)) errors++;
+                if (!string.IsNullOrEmpty(row.ErrorText) && CheckHeader.Checked == true) errorRows.Add(row);
             }
             CheckedRowsCount = CheckHeader.Checked == true ? Rows.Count : 0;
-            ErrorRowsCount = CheckHeader.Checked == true ? errors : 0;
+            NotifyErrorRowsChanged();
         }
         
         protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {
@@ -161,7 +161,13 @@ namespace VisualLocalizer.Library {
 
                 if (value != (bool)cell.Tag) {
                     CheckedRowsCount += value ? 1 : -1;
-                    if (!string.IsNullOrEmpty(row.ErrorText)) ErrorRowsCount += value ? 1 : -1;                    
+                    if (!value && !string.IsNullOrEmpty(row.ErrorText)) {
+                        errorRows.Remove(row);
+                    }
+                    if (value && !string.IsNullOrEmpty(row.ErrorText)) {
+                        errorRows.Add(row);
+                    }
+                    NotifyErrorRowsChanged();
                 }
 
                 UpdateCheckHeader();
@@ -170,12 +176,20 @@ namespace VisualLocalizer.Library {
 
         protected override void OnRowErrorTextChanged(DataGridViewRowEventArgs e) {
             base.OnRowErrorTextChanged(e);
-            ErrorRowsCount += string.IsNullOrEmpty(e.Row.ErrorText) ? -1 : 1;
+            if (CheckBoxColumnName==null || (bool)e.Row.Cells[CheckBoxColumnName].Value) {
+                if (string.IsNullOrEmpty(e.Row.ErrorText)) {
+                    errorRows.Remove(e.Row);
+                } else {
+                    errorRows.Add(e.Row);
+                }
+                NotifyErrorRowsChanged();
+            }
 
             if (!string.IsNullOrEmpty(e.Row.ErrorText)) {
+                e.Row.DefaultCellStyle.Tag = e.Row.DefaultCellStyle.BackColor;
                 e.Row.DefaultCellStyle.BackColor = ErrorColor;
             } else {
-                e.Row.DefaultCellStyle.BackColor = Color.White;
+                e.Row.DefaultCellStyle.BackColor = e.Row.DefaultCellStyle.Tag == null ? Color.White : (Color)e.Row.DefaultCellStyle.Tag;
             }
             this.UpdateRowErrorText(e.Row.Index);            
         }
@@ -200,6 +214,10 @@ namespace VisualLocalizer.Library {
             ErrorTimer.Stop();
         }
 
+        protected void NotifyErrorRowsChanged() {
+            if (HasErrorChanged != null) HasErrorChanged(this, null);
+        }
+
         private void RowHeaderMouseMove(object sender, MouseEventArgs e) {
             HitTestInfo info = this.HitTest(e.X, e.Y);
             if (info != null && info.Type == DataGridViewHitTestType.RowHeader && info.RowIndex >= 0) {
@@ -210,5 +228,16 @@ namespace VisualLocalizer.Library {
                 }
             }
         }
+
+        public string LineColumnName {
+            get { return "Line"; }
+        }
+
+        public string ContextColumnName {
+            get { return "Context"; }
+        }
+
     }
+
+   
 }

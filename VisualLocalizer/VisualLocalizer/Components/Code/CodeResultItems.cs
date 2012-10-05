@@ -12,12 +12,15 @@ namespace VisualLocalizer.Components {
         }
 
         public bool MoveThisItem { get; set; }
+        public bool IsWithinLocalizableFalse { get; set; }
+        public bool IsMarkedWithUnlocalizableComment { get; set; }
         public ProjectItem SourceItem { get; set; }
         public ResXProjectItem DestinationItem { get; set; }
         public TextSpan ReplaceSpan { get; set; }        
         public int AbsoluteCharOffset { get; set; }
         public int AbsoluteCharLength { get; set; }
         public string Value { get; set; }
+        public string Context { get; set; }        
     }
 
     internal sealed class CodeStringResultItem : AbstractResultItem {
@@ -26,6 +29,8 @@ namespace VisualLocalizer.Components {
         public string VariableElementName { get; set; }
         public string ClassOrStructElementName { get; set; }
         public string Key { get; set; }
+        public bool WasVerbatim { get; set; }
+        public string ErrorText { get; set; }
 
         public override string ToString() {
             return string.Format("CodeStringResultItem: Key=\"{0}\", Value=\"{1}\", Source=\"{2}\", Target=\"{3}\"", Key, Value, (SourceItem == null ? "(null)" : SourceItem.Name), (DestinationItem == null ? "(null)" : DestinationItem.InternalProjectItem.Name));

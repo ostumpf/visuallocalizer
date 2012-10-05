@@ -9,19 +9,20 @@ using EnvDTE;
 namespace VisualLocalizer.Components {
     internal class CodeReferenceLookuper : AbstractCodeLookuper {
 
-        public CodeReferenceLookuper(string text, int startLine, int startIndex, int startOffset, Trie Trie, 
-            Dictionary<string, string> usedNamespaces,CodeNamespace codeNamespace) {
+        public CodeReferenceLookuper(string text, TextPoint startPoint, Trie<CodeReferenceTrieElement> Trie,
+            Dictionary<string, string> usedNamespaces, CodeNamespace codeNamespace, bool isWithinLocFalse) {
             this.text = text;
-            this.CurrentIndex = startIndex - 1;
-            this.CurrentLine = startLine;
-            this.CurrentAbsoluteOffset = startOffset;
+            this.CurrentIndex = startPoint.LineCharOffset - 1;
+            this.CurrentLine = startPoint.Line;
+            this.CurrentAbsoluteOffset = startPoint.AbsoluteCharOffset + startPoint.Line - 2;
             this.Trie = Trie;
             this.UsedNamespaces = usedNamespaces;
             this.CodeNamespace = codeNamespace;
+            this.IsWithinLocFalse = isWithinLocFalse;
         }
 
         protected Dictionary<string, string> UsedNamespaces;
-        protected Trie Trie { get; set; }
+        protected Trie<CodeReferenceTrieElement> Trie { get; set; }
         protected int ReferenceStartLine { get; set; }
         protected int ReferenceStartIndex { get; set; }
         protected int ReferenceStartOffset { get; set; }
@@ -36,7 +37,7 @@ namespace VisualLocalizer.Components {
             previousPreviousChar = '?';
             stringStartChar = '?';
             List<CodeReferenceResultItem> list = new List<CodeReferenceResultItem>();
-            TrieElement currentElement = Trie.Root; 
+            CodeReferenceTrieElement currentElement = Trie.Root; 
             StringBuilder prefixBuilder = new StringBuilder();
             string prefix = null;
             char lastNonWhitespaceChar = '?';
@@ -90,7 +91,7 @@ namespace VisualLocalizer.Components {
                             }
                             
                             if (currentElement.IsTerminal && (i == text.Length - 1 || !text[i + 1].CanBePartOfIdentifier())) {
-                                AddResult(list, currentElement.Word, prefix, currentElement.Tag);
+                                AddResult(list, currentElement.Word, prefix, currentElement.Infos);
                             }                                                           
                         }
                     } else {
@@ -108,13 +109,13 @@ namespace VisualLocalizer.Components {
             return list;
         }
 
-        protected void AddResult(List<CodeReferenceResultItem> list, string referenceText,string prefix, List<object> tags) {
+        protected void AddResult(List<CodeReferenceResultItem> list, string referenceText,string prefix, List<CodeReferenceInfo> trieElementInfos) {
             CodeReferenceInfo info = null;
-            if (tags.Count == 1) {
-                info = (CodeReferenceInfo)tags[0];
+            if (trieElementInfos.Count == 1) {
+                info = trieElementInfos[0];
             } else {
                 if (!string.IsNullOrEmpty(prefix)) {
-                    foreach (CodeReferenceInfo nfo in tags) {
+                    foreach (CodeReferenceInfo nfo in trieElementInfos) {
                         if (nfo.Origin.Namespace == prefix) {
                             info = nfo;
                             break;
@@ -123,7 +124,7 @@ namespace VisualLocalizer.Components {
                 } else {
                     CodeNamespace c = CodeNamespace;
                     while (info == null && c != null) {
-                        foreach (CodeReferenceInfo nfo in tags) {
+                        foreach (CodeReferenceInfo nfo in trieElementInfos) {
                             if (nfo.Origin.Namespace == c.FullName) {
                                 info = nfo;
                                 break;
@@ -148,15 +149,12 @@ namespace VisualLocalizer.Components {
                 resultItem.AbsoluteCharOffset = ReferenceStartOffset;
                 resultItem.AbsoluteCharLength = AbsoluteReferenceLength;
                 resultItem.DestinationItem = info.Origin;
-                resultItem.ReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, referenceText);
+                resultItem.ReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, referenceText.Substring(referenceText.LastIndexOf('.') + 1));
+                resultItem.IsWithinLocalizableFalse = IsWithinLocFalse;
 
                 list.Add(resultItem);
             }
         }
-
-        internal class CodeReferenceInfo {
-            public string Value { get; set; }
-            public ResXProjectItem Origin { get; set; }
-        }
+        
     }
 }

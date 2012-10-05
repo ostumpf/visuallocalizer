@@ -21,28 +21,28 @@ namespace VisualLocalizer.Gui {
             referenceColumn.HeaderText = "Reference Text";
             referenceColumn.Name = "ReferenceText";
             referenceColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(referenceColumn);
+            this.Columns.Insert(2, referenceColumn);
 
             DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
             valueColumn.MinimumWidth = 250;
             valueColumn.HeaderText = "Value";
             valueColumn.Name = "Value";
             valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(valueColumn);
+            this.Columns.Insert(3, valueColumn);
 
             DataGridViewTextBoxColumn sourceFileColumn = new DataGridViewTextBoxColumn();
             sourceFileColumn.MinimumWidth = 250;
             sourceFileColumn.HeaderText = "Source File";
             sourceFileColumn.Name = "Source";
             sourceFileColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(sourceFileColumn);
+            this.Columns.Insert(4, sourceFileColumn);
 
             DataGridViewTextBoxColumn destinationColumn = new DataGridViewTextBoxColumn();
             destinationColumn.MinimumWidth = 250;
             destinationColumn.HeaderText = "Resource File";
             destinationColumn.Name = "Destination";
             destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Add(destinationColumn);
+            this.Columns.Insert(5, destinationColumn);
 
             DataGridViewColumn column = new DataGridViewColumn();
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -59,7 +59,7 @@ namespace VisualLocalizer.Gui {
 
         public override void SetData(List<CodeReferenceResultItem> value) {
             Rows.Clear();
-            ErrorRowsCount = 0;
+            errorRows.Clear();
             this.SuspendLayout();
 
             foreach (var item in value) {
@@ -70,13 +70,17 @@ namespace VisualLocalizer.Gui {
                 checkCell.Value = item.MoveThisItem;
                 row.Cells.Add(checkCell);
 
+                DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
+                lineCell.Value = item.ReplaceSpan.iStartLine + 1;
+                row.Cells.Add(lineCell);
+
                 DataGridViewTextBoxCell referenceCell = new DataGridViewTextBoxCell();
                 referenceCell.Value = item.ReferenceText;
                 row.Cells.Add(referenceCell);
 
                 DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
                 valueCell.Value = item.Value;
-                row.Cells.Add(valueCell);
+                row.Cells.Add(valueCell);               
 
                 DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
                 sourceCell.Value = item.SourceItem.Name;
@@ -84,7 +88,12 @@ namespace VisualLocalizer.Gui {
 
                 DataGridViewTextBoxCell destinationCell = new DataGridViewTextBoxCell();
                 destinationCell.Value = item.DestinationItem.ToString();
+                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
                 row.Cells.Add(destinationCell);
+
+                DataGridViewTextBoxCell contextCell = new DataGridViewTextBoxCell();
+                contextCell.Value = item.Context;
+                row.Cells.Add(contextCell);
 
                 DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
                 row.Cells.Add(cell);                
@@ -95,12 +104,15 @@ namespace VisualLocalizer.Gui {
                 valueCell.ReadOnly = true;
                 sourceCell.ReadOnly = true;
                 destinationCell.ReadOnly = true;
+                lineCell.ReadOnly = true;
+                contextCell.ReadOnly = true;
             }
 
             CheckedRowsCount = Rows.Count;
             CheckHeader.Checked = true;
             this.ResumeLayout(true);
             this.OnResize(null);
+            NotifyErrorRowsChanged();
         }
 
         protected override CodeReferenceResultItem GetResultItemFromRow(CodeDataGridViewRow<CodeReferenceResultItem> row) {
@@ -108,50 +120,7 @@ namespace VisualLocalizer.Gui {
             item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
 
             row.DataSourceItem = item;
-            if (item.MoveThisItem) {                                
-                return item;
-            } else {                
-                return GetNextResultItem();
-            }
-        }
-
-        public void SetItemFinished(bool ok, int newLength) {
-            if (CurrentItemIndex == null || CurrentItemIndex < 0) throw new ArgumentException("currentItemIndex");
-
-            if (ok) {
-                AbstractResultItem resultItem = (Rows[CurrentItemIndex.Value] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
-                TextSpan currentReplaceSpan = resultItem.ReplaceSpan;
-
-                int diff = currentReplaceSpan.iEndLine - currentReplaceSpan.iStartLine;
-                for (int i = CurrentItemIndex.Value + 1; i < Rows.Count; i++) {
-                    AbstractResultItem item = (Rows[i] as CodeDataGridViewRow<AbstractResultItem>).DataSourceItem;
-                    item.AbsoluteCharOffset += newLength - resultItem.AbsoluteCharLength;
-
-                    if (item.ReplaceSpan.iStartLine > currentReplaceSpan.iEndLine) {
-                        TextSpan newSpan = new TextSpan();
-                        newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
-                        newSpan.iStartIndex = item.ReplaceSpan.iStartIndex;
-                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
-                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
-                        item.ReplaceSpan = newSpan;
-                    } else if (item.ReplaceSpan.iStartLine == currentReplaceSpan.iEndLine) {
-                        TextSpan newSpan = new TextSpan();
-                        newSpan.iStartIndex = currentReplaceSpan.iStartIndex + newLength + item.ReplaceSpan.iStartIndex - currentReplaceSpan.iEndIndex;
-                        if (item.ReplaceSpan.iEndLine == item.ReplaceSpan.iStartLine) {
-                            newSpan.iEndIndex = newSpan.iStartIndex + item.ReplaceSpan.iEndIndex - item.ReplaceSpan.iStartIndex;
-                        } else {
-                            newSpan.iEndIndex = item.ReplaceSpan.iEndIndex;
-                        }
-                        newSpan.iEndLine = item.ReplaceSpan.iEndLine - diff;
-                        newSpan.iStartLine = item.ReplaceSpan.iStartLine - diff;
-                        item.ReplaceSpan = newSpan;
-                    }
-                }
-
-                Rows.RemoveAt(CurrentItemIndex.Value);
-                CheckedRowsCount--;
-                UpdateCheckHeader();
-            }
+            return item;
         }
 
         public override string CheckBoxColumnName {

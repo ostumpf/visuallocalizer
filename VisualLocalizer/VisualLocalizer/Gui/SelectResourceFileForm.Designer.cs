@@ -130,7 +130,6 @@
             // 
             // inlineButton
             // 
-            this.inlineButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.inlineButton.Dock = System.Windows.Forms.DockStyle.Top;
             this.inlineButton.Location = new System.Drawing.Point(3, 3);
             this.inlineButton.Name = "inlineButton";
@@ -143,7 +142,6 @@
             // overwriteButton
             // 
             this.overwriteButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.overwriteButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.overwriteButton.Location = new System.Drawing.Point(149, 3);
             this.overwriteButton.Name = "overwriteButton";
             this.overwriteButton.Size = new System.Drawing.Size(133, 23);
@@ -227,7 +225,6 @@
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.okButton.Location = new System.Drawing.Point(84, 3);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
