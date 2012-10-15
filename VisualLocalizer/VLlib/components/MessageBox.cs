@@ -108,16 +108,20 @@ namespace VisualLocalizer.Library {
 
             string returnedData=Marshal.PtrToStringBSTR(arr[0].pwzFileName);
             string[] tokens = returnedData.Split(new char[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
-            if (tokens.Length <= 1) throw new Exception("Unexpected OpenFileDialog result.");
+            if (tokens.Length == 0) throw new Exception("Unexpected OpenFileDialog result.");
 
-            string directory = tokens[0];
-            string[] ret = new string[tokens.Length - 1];
+            if (tokens.Length == 1) {
+                return new string[] { tokens[0] };
+            } else {
+                string directory = tokens[0];
+                string[] ret = new string[tokens.Length - 1];
 
-            for (int i = 1; i < tokens.Length; i++) {
-                ret[i - 1] = Path.Combine(directory, tokens[i]);
+                for (int i = 1; i < tokens.Length; i++) {
+                    ret[i - 1] = Path.Combine(directory, tokens[i]);
+                }
+
+                return ret;
             }
-
-            return ret;
         }
     }
 }

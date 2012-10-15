@@ -98,7 +98,8 @@ namespace VisualLocalizer.Gui {
                     VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);                    
                 }
 
-                bool ident = keyBox.Text.IsValidIdentifier(ref errorText);                
+                bool ident = keyBox.Text.IsValidIdentifier();
+                if (ident) errorText = "Key is not valid C# identifier";
                 keyBox.BackColor = (ident ? Color.White : errorColor);
 
                 if (ident) {

@@ -10,16 +10,17 @@ using VSLangProj;
 using EnvDTE;
 using VisualLocalizer.Editor.UndoUnits;
 using System.IO;
+using VisualLocalizer.Components;
+using System.Windows.Forms;
 
 namespace VisualLocalizer.Editor {
     [Guid("163D9FB6-68C6-4801-9CA0-3C53241D7855")]
     internal class ResXEditorFactory : EditorFactory<ResXEditor,ResXEditorControl> {
     }
 
-    internal sealed class ResXEditor : AbstractSingleViewEditor<ResXEditorControl> {
-        
-        public ResXEditor() {            
-            UIControl.Editor = this;
+    internal sealed class ResXEditor : AbstractSingleViewEditor<ResXEditorControl> {        
+
+        public ResXEditor() {                        
             UIControl.DataChanged += new EventHandler(UIControl_DataChanged);            
         }
 
@@ -44,7 +45,10 @@ namespace VisualLocalizer.Editor {
 
                 UIControl.SetData(data);
             } catch (Exception ex) {
-                MessageBox.ShowError(ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
                 throw;
             } finally {
                 if (reader != null) reader.Close();
@@ -58,13 +62,17 @@ namespace VisualLocalizer.Editor {
             try {
                 Dictionary<string,ResXDataNode> data = UIControl.GetData(true);
                 writer = new ResXResourceWriter(path);
-                
+                writer.BasePath = Path.GetDirectoryName(path);
+
                 foreach (var o in data) {
                     writer.AddResource(o.Value);
                 }              
 
             } catch (Exception ex) {
-                MessageBox.ShowError(ex.Message);
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
                 throw;
             } finally {
                 if (writer != null) writer.Close();
@@ -83,12 +91,80 @@ namespace VisualLocalizer.Editor {
             return "Managed Resource File (*.resx)\0*.resx\0";
         }
 
+        public override string FileName {
+            get {
+                return base.FileName;
+            }
+            protected set {
+                base.FileName = value;
+                FileUri = new Uri(value);
+            }
+        }
+
+        public Uri FileUri {
+            get;
+            private set;
+        }
+
         public override string Extension {            
             get { return StringConstants.ResXExtension; }
         }
 
         public override Guid EditorFactoryGuid {
             get { return typeof(ResXEditorFactory).GUID; }
+        }
+        
+        public override bool ExecutePaste() {
+            return UIControl.ExecutePaste();
+        }
+
+        public override bool ExecuteCopy() {
+            return UIControl.ExecuteCopy();
+        }
+
+        public override bool ExecuteCut() {
+            return UIControl.ExecuteCut();
+        }
+
+        public override COMMAND_STATUS IsCutSupported {
+            get {
+                return UIControl.CanCutOrCopy;
+            }
+        }
+
+        public override COMMAND_STATUS IsPasteSupported {
+            get {
+                return UIControl.CanPaste;
+            }
+        }
+
+        public override COMMAND_STATUS IsCopySupported {
+            get {
+                return UIControl.CanCutOrCopy;
+            }
+        }
+
+        public override COMMAND_STATUS GetSystemCommandStatus(Microsoft.VisualStudio.VSConstants.VSStd97CmdID cmdID) {
+            switch (cmdID) {
+                case Microsoft.VisualStudio.VSConstants.VSStd97CmdID.Delete:
+                    return UIControl.CanDelete;
+                case Microsoft.VisualStudio.VSConstants.VSStd97CmdID.SelectAll:
+                    return UIControl.CanSelectAll;
+                default:
+                    return base.GetSystemCommandStatus(cmdID);
+            }            
+        }
+
+        public override bool ExecuteSystemCommand(Microsoft.VisualStudio.VSConstants.VSStd97CmdID cmdID) {
+            switch (cmdID) {
+                case Microsoft.VisualStudio.VSConstants.VSStd97CmdID.Delete:
+                    UIControl.NotifyRemoveRequested(REMOVEKIND.REMOVE);
+                    return true;
+                case Microsoft.VisualStudio.VSConstants.VSStd97CmdID.SelectAll:
+                    return UIControl.ExecuteSelectAll();
+                default:
+                    return base.ExecuteSystemCommand(cmdID);
+            }               
         }
     }
 

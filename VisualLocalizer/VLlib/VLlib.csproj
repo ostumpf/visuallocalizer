@@ -78,8 +78,13 @@
     <Compile Include="components\AbstractEditor.cs">
     </Compile>
     <Compile Include="components\DocumentViewsManager.cs" />
+    <Compile Include="components\IEditorControl.cs">
+    </Compile>
+    <Compile Include="components\IKeyValueSource.cs" />
+    <Compile Include="components\KeyValueConflictResolver.cs" />
     <Compile Include="components\MessageBox.cs" />
     <Compile Include="components\RDTManager.cs" />
+    <Compile Include="components\SoundInfo.cs" />
     <Compile Include="extensions\CodeModelEx.cs" />
     <Compile Include="extensions\DocumentEx.cs" />
     <Compile Include="extensions\IOleUndoManagerEx.cs" />
@@ -96,6 +101,8 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="gui\DataGridViewCheckBoxHeaderCell.cs" />
+    <Compile Include="gui\DataGridViewDynamicWrapCell.cs" />
+    <Compile Include="gui\DataGridViewKeyValueRow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="attributes\ProvideMarkerAttribute.cs" />
     <Compile Include="attributes\ProvideOutputWindowAttribute.cs" />

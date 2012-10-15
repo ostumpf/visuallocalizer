@@ -9,26 +9,6 @@ using System.Drawing;
 
 namespace VisualLocalizer.Library {
 
-    public class CodeDataGridViewRow<ItemType> : DataGridViewRow {
-        public CodeDataGridViewRow() {
-            this.RowsWithSameKey = new List<CodeDataGridViewRow<ItemType>>();
-            this.ConflictRows = new HashSet<CodeDataGridViewRow<ItemType>>();
-            this.ErrorSet = new HashSet<string>();
-        }
-        public ItemType DataSourceItem { get; set; }
-        public List<CodeDataGridViewRow<ItemType>> RowsWithSameKey { get; set; }
-        public HashSet<CodeDataGridViewRow<ItemType>> ConflictRows { get; private set; }
-        public HashSet<string> ErrorSet { get; private set; }
-
-        public void ErrorSetUpdate() {
-            if (ErrorSet.Count == 0) {
-                ErrorText = null;
-            } else {
-                ErrorText = ErrorSet.First();
-            }
-        }
-    }
-
     public abstract class AbstractCheckedGridView<ItemType> : DataGridView where ItemType : class {
                 
         public event EventHandler HasErrorChanged;
@@ -41,7 +21,8 @@ namespace VisualLocalizer.Library {
         protected Color ErrorColor = Color.FromArgb(255, 213, 213);
         protected Color ExistingKeySameValueColor = Color.FromArgb(213, 255, 213);
         protected HashSet<DataGridViewRow> errorRows = new HashSet<DataGridViewRow>();
-        
+        protected DataGridViewRow previouslySelectedRow = null;
+
         public AbstractCheckedGridView() {
             this.EnableHeadersVisualStyles = true;
             this.AutoGenerateColumns = false;
@@ -57,7 +38,8 @@ namespace VisualLocalizer.Library {
             this.ScrollBars = ScrollBars.Both;
             
             this.MouseMove += new MouseEventHandler(RowHeaderMouseMove);
-            
+            this.SelectionChanged += new EventHandler(RowSelectionChanged);
+
             ErrorToolTip = new ToolTip();
             ErrorToolTip.InitialDelay = 0;
             ErrorToolTip.AutoPopDelay = 0;
@@ -74,16 +56,12 @@ namespace VisualLocalizer.Library {
             CheckHeader.CheckBoxClicked += new EventHandler(OnCheckHeaderClicked);
 
             CheckedRowsCount = 0;
-
-            CodeDataGridViewRow<ItemType> rowTemplate = new CodeDataGridViewRow<ItemType>();
-            this.RowTemplate = rowTemplate;
-
+            
             InitializeColumns();
         }
-
+        
         #region public members
         
-
         public bool HasError {
             get {
                 return errorRows.Count > 0;
@@ -93,7 +71,7 @@ namespace VisualLocalizer.Library {
         public virtual List<ItemType> GetData() {
             List<ItemType> list = new List<ItemType>(Rows.Count);
 
-            foreach (CodeDataGridViewRow<ItemType> row in Rows)
+            foreach (DataGridViewRow row in Rows)
                 list.Add(GetResultItemFromRow(row));
 
             return list;
@@ -124,11 +102,30 @@ namespace VisualLocalizer.Library {
             
             DataGridViewTextBoxColumn contextColumn = new DataGridViewTextBoxColumn();
             contextColumn.MinimumWidth = 40;
-            contextColumn.Width = 250;
+            contextColumn.Width = 350;
             contextColumn.HeaderText = "Context";
-            contextColumn.Name = ContextColumnName;
-            contextColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            contextColumn.Name = ContextColumnName;            
             this.Columns.Add(contextColumn);
+        }
+
+        protected virtual void RowSelectionChanged(object sender, EventArgs e) {
+            if (!Columns.Contains(ContextColumnName)) return;
+
+            if (previouslySelectedRow != null) {
+                DataGridViewDynamicWrapCell cell = previouslySelectedRow.Cells[ContextColumnName] as DataGridViewDynamicWrapCell;
+                cell.SetWrapContents(false);
+            }
+
+            DataGridViewRow row = null;
+            if (SelectedRows.Count > 0)
+                row = SelectedRows[0];
+
+            if (row != null) {
+                DataGridViewDynamicWrapCell cell = row.Cells[ContextColumnName] as DataGridViewDynamicWrapCell;
+                cell.SetWrapContents(true);
+            }
+
+            previouslySelectedRow = row;
         }
 
         protected virtual void OnCheckHeaderClicked(object sender, EventArgs e) {
@@ -186,7 +183,8 @@ namespace VisualLocalizer.Library {
             }
 
             if (!string.IsNullOrEmpty(e.Row.ErrorText)) {
-                e.Row.DefaultCellStyle.Tag = e.Row.DefaultCellStyle.BackColor;
+                if (e.Row.DefaultCellStyle.BackColor != ErrorColor) 
+                    e.Row.DefaultCellStyle.Tag = e.Row.DefaultCellStyle.BackColor;
                 e.Row.DefaultCellStyle.BackColor = ErrorColor;
             } else {
                 e.Row.DefaultCellStyle.BackColor = e.Row.DefaultCellStyle.Tag == null ? Color.White : (Color)e.Row.DefaultCellStyle.Tag;
@@ -206,8 +204,7 @@ namespace VisualLocalizer.Library {
             }
         }
 
-        protected abstract ItemType GetResultItemFromRow(CodeDataGridViewRow<ItemType> row);
-
+        protected abstract ItemType GetResultItemFromRow(DataGridViewRow row);
 
         private void errorTimer_Tick(object sender, EventArgs e) {
             ErrorToolTipVisible = false;

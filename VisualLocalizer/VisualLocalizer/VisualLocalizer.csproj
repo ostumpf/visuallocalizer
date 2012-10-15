@@ -73,22 +73,51 @@
     <Compile Include="Components\Code\CodeReferenceTrieElement.cs" />
     <Compile Include="Components\Code\CodeResultItems.cs" />
     <Compile Include="Components\Code\CodeStringLookuper.cs" />
+    <Compile Include="Components\DestinationKeyValueConflictResolver.cs" />
     <Compile Include="Components\UndoUnits\MarkAsNotLocalizedStringUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesReferenceUndoUnit.cs" />
     <Compile Include="Components\VLDocumentViewsManager.cs" />
+    <Compile Include="Editor\AbstractListView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Editor\Editor.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Editor.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\IDataTabItem.cs" />
+    <Compile Include="Editor\ListViewKeyItem.cs" />
+    <Compile Include="Editor\ResXFilesList.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Editor\ResXIconsList.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Editor\ResXImagesList.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Editor\ResXSoundsList.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Editor\ResXStringGrid.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editor\ResXStringGridRow.cs" />
     <Compile Include="Editor\ResXTabControl.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editor\UndoUnits\AccessModifierChangeUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewChangeCommentUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewNewItemCreateUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewRemoveItemsUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewRenameKeyUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\RemoveStringsUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\RenameKeyUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringChangeCommentUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringChangeValueUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringRenameKeyUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\StringRowAddUndoUnit.cs" />
+    <Compile Include="Editor\VsColorTable.cs" />
     <Compile Include="Extensions\ResXItemsEx.cs" />
     <Compile Include="Gui\AbstractCheckedGridViewEx.cs" />
     <Compile Include="Gui\AbstractCodeToolWindow.cs" />
@@ -114,6 +143,19 @@
     <Compile Include="Editor\ResXEditorControl.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Gui\CommentWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\CommentWindow.Designer.cs">
+      <DependentUpon>CommentWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\UndoUnits\ListViewItemsAddUndoUnit.cs" />
+    <Compile Include="Gui\NewImageWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\NewImageWindow.Designer.cs">
+      <DependentUpon>NewImageWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -136,6 +178,19 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Editor\Editor.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Editor.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\CommentWindow.resx">
+      <DependentUpon>CommentWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\NewImageWindow.resx">
+      <DependentUpon>NewImageWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Gui\SelectResourceFileForm.resx">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -146,7 +201,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\doc.png" />
     <Content Include="Resources\Package.ico" />
+    <None Include="Resources\play.png" />
     <Content Include="Resources\run.png" />
   </ItemGroup>
   <ItemGroup>

@@ -110,6 +110,7 @@ namespace VisualLocalizer.Components {
                 try {
                     stream = new MemoryStream();
                     writer = new ResXResourceWriter(stream);
+                    writer.BasePath = Path.GetDirectoryName(file);
                     foreach (var pair in data) {
                         writer.AddResource(pair.Key, pair.Value);
                     }

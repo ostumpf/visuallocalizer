@@ -6,36 +6,33 @@ using System.Windows.Forms;
 using System.Resources;
 using VisualLocalizer.Library;
 using System.Drawing;
-using System.IO;
-using EnvDTE;
-using VSLangProj;
-using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor {
-    internal sealed class ResXImagesList : AbstractListView {
+    internal sealed class ResXIconsList : AbstractListView {
 
-        public ResXImagesList(ResXEditorControl editorControl) : base(editorControl) {
+        public ResXIconsList(ResXEditorControl editorControl) : base(editorControl) {
         }
 
         public override bool CanContainItem(ResXDataNode node) {
-            return node.HasValue<Bitmap>();
+            return node.HasValue<Icon>();
         }
 
         public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
             ListViewKeyItem item = base.Add(key, value, showThumbnails) as ListViewKeyItem;
 
-            Bitmap bmp = null;
-            if (showThumbnails) bmp = value.GetValue<Bitmap>();
-            if (bmp != null) {
-                LargeImageList.Images.Add(item.Name, bmp);
-                SmallImageList.Images.Add(item.Name, bmp);
-            } 
+            Icon ico = null;
+            if (showThumbnails) ico = value.GetValue<Icon>();
+
+            if (ico != null) {
+                LargeImageList.Images.Add(item.Name, ico);
+                SmallImageList.Images.Add(item.Name, ico);
+            }
             
-            if (bmp == null && showThumbnails) item.FileRefOk = false;
+            if (ico == null && showThumbnails) item.FileRefOk = false;
 
             ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
             subSize.Name = "Size";
-            if (bmp != null) subSize.Text = string.Format("{0} x {1}", bmp.Width, bmp.Height);
+            if (ico != null) subSize.Text = string.Format("{0} x {1}", ico.Width, ico.Height);
             item.SubItems.Insert(2, subSize);
 
             return item;
@@ -45,21 +42,21 @@ namespace VisualLocalizer.Editor {
             ListViewKeyItem item = base.UpdateDataOf(name);
             if (item == null) return null;
 
-            Bitmap bmp = item.DataNode.GetValue<Bitmap>();
+            Icon ico = item.DataNode.GetValue<Icon>();
             if (!string.IsNullOrEmpty(item.ImageKey) && LargeImageList.Images.ContainsKey(item.ImageKey)) {
                 LargeImageList.Images.RemoveByKey(item.ImageKey);
                 SmallImageList.Images.RemoveByKey(item.ImageKey);
             }
 
-            if (bmp != null) {                
-                LargeImageList.Images.Add(item.ImageKey, bmp);
-                SmallImageList.Images.Add(item.ImageKey, bmp);
+            if (ico != null) {
+                LargeImageList.Images.Add(item.ImageKey, ico);
+                SmallImageList.Images.Add(item.ImageKey, ico);
 
-                item.SubItems["Size"].Text = string.Format("{0} x {1}", bmp.Width, bmp.Height);
-            } else {                
+                item.SubItems["Size"].Text = string.Format("{0} x {1}", ico.Width, ico.Height);
+            } else {
                 item.SubItems["Size"].Text = null;
             }
-            
+
             string p = item.ImageKey;
             item.ImageKey = null;
             item.ImageKey = p;
@@ -71,7 +68,7 @@ namespace VisualLocalizer.Editor {
             base.InitializeColumns();
 
             ColumnHeader sizeHeader = new ColumnHeader();
-            sizeHeader.Text = "Image Size";
+            sizeHeader.Text = "Icon Size";
             sizeHeader.Width = 80;
             sizeHeader.Name = "Size";
             this.Columns.Insert(2, sizeHeader);            

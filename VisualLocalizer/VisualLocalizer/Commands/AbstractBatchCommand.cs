@@ -198,11 +198,13 @@ namespace VisualLocalizer.Commands {
             int topLines = 0;
 
             int currentLine=item.ReplaceSpan.iStartLine;
+            int contextRelativeLine = 0;
             while (currentLine >= 1 && topLines < contextLineSpan) {
                 editPoint.MoveToLineAndOffset(currentLine, 1);
                 string lineText = editPoint.GetText(editPoint.LineLength).Trim();
                 if (lineText.Length > 0) {
                     context.Insert(0, lineText + Environment.NewLine);
+                    contextRelativeLine++;
                     if (lineText.Length > 1) topLines++;
                 }
                 currentLine--;
@@ -231,6 +233,7 @@ namespace VisualLocalizer.Commands {
             }
 
             item.Context = context.ToString();
+            item.ContextRelativeLine = contextRelativeLine;
         }
     }
 }

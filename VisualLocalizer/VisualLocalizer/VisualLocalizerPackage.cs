@@ -47,6 +47,8 @@ namespace VisualLocalizer
         internal OleMenuCommandService menuService;
         internal IVsUIShell uiShell;
         internal IVsRunningDocumentTable ivsRunningDocumentTable;
+        internal IVsUIHierWinClipboardHelper clipboardHelper;
+
         private static VisualLocalizerPackage instance;
 
         protected override void Initialize() {
@@ -76,8 +78,9 @@ namespace VisualLocalizer
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
             ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
-            
-            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable==null)
+            clipboardHelper = (IVsUIHierWinClipboardHelper)GetService(typeof(SVsUIHierWinClipboardHelper));
+
+            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable == null || clipboardHelper==null)
                 throw new Exception("Error during initialization of base services.");
         }
        

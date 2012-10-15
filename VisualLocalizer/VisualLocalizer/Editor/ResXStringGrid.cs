@@ -9,52 +9,198 @@ using System.Resources;
 using System.ComponentModel.Design;
 using VisualLocalizer.Library;
 using System.IO;
+using VisualLocalizer.Editor.UndoUnits;
 
-namespace VisualLocalizer.Editor {
+namespace VisualLocalizer.Editor {    
 
-    internal sealed class ResXStringGridRow : CodeDataGridViewRow<ResXDataNode> {
-        public enum STATUS { OK, KEY_NULL }
-
-        public ResXStringGridRow() {
-            Status = STATUS.OK;
-        }
-
-        public STATUS Status { get; set; }
-    }
-
-    internal sealed class ResXStringGrid : AbstractKeyValueGridView<ResXDataNode> {
+    internal sealed class ResXStringGrid : AbstractKeyValueGridView<ResXDataNode>, IDataTabItem {
 
         public event EventHandler DataChanged;
-        public event Action<ResXStringGridRow, string> StringKeyRenamed;
-        public event Action<ResXStringGridRow, string, string> StringValueChanged;
-        public event Action<ResXStringGridRow, string, string> StringCommentChanged;
-        
-        public ResXStringGrid(ResXEditorControl editorControl) {
+        public event EventHandler ItemsStateChanged;
+                
+        private TextBox CurrentlyEditedTextBox;
+        private ResXEditorControl editorControl;
+        private MenuItem editContextMenuItem, cutContextMenuItem, copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem,
+            inlineContextMenuItem;
+
+        public ResXStringGrid(ResXEditorControl editorControl) : base(editorControl.conflictResolver) {
+            this.editorControl = editorControl;
             this.AllowUserToAddRows = true;            
             this.ShowEditingIcon = false;
             this.MultiSelect = true;
             this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-            editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
+            this.editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
+            this.SelectionChanged += new EventHandler((o, e) => { NotifyItemsStateChanged(); });
+            this.NewRowNeeded += new DataGridViewRowEventHandler((o, e) => { NotifyItemsStateChanged(); });
+            this.MouseDown += new MouseEventHandler(ResXStringGrid_MouseDown);
 
             ResXStringGridRow rowTemplate = new ResXStringGridRow();
+            rowTemplate.MinimumHeight = 24;
             this.RowTemplate = rowTemplate;
+
+            editContextMenuItem = new MenuItem("Edit cell");
+            editContextMenuItem.Click += new EventHandler((o, e) => { this.BeginEdit(true); });
+
+            cutContextMenuItem = new MenuItem("Cut");
+            cutContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCut(); });
+
+            copyContextMenuItem = new MenuItem("Copy");
+            copyContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCopy(); });
+
+            pasteContextMenuItem = new MenuItem("Paste");
+            pasteContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecutePaste(); });
+
+            deleteContextMenuItem = new MenuItem("Remove");
+            deleteContextMenuItem.Click += new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE); }); 
+
+            inlineContextMenuItem = new MenuItem("Inline");
+
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.MenuItems.Add(editContextMenuItem);
+            contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(cutContextMenuItem);
+            contextMenu.MenuItems.Add(copyContextMenuItem);
+            contextMenu.MenuItems.Add(pasteContextMenuItem);
+            contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(inlineContextMenuItem);
+            contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(deleteContextMenuItem);
+            contextMenu.Popup += new EventHandler(contextMenu_Popup);
+            this.ContextMenu = contextMenu;
 
             this.ColumnHeadersHeight = 24;
         }
+                
+        #region IDataTabItem members
 
-        private void editorControl_RemoveRequested(REMOVEKIND flags) {
-            if (!this.Visible) return;
-            if (this.SelectedRows.Count == 0) return;
-            if ((flags | REMOVEKIND.REMOVE) != REMOVEKIND.REMOVE) throw new ArgumentException("Cannot delete or exclude strings.");
+        public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
+            EndEdit();
 
-            if ((flags & REMOVEKIND.REMOVE) == REMOVEKIND.REMOVE) {
-                foreach (ResXStringGridRow row in SelectedRows) {
-                    TrySetValue(row.DataSourceItem.Name, null, row);
-                    Rows.Remove(row);
+            Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(RowCount);
+            foreach (ResXStringGridRow row in Rows) {
+                if (!string.IsNullOrEmpty(row.ErrorText)) {
+                    if (throwExceptions) {
+                        throw new Exception(row.ErrorText);
+                    } else {
+                        if (row.DataSourceItem != null) {
+                            string rndFile = Path.GetRandomFileName();
+                            ResXDataNode newNode = new ResXDataNode(rndFile.Replace('@', '_'), row.DataSourceItem.GetValue<string>());
+                            newNode.Comment = string.Format("@@{0}@{1}", row.Status == ResXStringGridRow.STATUS.KEY_NULL ? "" : row.DataSourceItem.Name, row.DataSourceItem.Comment);
+                            data.Add(newNode.Name.ToLower(), newNode);
+                        }
+                    }
+                } else if (row.DataSourceItem != null) {
+                    data.Add(row.DataSourceItem.Name.ToLower(), row.DataSourceItem);
                 }
-                NotifyDataChanged();
-            }            
+            }
+
+            return data;
+        }        
+
+        public bool CanContainItem(ResXDataNode node) {
+            return node.HasValue<string>();
         }
+
+        public void BeginAdd() {
+            base.SetData(null);
+            this.SuspendLayout();
+            Rows.Clear();
+        }
+
+        public IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
+            ResXStringGridRow row = new ResXStringGridRow();
+            PopulateRow(row, value);
+
+            Rows.Add(row);
+            Validate(row);
+
+            return row;
+        }
+
+        public void EndAdd() {
+            this.ResumeLayout();
+            this.OnResize(null);
+        }
+
+        public COMMAND_STATUS CanCutOrCopy {
+            get {
+                return HasSelectedItems && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+            }
+        }
+
+        public COMMAND_STATUS CanPaste {
+            get {
+                return Clipboard.ContainsText() && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+            }
+        }
+
+        public bool Copy() {
+            StringBuilder content = new StringBuilder();
+            foreach (DataGridViewRow row in SelectedRows) {
+                if (row.IsNewRow) continue;
+                content.AppendFormat("{0},{1},{2};", (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
+            }
+            Clipboard.SetText(content.ToString(), TextDataFormat.UnicodeText);
+            return true;
+        }
+
+        public bool Cut() {
+            bool ok = Copy();
+            if (!ok) return false;
+
+            editorControl_RemoveRequested(REMOVEKIND.REMOVE);            
+
+            return true;
+        }
+
+        public bool HasItems {
+            get {
+                return Rows.Count > 1;
+            }
+        }
+
+        public bool HasSelectedItems {
+            get {
+                return (SelectedRows.Count > 1 || (SelectedRows.Count == 1 && !SelectedRows[0].IsNewRow));
+            }
+        }
+
+        public bool SelectAllItems() {
+            foreach (DataGridViewRow row in Rows)
+                if (!row.IsNewRow) row.Selected = true;
+
+            return true;
+        }
+
+        public bool IsEditing {
+            get {
+                return IsCurrentCellInEditMode;
+            }
+        }
+
+        #endregion
+
+        #region AbstractKeyValueGridView members        
+
+        public override void SetData(List<ResXDataNode> list) {
+            throw new NotImplementedException();
+        }        
+        
+        public override string CheckBoxColumnName {
+            get { return null; }
+        }
+
+        public override string KeyColumnName {
+            get { return "KeyColumn"; }
+        }
+
+        public override string ValueColumnName {
+            get { return "ValueColumn"; }
+        }        
+
+        #endregion        
+
+        #region protected members - virtual
 
         protected override void InitializeColumns() {            
             DataGridViewTextBoxColumn keyColumn = new DataGridViewTextBoxColumn();
@@ -77,79 +223,14 @@ namespace VisualLocalizer.Editor {
             commentColumn.Name = CommentColumnName;
             commentColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Add(commentColumn);
-        }
 
-        private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
-            string name, value, comment;
-            if (node.Comment.StartsWith("@@")) {
-                string p = node.Comment.Substring(2);
-                int at = p.IndexOf('@');
-
-                name = p.Substring(0, at);
-                value = node.GetStringValue();
-                comment = p.Substring(at + 1);
-            } else {
-                name = node.Name;
-                value = node.GetStringValue();
-                comment = node.Comment;
-            }
-
-            DataGridViewTextBoxCell keyCell = new DataGridViewTextBoxCell();
-            keyCell.Value = name;
-
-            DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
-            valueCell.Value = value;
-
-            DataGridViewTextBoxCell commentCell = new DataGridViewTextBoxCell();
-            commentCell.Value = comment;
-
-            row.Cells.Add(keyCell);
-            row.Cells.Add(valueCell);
-            row.Cells.Add(commentCell);
-            row.DataSourceItem = node;
-
-            row.MinimumHeight = 25;
-        }
-
-        public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
-            Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(RowCount);
-
-            foreach (ResXStringGridRow row in Rows) {
-                if (!string.IsNullOrEmpty(row.ErrorText)) {
-                    if (throwExceptions) {
-                        throw new Exception(row.ErrorText);
-                    } else {
-                        if (row.DataSourceItem != null) {
-                            string rndFile = Path.GetRandomFileName();
-                            ResXDataNode newNode = new ResXDataNode(rndFile.Replace('@','_'), row.DataSourceItem.GetStringValue());
-                            newNode.Comment = string.Format("@@{0}@{1}", row.DataSourceItem.Name, row.DataSourceItem.Comment);
-                            data.Add(newNode.Name.ToLower(), newNode); 
-                        }
-                    }
-                } else if (row.DataSourceItem != null) { 
-                    data.Add(row.DataSourceItem.Name.ToLower(), row.DataSourceItem); 
-                }
-            }
-
-            return data;
-        }
-
-        public void SetData(Dictionary<string, ResXDataNode> newData) {
-            base.SetData(null);
-            this.SuspendLayout();
-            Rows.Clear();            
-
-            foreach (var pair in newData) {
-                ResXStringGridRow row = new ResXStringGridRow();
-                PopulateRow(row, pair.Value);
-                
-                Rows.Add(row);                
-                Validate(row);
-            }
-
-            this.ResumeLayout();
-            this.OnResize(null);
-        }
+            DataGridViewTextBoxColumn referencesColumn = new DataGridViewTextBoxColumn();
+            referencesColumn.MinimumWidth = 40;
+            referencesColumn.HeaderText = "References";
+            referencesColumn.Name = ReferencesColumnName;
+            referencesColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.Columns.Add(referencesColumn);
+        }        
 
         protected override bool ProcessDataGridViewKey(KeyEventArgs e) {
             if (this.IsCurrentCellInEditMode && this.EditingControl is TextBox) {
@@ -174,58 +255,148 @@ namespace VisualLocalizer.Editor {
                 box.Multiline = true;
                 box.WordWrap = true;
             }
+            if (e.Control is TextBox) {
+                CurrentlyEditedTextBox = e.Control as TextBox;
+            }
+            NotifyItemsStateChanged();
+        }
+
+        protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
+            try {
+                if (e.RowIndex == this.Rows.Count - 1) return; // last row edited - cancel
+                base.OnCellEndEdit(e);
+
+                if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
+                    ResXStringGridRow row = Rows[e.RowIndex] as ResXStringGridRow;
+                    bool isNewRow = false;
+                    if (row.DataSourceItem == null) {
+                        isNewRow = true;
+                        row.DataSourceItem = new ResXDataNode("(new)", string.Empty);
+                    }
+                    ResXDataNode node = row.DataSourceItem;
+
+                    if (Columns[e.ColumnIndex].Name == KeyColumnName) {
+                        string newKey = (string)row.Cells[KeyColumnName].Value;                                       
+
+                        if (isNewRow) {
+                            setNewKey(row, newKey);
+                            StringRowAdded(row);
+                            NotifyDataChanged();
+                        } else {
+                            if (string.Compare(newKey, node.Name) != 0) {
+                                StringKeyRenamed(row, newKey);
+                                setNewKey(row, newKey);
+                                NotifyDataChanged();
+                            }
+                        }         
+                    } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
+                        string newValue = (string)row.Cells[ValueColumnName].Value;
+                        if (isNewRow) {
+                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            StringRowAdded(row);
+                            NotifyDataChanged();
+                        } else {
+                            if (string.Compare(newValue, node.GetValue<string>()) != 0) {
+                                StringValueChanged(row, node.GetValue<string>(), newValue);
+                                NotifyDataChanged();
+
+                                string key = (string)row.Cells[KeyColumnName].Value;
+                                ResXDataNode newNode;
+                                if (string.IsNullOrEmpty(key)) {
+                                    newNode = new ResXDataNode("A", newValue);
+                                    row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                                } else {
+                                    newNode = new ResXDataNode(key, newValue);
+                                    row.Status = ResXStringGridRow.STATUS.OK;
+                                }
+
+                                newNode.Comment = (string)row.Cells[CommentColumnName].Value;
+                                row.DataSourceItem = newNode;
+                            }
+                        }
+                    } else {
+                        string newComment = (string)row.Cells[CommentColumnName].Value;
+                        if (isNewRow) {
+                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            StringRowAdded(row);
+                            NotifyDataChanged();
+                        } else {
+                            if (string.Compare(newComment, node.Comment) != 0) {
+                                StringCommentChanged(row, node.Comment, newComment);
+                                NotifyDataChanged();
+
+                                node.Comment = newComment;
+                            }
+                        }
+                    }
+                }                
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            }
+            NotifyItemsStateChanged();
         }
         
-        protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
-            base.OnCellEndEdit(e);
+        protected override ResXDataNode GetResultItemFromRow(DataGridViewRow row) {
+            throw new NotImplementedException();
+        }
 
-            if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
-                ResXStringGridRow row = Rows[e.RowIndex] as ResXStringGridRow;
-                if (row.DataSourceItem == null) row.DataSourceItem = new ResXDataNode("(new)", string.Empty);
-                ResXDataNode node = row.DataSourceItem;
+        #endregion
 
-                if (Columns[e.ColumnIndex].Name == KeyColumnName) {
-                    string newKey=(string)row.Cells[KeyColumnName].Value;
-                    if (string.Compare(newKey, node.Name) != 0) {
-                        NotifyStringKeyRenamed(row, newKey);
-                        NotifyDataChanged();                        
+        #region public members
 
-                        if (!string.IsNullOrEmpty(newKey)) {
-                            node.Name = newKey;
-                            row.Status = ResXStringGridRow.STATUS.OK;
-                        } else {
-                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
-                        }
-                    }
-                } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
-                    string newValue=(string)row.Cells[ValueColumnName].Value;
-                    if (string.Compare(newValue, node.GetStringValue()) != 0) {
-                        NotifyStringValueChanged(row, node.GetStringValue(), newValue);
-                        NotifyDataChanged();
+        public void StringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
+            string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            StringChangeCommentUndoUnit unit = new StringChangeCommentUndoUnit(row, this, key, oldComment, newComment);
+            editorControl.Editor.AddUndoUnit(unit);
+        }
 
-                        string key=(string)row.Cells[KeyColumnName].Value;
-                        ResXDataNode newNode;
-                        if (string.IsNullOrEmpty(key)) {
-                            newNode = new ResXDataNode("A", newValue);
-                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
-                        } else {
-                            newNode = new ResXDataNode(key, newValue);
-                            row.Status = ResXStringGridRow.STATUS.OK;
-                        }
+        public void StringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
+            string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            StringChangeValueUndoUnit unit = new StringChangeValueUndoUnit(row, this, key, oldValue, newValue, row.DataSourceItem.Comment);
+            editorControl.Editor.AddUndoUnit(unit);
+        }
 
-                        newNode.Comment = (string)row.Cells[CommentColumnName].Value;
-                        row.DataSourceItem = newNode;                        
-                    }
-                } else {
-                    string newComment = (string)row.Cells[CommentColumnName].Value;
-                    if (string.Compare(newComment, node.Comment) != 0) {
-                        NotifyStringCommentChanged(row, node.Comment, newComment);
-                        NotifyDataChanged();
-                        
-                        node.Comment = newComment;                        
-                    }
-                }
-            }           
+        public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
+            string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
+            editorControl.Editor.AddUndoUnit(unit);
+        }
+
+        public void StringRowAdded(ResXStringGridRow row) {
+            StringRowsAdded(new List<ResXStringGridRow>() { row });
+        }
+
+        public void StringRowsAdded(List<ResXStringGridRow> rows) {
+            StringRowAddUndoUnit unit = new StringRowAddUndoUnit(rows, this, editorControl.conflictResolver);
+            editorControl.Editor.AddUndoUnit(unit);
+        }
+
+        public void AddClipboardText(string text) {
+            string[] rows = text.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+            List<ResXStringGridRow> addedRows = new List<ResXStringGridRow>();
+            foreach (string row in rows) {
+                string[] columns = row.Split(',');
+                if (columns.Length != 3) continue;
+
+                string key = columns[0].CreateIdentifier();
+                string value = columns[1];
+                string comment = columns[2];
+
+                ResXDataNode node = new ResXDataNode(key, value);
+                node.Comment = comment;
+
+                ResXStringGridRow newRow = Add(key, node, true) as ResXStringGridRow;
+                addedRows.Add(newRow);   
+            }
+
+            if (addedRows.Count > 0) {
+                StringRowsAdded(addedRows);
+                NotifyDataChanged();
+                NotifyItemsStateChanged();
+            }
         }
 
         public void ValidateRow(ResXStringGridRow row) {
@@ -236,40 +407,141 @@ namespace VisualLocalizer.Editor {
             if (DataChanged != null) DataChanged(this, null);
         }
 
-        public void NotifyStringKeyRenamed(ResXStringGridRow row, string newKey) {
-            if (StringKeyRenamed != null) StringKeyRenamed(row, newKey);
-        }
-
-        public void NotifyStringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
-            if (StringCommentChanged != null) StringCommentChanged(row, oldComment, newComment);
-        }
-
-        public void NotifyStringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
-            if (StringValueChanged != null) StringValueChanged(row, oldValue, newValue);
-        }
-
-        public override string CheckBoxColumnName {
-            get { return null; }
-        }
-
-        public override string KeyColumnName {
-            get { return "KeyColumn"; }
-        }
-
-        public override string ValueColumnName {
-            get { return "ValueColumn"; }
-        }
-
         public string CommentColumnName {
             get { return "Comment"; }
         }
 
-        protected override ResXDataNode GetResultItemFromRow(CodeDataGridViewRow<ResXDataNode> row) {
-            throw new NotImplementedException();
+        public string ReferencesColumnName {
+            get { return "References"; }
         }
 
-        public override void SetData(List<ResXDataNode> list) {
-            throw new NotImplementedException();
+        #endregion
+
+        #region private members
+
+        private void NotifyItemsStateChanged() {
+            if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
         }
+
+        private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
+            string name, value, comment;
+            if (node.Comment.StartsWith("@@")) {
+                string p = node.Comment.Substring(2);
+                int at = p.LastIndexOf('@');
+
+                name = p.Substring(0, at);
+                value = node.GetValue<string>();
+                comment = p.Substring(at + 1);
+
+                if (string.IsNullOrEmpty(name)) {
+                    row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                } else {
+                    row.Status = ResXStringGridRow.STATUS.OK;
+                    node.Name = name;
+                }
+                node.Comment = comment;
+            } else {
+                name = node.Name;
+                value = node.GetValue<string>();
+                comment = node.Comment;
+            }
+
+            DataGridViewTextBoxCell keyCell = new DataGridViewTextBoxCell();
+            keyCell.Value = name;
+
+            DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
+            valueCell.Value = value;
+
+            DataGridViewTextBoxCell commentCell = new DataGridViewTextBoxCell();
+            commentCell.Value = comment;
+
+            DataGridViewTextBoxCell referencesCell = new DataGridViewTextBoxCell();
+            referencesCell.Value = 0;            
+
+            row.Cells.Add(keyCell);
+            row.Cells.Add(valueCell);
+            row.Cells.Add(commentCell);
+            row.Cells.Add(referencesCell);
+            row.DataSourceItem = node;
+
+            referencesCell.ReadOnly = true;
+            row.MinimumHeight = 25;
+        }
+
+        private void setNewKey(ResXStringGridRow row, string newKey) {
+            if (string.IsNullOrEmpty(newKey)) {
+                row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+            } else {
+                row.Status = ResXStringGridRow.STATUS.OK;
+                row.DataSourceItem.Name = newKey;
+            }
+        }
+
+        private void editorControl_RemoveRequested(REMOVEKIND flags) {
+            try {
+                if (!this.Visible) return;
+                if (this.SelectedRows.Count == 0) return;
+                if ((flags | REMOVEKIND.REMOVE) != REMOVEKIND.REMOVE) throw new ArgumentException("Cannot delete or exclude strings.");
+
+                if ((flags & REMOVEKIND.REMOVE) == REMOVEKIND.REMOVE) {
+                    bool dataChanged = false;
+                    List<ResXStringGridRow> copyRows = new List<ResXStringGridRow>(SelectedRows.Count);
+
+                    foreach (ResXStringGridRow row in SelectedRows) {
+                        if (!row.IsNewRow) {
+                            ConflictResolver.TryAdd(row.Key, null, row);
+
+                            row.Cells[KeyColumnName].Tag = null;
+                            row.IndexAtDeleteTime = row.Index;
+                            copyRows.Add(row);
+                            Rows.Remove(row);  
+                            dataChanged = true;
+                        }                        
+                    }
+
+                    if (dataChanged) {
+                        RemoveStringsUndoUnit undoUnit = new RemoveStringsUndoUnit(copyRows, this, editorControl.conflictResolver);
+                        editorControl.Editor.AddUndoUnit(undoUnit);
+
+                        NotifyItemsStateChanged();
+                        NotifyDataChanged();
+                    }
+                }
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            }
+        }
+
+        private void ResXStringGrid_MouseDown(object sender, MouseEventArgs e) {
+            if (e.Button == MouseButtons.Right && !IsEditing) {
+                HitTestInfo info = this.HitTest(e.X, e.Y);
+                if (info != null && info.ColumnIndex >= 0 && info.RowIndex >= 0 && info.RowIndex != Rows.Count - 1) {
+                    if (SelectedRows.Count == 0) {
+                        Rows[info.RowIndex].Selected = true;                        
+                    } else {
+                        if (!Rows[info.RowIndex].Selected) {
+                            ClearSelection();
+                            Rows[info.RowIndex].Selected = true;
+                        }
+                    }
+                    CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
+                    this.ContextMenu.Show(this, e.Location);
+                }
+            }
+        }
+
+        private void contextMenu_Popup(object sender, EventArgs e) {
+            cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
+            copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
+            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1;
+            editContextMenuItem.Enabled = SelectedRows.Count == 1;
+            inlineContextMenuItem.Enabled = false;
+            pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
+        }
+
+        #endregion
     }
 }

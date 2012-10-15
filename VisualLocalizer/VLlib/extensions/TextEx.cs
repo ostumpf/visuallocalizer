@@ -25,17 +25,8 @@ namespace VisualLocalizer.Library {
                                                      UnicodeCategory.Format
                                                     };      
 
-        public static bool IsValidIdentifier(this string text, ref string errorText) {
-            if (string.IsNullOrEmpty(text)) {
-                errorText = "Key cannot be empty";
-                return false;
-            }
-            if (!csharp.IsValidIdentifier(text)) {
-                errorText = "Key is not valid C# identifier";
-                return false;
-            }
-
-            return true;
+        public static bool IsValidIdentifier(this string text) {
+            return !string.IsNullOrEmpty(text) && csharp.IsValidIdentifier(text);
         }
 
         public static string RemoveWhitespace(this string text) {
@@ -223,6 +214,23 @@ namespace VisualLocalizer.Library {
 
         private static string Escape(this char c) {
             return string.Format("\\x{0:x4}", (int)c);
+        }
+
+        public static string CreateIdentifier(this string original) {
+            StringBuilder b = new StringBuilder();
+
+            foreach (char c in original) {
+                if (c.CanBePartOfIdentifier()) {
+                    b.Append(c);
+                } else {
+                    b.Append('_');
+                }
+            }
+
+            string ident = b.ToString();
+            if (!ident.IsValidIdentifier()) ident = "_" + ident;
+
+            return ident;
         }
     }
 }

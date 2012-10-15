@@ -18,7 +18,7 @@ namespace VisualLocalizer.Library {
    
     public abstract class EditorFactory<EditorType, ControlType> : IVsEditorFactory
         where EditorType : AbstractSingleViewEditor<ControlType>,new()
-        where ControlType : Control, new() {
+        where ControlType : Control, IEditorControl, new() {
 
         private ServiceProvider serviceProvider;
 
@@ -84,7 +84,7 @@ namespace VisualLocalizer.Library {
         IPersistFileFormat,
         IVsFileChangeEvents,
         IExtensibleObject
-        where T : Control,new() {
+        where T : Control, IEditorControl, new() {
                          
         private uint vsFileChangeCookie;
         private bool fileChangedTimerSet;
@@ -95,6 +95,7 @@ namespace VisualLocalizer.Library {
             : base(null) {
             
             UIControl = new T();            
+            UIControl.Init(this);
         }        
 
         #region WindowPane members
@@ -112,7 +113,20 @@ namespace VisualLocalizer.Library {
         int IOleCommandTarget.Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut) {
             bool ok = false;
             if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97) {
-                ok = ExecuteSystemCommand((VSConstants.VSStd97CmdID)nCmdID);
+                switch ((VSConstants.VSStd97CmdID)nCmdID) {
+                    case VSConstants.VSStd97CmdID.Paste:
+                        ok = ExecutePaste();
+                        break;
+                    case VSConstants.VSStd97CmdID.Cut:
+                        ok = ExecuteCut();
+                        break;
+                    case VSConstants.VSStd97CmdID.Copy:
+                        ok = ExecuteCopy();
+                        break;
+                    default:
+                        ok = ExecuteSystemCommand((VSConstants.VSStd97CmdID)nCmdID);
+                        break;
+                }                 
             } else {
                 ok = ExecuteCommand(pguidCmdGroup, nCmdID);
             }
@@ -129,7 +143,20 @@ namespace VisualLocalizer.Library {
 
             COMMAND_STATUS status;
             if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97) {
-                status = GetSystemCommandStatus((VSConstants.VSStd97CmdID)prgCmds[0].cmdID);
+                switch ((VSConstants.VSStd97CmdID)prgCmds[0].cmdID) {
+                    case VSConstants.VSStd97CmdID.Paste: 
+                        status = IsPasteSupported;
+                        break;
+                    case VSConstants.VSStd97CmdID.Cut:
+                        status = IsCutSupported;
+                        break;
+                    case VSConstants.VSStd97CmdID.Copy:
+                        status = IsCopySupported;
+                        break;
+                    default:
+                        status = GetSystemCommandStatus((VSConstants.VSStd97CmdID)prgCmds[0].cmdID);
+                        break;
+                }                
             } else {
                 status = GetCommandStatus(pguidCmdGroup, prgCmds[0].cmdID);
             }
@@ -249,7 +276,7 @@ namespace VisualLocalizer.Library {
                 }
                 return VSConstants.S_OK;
             } catch (Exception) {                
-                return VSConstants.S_FALSE;
+                return VSConstants.E_ABORT;
             }
             
         }
@@ -512,9 +539,9 @@ namespace VisualLocalizer.Library {
             set;
         }
 
-        public string FileName {
+        public virtual string FileName {
             get;
-            private set;
+            protected set;
         }
 
         public abstract string Extension {
@@ -657,6 +684,36 @@ namespace VisualLocalizer.Library {
         public void SetUndoManagerEnabled(bool enabled) {
             IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
             undoManager.Enable(enabled ? 1 : 0);
+        }
+
+        public virtual COMMAND_STATUS IsPasteSupported {
+            get {
+                return COMMAND_STATUS.UNSUPPORTED;
+            }
+        }
+
+        public virtual COMMAND_STATUS IsCopySupported {
+            get {
+                return COMMAND_STATUS.UNSUPPORTED;
+            }
+        }
+
+        public virtual COMMAND_STATUS IsCutSupported {
+            get {
+                return COMMAND_STATUS.UNSUPPORTED;
+            }
+        }
+
+        public virtual bool ExecutePaste() {
+            return true;
+        }
+
+        public virtual bool ExecuteCut() {
+            return true;
+        }
+
+        public virtual bool ExecuteCopy() {
+            return true;
         }
     }
 

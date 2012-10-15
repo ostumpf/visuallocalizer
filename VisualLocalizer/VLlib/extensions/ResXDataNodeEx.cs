@@ -6,28 +6,22 @@ using System.Resources;
 using System.ComponentModel.Design;
 using System.Reflection;
 using System.Drawing;
+using System.IO;
 
 namespace VisualLocalizer.Library {
     public static class ResXDataNodeEx {
 
-        public static bool HasStringValue(this ResXDataNode node) {
+        public static bool HasValue<T>(this ResXDataNode node) {
             string type = node.GetValueTypeName((ITypeResolutionService)null);
-            return !string.IsNullOrEmpty(type) && Type.GetType(type) == typeof(string);
+            bool hasType = !string.IsNullOrEmpty(type) && Type.GetType(type) == typeof(T);
+
+            return hasType && (typeof(T) != typeof(string) || node.FileRef == null);
         }
 
-        public static bool HasImageValue(this ResXDataNode node) {
+        public static T GetValue<T>(this ResXDataNode node) where T:class {
             string type = node.GetValueTypeName((ITypeResolutionService)null);
-            return !string.IsNullOrEmpty(type) && Type.GetType(type) == typeof(Bitmap);
-        }
-
-        public static string GetStringValue(this ResXDataNode node) {
-            string type = node.GetValueTypeName((ITypeResolutionService)null);
-            return string.IsNullOrEmpty(type) ? null : (string)node.GetValue((ITypeResolutionService)null);
-        }
-
-        public static Bitmap GetImageValue(this ResXDataNode node) {
-            string type = node.GetValueTypeName((ITypeResolutionService)null);
-            return string.IsNullOrEmpty(type) ? null : (Bitmap)node.GetValue((ITypeResolutionService)null);
+            bool exists = node.FileRef == null || File.Exists(node.FileRef.FileName);
+            return (string.IsNullOrEmpty(type) || !exists) ? null : (T)node.GetValue((ITypeResolutionService)null);
         }
     }
 }

@@ -8,10 +8,11 @@ using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Gui {
+    
     internal sealed class BatchInlineToolPanel : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
-
-        public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
-
+        
+        public event EventHandler<CodeResultItemEventArgs> HighlightRequired;        
+        
         protected override void InitializeColumns() {
             base.InitializeColumns();
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -47,12 +48,16 @@ namespace VisualLocalizer.Gui {
             DataGridViewColumn column = new DataGridViewColumn();
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.Columns.Add(column);   
+
+            DataGridViewCheckedRow<CodeReferenceResultItem> template=new DataGridViewCheckedRow<CodeReferenceResultItem>();
+            template.MinimumHeight = 24;
+            this.RowTemplate = template;
         }
 
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
             if (HighlightRequired != null && e.RowIndex >= 0) {
-                HighlightRequired(this, new CodeResultItemEventArgs() { 
-                    Item = (Rows[e.RowIndex] as CodeDataGridViewRow<CodeReferenceResultItem>).DataSourceItem
+                HighlightRequired(this, new CodeResultItemEventArgs() {
+                    Item = (Rows[e.RowIndex] as DataGridViewCheckedRow<CodeReferenceResultItem>).DataSourceItem
                 });
             }
         }
@@ -63,7 +68,7 @@ namespace VisualLocalizer.Gui {
             this.SuspendLayout();
 
             foreach (var item in value) {
-                CodeDataGridViewRow<CodeReferenceResultItem> row = new CodeDataGridViewRow<CodeReferenceResultItem>();
+                DataGridViewCheckedRow<CodeReferenceResultItem> row = new DataGridViewCheckedRow<CodeReferenceResultItem>();
                 row.DataSourceItem = item;
 
                 DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
@@ -91,8 +96,11 @@ namespace VisualLocalizer.Gui {
                 VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
                 row.Cells.Add(destinationCell);
 
-                DataGridViewTextBoxCell contextCell = new DataGridViewTextBoxCell();
+                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
                 contextCell.Value = item.Context;
+                contextCell.RelativeLine = item.ContextRelativeLine;
+                contextCell.FullText = item.Context;
+                contextCell.SetWrapContents(false);
                 row.Cells.Add(contextCell);
 
                 DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
@@ -115,11 +123,12 @@ namespace VisualLocalizer.Gui {
             NotifyErrorRowsChanged();
         }
 
-        protected override CodeReferenceResultItem GetResultItemFromRow(CodeDataGridViewRow<CodeReferenceResultItem> row) {
-            CodeReferenceResultItem item = row.DataSourceItem;
-            item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
+        protected override CodeReferenceResultItem GetResultItemFromRow(DataGridViewRow row) {
+            var typedRow = row as DataGridViewCheckedRow<CodeReferenceResultItem>;
+            CodeReferenceResultItem item = typedRow.DataSourceItem;
+            item.MoveThisItem = (bool)(typedRow.Cells[CheckBoxColumnName].Value);
 
-            row.DataSourceItem = item;
+            typedRow.DataSourceItem = item;
             return item;
         }
 

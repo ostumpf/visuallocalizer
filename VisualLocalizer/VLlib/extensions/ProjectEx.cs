@@ -68,6 +68,33 @@ namespace VisualLocalizer.Library {
 
             return list;
         }
-        
+
+        public static ProjectItem AddResourceDir(this Project project, string subdir) {
+            ProjectItem resItem = null;
+            if (project.ProjectItems.ContainsItem("Resources")) {
+                resItem = project.ProjectItems.Item("Resources");
+            } else {
+                resItem = project.ProjectItems.AddFolder("Resources", null);   
+            }
+
+            ProjectItem subItem = null;
+            if (resItem.ProjectItems.ContainsItem(subdir)) {
+                subItem = resItem.ProjectItems.Item(subdir);
+            } else {
+                subItem = resItem.ProjectItems.AddFolder(subdir, null);
+            }
+
+            return subItem;
+        }
+
+        public static bool ContainsItem(this ProjectItems items, string item) {
+            foreach (ProjectItem i in items)
+                if (i.Name == item) return true;
+            return false;
+        }
+
+        public static bool IsUserDefined(this Solution solution) {
+            return solution != null && !string.IsNullOrEmpty(solution.FileName);
+        }
     }
 }

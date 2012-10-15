@@ -24,10 +24,14 @@ namespace VisualLocalizer.Gui {
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
         private bool valueAdded = false;
 
-        public BatchMoveToResourcesToolGrid() {                        
+        public BatchMoveToResourcesToolGrid() : base(new DestinationKeyValueConflictResolver()) {                        
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
+
+            DataGridViewKeyValueRow<CodeReferenceResultItem> template = new DataGridViewKeyValueRow<CodeReferenceResultItem>();
+            template.MinimumHeight = 24;
+            this.RowTemplate = template;
         }
 
         #region public members
@@ -49,7 +53,7 @@ namespace VisualLocalizer.Gui {
             this.SuspendLayout();
 
             foreach (CodeStringResultItem item in value) {
-                CodeDataGridViewRow<CodeStringResultItem> row = new CodeDataGridViewRow<CodeStringResultItem>();
+                DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
                 row.DataSourceItem = item;
 
                 DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
@@ -83,8 +87,11 @@ namespace VisualLocalizer.Gui {
                     destinationCell.Value = destinationCell.Items[0].ToString();
                 row.Cells.Add(destinationCell);
 
-                DataGridViewTextBoxCell contextCell = new DataGridViewTextBoxCell();
+                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
                 contextCell.Value = item.Context;
+                contextCell.RelativeLine = item.ContextRelativeLine;
+                contextCell.FullText = item.Context;
+                contextCell.SetWrapContents(false);
                 row.Cells.Add(contextCell);
 
                 DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
@@ -109,7 +116,7 @@ namespace VisualLocalizer.Gui {
             this.OnResize(null);
         }
 
-        private bool TestFilterRow(CodeDataGridViewRow<CodeStringResultItem> row) {
+        private bool TestFilterRow(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             bool check = true;
 
             if (check && IsRowCapitalsTest(row)) check = check && !SettingsObject.Instance.FilterOutCaps;
@@ -128,10 +135,10 @@ namespace VisualLocalizer.Gui {
             }
 
             return check;
-        }      
-       
-        public void CheckByPredicate(Predicate<CodeDataGridViewRow<CodeStringResultItem>> test, bool checkResult) {            
-            foreach (CodeDataGridViewRow<CodeStringResultItem> row in Rows) {                
+        }
+
+        public void CheckByPredicate(Predicate<DataGridViewKeyValueRow<CodeStringResultItem>> test, bool checkResult) {
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {                
                 if (test(row)) {
                     bool oldValue = (bool)row.Cells[CheckBoxColumnName].Value;
                     row.Cells[CheckBoxColumnName].Value = checkResult;
@@ -142,8 +149,8 @@ namespace VisualLocalizer.Gui {
             UpdateCheckHeader();
         }
 
-        public void CheckByPredicate(Func<CodeDataGridViewRow<CodeStringResultItem>, SettingsObject.RegexpInstance, bool> test,SettingsObject.RegexpInstance regexInstance) {
-            foreach (CodeDataGridViewRow<CodeStringResultItem> row in Rows) {
+        public void CheckByPredicate(Func<DataGridViewKeyValueRow<CodeStringResultItem>, SettingsObject.RegexpInstance, bool> test, SettingsObject.RegexpInstance regexInstance) {
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
                 bool oldValue = (bool)row.Cells[CheckBoxColumnName].Value;
                 if (test(row, regexInstance)) {
                     row.Cells[CheckBoxColumnName].Value = false;
@@ -153,7 +160,7 @@ namespace VisualLocalizer.Gui {
             UpdateCheckHeader();
         }
 
-        public bool IsRowCapitalsTest(CodeDataGridViewRow<CodeStringResultItem> row) {
+        public bool IsRowCapitalsTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             string value = (string)row.Cells[ValueColumnName].Value;
             if (value == null) return false;
 
@@ -167,7 +174,7 @@ namespace VisualLocalizer.Gui {
             return onlyCaps;
         }
 
-        public bool IsRowNoLettersTest(CodeDataGridViewRow<CodeStringResultItem> row) {
+        public bool IsRowNoLettersTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             string value = (string)row.Cells[ValueColumnName].Value;
             if (value == null) return true;
 
@@ -180,19 +187,19 @@ namespace VisualLocalizer.Gui {
             return !containsLetter;
         }
 
-        public bool IsRowUnlocalizableTest(CodeDataGridViewRow<CodeStringResultItem> row) {
+        public bool IsRowUnlocalizableTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             return row.DataSourceItem.IsWithinLocalizableFalse;
         }
 
-        public bool IsRowVerbatimTest(CodeDataGridViewRow<CodeStringResultItem> row) {
+        public bool IsRowVerbatimTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             return row.DataSourceItem.WasVerbatim;
         }
 
-        public bool IsRowMarkedWithUnlocCommentTest(CodeDataGridViewRow<CodeStringResultItem> row) {
+        public bool IsRowMarkedWithUnlocCommentTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             return row.DataSourceItem.IsMarkedWithUnlocalizableComment;
         }
 
-        public bool IsRowMatchingRegexpInstance(CodeDataGridViewRow<CodeStringResultItem> row, SettingsObject.RegexpInstance regexpInstance) {
+        public bool IsRowMatchingRegexpInstance(DataGridViewKeyValueRow<CodeStringResultItem> row, SettingsObject.RegexpInstance regexpInstance) {
             string value = (string)row.Cells[ValueColumnName].Value;
             return Regex.IsMatch(value, regexpInstance.Regexp) == regexpInstance.MustMatch;
         }
@@ -235,11 +242,13 @@ namespace VisualLocalizer.Gui {
             this.Columns.Add(column);
         }
 
-        protected override CodeStringResultItem GetResultItemFromRow(CodeDataGridViewRow<CodeStringResultItem> row) {
+        protected override CodeStringResultItem GetResultItemFromRow(DataGridViewRow originalRow) {
+            DataGridViewKeyValueRow<CodeStringResultItem> row = originalRow as DataGridViewKeyValueRow<CodeStringResultItem>;
+
             CodeStringResultItem item = row.DataSourceItem;
             item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
-            item.Key = (string)row.Cells[KeyColumnName].Value;
-            item.Value = (string)row.Cells[ValueColumnName].Value;
+            item.Key = row.Key;
+            item.Value = row.Value;
 
             string dest = (string)row.Cells["DestinationItem"].Value;
             if (!string.IsNullOrEmpty(dest) && resxItemsCache.ContainsKey(dest))
@@ -264,7 +273,7 @@ namespace VisualLocalizer.Gui {
             base.OnCellEndEdit(e);
         }
 
-        protected override void Validate(CodeDataGridViewRow<CodeStringResultItem> row) {
+        protected override void Validate(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             object dest = row.Cells["DestinationItem"].Value;
             bool existsSameValue = false; 
             string destError = "Destination file not set";
@@ -280,10 +289,9 @@ namespace VisualLocalizer.Gui {
                     loadedItems.Add(resxItem);
                 }
 
-                string key = (string)row.Cells[KeyColumnName].Value;
-                string value = (string)row.Cells[ValueColumnName].Value;
-                if (key == null || value == null) return;
-
+                string key = row.Key;
+                string value = row.Value;
+                
                 string errorText = "Duplicate key entry - key is already present in resource file with different value";
                 CONTAINS_KEY_RESULT keyConflict = resxItem.StringKeyInConflict(key, value);
                 switch (keyConflict) {
@@ -310,21 +318,13 @@ namespace VisualLocalizer.Gui {
                 }
             }
         }
-
-        protected override void SetConflictedRows(CodeDataGridViewRow<CodeStringResultItem> row1, CodeDataGridViewRow<CodeStringResultItem> row2, bool p) {
-            object dest1 = row1.Cells["DestinationItem"].Value;
-            object dest2 = row2.Cells["DestinationItem"].Value;
-            p = p && (dest1 == null || dest2 == null || dest1.ToString() == dest2.ToString());
-
-            base.SetConflictedRows(row1, row2, p);
-        }
-
+        
         #endregion
 
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
             if (HighlightRequired != null && e.RowIndex >= 0) {
                 HighlightRequired(this, new CodeResultItemEventArgs() {
-                    Item = (Rows[e.RowIndex] as CodeDataGridViewRow<CodeStringResultItem>).DataSourceItem
+                    Item = (Rows[e.RowIndex] as DataGridViewKeyValueRow<CodeStringResultItem>).DataSourceItem
                 });
             }
         }
@@ -355,7 +355,7 @@ namespace VisualLocalizer.Gui {
             }
         }
 
-        protected override bool ProcessDataGridViewKey(KeyEventArgs e) {
+        protected override bool ProcessDataGridViewKey(KeyEventArgs e) {            
             if (this.IsCurrentCellInEditMode) {
                 if (e.KeyData == Keys.Left || e.KeyData == Keys.Right || e.KeyData==Keys.Home || e.KeyData==Keys.End) {
                     return false;

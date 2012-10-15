@@ -20,7 +20,8 @@ namespace VisualLocalizer.Components {
         public int AbsoluteCharOffset { get; set; }
         public int AbsoluteCharLength { get; set; }
         public string Value { get; set; }
-        public string Context { get; set; }        
+        public string Context { get; set; }
+        public int ContextRelativeLine { get; set; }
     }
 
     internal sealed class CodeStringResultItem : AbstractResultItem {
