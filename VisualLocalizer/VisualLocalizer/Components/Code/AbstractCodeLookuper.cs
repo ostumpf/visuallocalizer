@@ -17,7 +17,7 @@ namespace VisualLocalizer.Components {
         protected bool IsWithinLocFalse { get; set; }
 
         protected string text;
-        protected char currentChar, previousChar, previousPreviousChar, stringStartChar;
+        protected char currentChar, previousChar, previousPreviousChar,previousPreviousPreviousChar, stringStartChar;
 
         protected void Move() {
             CurrentIndex++;
@@ -56,12 +56,17 @@ namespace VisualLocalizer.Components {
                     StringStartAbsoluteOffset = CurrentAbsoluteOffset;
                     if (previousChar == '@') {
                         isVerbatimString = true;
-                        StringStartIndex--;
+                        StringStartIndex--;                        
                     }
                 }
-            } else if (!insideComment && isVerbatimString && insideString && previousChar == stringStartChar
-                && previousPreviousChar != stringStartChar && previousPreviousChar != '@') {
-                insideString = false;
+            } else if (!insideComment && isVerbatimString && insideString && previousChar == stringStartChar) {
+                if (previousPreviousChar != stringStartChar && (previousPreviousChar != '@' || CurrentAbsoluteOffset - StringStartAbsoluteOffset > 3)) {
+                    insideString = false;
+                }
+                if (previousPreviousChar != '@' && (previousPreviousChar != stringStartChar || previousPreviousPreviousChar == stringStartChar) 
+                    && CurrentAbsoluteOffset - StringStartAbsoluteOffset > 4) {
+                    insideString = false;
+                }
             }
         }
     }

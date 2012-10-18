@@ -169,36 +169,52 @@ namespace VisualLocalizer.Components {
         }
        
         public string GetString(string key) {
+            bool wasLoaded = IsLoaded;            
             if (!IsLoaded) Load();
 
-            return data[key.ToLower()].GetValue<string>();
+            string value = data[key.ToLower()].GetValue<string>();
+            if (!wasLoaded) Unload();
+            
+            return value;
         }
 
         public CONTAINS_KEY_RESULT StringKeyInConflict(string key, string value) {
+            bool wasLoaded = IsLoaded;
             if (!IsLoaded) Load();
             if (string.IsNullOrEmpty(key)) return CONTAINS_KEY_RESULT.DOESNT_EXIST;
             string lowerKey = key.ToLower();
 
+            CONTAINS_KEY_RESULT status;
             if (data.ContainsKey(lowerKey)) {
                 if (data[lowerKey].HasValue<string>()) {
                     if (string.Compare(data[lowerKey].GetValue<string>(), value, false, CultureInfo.CurrentCulture) == 0) {
-                        return CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE;
+                        status = CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE; 
                     } else {
-                        return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                        status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
                     }
-                } else return CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
-            } else return CONTAINS_KEY_RESULT.DOESNT_EXIST;
+                } else status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+            } else status = CONTAINS_KEY_RESULT.DOESNT_EXIST;
+
+            if (!wasLoaded) Unload();
+
+            return status;
         }
 
         public string GetRealKey(string key) {
+            bool wasLoaded = IsLoaded;
             if (!IsLoaded) Load();
-            string lowerKey=key.ToLower();
             
+            string lowerKey=key.ToLower();
+            string realKey;
+
             if (data.ContainsKey(lowerKey)) {
-                return data[lowerKey].Name;
+                realKey = data[lowerKey].Name;
             } else {
-                return key;
+                realKey = key;
             }
+
+            if (!wasLoaded) Unload();
+            return realKey;
         }
 
         public void Load() {
@@ -239,12 +255,14 @@ namespace VisualLocalizer.Components {
 
         public Dictionary<string, string> GetAllStringReferences() {
             Dictionary<string, string> AllReferences = new Dictionary<string, string>();
+            bool wasLoaded = IsLoaded;
             if (!IsLoaded) Load();
 
             foreach (var pair in data) {
                 if (pair.Value.HasValue<string>())
                     AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Value.Name), pair.Value.GetValue<string>());
             }
+            if (!wasLoaded) Unload();
 
             return AllReferences;
         }

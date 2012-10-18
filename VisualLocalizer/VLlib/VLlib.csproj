@@ -83,6 +83,7 @@
     <Compile Include="components\IKeyValueSource.cs" />
     <Compile Include="components\KeyValueConflictResolver.cs" />
     <Compile Include="components\MessageBox.cs" />
+    <Compile Include="components\NamespacesList.cs" />
     <Compile Include="components\RDTManager.cs" />
     <Compile Include="components\SoundInfo.cs" />
     <Compile Include="extensions\CodeModelEx.cs" />

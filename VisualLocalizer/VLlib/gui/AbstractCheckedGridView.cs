@@ -129,12 +129,16 @@ namespace VisualLocalizer.Library {
         }
 
         protected virtual void OnCheckHeaderClicked(object sender, EventArgs e) {
-            errorRows.Clear();
-            foreach (DataGridViewRow row in Rows) {
+            EndEdit();
+            errorRows.Clear();            
+            foreach (DataGridViewRow row in Rows) {                 
                 row.Cells[CheckBoxColumnName].Value = CheckHeader.Checked == true;
-                row.Cells[CheckBoxColumnName].Tag = CheckHeader.Checked == true;
+                row.Cells[CheckBoxColumnName].Tag = CheckHeader.Checked == true;                
+
                 if (!string.IsNullOrEmpty(row.ErrorText) && CheckHeader.Checked == true) errorRows.Add(row);
             }
+            
+            RefreshEdit();
             CheckedRowsCount = CheckHeader.Checked == true ? Rows.Count : 0;
             NotifyErrorRowsChanged();
         }

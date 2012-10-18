@@ -102,13 +102,13 @@ namespace VisualLocalizer.Library {
             }            
         }
 
-        public static Dictionary<string,string> GetUsedNamespaces(this CodeNamespace codeNamespace,ProjectItem item) {
-            Dictionary<string, string> list = new Dictionary<string, string>();
+        public static NamespacesList GetUsedNamespaces(this CodeNamespace codeNamespace, ProjectItem item) {
+            NamespacesList list = new NamespacesList();
             GetUsedNamespacesInternal(codeNamespace, item, list);
             return list;
         }
 
-        private static void GetUsedNamespacesInternal(CodeNamespace codeNamespace, ProjectItem item, Dictionary<string, string> list) {
+        private static void GetUsedNamespacesInternal(CodeNamespace codeNamespace, ProjectItem item, NamespacesList list) {
             if (codeNamespace != null) {
                 list.Add(codeNamespace.FullName, null);
 
@@ -121,7 +121,7 @@ namespace VisualLocalizer.Library {
             }
         }
 
-        private static void AddUsedNamespacesToList(CodeElements elements, Dictionary<string, string> list) {
+        private static void AddUsedNamespacesToList(CodeElements elements, NamespacesList list) {
             foreach (CodeElement2 element in elements) {
                 if (element.Kind == vsCMElement.vsCMElementImportStmt) {
                     CodeImport codeImport = (CodeImport)element;
@@ -130,5 +130,6 @@ namespace VisualLocalizer.Library {
             }
         }
     }
-   
+
+    
 }

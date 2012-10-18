@@ -118,6 +118,7 @@ namespace VisualLocalizer.Gui {
 
             CheckedRowsCount = Rows.Count;
             CheckHeader.Checked = true;
+            this.ClearSelection();
             this.ResumeLayout(true);
             this.OnResize(null);
             NotifyErrorRowsChanged();

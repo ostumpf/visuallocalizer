@@ -36,6 +36,7 @@ namespace VisualLocalizer.Components {
             currentChar = '?';
             previousChar = '?';
             previousPreviousChar = '?';
+            previousPreviousPreviousChar = '?';
             stringStartChar = '?';
             List<CodeStringResultItem> list = new List<CodeStringResultItem>();
 
@@ -45,6 +46,7 @@ namespace VisualLocalizer.Components {
             bool stringMarkedUnlocalized = false;
 
             for (int i = 0; i < text.Length; i++) {
+                previousPreviousPreviousChar = previousPreviousChar;
                 previousPreviousChar = previousChar;
                 previousChar = currentChar;
                 currentChar = text[i];

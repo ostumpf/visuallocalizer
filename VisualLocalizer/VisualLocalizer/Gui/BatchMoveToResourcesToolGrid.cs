@@ -50,7 +50,7 @@ namespace VisualLocalizer.Gui {
             resxItemsCache.Clear();
             loadedItems.Clear();            
             CheckedRowsCount = 0;
-            this.SuspendLayout();
+            SuspendLayout();
 
             foreach (CodeStringResultItem item in value) {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
@@ -112,6 +112,7 @@ namespace VisualLocalizer.Gui {
 
             UpdateCheckHeader();
 
+            this.ClearSelection();            
             this.ResumeLayout();            
             this.OnResize(null);
         }

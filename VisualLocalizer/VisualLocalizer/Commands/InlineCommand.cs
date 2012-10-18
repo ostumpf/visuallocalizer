@@ -52,7 +52,7 @@ namespace VisualLocalizer.Commands {
                 CodeNamespace codeNamespace = codeClass.GetNamespace();
                 CodeReferenceLookuper lookuper = new CodeReferenceLookuper(text, startPoint,
                     currentDocument.ProjectItem.GetResXItemsAround(false).CreateTrie(),
-                    codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), codeNamespace, false);
+                    codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), codeNamespace, false, currentDocument.ProjectItem.ContainingProject);
                 List<CodeReferenceResultItem> items = lookuper.LookForReferences();
 
                 foreach (CodeReferenceResultItem item in items) {

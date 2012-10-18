@@ -16,7 +16,7 @@ namespace VisualLocalizer.Commands {
             private set;
         }
         private Dictionary<Project, Trie<CodeReferenceTrieElement>> trieCache = new Dictionary<Project, Trie<CodeReferenceTrieElement>>();
-        private Dictionary<CodeElement, Dictionary<string, string>> codeUsingsCache = new Dictionary<CodeElement, Dictionary<string, string>>();
+        private Dictionary<CodeElement, NamespacesList> codeUsingsCache = new Dictionary<CodeElement, NamespacesList>();
 
         public override void Process() {
             base.Process();            
@@ -61,7 +61,7 @@ namespace VisualLocalizer.Commands {
             return trieCache[currentlyProcessedItem.ContainingProject]; 
         }
 
-        private Dictionary<string, string> PutCodeUsingsInCache(CodeElement parentNamespace, CodeElement codeClassOrStruct) {
+        private NamespacesList PutCodeUsingsInCache(CodeElement parentNamespace, CodeElement codeClassOrStruct) {
             if (parentNamespace == null) {
                 if (!codeUsingsCache.ContainsKey(codeClassOrStruct)) {
                     codeUsingsCache.Add(codeClassOrStruct, (null as CodeNamespace).GetUsedNamespaces(currentlyProcessedItem));
@@ -77,10 +77,10 @@ namespace VisualLocalizer.Commands {
 
         protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName,bool isWithinLocFalse) {
             Trie<CodeReferenceTrieElement> trie = PutResourceFilesInCache();
-            Dictionary<string, string> usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);                       
+            NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
 
             CodeReferenceLookuper lookuper = new CodeReferenceLookuper(functionText, startPoint,
-                trie, usedNamespaces, parentNamespace, isWithinLocFalse);
+                trie, usedNamespaces, parentNamespace, isWithinLocFalse, currentlyProcessedItem.ContainingProject);
             lookuper.SourceItem = currentlyProcessedItem;
 
             var list = lookuper.LookForReferences();

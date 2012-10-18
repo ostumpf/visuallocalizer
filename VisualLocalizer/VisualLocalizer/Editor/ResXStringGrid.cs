@@ -537,7 +537,7 @@ namespace VisualLocalizer.Editor {
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             deleteContextMenuItem.Enabled = SelectedRows.Count >= 1;
-            editContextMenuItem.Enabled = SelectedRows.Count == 1;
+            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly;
             inlineContextMenuItem.Enabled = false;
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
         }

@@ -44,20 +44,15 @@ namespace VisualLocalizer.Commands {
                 
                 if (result == System.Windows.Forms.DialogResult.OK) {
                     string referenceText;
-                    bool addNamespace;
-                    
+                    bool addNamespace;                    
+
                     if (f.UsingFullName) {
                         referenceText = f.SelectedItem.Namespace + "." + f.SelectedItem.Class + "." + f.Key;
                         addNamespace = false;
                     } else {
-                        Dictionary<string, string> usedNamespaces = resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem);
-                        referenceText = f.SelectedItem.Class + "." + f.Key;
-                        addNamespace = true;
-                        if (usedNamespaces.ContainsKey(f.SelectedItem.Namespace)) {
-                            addNamespace = false;
-                            string alias = usedNamespaces[f.SelectedItem.Namespace];
-                            if (!string.IsNullOrEmpty(alias)) referenceText = alias + "." + referenceText;  
-                        }                     
+                        NamespacesList usedNamespaces = resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem);
+                        addNamespace = usedNamespaces.ResolveNewElement(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key,
+                            currentDocument.ProjectItem.ContainingProject, out referenceText);
                     }
                     
                     int hr=textLines.ReplaceLines(replaceSpan.iStartLine, replaceSpan.iStartIndex, replaceSpan.iEndLine, replaceSpan.iEndIndex,

@@ -191,7 +191,7 @@ namespace VisualLocalizer.Gui {
             try {
                 bool usingFullName = currentNamespacePolicy == NAMESPACE_POLICY_ITEMS[1];
                 bool markUncheckedStringsWithComment = currentRememberOption == REMEMBER_OPTIONS[1];
-                Dictionary<object, Dictionary<string, string>> usedNamespacesCache = new Dictionary<object, Dictionary<string, string>>();
+                Dictionary<object, NamespacesList> usedNamespacesCache = new Dictionary<object, NamespacesList>();
                 Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
                 Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
                 Dictionary<string, StringBuilder> filesCache = new Dictionary<string, StringBuilder>();
@@ -220,7 +220,7 @@ namespace VisualLocalizer.Gui {
                             if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE) throw new InvalidOperationException(string.Format("Key \"{0}\" already exists with different value.", resultItem.Key));
                             resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key);
 
-                            Dictionary<string, string> usedNamespaces = null;
+                            NamespacesList usedNamespaces = null;
                             if (resultItem.NamespaceElement == null) {
                                 if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
                                     usedNamespacesCache.Add(resultItem.SourceItem, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
@@ -237,13 +237,8 @@ namespace VisualLocalizer.Gui {
                                 referenceText = resultItem.DestinationItem.Namespace + "." + resultItem.DestinationItem.Class + "." + resultItem.Key;
                                 addNamespace = false;
                             } else {
-                                referenceText = resultItem.DestinationItem.Class + "." + resultItem.Key;
-                                addNamespace = true;
-                                if (usedNamespaces.ContainsKey(resultItem.DestinationItem.Namespace)) {
-                                    addNamespace = false;
-                                    string alias = usedNamespaces[resultItem.DestinationItem.Namespace];
-                                    if (!string.IsNullOrEmpty(alias)) referenceText = alias + "." + referenceText;
-                                }
+                                addNamespace = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key, 
+                                    resultItem.SourceItem.ContainingProject, out referenceText);                              
                             }
                             if (addNamespace) {
                                 if (resultItem.NamespaceElement == null) {
