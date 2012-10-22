@@ -259,8 +259,16 @@ namespace VisualLocalizer.Components {
             if (!IsLoaded) Load();
 
             foreach (var pair in data) {
-                if (pair.Value.HasValue<string>())
-                    AllReferences.Add(Class + "." + GetPropertyNameForKey(pair.Value.Name), pair.Value.GetValue<string>());
+                if (pair.Value.HasValue<string>()) {
+                    string property = GetPropertyNameForKey(pair.Value.Name);
+                    string reference = Class + "." + property;
+
+                    if (AllReferences.ContainsKey(reference)) {
+                        AllReferences.Remove(reference);
+                    } else {
+                        AllReferences.Add(reference, pair.Value.GetValue<string>());
+                    }
+                }
             }
             if (!wasLoaded) Unload();
 

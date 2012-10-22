@@ -26,10 +26,10 @@ namespace VisualLocalizer.Library {
         public abstract void Redo();
         public abstract string GetUndoDescription();
         public abstract string GetRedoDescription();
-
+      
         public void Do(IOleUndoManager pUndoManager) {
             List<IOleUndoUnit> prepunits = handleUnits(PrependUnits, pUndoManager);
-            
+
             if (isUndo) {
                 Undo();
             } else {

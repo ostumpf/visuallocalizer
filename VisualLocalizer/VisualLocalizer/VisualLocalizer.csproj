@@ -65,7 +65,9 @@
     <Compile Include="Commands\AbstractBatchCommand.cs" />
     <Compile Include="Commands\AbstractCommand.cs" />
     <Compile Include="Commands\BatchInlineCommand.cs" />
+    <Compile Include="Commands\BatchInliner.cs" />
     <Compile Include="Commands\BatchMoveCommand.cs" />
+    <Compile Include="Commands\BatchMover.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
     <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="Editor\UndoUnits\ListViewNewItemCreateUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewRemoveItemsUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewRenameKeyUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\MergeUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\RemoveStringsUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\RenameKeyUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringChangeCommentUndoUnit.cs" />

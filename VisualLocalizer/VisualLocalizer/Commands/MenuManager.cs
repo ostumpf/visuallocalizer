@@ -58,7 +58,15 @@ namespace VisualLocalizer.Commands {
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineSolExpMenuItem,
-                new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);     
+                new EventHandler(batchInlineSolExpClick), null, VisualLocalizerPackage.Instance.menuService);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.BatchInlineSelectionCodeMenuItem,
+                new EventHandler(batchInlineSelectionCodeClick), new EventHandler(selectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
+
+            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+                PackageCommandIDs.BatchMoveSelectionCodeMenuItem,
+                new EventHandler(batchMoveSelectionCodeClick), new EventHandler(selectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
         }
 
         internal static OleMenuCommand ConfigureMenuCommand(Guid guid, int id, EventHandler invokeHandler,
@@ -90,6 +98,25 @@ namespace VisualLocalizer.Commands {
             ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject != null;
             ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
             (sender as OleMenuCommand).Supported = ok;
+        }
+
+        private void selectionCodeQueryStatus(object sender, EventArgs args) {
+            OleMenuCommand cmd = sender as OleMenuCommand;
+            
+            Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
+            if (currentDocument == null) {
+                cmd.Enabled = false;
+                return;
+            } 
+            
+            TextSelection selection = currentDocument.Selection as TextSelection;
+            if (selection == null) {
+                cmd.Enabled = false;
+                return;
+            }
+
+            cmd.Enabled = !selection.IsEmpty;
+            
         }
 
         private void solExpMenuQueryStatus(object sender, EventArgs args) {
@@ -198,6 +225,38 @@ namespace VisualLocalizer.Commands {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
             } 
+        }
+
+        private void batchInlineSelectionCodeClick(object sender, EventArgs args) {
+            try {
+                batchInlineCommand.ProcessSelection();
+                BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
+                if (win != null) {
+                    win.SetData(batchInlineCommand.Results);
+                } else throw new Exception("Unable to display tool window.");
+                batchInlineCommand.Results.Clear();
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
+            }
+        }
+
+        private void batchMoveSelectionCodeClick(object sender, EventArgs args) {
+            try {
+                batchMoveCommand.ProcessSelection();
+                BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
+                if (win != null) {
+                    win.SetData(batchMoveCommand.Results);
+                } else throw new Exception("Unable to display tool window.");
+                batchMoveCommand.Results.Clear();
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                MessageBox.ShowError(text);
+            }
         }
     }
 

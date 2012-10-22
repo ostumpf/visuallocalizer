@@ -19,6 +19,7 @@ namespace VisualLocalizer.Gui {
 
         private Color errorColor = Color.FromArgb(255, 200, 200);
         private Color existingKeyColor = Color.FromArgb(213, 255, 213);
+        private CONTAINS_KEY_RESULT keyConflict;
 
         public SelectResourceFileForm(List<string> keys, string value,Project project) {
             InitializeComponent();
@@ -103,7 +104,7 @@ namespace VisualLocalizer.Gui {
                 keyBox.BackColor = (ident ? Color.White : errorColor);
 
                 if (ident) {
-                    CONTAINS_KEY_RESULT keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
+                    keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
                     Color backColor = Color.White;
                     switch (keyConflict) {
                         case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:
@@ -177,7 +178,11 @@ namespace VisualLocalizer.Gui {
         }
 
         private void okButton_Click(object sender, EventArgs e) {
-            Result = SELECT_RESOURCE_FILE_RESULT.OK;
+            if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE) {
+                Result = SELECT_RESOURCE_FILE_RESULT.INLINE;
+            } else {
+                Result = SELECT_RESOURCE_FILE_RESULT.OK;
+            }
             DialogResult = DialogResult.OK;
             Close();
         }

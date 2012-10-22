@@ -156,7 +156,7 @@
 
 
 
-      <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button">
+      <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button" priority="1">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
           <CommandName>MoveTo</CommandName>
@@ -164,7 +164,7 @@
         </Strings>
       </Button>
 
-      <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button">
+      <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button" priority="2">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
           <CommandName>Inline</CommandName>
@@ -172,22 +172,40 @@
         </Strings>
       </Button>
 
-      <Button guid="VLCommandSetGuid" id="batchInlineCodeMenuItem" type="Button">
+      <Button guid="VLCommandSetGuid" id="batchInlineCodeMenuItem" type="Button" priority="4">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
           <CommandName>BatchInline</CommandName>
-          <ButtonText>Batch inline...</ButtonText>
+          <ButtonText>Batch inline (document)...</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid="VLCommandSetGuid" id="batchMoveCodeMenuItem" type="Button">
+      <Button guid="VLCommandSetGuid" id="batchMoveCodeMenuItem" type="Button" priority="3">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
           <CommandName>BatchMoveTo</CommandName>
-          <ButtonText>Batch move to resources...</ButtonText>
+          <ButtonText>Batch move to resources (document)...</ButtonText>
         </Strings>
       </Button>
-           
+      
+
+      <Button guid="VLCommandSetGuid" id="batchMoveSelectionCodeMenuItem" type="Button" priority="5">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveTo</CommandName>
+          <ButtonText>Batch move to resources (selection)...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchInlineSelectionCodeMenuItem" type="Button" priority="6">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline (selection)...</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <Menus>
@@ -225,13 +243,15 @@
 
       <IDSymbol name="solutionExpSubmenuGroup" value="0x0004" />
       <IDSymbol name="batchMoveMenuItem" value="0x0003" />
-      <IDSymbol name="batchInlineMenuItem" value="0x0016" />
+      <IDSymbol name="batchInlineMenuItem" value="0x0016" />      
 
       <IDSymbol name="moveMenuItem" value="0x0007" />
       <IDSymbol name="inlineMenuItem" value="0x0008" />
       <IDSymbol name="visualLocalizerCodeMenu" value="0x0009" />
       <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
       <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
+      <IDSymbol name="batchInlineSelectionCodeMenuItem" value="0x0017" />
+      <IDSymbol name="batchMoveSelectionCodeMenuItem" value="0x0018" />
       
       <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
       <IDSymbol name="batchInlineCodeMenuItem" value="0x0015" />

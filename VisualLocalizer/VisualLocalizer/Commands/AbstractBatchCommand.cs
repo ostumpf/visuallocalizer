@@ -13,6 +13,7 @@ namespace VisualLocalizer.Commands {
     internal abstract class AbstractBatchCommand {
 
         protected ProjectItem currentlyProcessedItem;
+        protected VirtualPoint selectionTopPoint, selectionBotPoint;
         protected abstract void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
 
@@ -43,6 +44,43 @@ namespace VisualLocalizer.Commands {
             }            
         }
 
+        public virtual void ProcessSelection() {
+            Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
+            if (currentDocument == null)
+                throw new Exception("No selected document");
+            if (currentDocument.ProjectItem == null)
+                throw new Exception("Selected document has no corresponding Project Item.");
+            if (currentDocument.ProjectItem.ContainingProject == null)
+                throw new Exception("Selected document is not a part of any Project.");
+            if (currentDocument.ReadOnly)
+                throw new Exception("Cannot perform this operation - active document is readonly");            
+            currentlyProcessedItem = currentDocument.ProjectItem;
+
+            TextSelection currentSelection = currentDocument.Selection as TextSelection;
+            if (currentSelection == null || currentSelection.IsEmpty)
+                throw new Exception("Cannot perform this operation on an empty selection.");
+                       
+            selectionTopPoint = currentSelection.BottomPoint;
+            selectionBotPoint = currentSelection.TopPoint;            
+        }
+
+        protected virtual bool IntersectsWithSelection(CodeElement codeElement) {            
+            if (selectionBotPoint.GreaterThan(codeElement.EndPoint) && selectionTopPoint.LessThan(codeElement.StartPoint)) return true;
+            if (selectionBotPoint.LessThan(codeElement.EndPoint) && selectionTopPoint.GreaterThan(codeElement.StartPoint)) return true;
+
+            return false;
+        }
+
+        protected virtual bool IsItemOutsideSelection(AbstractResultItem item) {
+            int startOffset = item.AbsoluteCharOffset - item.ReplaceSpan.iStartLine + 2;
+            int endOffset = item.AbsoluteCharOffset + item.AbsoluteCharLength - item.ReplaceSpan.iEndLine + 2;
+
+            int bottom = Math.Max(selectionBotPoint.AbsoluteCharOffset, selectionTopPoint.AbsoluteCharOffset);
+            int top = Math.Min(selectionBotPoint.AbsoluteCharOffset, selectionTopPoint.AbsoluteCharOffset);
+
+            return (startOffset > bottom) || (endOffset <= top);
+        }
+
         protected virtual void Process(Project project) {
             if (project.Kind != VSLangProj.PrjKind.prjKindCSharpProject)
                 throw new InvalidOperationException("Selected project is not a C# project.");
@@ -70,7 +108,7 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        protected virtual void Process(ProjectItem projectItem) {
+        protected virtual void Process(ProjectItem projectItem, Predicate<CodeElement> exploreable) {
             FileCodeModel2 codeModel = projectItem.FileCodeModel as FileCodeModel2;
             if (codeModel == null) {
                 VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
@@ -82,38 +120,42 @@ namespace VisualLocalizer.Commands {
             foreach (CodeElement2 codeElement in codeModel.CodeElements) {
                 if (codeElement.Kind == vsCMElement.vsCMElementNamespace || codeElement.Kind == vsCMElement.vsCMElementClass ||
                     codeElement.Kind == vsCMElement.vsCMElementStruct) {
-                    Explore(codeElement, null, false);
+                    Explore(codeElement, null, exploreable, false);
                 }
             }
             currentlyProcessedItem = null;
         }
 
-        protected virtual void Explore(CodeElement2 parentElement, CodeElement2 parentNamespace, bool isLocalizableFalse) {
+        protected virtual void Process(ProjectItem projectItem) {
+            Process(projectItem, (e) => { return true; });
+        }
+
+        protected virtual void Explore(CodeElement2 parentElement, CodeElement2 parentNamespace,Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             bool isLocalizableFalseSetOnParent = HasLocalizableFalseAttribute(parentElement);
 
             foreach (CodeElement2 codeElement in parentElement.Children) {                
                 if (codeElement.Kind == vsCMElement.vsCMElementClass) {
                     Explore(codeElement, parentElement.Kind == vsCMElement.vsCMElementNamespace ? parentElement : parentNamespace,
-                        isLocalizableFalse || isLocalizableFalseSetOnParent);
+                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
                 if (codeElement.Kind == vsCMElement.vsCMElementNamespace) {
-                    Explore(codeElement, parentElement, isLocalizableFalse || isLocalizableFalseSetOnParent); 
+                    Explore(codeElement, parentElement, exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent); 
                 }
                 if (codeElement.Kind == vsCMElement.vsCMElementVariable) {
-                    Explore(codeElement as CodeVariable2, (CodeNamespace)parentNamespace, parentElement, 
-                        isLocalizableFalse || isLocalizableFalseSetOnParent);
+                    Explore(codeElement as CodeVariable2, (CodeNamespace)parentNamespace, parentElement,
+                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
                 if (codeElement.Kind == vsCMElement.vsCMElementFunction) {
                     Explore(codeElement as CodeFunction2, (CodeNamespace)parentNamespace, parentElement,
-                        isLocalizableFalse || isLocalizableFalseSetOnParent);
+                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
                 if (codeElement.Kind == vsCMElement.vsCMElementProperty) {
                     Explore(codeElement as CodeProperty, (CodeNamespace)parentNamespace, parentElement,
-                        isLocalizableFalse || isLocalizableFalseSetOnParent);
+                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
                 if (codeElement.Kind == vsCMElement.vsCMElementStruct) {
                     Explore(codeElement, parentElement.Kind == vsCMElement.vsCMElementNamespace ? parentElement : parentNamespace,
-                        isLocalizableFalse || isLocalizableFalseSetOnParent);
+                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
             }
         }
@@ -161,17 +203,18 @@ namespace VisualLocalizer.Commands {
             return contains;
         }
 
-        protected virtual void Explore(CodeProperty codeProperty, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, bool isLocalizableFalse) {
+        protected virtual void Explore(CodeProperty codeProperty, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             bool propertyLocalizableFalse = HasLocalizableFalseAttribute(codeProperty as CodeElement);
-            if (codeProperty.Getter != null) Explore(codeProperty.Getter as CodeFunction2, parentNamespace, codeClassOrStruct, isLocalizableFalse || propertyLocalizableFalse);
-            if (codeProperty.Setter != null) Explore(codeProperty.Setter as CodeFunction2, parentNamespace, codeClassOrStruct, isLocalizableFalse || propertyLocalizableFalse);
+            if (codeProperty.Getter != null) Explore(codeProperty.Getter as CodeFunction2, parentNamespace, codeClassOrStruct, exploreable, isLocalizableFalse || propertyLocalizableFalse);
+            if (codeProperty.Setter != null) Explore(codeProperty.Setter as CodeFunction2, parentNamespace, codeClassOrStruct, exploreable, isLocalizableFalse || propertyLocalizableFalse);
         }
 
-        protected virtual void Explore(CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, bool isLocalizableFalse) {
+        protected virtual void Explore(CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             if (codeVariable.ConstKind == vsCMConstKind.vsCMConstKindConst) return;
             if (codeVariable.Type.TypeKind != vsCMTypeRef.vsCMTypeRefString) return;
             if (codeVariable.InitExpression == null) return;
             if (codeClassOrStruct.Kind == vsCMElement.vsCMElementStruct) return;
+            if (!exploreable(codeVariable as CodeElement)) return;
 
             string initExpression = codeVariable.GetText();
             TextPoint startPoint = codeVariable.StartPoint;
@@ -180,8 +223,9 @@ namespace VisualLocalizer.Commands {
             Lookup(initExpression, startPoint, parentNamespace, codeClassOrStruct, null, codeVariable.Name, isLocalizableFalse || variableLocalizableFalse);
         }
 
-        protected virtual void Explore(CodeFunction2 codeFunction, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, bool isLocalizableFalse) {
+        protected virtual void Explore(CodeFunction2 codeFunction, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct,Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             if (codeFunction.MustImplement) return;
+            if (!exploreable(codeFunction as CodeElement)) return;
 
             string functionText = codeFunction.GetText();
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);

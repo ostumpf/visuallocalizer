@@ -24,5 +24,8 @@ namespace VisualLocalizer.Editor {
         bool HasSelectedItems { get; }
         bool HasItems { get; }
         bool IsEditing { get; }
+        bool DataReadOnly { get; set; }
+        void NotifyDataChanged();
+        void NotifyItemsStateChanged();
     }
 }

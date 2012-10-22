@@ -189,158 +189,15 @@ namespace VisualLocalizer.Gui {
             int rowErrors = 0;
 
             try {
+                VLDocumentViewsManager.ReleaseLocks();
+
                 bool usingFullName = currentNamespacePolicy == NAMESPACE_POLICY_ITEMS[1];
                 bool markUncheckedStringsWithComment = currentRememberOption == REMEMBER_OPTIONS[1];
-                Dictionary<object, NamespacesList> usedNamespacesCache = new Dictionary<object, NamespacesList>();
-                Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
-                Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
-                Dictionary<string, StringBuilder> filesCache = new Dictionary<string, StringBuilder>();
-                Dictionary<string, List<string>> externalUsingsPlan = new Dictionary<string, List<string>>();
-                List<ResXProjectItem> modifiedResxItems = new List<ResXProjectItem>();
-                VLDocumentViewsManager.ReleaseLocks();
-                List<CodeStringResultItem> dataList=panel.ToolGrid.GetData();
 
-                for (int i = dataList.Count - 1; i >= 0; i--) {
-                    try {
-                        CodeStringResultItem resultItem = dataList[i];
-                        string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
-                        string referenceText = null;
-                        bool addNamespace = false;
-                        CONTAINS_KEY_RESULT keyConflict = CONTAINS_KEY_RESULT.DOESNT_EXIST;
+                BatchMover mover = new BatchMover(panel.ToolGrid.Rows, usingFullName, markUncheckedStringsWithComment);
 
-                        if (resultItem.MoveThisItem) {
-                            if (string.IsNullOrEmpty(resultItem.Key) || resultItem.Value == null)
-                                throw new InvalidOperationException("Item key and value cannot be null");
-                            if (resultItem.DestinationItem == null)
-                                throw new InvalidOperationException("Item destination cannot be null");
-                            if (!string.IsNullOrEmpty(resultItem.ErrorText))
-                                throw new InvalidOperationException(string.Format("on key \"{0}\": \"{1}\"", resultItem.Key, resultItem.ErrorText));
-
-                            keyConflict = resultItem.DestinationItem.StringKeyInConflict(resultItem.Key, resultItem.Value);
-                            if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE) throw new InvalidOperationException(string.Format("Key \"{0}\" already exists with different value.", resultItem.Key));
-                            resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key);
-
-                            NamespacesList usedNamespaces = null;
-                            if (resultItem.NamespaceElement == null) {
-                                if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
-                                    usedNamespacesCache.Add(resultItem.SourceItem, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
-                                }
-                                usedNamespaces = usedNamespacesCache[resultItem.SourceItem];
-                            } else {
-                                if (!usedNamespacesCache.ContainsKey(resultItem.NamespaceElement)) {
-                                    usedNamespacesCache.Add(resultItem.NamespaceElement, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
-                                }
-                                usedNamespaces = usedNamespacesCache[resultItem.NamespaceElement];
-                            }                            
-
-                            if (usingFullName) {
-                                referenceText = resultItem.DestinationItem.Namespace + "." + resultItem.DestinationItem.Class + "." + resultItem.Key;
-                                addNamespace = false;
-                            } else {
-                                addNamespace = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key, 
-                                    resultItem.SourceItem.ContainingProject, out referenceText);                              
-                            }
-                            if (addNamespace) {
-                                if (resultItem.NamespaceElement == null) {
-                                    usedNamespacesCache[resultItem.SourceItem].Add(resultItem.DestinationItem.Namespace, null);
-                                } else {
-                                    usedNamespacesCache[resultItem.NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
-                                }
-                            }
-                        }
-                        
-                        if (RDTManager.IsFileOpen(path)) {
-                            if (resultItem.MoveThisItem || (markUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment)) {
-                                if (!buffersCache.ContainsKey(path)) {
-                                    IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
-                                    buffersCache.Add(path, textLines);
-
-                                    IOleUndoManager m;
-                                    int hr = textLines.GetUndoManager(out m);
-                                    Marshal.ThrowExceptionForHR(hr);
-                                    undoManagersCache.Add(path, m);
-                                }
-                            }
-
-                            if (resultItem.MoveThisItem) {
-                                MoveToResource(buffersCache[path], resultItem, referenceText);
-                                if (addNamespace) {
-                                    resultItem.SourceItem.Document.AddUsingBlock(resultItem.DestinationItem.Namespace);
-                                    for (int j = i; j >= 0; j--) {
-                                        var item = dataList[j];
-                                        TextSpan ts = new TextSpan();
-                                        ts.iEndIndex = item.ReplaceSpan.iEndIndex;
-                                        ts.iEndLine = item.ReplaceSpan.iEndLine + 1;
-                                        ts.iStartIndex = item.ReplaceSpan.iStartIndex;
-                                        ts.iStartLine = item.ReplaceSpan.iStartLine + 1;
-                                        item.ReplaceSpan = ts;
-                                    }
-                                }
-
-                                List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(addNamespace ? 2 : 1);
-                                AbstractUndoUnit newUnit = null;
-                                if (keyConflict == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
-                                    newUnit = new MoveToResourcesUndoUnit(resultItem.Key, resultItem.Value, resultItem.DestinationItem);
-                                } else if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE) {
-                                    newUnit = new MoveToResourcesReferenceUndoUnit(resultItem.Key);
-                                }
-
-                                newUnit.AppendUnits.AddRange(units);
-                                undoManagersCache[path].Add(newUnit);
-                            } else if (markUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
-                                MarkAsNoLoc(buffersCache[path], resultItem);
-
-                                List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
-                                MarkAsNotLocalizedStringUndoUnit newUnit = new MarkAsNotLocalizedStringUndoUnit(resultItem.Value);
-                                newUnit.AppendUnits.AddRange(units);
-                                undoManagersCache[path].Add(newUnit);
-                            }
-                        } else {
-                            if (resultItem.MoveThisItem || (markUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment)) {
-                                if (!filesCache.ContainsKey(path)) {
-                                    filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
-                                }
-                            }
-
-                            if (resultItem.MoveThisItem) {
-                                StringBuilder b = filesCache[path];
-                                b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
-                                b.Insert(resultItem.AbsoluteCharOffset, referenceText);
-
-                                if (addNamespace) {
-                                    if (!externalUsingsPlan.ContainsKey(path))
-                                        externalUsingsPlan.Add(path, new List<string>());
-                                    externalUsingsPlan[path].Add(resultItem.DestinationItem.Namespace);
-                                }
-                            } else if (markUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
-                                StringBuilder b = filesCache[path];
-                                b.Insert(resultItem.AbsoluteCharOffset, StringConstants.NoLocalizationComment);
-                            }
-                        }
-
-                        if (resultItem.MoveThisItem && keyConflict == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
-                            if (!resultItem.DestinationItem.IsInBatchMode) {
-                                resultItem.DestinationItem.BeginBatch();
-                                modifiedResxItems.Add(resultItem.DestinationItem);
-                            }
-                            resultItem.DestinationItem.AddString(resultItem.Key, resultItem.Value);
-                        }
-                    } catch (Exception ex) {
-                        rowErrors++;
-                        VLOutputWindow.VisualLocalizerPane.WriteLine(ex.Message);
-                    }
-                }
-
-                modifiedResxItems.ForEach((item) => { item.EndBatch(); });
-                foreach (var pair in externalUsingsPlan)
-                    foreach (string nmspc in pair.Value) {
-                        filesCache[pair.Key].Insert(0, string.Format("using {0};{1}", nmspc, Environment.NewLine));
-                    }
-                foreach (var pair in filesCache) {
-                    File.WriteAllText(pair.Key, pair.Value.ToString());
-                }
-                if (rowErrors > 0) throw new Exception("Error occured while processing some rows - see Output window for details."); 
-                      
+                mover.Move(panel.ToolGrid.GetData(), ref rowErrors);
+      
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -352,19 +209,7 @@ namespace VisualLocalizer.Gui {
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);
             }
-        }
-
-        private void MarkAsNoLoc(IVsTextLines textLines, CodeStringResultItem resultItem) {
-            int hr=textLines.ReplaceLines(resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex, resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex,
-                Marshal.StringToBSTR(StringConstants.NoLocalizationComment), StringConstants.NoLocalizationComment.Length, new TextSpan[1]);
-            Marshal.ThrowExceptionForHR(hr);
-        }
-
-        private void MoveToResource(IVsTextLines textLines, CodeStringResultItem resultItem, string referenceText) {
-            int hr = textLines.ReplaceLines(resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex, resultItem.ReplaceSpan.iEndLine, resultItem.ReplaceSpan.iEndIndex,
-                        Marshal.StringToBSTR(referenceText), referenceText.Length, new TextSpan[] { resultItem.ReplaceSpan });            
-            Marshal.ThrowExceptionForHR(hr);
-        }
+        }       
     }
 
     

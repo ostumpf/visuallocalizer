@@ -18,6 +18,7 @@ namespace VisualLocalizer.Components {
 
         protected string text;
         protected char currentChar, previousChar, previousPreviousChar,previousPreviousPreviousChar, stringStartChar;
+        private int sameCharInLine = 0;
 
         protected void Move() {
             CurrentIndex++;
@@ -29,6 +30,11 @@ namespace VisualLocalizer.Components {
         }
 
         protected void PreProcessChar(ref bool insideComment, ref bool insideString, ref bool isVerbatimString, out bool skipLine) {
+            if (previousPreviousChar == previousChar) {
+                sameCharInLine++;
+            } else {
+                sameCharInLine = 1;
+            }
             skipLine = false;
 
             if (currentChar == '/' && !insideString) {
@@ -63,8 +69,8 @@ namespace VisualLocalizer.Components {
                 if (previousPreviousChar != stringStartChar && (previousPreviousChar != '@' || CurrentAbsoluteOffset - StringStartAbsoluteOffset > 3)) {
                     insideString = false;
                 }
-                if (previousPreviousChar != '@' && (previousPreviousChar != stringStartChar || previousPreviousPreviousChar == stringStartChar) 
-                    && CurrentAbsoluteOffset - StringStartAbsoluteOffset > 4) {
+                if (previousPreviousChar != '@' && (previousPreviousChar != stringStartChar || previousPreviousPreviousChar == stringStartChar)
+                    && (CurrentAbsoluteOffset - StringStartAbsoluteOffset > 4 || sameCharInLine == 4)) {
                     insideString = false;
                 }
             }

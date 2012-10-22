@@ -26,6 +26,8 @@ namespace VisualLocalizer
         public const int InlineCodeMenuItem = 0x0008;
         public const int BatchMoveCodeMenuItem = 0x0014;
         public const int BatchInlineCodeMenuItem = 0x0015;
+        public const int BatchMoveSelectionCodeMenuItem = 0x0018;
+        public const int BatchInlineSelectionCodeMenuItem = 0x0017;
 
         public const int BatchMoveSolExpMenuItem = 0x0003;
         public const int BatchInlineSolExpMenuItem = 0x0016;

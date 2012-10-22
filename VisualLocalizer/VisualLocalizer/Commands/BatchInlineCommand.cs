@@ -53,6 +53,26 @@ namespace VisualLocalizer.Commands {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline completed - found {0} items to be moved", Results.Count);
         }
 
+        public override void ProcessSelection() {
+            base.ProcessSelection();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on text selection of active document ");
+
+            Results = new List<CodeReferenceResultItem>();
+
+            Process(currentlyProcessedItem, IntersectsWithSelection);
+
+            Results.RemoveAll((item) => {
+                bool empty = item.Value.Trim().Length == 0;
+                return empty || IsItemOutsideSelection(item);
+            });
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
+            });
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+        }
+
         private Trie<CodeReferenceTrieElement> PutResourceFilesInCache() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
                 var resxItems = currentlyProcessedItem.GetResXItemsAround(false);

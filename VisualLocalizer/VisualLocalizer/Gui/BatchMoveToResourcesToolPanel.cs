@@ -306,7 +306,7 @@ namespace VisualLocalizer.Gui {
             filterPanel.PerformLayout();
 
             SettingsObject.Instance.FilterRegexps.Remove(senderButton.Tag as SettingsObject.RegexpInstance);
-            SettingsObject.Instance.NotifyPropertyChanged();
+            SettingsObject.Instance.NotifyPropertyChanged();            
         }
 
         private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {

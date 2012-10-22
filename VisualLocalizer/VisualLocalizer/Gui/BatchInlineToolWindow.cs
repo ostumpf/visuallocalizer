@@ -39,57 +39,10 @@ namespace VisualLocalizer.Gui {
 
             try {
                 VLDocumentViewsManager.ReleaseLocks();
+                BatchInliner inliner = new BatchInliner(panel.Rows);
 
-                Dictionary<string, IVsTextLines> buffersCache = new Dictionary<string, IVsTextLines>();
-                Dictionary<string, IOleUndoManager> undoManagersCache = new Dictionary<string, IOleUndoManager>();
-                Dictionary<string, StringBuilder> filesCache = new Dictionary<string, StringBuilder>();
-                List<CodeReferenceResultItem> dataList = panel.GetData();
-
-                for (int i = dataList.Count - 1; i >= 0; i--) {
-                    try {
-                        CodeReferenceResultItem resultItem = dataList[i];
-
-                        if (resultItem.MoveThisItem) {
-                            TextSpan inlineSpan = resultItem.ReplaceSpan;
-                            string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
-
-                            string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
-                            if (RDTManager.IsFileOpen(path)) {
-                                if (!buffersCache.ContainsKey(path)) {
-                                    IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
-                                    buffersCache.Add(path, textLines);
-
-                                    IOleUndoManager m;
-                                    int hr = textLines.GetUndoManager(out m);
-                                    Marshal.ThrowExceptionForHR(hr);
-                                    undoManagersCache.Add(path, m);
-                                }
-
-                                int h = buffersCache[path].ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
-                                Marshal.StringToBSTR(text), text.Length, null);
-                                Marshal.ThrowExceptionForHR(h);
-
-                                List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
-                                InlineUndoUnit newUnit = new InlineUndoUnit(resultItem.ReferenceText);
-                                newUnit.AppendUnits.AddRange(units);
-                                undoManagersCache[path].Add(newUnit);
-                            } else {
-                                if (!filesCache.ContainsKey(path)) {
-                                    filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
-                                }
-                                StringBuilder b = filesCache[path];
-                                b = b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
-                                b = b.Insert(resultItem.AbsoluteCharOffset, text);
-                                filesCache[path] = b;
-                            }
-                        }
-                    } catch (Exception ex) {                        
-                        rowErrors++;
-                    }
-                }
-                foreach (var pair in filesCache) {
-                    File.WriteAllText(pair.Key, pair.Value.ToString());
-                }
+                inliner.Inline(panel.GetData(), ref rowErrors);
+               
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

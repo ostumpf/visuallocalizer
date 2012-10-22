@@ -147,13 +147,13 @@ namespace VisualLocalizer.Editor {
 
         public COMMAND_STATUS CanCutOrCopy {
             get {
-                return HasSelectedItems && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return HasSelectedItems && !IsEditing && !DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
         public COMMAND_STATUS CanPaste {
             get {
-                return Clipboard.ContainsFileDropList() && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return Clipboard.ContainsFileDropList() && !IsEditing && !DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
@@ -208,6 +208,25 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        private bool _ReadOnly;
+        public bool DataReadOnly {
+            get {
+                return _ReadOnly; 
+            }
+            set {
+                _ReadOnly = value;
+                LabelEdit = !value;
+            }
+        }
+
+        public void NotifyDataChanged() {
+            if (DataChanged != null) DataChanged(this, null);
+        }
+
+        public void NotifyItemsStateChanged() {
+            if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
+        }
+
         #endregion
 
         #region protected members - virtual
@@ -248,15 +267,7 @@ namespace VisualLocalizer.Editor {
             item.SubItems["Comment"].Text = null;
 
             return item;
-        }
-
-        public void NotifyDataChanged() {
-            if (DataChanged != null) DataChanged(this, null);
-        }
-
-        public void NotifyItemsStateChanged() {
-            if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
-        }
+        }       
 
         public void ListItemKeyRenamed(ListViewKeyItem item) {
             ListViewRenameKeyUndoUnit unit = new ListViewRenameKeyUndoUnit(this, item, item.BeforeEditValue, item.AfterEditValue);
@@ -301,13 +312,13 @@ namespace VisualLocalizer.Editor {
         }        
 
         protected void contextMenu_Popup(object sender, EventArgs e) {
-            renameContextMenuItem.Enabled = SelectedItems.Count == 1;
-            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1;
+            renameContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly;
+            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly;
             openContextMenuItem.Enabled = SelectedItems.Count == 1;
 
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            deleteContextMenuItem.Enabled = SelectedItems.Count >= 1;
+            deleteContextMenuItem.Enabled = SelectedItems.Count >= 1 && !DataReadOnly;
 
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
         }

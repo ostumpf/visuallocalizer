@@ -23,18 +23,32 @@ namespace VisualLocalizer.Commands {
 
             CodeReferenceResultItem resultItem = GetCodeReferenceResultItem();
             if (resultItem != null) {
-                TextSpan inlineSpan = resultItem.ReplaceSpan;
-                string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
+                try {
+                    TextSpan inlineSpan = resultItem.ReplaceSpan;
+                    string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
 
-                int hr = textLines.ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
-                    Marshal.StringToBSTR(text), text.Length, null);
-                Marshal.ThrowExceptionForHR(hr);
+                    int hr = textLines.ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
+                        Marshal.StringToBSTR(text), text.Length, null);
+                    Marshal.ThrowExceptionForHR(hr);                    
 
-                hr = textView.SetSelection(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iStartLine,
-                    inlineSpan.iStartIndex + text.Length);
-                Marshal.ThrowExceptionForHR(hr);
+                    hr = textView.SetSelection(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iStartLine,
+                        inlineSpan.iStartIndex + text.Length);
+                    Marshal.ThrowExceptionForHR(hr);
 
-                CreateInlineUndoUnit(resultItem.ReferenceText);
+                    CreateInlineUndoUnit(resultItem.ReferenceText);                    
+                } catch (Exception) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Exception caught, rolling back...");
+                    
+                    IOleUndoUnit unit = undoManager.RemoveTopFromUndoStack(1)[0];
+                    int itemsToRemove = 1;
+                    if (unit is AbstractUndoUnit) {
+                        itemsToRemove += ((AbstractUndoUnit)unit).AppendUnits.Count;
+                    }
+                    unit.Do(undoManager);
+                    undoManager.RemoveTopFromUndoStack(itemsToRemove);
+
+                    throw;
+                }
             } else throw new Exception("This part of code cannot be inlined");        
         }
 
@@ -67,11 +81,16 @@ namespace VisualLocalizer.Commands {
             return result;
         }
 
-        private void CreateInlineUndoUnit(string key) {
+        private bool CreateInlineUndoUnit(string key) {
+            bool unitsRemoved = false;
             List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(1);
+            unitsRemoved = true;
+
             InlineUndoUnit newUnit = new InlineUndoUnit(key);
             newUnit.AppendUnits.AddRange(units);
             undoManager.Add(newUnit);
+
+            return unitsRemoved;
         }              
                
     }

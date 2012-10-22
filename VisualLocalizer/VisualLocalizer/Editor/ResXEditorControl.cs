@@ -22,8 +22,9 @@ using EnvDTE80;
 using System.Drawing.Imaging;
 using VisualLocalizer.Gui;
 using System.Collections.Specialized;
-using VisualLocalizer.Library;
 using System.Text.RegularExpressions;
+using System.Collections;
+using Microsoft.VisualStudio.OLE.Interop;
 
 namespace VisualLocalizer.Editor {
 
@@ -36,14 +37,14 @@ namespace VisualLocalizer.Editor {
         private ResXTabControl tabs;
         private ToolStrip toolStrip;
         private ToolStripMenuItem removeExcludeItem, removeDeleteItem;
-        internal ToolStripSplitButton removeButton, inlineButton;
-        private ToolStripDropDownButton viewButton;
+        internal ToolStripSplitButton removeButton, inlineButton, addButton;
+        private ToolStripDropDownButton viewButton, mergeButton;
         private ResXImagesList imagesListView;
         private ResXIconsList iconsListView;
         private ResXSoundsList soundsListView;
         private ResXFilesList filesListView;
         private TabPage stringTab, imagesTab, iconsTab, soundsTab, filesTab;
-        private ToolStripComboBox codeGenerationBox;        
+        private ToolStripComboBox codeGenerationBox;
         private bool readOnly;
 
         private readonly string[] IMAGE_FILE_EXT = { ".png", ".gif", ".bmp", ".jpg", ".jpeg", ".tif", ".tiff" };
@@ -88,7 +89,7 @@ namespace VisualLocalizer.Editor {
             toolStrip = new ToolStrip();
             toolStrip.Dock = DockStyle.Top;
 
-            ToolStripSplitButton addButton = new ToolStripSplitButton("&Add Resource");
+            addButton = new ToolStripSplitButton("&Add Resource");
             addButton.ButtonClick += new EventHandler(addExistingResources);
             addButton.DropDownItems.Add("Existing File", null, new EventHandler(addExistingResources));
             addButton.DropDownItems.Add(new ToolStripSeparator());
@@ -99,9 +100,9 @@ namespace VisualLocalizer.Editor {
             addButton.DropDownItems.Add(newItem);
             toolStrip.Items.Add(addButton);
 
-            ToolStripDropDownButton mergeButton = new ToolStripDropDownButton("&Merge with ResX File");
-            mergeButton.DropDownItems.Add("Merge && &Preserve Both", null, new EventHandler(mergeButton_ButtonClick));
-            mergeButton.DropDownItems.Add("Merge && &Delete Source", null, new EventHandler(mergeButton_ButtonClick));
+            mergeButton = new ToolStripDropDownButton("&Merge with ResX File");
+            mergeButton.DropDownItems.Add("Merge && &Preserve Both", null, new EventHandler(mergeButton_PreserveClick));
+            mergeButton.DropDownItems.Add("Merge && &Delete Source", null, new EventHandler(mergeButton_DeleteClick));
             toolStrip.Items.Add(mergeButton);
 
             toolStrip.Items.Add(new ToolStripSeparator());
@@ -258,8 +259,10 @@ namespace VisualLocalizer.Editor {
         }
 
         public void SetReadOnly(bool readOnly) {
-            toolStrip.Enabled = !readOnly;
-            stringGrid.ReadOnly = readOnly;
+            foreach (TabPage page in tabs.TabPages) {
+                IDataTabItem item = GetContentFromTabPage(page);
+                item.DataReadOnly = readOnly;
+            }
             this.readOnly = readOnly;
             UpdateToolStripButtonsEnable(null, null);
         }
@@ -336,7 +339,7 @@ namespace VisualLocalizer.Editor {
             get {
                 IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
                 if (content != null)
-                    return content.HasSelectedItems && !content.IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                    return content.HasSelectedItems && !content.IsEditing && !content.DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
                 else
                     return COMMAND_STATUS.UNSUPPORTED;
             }
@@ -655,6 +658,8 @@ namespace VisualLocalizer.Editor {
             removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
             removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
             viewButton.Enabled = !selectedString && !item.IsEditing;
+            addButton.Enabled = !readOnly;
+            mergeButton.Enabled = !readOnly;
         }        
 
         private void inlineButton_ButtonClick(object sender, EventArgs e) {
@@ -665,10 +670,14 @@ namespace VisualLocalizer.Editor {
             VisualLocalizer.Library.MessageBox.ShowError("Not yet implemented");
         }
 
-        private void mergeButton_ButtonClick(object sender, EventArgs e) {
-            VisualLocalizer.Library.MessageBox.ShowError("Not yet implemented");
+        private void mergeButton_PreserveClick(object sender, EventArgs e) {
+            MergeWithFile(false);
         }
 
+        private void mergeButton_DeleteClick(object sender, EventArgs e) {
+            MergeWithFile(true);
+        }
+        
         private string previousValue = null;       
         private void codeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return;
@@ -739,7 +748,92 @@ namespace VisualLocalizer.Editor {
             tab.Controls.Add(content);
 
             return tab;
-        }             
+        }
+
+        private void MergeWithFile(bool deleteSource) {
+            ResXResourceReader reader = null;
+            try {
+                string[] files = VisualLocalizer.Library.MessageBox.SelectFilesViaDlg("Select file", Path.GetDirectoryName(Editor.FileName),
+                    "ResX file\0*.resx\0", 0, 0);
+                if (files == null) return;
+                if (files.Length != 1) throw new Exception("Exactly one file must be selected!");
+
+                string file = files[0];
+                if (Path.GetFullPath(file) == Path.GetFullPath(Editor.FileName)) throw new Exception("Cannot select same file as the one being edited!");
+
+                if (deleteSource) {
+                    DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("You have chosen to delete source file \"{0}\". Do you really want to do so?", Path.GetFileName(file)), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNOCANCEL, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_THIRD, OLEMSGICON.OLEMSGICON_WARNING);
+                    if (result == DialogResult.Cancel) return;
+                    if (result == DialogResult.No) deleteSource = false;
+                }
+
+                List<IDataTabItem> dataTabItems = new List<IDataTabItem>();
+
+                foreach (TabPage page in this.tabs.TabPages) {
+                    IDataTabItem content = GetContentFromTabPage(page);
+                    if (content != null) {
+                        IDataTabItem tabItem = content as IDataTabItem;
+                        dataTabItems.Add(tabItem);
+                    }
+                }
+
+                IEnumerable enumarable;
+                if (RDTManager.IsFileOpen(file)) {
+                    Dictionary<string, ResXDataNode> data = null;
+                    VLDocumentViewsManager.LoadDataFromBuffer(ref data, file);
+
+                    enumarable = (IEnumerable)data;
+                } else {
+                    reader = new ResXResourceReader(file);
+                    reader.BasePath = Path.GetDirectoryName(file);
+                    reader.UseResXDataNodes = true;
+
+                    enumarable = (IEnumerable)reader;
+                }
+
+                Stack<IOleUndoUnit> units = new Stack<IOleUndoUnit>();
+
+                foreach (object o in enumarable) {
+                    foreach (var item in dataTabItems) {
+                        ResXDataNode node = (o is DictionaryEntry) ? ((DictionaryEntry)o).Value as ResXDataNode : ((KeyValuePair<string, ResXDataNode>)o).Value;
+                        string key = (o is DictionaryEntry) ? ((DictionaryEntry)o).Key.ToString() : ((KeyValuePair<string, ResXDataNode>)o).Key;
+
+                        if (item.CanContainItem(node)) {
+                            IKeyValueSource newItem = item.Add(key, node, true);
+                            if (newItem is ResXStringGridRow) {
+                                StringRowAddUndoUnit undoUnit = new StringRowAddUndoUnit(
+                                    new List<ResXStringGridRow>() { newItem as ResXStringGridRow }, stringGrid, conflictResolver);
+                                units.Push(undoUnit);
+                            } else {
+                                ListViewItemsAddUndoUnit undoUnit = new ListViewItemsAddUndoUnit(
+                                    new List<ListViewKeyItem>() { newItem as ListViewKeyItem }, conflictResolver);
+                                units.Push(undoUnit);
+                            }
+
+                            item.NotifyDataChanged();
+                            item.NotifyItemsStateChanged();
+                            break;
+                        }
+                    }
+                }                
+
+                MergeUndoUnit unit = new MergeUndoUnit(Path.GetFileName(file), units);
+                Editor.AddUndoUnit(unit);
+
+                if (deleteSource) {
+                    ProjectItem item = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(file);
+                    if (item != null) item.Delete();
+                    File.Delete(file);
+                }
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                if (reader != null) reader.Close();
+            }
+        }
     }
 
 }

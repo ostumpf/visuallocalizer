@@ -216,6 +216,7 @@ namespace VisualLocalizer.Gui {
             keyColumn.MinimumWidth = 150;
             keyColumn.HeaderText = "Resource Key";
             keyColumn.Name = KeyColumnName;
+            keyColumn.SortMode = DataGridViewColumnSortMode.Automatic;
             this.Columns.Insert(2, keyColumn);
 
             DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
@@ -235,6 +236,7 @@ namespace VisualLocalizer.Gui {
             destinationColumn.MinimumWidth = 250;
             destinationColumn.HeaderText = "Destination File";
             destinationColumn.Name = "DestinationItem";
+            destinationColumn.SortMode = DataGridViewColumnSortMode.Automatic;
             destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Insert(5, destinationColumn);
 

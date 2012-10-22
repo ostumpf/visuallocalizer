@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System.Windows.Forms;
 using System.Resources;
 using System.Drawing;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Library {
 
@@ -54,11 +55,12 @@ namespace VisualLocalizer.Library {
             CheckHeader.ThreeStates = true;
             CheckHeader.Checked = true;
             CheckHeader.CheckBoxClicked += new EventHandler(OnCheckHeaderClicked);
+            CheckHeader.Sort += new Action<SortOrder>(CheckHeader_Sort);
 
             CheckedRowsCount = 0;
             
             InitializeColumns();
-        }
+        }        
         
         #region public members
         
@@ -85,15 +87,20 @@ namespace VisualLocalizer.Library {
         #region overridable members
         protected virtual void InitializeColumns() {
             DataGridViewCheckBoxColumn checkColumn = new DataGridViewCheckBoxColumn(false);
-            checkColumn.MinimumWidth = 30;
-            checkColumn.Width = 30;
+            checkColumn.MinimumWidth = 50;
+            checkColumn.Width = 50;
             checkColumn.Name = CheckBoxColumnName;            
             checkColumn.HeaderCell = CheckHeader;
+            checkColumn.ToolTipText = null;
+            checkColumn.SortMode = DataGridViewColumnSortMode.Programmatic;
+            checkColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            checkColumn.DefaultCellStyle.Padding = new Padding(4, 0, 0, 0);
+            checkColumn.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
             this.Columns.Add(checkColumn);
 
             DataGridViewTextBoxColumn lineColumn = new DataGridViewTextBoxColumn();
             lineColumn.MinimumWidth = 40;
-            lineColumn.Width = 40;
+            lineColumn.Width = 55;
             lineColumn.HeaderText = "Line";
             lineColumn.Name = LineColumnName;
             lineColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -142,7 +149,18 @@ namespace VisualLocalizer.Library {
             CheckedRowsCount = CheckHeader.Checked == true ? Rows.Count : 0;
             NotifyErrorRowsChanged();
         }
-        
+
+        protected override void OnSorted(EventArgs e) {
+            base.OnSorted(e);
+            if (this.SortedColumn.Name != CheckBoxColumnName) {
+                CheckHeader.SortGlyphDirection = SortOrder.None;
+            }
+        }        
+
+        protected virtual void CheckHeader_Sort(SortOrder direction) {
+            this.Sort(Columns[CheckBoxColumnName], direction == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+        }
+
         protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {
             base.OnCellBeginEdit(e);
 

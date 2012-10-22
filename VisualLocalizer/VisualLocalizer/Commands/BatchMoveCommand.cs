@@ -34,8 +34,28 @@ namespace VisualLocalizer.Commands {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
+        public override void ProcessSelection() {
+            base.ProcessSelection();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on text selection of active document ");
+
+            Results = new List<CodeStringResultItem>();
+
+            Process(currentlyProcessedItem, IntersectsWithSelection);
+
+            Results.RemoveAll((item) => {
+                bool empty = item.Value.Trim().Length == 0;
+                return empty || IsItemOutsideSelection(item);
+            });
+            Results.ForEach((item) => {
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
+            });
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+        }
+
         public override void Process(Array selectedItems) {
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on selection");
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on selected items from Solution Explorer");
             Results = new List<CodeStringResultItem>();
             
             base.Process(selectedItems);

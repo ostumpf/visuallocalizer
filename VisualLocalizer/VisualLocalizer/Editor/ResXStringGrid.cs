@@ -124,13 +124,13 @@ namespace VisualLocalizer.Editor {
 
         public COMMAND_STATUS CanCutOrCopy {
             get {
-                return HasSelectedItems && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return HasSelectedItems && !IsEditing && !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
         public COMMAND_STATUS CanPaste {
             get {
-                return Clipboard.ContainsText() && !IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return Clipboard.ContainsText() && !IsEditing && !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
@@ -165,6 +165,15 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        public bool DataReadOnly {
+            get {
+                return ReadOnly;
+            }
+            set {
+                this.ReadOnly = value;
+            }
+        }
+
         public bool SelectAllItems() {
             foreach (DataGridViewRow row in Rows)
                 if (!row.IsNewRow) row.Selected = true;
@@ -176,6 +185,14 @@ namespace VisualLocalizer.Editor {
             get {
                 return IsCurrentCellInEditMode;
             }
+        }
+
+        public void NotifyDataChanged() {
+            if (DataChanged != null) DataChanged(this, null);
+        }
+
+        public void NotifyItemsStateChanged() {
+            if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
         }
 
         #endregion
@@ -401,11 +418,7 @@ namespace VisualLocalizer.Editor {
 
         public void ValidateRow(ResXStringGridRow row) {
             Validate(row);
-        }
-
-        public void NotifyDataChanged() {
-            if (DataChanged != null) DataChanged(this, null);
-        }
+        }        
 
         public string CommentColumnName {
             get { return "Comment"; }
@@ -417,11 +430,7 @@ namespace VisualLocalizer.Editor {
 
         #endregion
 
-        #region private members
-
-        private void NotifyItemsStateChanged() {
-            if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
-        }
+        #region private members        
 
         private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
             string name, value, comment;
@@ -536,8 +545,8 @@ namespace VisualLocalizer.Editor {
         private void contextMenu_Popup(object sender, EventArgs e) {
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1;
-            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly;
+            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly;
+            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly;
             inlineContextMenuItem.Enabled = false;
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
         }
