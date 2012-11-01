@@ -165,7 +165,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchMoveCodeClick(object sender, EventArgs args) {
             try {
-                batchMoveCommand.Process();
+                batchMoveCommand.Process(true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
                     win.SetData(batchMoveCommand.Results);
@@ -181,7 +181,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchMoveSolExpClick(object sender, EventArgs args) {
             try {
-                batchMoveCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
+                batchMoveCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
                     win.SetData(batchMoveCommand.Results); 
@@ -197,7 +197,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchInlineCodeClick(object sender, EventArgs args) {
             try {
-                batchInlineCommand.Process();
+                batchInlineCommand.Process(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
                     win.SetData(batchInlineCommand.Results);
@@ -213,7 +213,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchInlineSolExpClick(object sender, EventArgs args) {
             try {
-                batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
+                batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
                     win.SetData(batchInlineCommand.Results);
@@ -229,7 +229,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchInlineSelectionCodeClick(object sender, EventArgs args) {
             try {
-                batchInlineCommand.ProcessSelection();
+                batchInlineCommand.ProcessSelection(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
                     win.SetData(batchInlineCommand.Results);
@@ -245,7 +245,7 @@ namespace VisualLocalizer.Commands {
 
         private void batchMoveSelectionCodeClick(object sender, EventArgs args) {
             try {
-                batchMoveCommand.ProcessSelection();
+                batchMoveCommand.ProcessSelection(true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
                     win.SetData(batchMoveCommand.Results);

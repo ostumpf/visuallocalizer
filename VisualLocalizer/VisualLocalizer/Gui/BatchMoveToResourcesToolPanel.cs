@@ -203,7 +203,7 @@ namespace VisualLocalizer.Gui {
             };
             
             SettingsObject.Instance.FilterRegexps.Add(newInstance);
-            SettingsObject.Instance.NotifyPropertyChanged();
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
 
             AddRegexpRow(newInstance);
             ToolGrid.CheckByPredicate(ToolGrid.IsRowMatchingRegexpInstance, newInstance);
@@ -263,7 +263,7 @@ namespace VisualLocalizer.Gui {
             SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
 
             inst.MustMatch = false;
-            SettingsObject.Instance.NotifyPropertyChanged();            
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
         }
 
         private void matchingButton_Click(object sender, EventArgs e) {
@@ -271,7 +271,7 @@ namespace VisualLocalizer.Gui {
             SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
 
             inst.MustMatch = true;
-            SettingsObject.Instance.NotifyPropertyChanged();            
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
         }
 
         private void regexpBox_LostFocus(object sender, EventArgs e) {
@@ -279,7 +279,7 @@ namespace VisualLocalizer.Gui {
             SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
 
             inst.Regexp = senderBox.Text;
-            SettingsObject.Instance.NotifyPropertyChanged();            
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
         }
 
         private void removeButton_Click(object sender, EventArgs e) {
@@ -306,7 +306,7 @@ namespace VisualLocalizer.Gui {
             filterPanel.PerformLayout();
 
             SettingsObject.Instance.FilterRegexps.Remove(senderButton.Tag as SettingsObject.RegexpInstance);
-            SettingsObject.Instance.NotifyPropertyChanged();            
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
         }
 
         private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {

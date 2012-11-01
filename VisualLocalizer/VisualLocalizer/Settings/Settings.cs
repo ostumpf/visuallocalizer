@@ -4,13 +4,18 @@ using System.Linq;
 using System.Text;
 
 namespace VisualLocalizer.Settings {
+    
+    internal enum CHANGE_CATEGORY { FILTER = 1, EDITOR = 2 }
+
     internal sealed class SettingsObject {
 
-        public event Action PropertyChanged, SettingsLoaded;
+        public event Action<CHANGE_CATEGORY> PropertyChanged;
+        public event Action SettingsLoaded;
 
         private static SettingsObject instance;
         private SettingsObject() {
             FilterRegexps = new List<RegexpInstance>();
+            LanguagePairs = new List<LanguagePair>();
             FilterOutSpecificComment = true;
         }
 
@@ -23,7 +28,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _NamespacePolicyIndex = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -34,7 +39,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _MarkNotLocalizableStringsIndex = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -45,7 +50,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _BatchMoveSplitterDistance = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -56,7 +61,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _FilterOutVerbatim = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -67,7 +72,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _FilterOutSpecificComment = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -78,7 +83,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _FilterOutNoLetters = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -89,7 +94,7 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _FilterOutUnlocalizable = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
@@ -100,11 +105,46 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _FilterOutCaps = value;
-                NotifyPropertyChanged();
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _ShowFilterContext;
+        public bool ShowFilterContext {
+            get {
+                return _ShowFilterContext;
+            }
+            set {
+                _ShowFilterContext = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
         public List<RegexpInstance> FilterRegexps { get; private set; }
+
+        public List<LanguagePair> LanguagePairs { get; private set; }
+
+        private string _BingAppId;
+        public string BingAppId {
+            get {
+                return _BingAppId;
+            }
+            set {
+                _BingAppId = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+            }
+        }
+
+        private int _ReferenceUpdateInterval;
+        public int ReferenceUpdateInterval {
+            get {
+                return _ReferenceUpdateInterval;
+            }
+            set {
+                _ReferenceUpdateInterval = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+            }
+        }
 
         public static SettingsObject Instance {
             get {
@@ -113,8 +153,8 @@ namespace VisualLocalizer.Settings {
             }
         }
 
-        public void NotifyPropertyChanged() {
-            if (PropertyChanged != null && !IgnorePropertyChanges) PropertyChanged();
+        public void NotifyPropertyChanged(CHANGE_CATEGORY category) {
+            if (PropertyChanged != null && !IgnorePropertyChanges) PropertyChanged(category);
         }
 
         public void NotifySettingsLoaded() {
@@ -124,6 +164,28 @@ namespace VisualLocalizer.Settings {
         internal sealed class RegexpInstance {
             public string Regexp { get; set; }
             public bool MustMatch { get; set; }
+        }
+
+        internal sealed class LanguagePair {
+            public string FromLanguage { get; set; }
+            public string ToLanguage { get; set; }
+
+            public override int GetHashCode() {
+                return FromLanguage.GetHashCode() + ToLanguage.GetHashCode();
+            }
+
+            public override bool Equals(object obj) {
+                if (obj == null) return false;
+                if (!(obj is LanguagePair)) return false;
+
+                LanguagePair copy = obj as LanguagePair;
+                return (copy.FromLanguage == FromLanguage || (string.IsNullOrEmpty(copy.FromLanguage) && string.IsNullOrEmpty(FromLanguage))) 
+                    && copy.ToLanguage == ToLanguage;
+            }
+
+            public override string ToString() {
+                return (string.IsNullOrEmpty(FromLanguage) ? "(auto)":FromLanguage) + " => " + ToLanguage;
+            }
         }
     }
 }

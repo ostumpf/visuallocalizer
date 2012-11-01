@@ -6,13 +6,17 @@ using System.Windows.Forms;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer.Gui {
     
     internal sealed class BatchInlineToolPanel : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
         
-        public event EventHandler<CodeResultItemEventArgs> HighlightRequired;        
-        
+        public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
+
+        public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowFilterContext) {
+        }
+
         protected override void InitializeColumns() {
             base.InitializeColumns();
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -66,6 +70,7 @@ namespace VisualLocalizer.Gui {
             Rows.Clear();
             errorRows.Clear();
             this.SuspendLayout();
+            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
 
             foreach (var item in value) {
                 DataGridViewCheckedRow<CodeReferenceResultItem> row = new DataGridViewCheckedRow<CodeReferenceResultItem>();
@@ -80,7 +85,7 @@ namespace VisualLocalizer.Gui {
                 row.Cells.Add(lineCell);
 
                 DataGridViewTextBoxCell referenceCell = new DataGridViewTextBoxCell();
-                referenceCell.Value = item.ReferenceText;
+                referenceCell.Value = item.FullReferenceText;
                 row.Cells.Add(referenceCell);
 
                 DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
@@ -95,14 +100,14 @@ namespace VisualLocalizer.Gui {
                 destinationCell.Value = item.DestinationItem.ToString();
                 VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
                 row.Cells.Add(destinationCell);
-
+                
                 DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
                 contextCell.Value = item.Context;
                 contextCell.RelativeLine = item.ContextRelativeLine;
                 contextCell.FullText = item.Context;
                 contextCell.SetWrapContents(false);
                 row.Cells.Add(contextCell);
-
+                                   
                 DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
                 row.Cells.Add(cell);                
 

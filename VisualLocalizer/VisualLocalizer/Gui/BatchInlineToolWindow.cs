@@ -41,7 +41,7 @@ namespace VisualLocalizer.Gui {
                 VLDocumentViewsManager.ReleaseLocks();
                 BatchInliner inliner = new BatchInliner(panel.Rows);
 
-                inliner.Inline(panel.GetData(), ref rowErrors);
+                inliner.Inline(panel.GetData(), false, ref rowErrors);
                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);

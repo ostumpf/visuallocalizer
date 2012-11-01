@@ -26,8 +26,9 @@ namespace VisualLocalizer.Extensions {
                 item.Load();                
                 foreach (var pair in item.GetAllStringReferences()) {
                     var element = trie.Add(pair.Key);
-                    element.Infos.Add(new CodeReferenceInfo() { Origin = item, Value = pair.Value });
+                    element.Infos.Add(new CodeReferenceInfo() { Origin = item, Value = pair.Value, Key = pair.Key });
                 }
+                item.Unload();
             }
             trie.CreatePredecessorsAndShortcuts();
             return trie;

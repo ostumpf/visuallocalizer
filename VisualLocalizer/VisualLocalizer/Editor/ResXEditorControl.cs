@@ -25,20 +25,26 @@ using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Collections;
 using Microsoft.VisualStudio.OLE.Interop;
+using VisualLocalizer.Translate;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer.Editor {
 
     [Flags]
     internal enum REMOVEKIND { REMOVE = 1, EXCLUDE = 2, DELETE_FILE = 4 }
-    
+
+    [Flags]
+    internal enum INLINEKIND { INLINE = 1, REMOVE = 2 }
+
     internal sealed class ResXEditorControl : TableLayoutPanel,IEditorControl {
 
         private ResXStringGrid stringGrid;
         private ResXTabControl tabs;
         private ToolStrip toolStrip;
         private ToolStripMenuItem removeExcludeItem, removeDeleteItem;
-        internal ToolStripSplitButton removeButton, inlineButton, addButton;
+        private ToolStripSplitButton removeButton, inlineButton, addButton;
         private ToolStripDropDownButton viewButton, mergeButton;
+        internal ToolStripDropDownButton translateButton;
         private ResXImagesList imagesListView;
         private ResXIconsList iconsListView;
         private ResXSoundsList soundsListView;
@@ -55,6 +61,10 @@ namespace VisualLocalizer.Editor {
         public event EventHandler DataChanged;
         public event Action<REMOVEKIND> RemoveRequested;
         public event Action<View> ViewKindChanged;
+        public event Action<TRANSLATE_PROVIDER> NewTranslatePairAdded;
+        public event Action<TRANSLATE_PROVIDER, string, string> TranslateRequested;
+        public event Action<INLINEKIND> InlineRequested;
+
         public KeyValueConflictResolver conflictResolver;
 
         public void Init<T>(AbstractSingleViewEditor<T> editor) where T : Control, IEditorControl, new() {
@@ -64,8 +74,8 @@ namespace VisualLocalizer.Editor {
             this.DoubleBuffered = true;
             this.conflictResolver = new KeyValueConflictResolver(true, false);
 
-            initTabControl();
             initToolStrip();
+            initTabControl();            
 
             this.RowCount = 2;
             this.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -107,7 +117,7 @@ namespace VisualLocalizer.Editor {
 
             toolStrip.Items.Add(new ToolStripSeparator());
 
-            removeButton = new ToolStripSplitButton("&Remove Resources");
+            removeButton = new ToolStripSplitButton("&Remove");
             removeButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             removeExcludeItem = new ToolStripMenuItem("Remove && Exclude from Project");
             removeDeleteItem = new ToolStripMenuItem("Remove && Delete File");
@@ -118,11 +128,29 @@ namespace VisualLocalizer.Editor {
             removeExcludeItem.Click += new EventHandler((o, e) => { NotifyRemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.EXCLUDE); });
             toolStrip.Items.Add(removeButton);
 
-            inlineButton = new ToolStripSplitButton("&Inline resources");
+            inlineButton = new ToolStripSplitButton("&Inline");
             inlineButton.ButtonClick += new EventHandler(inlineButton_ButtonClick);
             inlineButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             inlineButton.DropDownItems.Add("Inline && &remove", null, new EventHandler(inlineAndRemoveButton_ButtonClick)); 
             toolStrip.Items.Add(inlineButton);
+
+            translateButton = new ToolStripDropDownButton("&Translate");
+            translateButton.DropDownOpening += new EventHandler(translateButton_DropDownOpening);
+            
+            ToolStripMenuItem bingItem = new ToolStripMenuItem("Bing");
+            bingItem.Tag = TRANSLATE_PROVIDER.BING;
+            translateButton.DropDownItems.Add(bingItem);
+
+            ToolStripMenuItem googleItem = new ToolStripMenuItem("Google");
+            googleItem.Tag = TRANSLATE_PROVIDER.GOOGLE;
+            translateButton.DropDownItems.Add(googleItem);
+
+            ToolStripMenuItem myMemoryItem = new ToolStripMenuItem("My Memory");
+            myMemoryItem.Tag = TRANSLATE_PROVIDER.MYMEMORY;
+            translateButton.DropDownItems.Add(myMemoryItem);            
+
+            translateButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            toolStrip.Items.Add(translateButton);
 
             toolStrip.Items.Add(new ToolStripSeparator());
 
@@ -165,7 +193,7 @@ namespace VisualLocalizer.Editor {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) codeGenerationBox.Enabled = false;
 
             toolStrip.Items.Add(codeGenerationBox);
-        }
+        }        
        
         private void initTabControl() {
             tabs = new ResXTabControl();
@@ -176,14 +204,11 @@ namespace VisualLocalizer.Editor {
             tabs.SelectedIndexChanged += new EventHandler(UpdateToolStripButtonsEnable);
 
             stringTab = new TabPage("Strings");
-            stringTab.BorderStyle = BorderStyle.None;
-            stringGrid = new ResXStringGrid(this);
-            stringGrid.Dock = DockStyle.Fill;
-            stringGrid.BackColor = Color.White;
-            stringGrid.ScrollBars = ScrollBars.Vertical;
-            stringGrid.DataChanged += new EventHandler((o, args) => { DataChanged(o, args); });
-            stringGrid.BorderStyle = BorderStyle.None;
+            stringTab.BorderStyle = BorderStyle.None;            
+            stringGrid = new ResXStringGrid(this);            
+            stringGrid.DataChanged += new EventHandler((o, args) => { DataChanged(o, args); });            
             stringGrid.ItemsStateChanged += new EventHandler(UpdateToolStripButtonsEnable);
+            stringGrid.LanguagePairAdded += new Action<string, string>(stringGrid_LanguagePairAdded);
             stringGrid.Name = "Content";
             stringTab.Controls.Add(stringGrid);
             tabs.TabPages.Add(stringTab);
@@ -203,7 +228,7 @@ namespace VisualLocalizer.Editor {
             filesListView = new ResXFilesList(this);
             filesTab = CreateItemTabPage("Files", filesListView);
             tabs.TabPages.Add(filesTab);
-        }
+        }        
 
         #region public members
 
@@ -374,7 +399,7 @@ namespace VisualLocalizer.Editor {
                     string.Format("Image files({0})\0{0}\0Icon files({1})\0{1}\0Sound files({2})\0{2}\0", imageFilter, iconFilter, soundFilter), selectedFilter, OPENFILENAME.OFN_ALLOWMULTISELECT);
                 if (files == null) return;
 
-                addExistingFiles(files);
+                addExistingFiles(files);                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -423,11 +448,14 @@ namespace VisualLocalizer.Editor {
             if (newItems.Count > 0) {
                 ListViewItemsAddUndoUnit unit = new ListViewItemsAddUndoUnit(newItems, conflictResolver);
                 Editor.AddUndoUnit(unit);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Added {0} existing files", newItems.Count);
             }
         }
 
         private ListViewKeyItem addExistingItem(AbstractListView list, ProjectItem folder, string file, Type type, bool showThumbnails) {
-            string fileName = Path.GetFileName(file);            
+            string fileName = Path.GetFileName(file);
+            string localFile = null;
             bool fileExists,sameTargetDir;
             Action conflictResolveAction=null;
             ListViewKeyItem addedListItem;
@@ -437,12 +465,12 @@ namespace VisualLocalizer.Editor {
                 sameTargetDir = true;
             } else {
                 string fileDir = folder.Properties.Item("FullPath").Value.ToString();
-                string localFile = Path.Combine(fileDir, fileName);
+                localFile = Path.Combine(fileDir, fileName);
                 fileExists = File.Exists(localFile);
                 sameTargetDir = Path.GetFullPath(localFile) == Path.GetFullPath(file);
                 if (fileExists) {
-                    if (folder.ProjectItems.ContainsItem(fileName)) {
-                        ProjectItem conflictItem = folder.ProjectItems.Item(fileName);
+                    if (folder.ProjectItems.ContainsItem(localFile)) {
+                        ProjectItem conflictItem = folder.ProjectItems.Item(localFile);
                         conflictResolveAction = new Action(() => { conflictItem.Delete(); });
                     } else {
                         conflictResolveAction = new Action(() => { File.Delete(localFile); });
@@ -461,11 +489,11 @@ namespace VisualLocalizer.Editor {
                     addedListItem = addExistingItem(list, copyFileName, type, showThumbnails);
                 } else {
                     DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("Item \"{0}\" already exists. Do you want to overwrite the file?", fileName), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_QUERY);
+                    string fullPath = localFile;
                     if (result == DialogResult.Yes) {
                         if (conflictResolveAction != null) {
                             conflictResolveAction();
                         }
-                        string fullPath;
 
                         if (folder != null) {
                             ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
@@ -474,16 +502,22 @@ namespace VisualLocalizer.Editor {
                         } else {
                             fullPath = file;
                         }
-
-                        if (list.Items.ContainsKey(fileName)) {
-                            addedListItem = list.UpdateDataOf(fileName);
-                        } else {
-                            addedListItem = addExistingItem(list, fullPath, type, showThumbnails);
+                    } else {
+                        if (!folder.ProjectItems.ContainsItem(Path.GetFileName(localFile))) {
+                            ProjectItem newItem = folder.ProjectItems.AddFromFile(localFile);
+                            newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
                         }
+                    }
 
-                        list.Refresh();
-                        list.NotifyDataChanged();
-                    } else addedListItem = null;
+                    if (list.Items.ContainsKey(fullPath)) {
+                        addedListItem = list.UpdateDataOf(fullPath);
+                    } else {
+                        addedListItem = addExistingItem(list, fullPath, type, showThumbnails);
+                    }
+
+                    list.Refresh();
+                    list.NotifyDataChanged();
+                    
                 }
             } else {
                 if (folder == null) {
@@ -535,13 +569,15 @@ namespace VisualLocalizer.Editor {
             tabs.SelectedTab = stringTab;
             stringGrid.ClearSelection();
 
-            DataGridViewCell cell = stringGrid.Rows[stringGrid.Rows.Count - 1].Cells[stringGrid.KeyColumnName];            
-            cell.Value = "new value";            
+            stringGrid.Rows.Add();
+
+            DataGridViewCell cell = stringGrid.Rows[stringGrid.Rows.Count - 2].Cells[stringGrid.KeyColumnName]; 
+            cell.Value = "(new)";
+            cell.Selected = true;
 
             stringGrid.CurrentCell = cell;
             stringGrid.BeginEdit(true);
-            stringGrid.EndEdit();
-            stringGrid.BeginEdit(true);
+            cell.Tag = null;
 
             stringGrid.NotifyDataChanged();
         }
@@ -573,6 +609,8 @@ namespace VisualLocalizer.Editor {
 
                     ListViewNewItemCreateUndoUnit unit = new ListViewNewItemCreateUndoUnit(newItem, conflictResolver);
                     Editor.AddUndoUnit(unit);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Created and added new object \"{0}\"", newItem.DataNode.FileRef.FileName);
                 } catch (Exception ex) {
                     string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -606,7 +644,7 @@ namespace VisualLocalizer.Editor {
 
                 newImageItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
 
-                return addExistingItem(listView, newImagePath, resourceType, false);
+                return addExistingItem(listView, newImagePath, resourceType, true);
             }
         }
 
@@ -624,13 +662,65 @@ namespace VisualLocalizer.Editor {
             Window newWindow = VisualLocalizerPackage.Instance.DTE.OpenFile(null, newImagePath);
             if (newWindow != null) newWindow.Activate();
 
-            return addExistingItem(listView, newImagePath, resourceType, false);
+            return addExistingItem(listView, newImagePath, resourceType, true);
         }
 
         #endregion
 
         #region private - listeners
-     
+
+        private void translateButton_DropDownOpening(object sender, EventArgs eargs) {
+            foreach (ToolStripMenuItem menuItem in translateButton.DropDownItems) {
+                menuItem.DropDownItems.Clear();
+                TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
+
+                bool enabled = true;
+                if (provider == TRANSLATE_PROVIDER.BING) {
+                    enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
+                }
+
+                menuItem.Enabled = enabled;
+
+                foreach (var pair in SettingsObject.Instance.LanguagePairs) {
+                    ToolStripMenuItem newItem = new ToolStripMenuItem(pair.ToString());
+                    newItem.Tag = pair;
+                    newItem.Click += new EventHandler((o, e) => {
+                        SettingsObject.LanguagePair sentPair = (o as ToolStripMenuItem).Tag as SettingsObject.LanguagePair;
+                        notifyTranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
+                    });
+                    newItem.Enabled = enabled;
+                    menuItem.DropDownItems.Add(newItem);
+                }
+
+                ToolStripMenuItem addItem = new ToolStripMenuItem("New language pair...", null, new EventHandler((o, e) => {
+                    notifyNewTranslatePairAdded(provider);
+                }));
+                addItem.Enabled = enabled;
+                menuItem.DropDownItems.Add(addItem);   
+            }
+        }
+
+        private void stringGrid_LanguagePairAdded(string sourceLanguage, string targetLanguage) {
+            SettingsObject.LanguagePair newPair = new SettingsObject.LanguagePair() {
+                FromLanguage = sourceLanguage,
+                ToLanguage = targetLanguage
+            };
+
+            bool contains = false;
+            foreach (var pair in SettingsObject.Instance.LanguagePairs)
+                if (pair.Equals(newPair)) {
+                    contains = true;
+                    break;
+                }
+
+            if (!contains) {
+                SettingsObject.Instance.LanguagePairs.Add(newPair);
+                SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Added new language pair \"{0}\"", newPair);
+            } 
+        }
+
         private void ViewCheckStateChanged(object sender, EventArgs e) {
             ToolStripMenuItem senderItem = sender as ToolStripMenuItem;
             if (senderItem.CheckState == CheckState.Unchecked) return;
@@ -639,35 +729,18 @@ namespace VisualLocalizer.Editor {
                 if (item != senderItem) item.CheckState = CheckState.Unchecked;
 
             notifyViewKindChanged((View)senderItem.Tag);
-        }
-
-        private void notifyViewKindChanged(View newView) {
-            if (ViewKindChanged != null) ViewKindChanged(newView);
-        }
+        }        
 
         private void noFocusBoxSelectedIndexChanged(object sender, EventArgs e) {
             toolStrip.Focus();
-        }        
-      
-        private void UpdateToolStripButtonsEnable(object sender, EventArgs e) {
-            bool selectedString = tabs.SelectedTab.Text.Equals("Strings");
-            IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
-
-            inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
-            viewButton.Enabled = !selectedString && !item.IsEditing;
-            addButton.Enabled = !readOnly;
-            mergeButton.Enabled = !readOnly;
-        }        
+        }                
 
         private void inlineButton_ButtonClick(object sender, EventArgs e) {
-            VisualLocalizer.Library.MessageBox.ShowError("Not yet implemented");
+            notifyInlineRequested(INLINEKIND.INLINE);
         }
 
         private void inlineAndRemoveButton_ButtonClick(object sender, EventArgs e) {
-            VisualLocalizer.Library.MessageBox.ShowError("Not yet implemented");
+            notifyInlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE);
         }
 
         private void mergeButton_PreserveClick(object sender, EventArgs e) {
@@ -688,13 +761,13 @@ namespace VisualLocalizer.Editor {
 
                 ToolStripComboBox box = sender as ToolStripComboBox; 
 
-                string selectedValue = box.SelectedItem.ToString();
+                string selectedValue = (string)box.SelectedItem;
                 if (selectedValue == "Internal") {
                     documentItem.Properties.Item("CustomTool").Value = StringConstants.InternalResXTool;
                 } else if (selectedValue == "Public") {
                     documentItem.Properties.Item("CustomTool").Value = StringConstants.PublicResXTool;
                 } else {
-                    documentItem.Properties.Item("CustomTool").Value = null;
+                    documentItem.Properties.Item("CustomTool").Value = "";
                 }
 
                 if (box.Tag == null) {
@@ -703,6 +776,8 @@ namespace VisualLocalizer.Editor {
                 }
                 box.Tag = null;
                 previousValue = selectedValue;
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Changed access modifier to \"{0}\"", selectedValue);
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -819,11 +894,13 @@ namespace VisualLocalizer.Editor {
 
                 MergeUndoUnit unit = new MergeUndoUnit(Path.GetFileName(file), units);
                 Editor.AddUndoUnit(unit);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Merged files \"{0}\" and \"{1}\"", Editor.FileName, file);
 
                 if (deleteSource) {
                     ProjectItem item = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(file);
                     if (item != null) item.Delete();
                     File.Delete(file);
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Deleted file after merge: \"{1}\"", file);
                 }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
@@ -833,6 +910,36 @@ namespace VisualLocalizer.Editor {
             } finally {
                 if (reader != null) reader.Close();
             }
+        }
+
+        private void notifyViewKindChanged(View newView) {
+            if (ViewKindChanged != null) ViewKindChanged(newView);
+        }
+
+        private void UpdateToolStripButtonsEnable(object sender, EventArgs e) {
+            bool selectedString = tabs.SelectedTab.Text.Equals("Strings");
+            IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
+
+            inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && Editor.HasDesignerClass;
+            removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+            removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+            removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
+            viewButton.Enabled = !selectedString && !item.IsEditing;
+            addButton.Enabled = !readOnly;
+            translateButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+            mergeButton.Enabled = !readOnly;
+        }
+
+        private void notifyNewTranslatePairAdded(TRANSLATE_PROVIDER provider) {
+            if (NewTranslatePairAdded != null) NewTranslatePairAdded(provider);
+        }
+
+        private void notifyTranslateRequested(TRANSLATE_PROVIDER provider, string fromLanguage, string toLanguage) {
+            if (TranslateRequested != null) TranslateRequested(provider, fromLanguage, toLanguage);
+        }
+
+        private void notifyInlineRequested(INLINEKIND inlineKind) {
+            if (InlineRequested != null) InlineRequested(inlineKind);
         }
     }
 

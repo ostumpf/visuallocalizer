@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -24,6 +25,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 item.RemoveKind = REMOVEKIND.REMOVE;
 
             RemoveUnit.Redo();
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Removed {0} added files", Items.Count);
+
+            if (Items.Count > 0 && Items[0].AbstractListView != null) Items[0].AbstractListView.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
@@ -31,6 +35,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 item.RemoveKind = REMOVEKIND.REMOVE;
 
             RemoveUnit.Undo();
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} existing files", Items.Count);
+
+            if (Items.Count > 0 && Items[0].AbstractListView != null) Items[0].AbstractListView.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

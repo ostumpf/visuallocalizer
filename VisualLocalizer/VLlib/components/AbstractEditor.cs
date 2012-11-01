@@ -83,7 +83,8 @@ namespace VisualLocalizer.Library {
         IVsPersistDocData,
         IPersistFileFormat,
         IVsFileChangeEvents,
-        IExtensibleObject
+        IExtensibleObject,
+        IVsStatusbarUser
         where T : Control, IEditorControl, new() {
                          
         private uint vsFileChangeCookie;
@@ -534,6 +535,15 @@ namespace VisualLocalizer.Library {
         }
         #endregion
 
+
+        #region IVsStatusBarUser members 
+        
+        public int SetInfo() {
+            return VSConstants.S_OK;
+        }
+
+        #endregion
+
         public bool IsDirty {
             get;
             set;
@@ -714,6 +724,14 @@ namespace VisualLocalizer.Library {
 
         public virtual bool ExecuteCopy() {
             return true;
+        }
+
+        private IVsStatusbar _StatusBar;
+        public IVsStatusbar StatusBar {
+            get {
+                if (_StatusBar == null) _StatusBar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+                return _StatusBar;
+            }
         }
     }
 

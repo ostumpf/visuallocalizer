@@ -29,6 +29,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
             }
             Grid.ResumeLayout();
             Grid.NotifyDataChanged();
+            Grid.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
@@ -39,6 +40,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
             }
             Grid.ResumeLayout();
             Grid.NotifyDataChanged();
+            Grid.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

@@ -12,9 +12,9 @@ namespace VisualLocalizer.Library {
 
         protected KeyValueConflictResolver ConflictResolver;
 
-        public AbstractKeyValueGridView() : this(new KeyValueConflictResolver()) { }
+        public AbstractKeyValueGridView(bool showContextColumn) : this(showContextColumn, new KeyValueConflictResolver()) { }
 
-        public AbstractKeyValueGridView(KeyValueConflictResolver resolver) {            
+        public AbstractKeyValueGridView(bool showContextColumn, KeyValueConflictResolver resolver) : base(showContextColumn) {            
             this.ConflictResolver = resolver;            
         }        
 

@@ -113,6 +113,16 @@ namespace VisualLocalizer.Components {
             return list;
         }
 
+        private CodeReferenceInfo GetInfoWithNamespace(List<CodeReferenceInfo> list, string nmspc) {
+            CodeReferenceInfo nfo = null;
+            foreach (var item in list)
+                if (item.Origin.Namespace == nmspc) {
+                    nfo = item;
+                    break;
+                }
+            return nfo;
+        }
+
         protected void AddResult(List<CodeReferenceResultItem> list, string referenceText,string prefix, List<CodeReferenceInfo> trieElementInfos) {            
             CodeReferenceInfo info = null;
             string[] t = referenceText.Split('.');
@@ -123,12 +133,14 @@ namespace VisualLocalizer.Components {
                 UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(referenceClass, Project);
 
                 if (item != null) {
-                    info = trieElementInfos.Where((i) => { return i.Origin.Namespace == item.Namespace; }).First();                            
+                    info = GetInfoWithNamespace(trieElementInfos, item.Namespace);
+                    if (info == null) return;
                 }
             } else {
                 string aliasNamespace = UsedNamespaces.GetNamespace(prefix);
                 if (!string.IsNullOrEmpty(aliasNamespace)) {
-                    info = trieElementInfos.Where((i) => { return i.Origin.Namespace == aliasNamespace; }).First();
+                    info = GetInfoWithNamespace(trieElementInfos, aliasNamespace);
+                    if (info == null) return;                    
                 } else {
                     foreach (var i in trieElementInfos)
                         if (i.Origin.Namespace == prefix) {
@@ -138,7 +150,10 @@ namespace VisualLocalizer.Components {
 
                     if (info == null) {
                         UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(prefix + "." + referenceClass, Project);
-                        info = trieElementInfos.Where((i) => { return i.Origin.Namespace == item.Namespace + "." + prefix; }).First();  
+                        if (item == null) return;
+
+                        info = GetInfoWithNamespace(trieElementInfos, item.Namespace + "." + prefix);
+                        if (info == null) return;                                 
                     }
                 }                
             }
@@ -156,9 +171,16 @@ namespace VisualLocalizer.Components {
                 resultItem.ReplaceSpan = span;
                 resultItem.AbsoluteCharOffset = ReferenceStartOffset;
                 resultItem.AbsoluteCharLength = AbsoluteReferenceLength;
-                resultItem.DestinationItem = info.Origin;
-                resultItem.ReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, referenceText.Substring(referenceText.LastIndexOf('.') + 1));
+                resultItem.DestinationItem = info.Origin;                
+                resultItem.FullReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, referenceText.Substring(referenceText.LastIndexOf('.') + 1));
                 resultItem.IsWithinLocalizableFalse = IsWithinLocFalse;
+                resultItem.Key = info.Key;
+
+                if (string.IsNullOrEmpty(prefix)) {
+                    resultItem.OriginalReferenceText = referenceText;
+                } else {
+                    resultItem.OriginalReferenceText = string.Format("{0}.{1}", prefix, referenceText);
+                }
 
                 list.Add(resultItem);
             } else throw new Exception("Cannot determine reference target.");

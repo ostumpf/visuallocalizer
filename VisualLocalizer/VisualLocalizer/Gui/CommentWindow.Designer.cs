@@ -54,7 +54,7 @@
             this.cancelButton.Location = new System.Drawing.Point(381, 175);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
-            this.cancelButton.TabIndex = 0;
+            this.cancelButton.TabIndex = 2;
             this.cancelButton.Text = "Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
             // 
@@ -79,12 +79,14 @@
             this.commentBox.Name = "commentBox";
             this.commentBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.commentBox.Size = new System.Drawing.Size(447, 160);
-            this.commentBox.TabIndex = 2;
+            this.commentBox.TabIndex = 0;
             // 
             // CommentWindow
             // 
+            this.AcceptButton = this.okButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(459, 201);
             this.Controls.Add(this.tablePanel);
             this.KeyPreview = true;

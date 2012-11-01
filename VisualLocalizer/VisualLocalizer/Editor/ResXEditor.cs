@@ -27,12 +27,18 @@ namespace VisualLocalizer.Editor {
         private void UIControl_DataChanged(object sender, EventArgs e) {
             IsDirty = true;            
         }
-      
+
+        public ProjectItem ProjectItem {
+            get;
+            private set;
+        }
+
         public override void LoadFile(string path) {
             base.LoadFile(path);
             
             ResXResourceReader reader = null;
             try {
+                ProjectItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(FileName);
                 Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>();
                 
                 reader = new ResXResourceReader(path);
@@ -44,6 +50,8 @@ namespace VisualLocalizer.Editor {
                 }
 
                 UIControl.SetData(data);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Opened file \"{0}\"", path);
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -66,8 +74,9 @@ namespace VisualLocalizer.Editor {
 
                 foreach (var o in data) {
                     writer.AddResource(o.Value);
-                }              
+                }
 
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Saved file \"{0}\"", path);
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -153,6 +162,14 @@ namespace VisualLocalizer.Editor {
                 default:
                     return base.GetSystemCommandStatus(cmdID);
             }            
+        }
+
+        public bool HasDesignerClass {
+            get {                                
+                if (ProjectItem != null && ProjectItem.Properties!=null) {
+                    return !string.IsNullOrEmpty((string)ProjectItem.Properties.Item("CustomToolOutput").Value);
+                } else return false;
+            }
         }
 
         public override bool ExecuteSystemCommand(Microsoft.VisualStudio.VSConstants.VSStd97CmdID cmdID) {

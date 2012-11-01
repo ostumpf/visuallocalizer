@@ -75,6 +75,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 usedList.NotifyDataChanged();
                 usedList.NotifyItemsStateChanged();
             }
+
+            if (Items.Count > 0 && Items[0].AbstractListView != null) Items[0].AbstractListView.SetContainingTabPageSelected();
         }
 
         private object GetImageFor(ListViewKeyItem item) {
@@ -123,6 +125,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 usedList.NotifyDataChanged();
                 usedList.NotifyItemsStateChanged();
             }
+
+            if (Items.Count > 0 && Items[0].AbstractListView != null) Items[0].AbstractListView.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

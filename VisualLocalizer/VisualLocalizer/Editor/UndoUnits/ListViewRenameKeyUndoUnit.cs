@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -24,6 +25,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
             Item.AfterEditValue = OldKey;
             ListView.Validate(Item);
             ListView.NotifyDataChanged();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
@@ -32,6 +36,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
             Item.AfterEditValue = NewKey;
             ListView.Validate(Item);
             ListView.NotifyDataChanged();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
     }
 }

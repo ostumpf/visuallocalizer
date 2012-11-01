@@ -10,6 +10,15 @@ using System.ComponentModel.Design;
 using VisualLocalizer.Library;
 using System.IO;
 using VisualLocalizer.Editor.UndoUnits;
+using VisualLocalizer.Translate;
+using System.Globalization;
+using VisualLocalizer.Settings;
+using VisualLocalizer.Commands;
+using EnvDTE;
+using System.Collections;
+using System.Drawing;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace VisualLocalizer.Editor {    
 
@@ -17,43 +26,86 @@ namespace VisualLocalizer.Editor {
 
         public event EventHandler DataChanged;
         public event EventHandler ItemsStateChanged;
-                
+        public event Action<string, string> LanguagePairAdded;        
+
         private TextBox CurrentlyEditedTextBox;
         private ResXEditorControl editorControl;
         private MenuItem editContextMenuItem, cutContextMenuItem, copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem,
-            inlineContextMenuItem;
+            inlineContextMenu, translateMenu, inlineContextMenuItem, inlineRemoveContextMenuItem;
+        private ReferenceLister referenceLister;
+        public bool ReferenceCounterThreadSuspended = false;
+        private System.Threading.Thread referenceUpdaterThread;
 
-        public ResXStringGrid(ResXEditorControl editorControl) : base(editorControl.conflictResolver) {
+        public ResXStringGrid(ResXEditorControl editorControl) : base(false, editorControl.conflictResolver) {
             this.editorControl = editorControl;
             this.AllowUserToAddRows = true;            
             this.ShowEditingIcon = false;
             this.MultiSelect = true;
+            this.Dock = DockStyle.Fill;            
+            this.BackColor = Color.White;
+            this.BorderStyle = BorderStyle.None;
+
+            this.ScrollBars = ScrollBars.Both;
             this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            this.AutoSize = true;            
+
             this.editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
             this.SelectionChanged += new EventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.NewRowNeeded += new DataGridViewRowEventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.MouseDown += new MouseEventHandler(ResXStringGrid_MouseDown);
+            this.editorControl.NewTranslatePairAdded+=new Action<TRANSLATE_PROVIDER>(editorControl_TranslateRequested);
+            this.editorControl.TranslateRequested+=new Action<TRANSLATE_PROVIDER,string,string>(editorControl_TranslateRequested);
+            this.editorControl.InlineRequested += new Action<INLINEKIND>(editorControl_InlineRequested);
+            this.Resize += new EventHandler(ResXStringGrid_Resize);
+            this.ColumnWidthChanged += new DataGridViewColumnEventHandler(ResXStringGrid_ColumnWidthChanged);
 
             ResXStringGridRow rowTemplate = new ResXStringGridRow();
             rowTemplate.MinimumHeight = 24;
             this.RowTemplate = rowTemplate;
 
             editContextMenuItem = new MenuItem("Edit cell");
+            editContextMenuItem.Shortcut = Shortcut.F2;
             editContextMenuItem.Click += new EventHandler((o, e) => { this.BeginEdit(true); });
 
             cutContextMenuItem = new MenuItem("Cut");
-            cutContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCut(); });
+            cutContextMenuItem.Shortcut = Shortcut.CtrlX;
+            cutContextMenuItem.Click += new EventHandler((o, e) => { 
+                editorControl.ExecuteCut();
+            });
 
             copyContextMenuItem = new MenuItem("Copy");
+            copyContextMenuItem.Shortcut = Shortcut.CtrlC;
             copyContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCopy(); });
 
             pasteContextMenuItem = new MenuItem("Paste");
+            pasteContextMenuItem.Shortcut = Shortcut.CtrlV;
             pasteContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecutePaste(); });
 
+            
             deleteContextMenuItem = new MenuItem("Remove");
+            deleteContextMenuItem.Shortcut = Shortcut.Del;            
             deleteContextMenuItem.Click += new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE); }); 
+            
+            inlineContextMenu = new MenuItem("Inline");
 
             inlineContextMenuItem = new MenuItem("Inline");
+            inlineContextMenuItem.Shortcut = Shortcut.CtrlI;
+            inlineContextMenuItem.Click += new EventHandler((o, e) => { editorControl_InlineRequested(INLINEKIND.INLINE); }); 
+            
+            inlineRemoveContextMenuItem = new MenuItem("Inline && remove");
+            inlineRemoveContextMenuItem.Shortcut = Shortcut.CtrlShiftI;            
+            inlineRemoveContextMenuItem.Click += new EventHandler((o, e) => { editorControl_InlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE); });
+
+            inlineContextMenu.MenuItems.Add(inlineContextMenuItem);
+            inlineContextMenu.MenuItems.Add(inlineRemoveContextMenuItem);
+
+            translateMenu = new MenuItem("Translate");
+            foreach (ToolStripMenuItem item in editorControl.translateButton.DropDownItems) {
+                MenuItem mItem = new MenuItem();
+                mItem.Tag = item.Tag;
+                mItem.Text = item.Text;
+                translateMenu.MenuItems.Add(mItem);
+            }
 
             ContextMenu contextMenu = new ContextMenu();
             contextMenu.MenuItems.Add(editContextMenuItem);
@@ -62,15 +114,25 @@ namespace VisualLocalizer.Editor {
             contextMenu.MenuItems.Add(copyContextMenuItem);
             contextMenu.MenuItems.Add(pasteContextMenuItem);
             contextMenu.MenuItems.Add("-");
-            contextMenu.MenuItems.Add(inlineContextMenuItem);
+            contextMenu.MenuItems.Add(inlineContextMenu);
+            contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(translateMenu);
             contextMenu.MenuItems.Add("-");
             contextMenu.MenuItems.Add(deleteContextMenuItem);
             contextMenu.Popup += new EventHandler(contextMenu_Popup);
             this.ContextMenu = contextMenu;
 
             this.ColumnHeadersHeight = 24;
-        }
-                
+
+            referenceLister = new ReferenceLister();
+            
+            referenceUpdaterThread = new System.Threading.Thread(ReferenceLookuperThread);
+            referenceUpdaterThread.IsBackground = true;
+            referenceUpdaterThread.Priority = System.Threading.ThreadPriority.BelowNormal;
+
+            UpdateContextItemsEnabled();
+        }      
+
         #region IDataTabItem members
 
         public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
@@ -85,7 +147,7 @@ namespace VisualLocalizer.Editor {
                         if (row.DataSourceItem != null) {
                             string rndFile = Path.GetRandomFileName();
                             ResXDataNode newNode = new ResXDataNode(rndFile.Replace('@', '_'), row.DataSourceItem.GetValue<string>());
-                            newNode.Comment = string.Format("@@{0}@{1}", row.Status == ResXStringGridRow.STATUS.KEY_NULL ? "" : row.DataSourceItem.Name, row.DataSourceItem.Comment);
+                            newNode.Comment = string.Format("@@@{0}-@-{1}-@-{2}", (int)row.Status, row.DataSourceItem.Name, row.DataSourceItem.Comment);
                             data.Add(newNode.Name.ToLower(), newNode);
                         }
                     }
@@ -105,6 +167,7 @@ namespace VisualLocalizer.Editor {
             base.SetData(null);
             this.SuspendLayout();
             Rows.Clear();
+            ReferenceCounterThreadSuspended = true;
         }
 
         public IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
@@ -119,18 +182,19 @@ namespace VisualLocalizer.Editor {
 
         public void EndAdd() {
             this.ResumeLayout();
-            this.OnResize(null);
+            ReferenceCounterThreadSuspended = false;
+            if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start();         
         }
 
         public COMMAND_STATUS CanCutOrCopy {
             get {
-                return HasSelectedItems && !IsEditing && !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return (HasSelectedItems && !IsEditing && !ReadOnly) ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
         public COMMAND_STATUS CanPaste {
             get {
-                return Clipboard.ContainsText() && !IsEditing && !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                return (Clipboard.ContainsText() && !IsEditing && !ReadOnly) ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
@@ -195,6 +259,16 @@ namespace VisualLocalizer.Editor {
             if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
         }
 
+        public void SetContainingTabPageSelected() {
+            TabPage page = Parent as TabPage;
+            if (page == null) return;
+
+            TabControl tabControl = page.Parent as TabControl;
+            if (tabControl == null) return;
+
+            tabControl.SelectedTab = page;
+        }
+
         #endregion
 
         #region AbstractKeyValueGridView members        
@@ -219,34 +293,50 @@ namespace VisualLocalizer.Editor {
 
         #region protected members - virtual
 
-        protected override void InitializeColumns() {            
+        protected override void InitializeColumns() {
+            ignoreColumnWidthChange = true;
+
             DataGridViewTextBoxColumn keyColumn = new DataGridViewTextBoxColumn();
-            keyColumn.MinimumWidth = 180;
+            keyColumn.MinimumWidth = 50;
+            keyColumn.Width = 180;
             keyColumn.HeaderText = "Resource Key";
             keyColumn.Name = KeyColumnName;
+            keyColumn.Frozen = false;
+            keyColumn.SortMode = DataGridViewColumnSortMode.Automatic;            
             this.Columns.Add(keyColumn);
 
             DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
-            valueColumn.MinimumWidth = 250;
+            valueColumn.Width = 250;
+            valueColumn.MinimumWidth = 50;
             valueColumn.HeaderText = "Resource Value";
             valueColumn.Name = ValueColumnName;
-            valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;            
-            valueColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;                        
+            valueColumn.Frozen = false;
+            valueColumn.SortMode = DataGridViewColumnSortMode.Automatic;            
             this.Columns.Add(valueColumn);
 
             DataGridViewTextBoxColumn commentColumn = new DataGridViewTextBoxColumn();
-            commentColumn.MinimumWidth = 180;
+            commentColumn.MinimumWidth = 50;
+            commentColumn.Width = 180;
             commentColumn.HeaderText = "Comment";
             commentColumn.Name = CommentColumnName;
             commentColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            commentColumn.Frozen = false;
+            commentColumn.SortMode = DataGridViewColumnSortMode.Automatic;
             this.Columns.Add(commentColumn);
 
             DataGridViewTextBoxColumn referencesColumn = new DataGridViewTextBoxColumn();
+            referencesColumn.Width = 70;
             referencesColumn.MinimumWidth = 40;
             referencesColumn.HeaderText = "References";
             referencesColumn.Name = ReferencesColumnName;
             referencesColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            referencesColumn.Frozen = false;
+            referencesColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            referencesColumn.ReadOnly = true;
             this.Columns.Add(referencesColumn);
+
+            ignoreColumnWidthChange = false;
         }        
 
         protected override bool ProcessDataGridViewKey(KeyEventArgs e) {
@@ -262,7 +352,7 @@ namespace VisualLocalizer.Editor {
                     return true;
                 } else return base.ProcessDataGridViewKey(e);
             } else return base.ProcessDataGridViewKey(e);
-        }
+        }        
 
         protected override void OnEditingControlShowing(DataGridViewEditingControlShowingEventArgs e) {            
             base.OnEditingControlShowing(e);
@@ -278,25 +368,40 @@ namespace VisualLocalizer.Editor {
             NotifyItemsStateChanged();
         }
 
+        protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {
+            base.OnCellBeginEdit(e);
+            
+            if (e.ColumnIndex == 0) {
+                ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
+                if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
+
+                ReferenceCounterThreadSuspended = true;
+                UpdateReferencesCount(row);
+            }         
+        }
+
         protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
             try {
-                if (e.RowIndex == this.Rows.Count - 1) return; // last row edited - cancel
-                base.OnCellEndEdit(e);
+                if (e.RowIndex == Rows.Count - 1) return;
 
+                base.OnCellEndEdit(e);                
+                
                 if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
                     ResXStringGridRow row = Rows[e.RowIndex] as ResXStringGridRow;
                     bool isNewRow = false;
                     if (row.DataSourceItem == null) {
                         isNewRow = true;
-                        row.DataSourceItem = new ResXDataNode("(new)", string.Empty);
+                        row.DataSourceItem = new ResXDataNode("(new)", string.Empty);                        
                     }
                     ResXDataNode node = row.DataSourceItem;
 
                     if (Columns[e.ColumnIndex].Name == KeyColumnName) {
-                        string newKey = (string)row.Cells[KeyColumnName].Value;                                       
+                        string newKey = (string)row.Cells[KeyColumnName].Value;
+                        if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
 
                         if (isNewRow) {
                             setNewKey(row, newKey);
+                            row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
                         } else {
@@ -305,11 +410,14 @@ namespace VisualLocalizer.Editor {
                                 setNewKey(row, newKey);
                                 NotifyDataChanged();
                             }
-                        }         
+                        }
+
+                        UpdateReferencesCount(row);
                     } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
                         string newValue = (string)row.Cells[ValueColumnName].Value;
                         if (isNewRow) {
                             row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
                         } else {
@@ -335,6 +443,7 @@ namespace VisualLocalizer.Editor {
                         string newComment = (string)row.Cells[CommentColumnName].Value;
                         if (isNewRow) {
                             row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
                         } else {
@@ -346,39 +455,117 @@ namespace VisualLocalizer.Editor {
                             }
                         }
                     }
-                }                
+                }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                ReferenceCounterThreadSuspended = false;
+                NotifyItemsStateChanged();
             }
-            NotifyItemsStateChanged();
         }
         
         protected override ResXDataNode GetResultItemFromRow(DataGridViewRow row) {
             throw new NotImplementedException();
+        }
+        
+        protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e) {
+            UpdateContextItemsEnabled();
+            base.OnPreviewKeyDown(e);
         }
 
         #endregion
 
         #region public members
 
+        public void UpdateReferencesCount(ResXStringGridRow row) {
+            UpdateReferencesCount(new List<ResXStringGridRow>() { row });
+        }
+
+        public void UpdateReferencesCount(IList rows) {            
+            ProjectItem thisItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(editorControl.Editor.FileName);
+            if (thisItem != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) {
+                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(thisItem, thisItem.ContainingProject);
+                List<Project> projects = new List<Project>();
+
+                projects.Add(thisItem.ContainingProject);
+                foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
+                    foreach (Project proj in solutionProject.GetReferencedProjects()) {
+                        if (proj == thisItem.ContainingProject) {
+                            projects.Add(solutionProject);
+                            break;
+                        }
+                    }
+                }
+
+                if (!editorControl.Editor.HasDesignerClass) {
+                    foreach (ResXStringGridRow row in rows) {
+                        if (row.IsNewRow) continue;
+                        row.CodeReferences.Clear();                        
+                        row.UpdateReferenceCount();
+                    }
+                } else {
+                    Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
+                    foreach (ResXStringGridRow row in rows) {
+                        if (row.IsNewRow) continue;
+                        string referenceKey;
+                        if (row.ErrorSet.Count == 0) {
+                            referenceKey = row.Key;
+                        } else {
+                            referenceKey = row.LastValidKey;
+                        }
+                        var element = trie.Add(resxItem.Class + "." + referenceKey);
+                        element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = row.Value, Key = referenceKey });
+                    }
+                    trie.CreatePredecessorsAndShortcuts();
+
+                    referenceLister.Process(projects, trie);
+
+                    foreach (ResXStringGridRow row in rows) {
+                        if (row.IsNewRow) continue;
+                        row.CodeReferences.Clear();
+                        row.CodeReferences.AddRange(referenceLister.Results.Where((item) => { 
+                            return item.Key == row.Key || (row.ErrorSet.Count > 0 && item.Key == row.LastValidKey); 
+                        }));
+                        row.UpdateReferenceCount();                        
+                    }
+                }
+            }
+        }
+
         public void StringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
             string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringChangeCommentUndoUnit unit = new StringChangeCommentUndoUnit(row, this, key, oldComment, newComment);
             editorControl.Editor.AddUndoUnit(unit);
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", key);
         }
 
         public void StringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
             string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringChangeValueUndoUnit unit = new StringChangeValueUndoUnit(row, this, key, oldValue, newValue, row.DataSourceItem.Comment);
             editorControl.Editor.AddUndoUnit(unit);
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited value of \"{0}\"", key);
         }
 
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
-            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
+            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);            
+
+            if (row.ErrorSet.Count == 0) {
+                int errors=0;
+                int count = row.CodeReferences.Count;
+                row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
+
+                BatchReferenceReplacer replacer = new BatchReferenceReplacer(row.CodeReferences);
+                replacer.Inline(row.CodeReferences, true, ref errors);
+                
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+            }
+
             editorControl.Editor.AddUndoUnit(unit);
         }
 
@@ -413,6 +600,8 @@ namespace VisualLocalizer.Editor {
                 StringRowsAdded(addedRows);
                 NotifyDataChanged();
                 NotifyItemsStateChanged();
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Added {0} new rows from clipboard", addedRows.Count);
             }
         }
 
@@ -432,22 +621,43 @@ namespace VisualLocalizer.Editor {
 
         #region private members        
 
+        private void ReferenceLookuperThread() {
+            UpdateReferencesCount(Rows);
+            while (!IsDisposed) {
+                try {
+                    System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
+                    if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
+                        UpdateReferencesCount(Rows);
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);
+                    // termination of IDE
+                }
+            }
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(editorControl.Editor.FileName));
+        }
+
+        private string[] GetMangledCommentData(string comment) {
+            string p = comment.Substring(3);
+            string[] data = p.Split(new string[] { "-@-" }, StringSplitOptions.None);
+            return data;
+        }
+
         private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
             string name, value, comment;
-            if (node.Comment.StartsWith("@@")) {
-                string p = node.Comment.Substring(2);
-                int at = p.LastIndexOf('@');
+            if (node.Comment.StartsWith("@@@")) {
+                string[] data = GetMangledCommentData(node.Comment);
 
-                name = p.Substring(0, at);
+                row.Status = (ResXStringGridRow.STATUS)int.Parse(data[0]);
+                name = data[1];
+                comment = data[2];
                 value = node.GetValue<string>();
-                comment = p.Substring(at + 1);
 
-                if (string.IsNullOrEmpty(name)) {
-                    row.Status = ResXStringGridRow.STATUS.KEY_NULL;
-                } else {
-                    row.Status = ResXStringGridRow.STATUS.OK;
+                if (row.Status == ResXStringGridRow.STATUS.OK) {
                     node.Name = name;
+                } else {
+                    name = string.Empty;
                 }
+
                 node.Comment = comment;
             } else {
                 name = node.Name;
@@ -465,7 +675,7 @@ namespace VisualLocalizer.Editor {
             commentCell.Value = comment;
 
             DataGridViewTextBoxCell referencesCell = new DataGridViewTextBoxCell();
-            referencesCell.Value = 0;            
+            referencesCell.Value = "?";            
 
             row.Cells.Add(keyCell);
             row.Cells.Add(valueCell);
@@ -479,14 +689,15 @@ namespace VisualLocalizer.Editor {
 
         private void setNewKey(ResXStringGridRow row, string newKey) {
             if (string.IsNullOrEmpty(newKey)) {
-                row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                row.Status = ResXStringGridRow.STATUS.KEY_NULL;                
             } else {
                 row.Status = ResXStringGridRow.STATUS.OK;
                 row.DataSourceItem.Name = newKey;
             }
         }
 
-        private void editorControl_RemoveRequested(REMOVEKIND flags) {
+        private void editorControl_RemoveRequested(REMOVEKIND flags, bool addUndoUnit, out RemoveStringsUndoUnit undoUnit) {
+            undoUnit = null;
             try {
                 if (!this.Visible) return;
                 if (this.SelectedRows.Count == 0) return;
@@ -503,17 +714,21 @@ namespace VisualLocalizer.Editor {
                             row.Cells[KeyColumnName].Tag = null;
                             row.IndexAtDeleteTime = row.Index;
                             copyRows.Add(row);
-                            Rows.Remove(row);  
+                            Rows.Remove(row);
                             dataChanged = true;
-                        }                        
+                        }
                     }
 
                     if (dataChanged) {
-                        RemoveStringsUndoUnit undoUnit = new RemoveStringsUndoUnit(copyRows, this, editorControl.conflictResolver);
-                        editorControl.Editor.AddUndoUnit(undoUnit);
+                        undoUnit = new RemoveStringsUndoUnit(copyRows, this, editorControl.conflictResolver);
+                        if (addUndoUnit) {                            
+                            editorControl.Editor.AddUndoUnit(undoUnit);
+                        }
 
                         NotifyItemsStateChanged();
                         NotifyDataChanged();
+
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("Removed {0} rows", copyRows.Count);
                     }
                 }
             } catch (Exception ex) {
@@ -522,6 +737,11 @@ namespace VisualLocalizer.Editor {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
             }
+        }
+
+        private void editorControl_RemoveRequested(REMOVEKIND flags) {
+            RemoveStringsUndoUnit u;
+            editorControl_RemoveRequested(flags, true, out u);
         }
 
         private void ResXStringGrid_MouseDown(object sender, MouseEventArgs e) {
@@ -540,17 +760,197 @@ namespace VisualLocalizer.Editor {
                     this.ContextMenu.Show(this, e.Location);
                 }
             }
+        }        
+
+        private void UpdateContextItemsEnabled() {
+            cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
+            copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
+            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing; ;
+            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly;
+            inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
+            pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
+            translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
         }
 
         private void contextMenu_Popup(object sender, EventArgs e) {
-            cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly;
-            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly;
-            inlineContextMenuItem.Enabled = false;
-            pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
+            UpdateContextItemsEnabled();
+
+            foreach (MenuItem menuItem in translateMenu.MenuItems) {
+                menuItem.MenuItems.Clear();
+                TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
+
+                bool enabled = true;
+                if (provider == TRANSLATE_PROVIDER.BING) {
+                    enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
+                }
+
+                menuItem.Enabled = enabled;
+
+                foreach (var pair in SettingsObject.Instance.LanguagePairs) {
+                    MenuItem newItem = new MenuItem(pair.ToString());
+                    newItem.Tag = pair;
+                    newItem.Click += new EventHandler((o, args) => {
+                        SettingsObject.LanguagePair sentPair = (o as MenuItem).Tag as SettingsObject.LanguagePair;
+                        editorControl_TranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
+                    });
+                    newItem.Enabled = enabled;
+                    menuItem.MenuItems.Add(newItem);
+                }
+
+                MenuItem addItem = new MenuItem("New language pair...", new EventHandler((o, args) => {
+                    editorControl_TranslateRequested(provider);
+                }));
+                addItem.Enabled = enabled;
+                menuItem.MenuItems.Add(addItem);
+            }
+
+        }
+
+        private void editorControl_TranslateRequested(TRANSLATE_PROVIDER provider) {
+            NewLanguagePairWindow win = new NewLanguagePairWindow(true);
+            if (win.ShowDialog() == DialogResult.OK) {
+                if (win.AddToList && LanguagePairAdded != null) {
+                    LanguagePairAdded(win.SourceLanguage, win.TargetLanguage);
+                }
+                editorControl_TranslateRequested(provider, win.SourceLanguage, win.TargetLanguage);
+            }
+        }
+
+        private void editorControl_TranslateRequested(TRANSLATE_PROVIDER provider, string from, string to) {
+            ITranslatorService service = null;
+            switch (provider) {
+                case TRANSLATE_PROVIDER.BING:
+                    service = BingTranslator.GetService(SettingsObject.Instance.BingAppId);
+                    break;
+                case TRANSLATE_PROVIDER.MYMEMORY:
+                    service = MyMemoryTranslator.GetService();
+                    break;
+                case TRANSLATE_PROVIDER.GOOGLE:
+                    service = GoogleTranslator.GetService();
+                    break;
+            }
+            if (service == null) {
+                VisualLocalizer.Library.MessageBox.ShowError("Cannot resolve translation provider!");
+            } else {
+                System.Threading.Thread translatingThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(this.translatingThread));
+                translatingThread.Start(new TranslatingThreadInfo() { FromLanguage = from, ToLanguage = to, Service = service });
+            }
+        }
+
+        private void translatingThread(object o) {          
+            uint statusBarCookie = 0;
+            string statusBarText = "Translating...";
+            uint completed = 0;
+
+            try {
+                TranslatingThreadInfo nfo = (TranslatingThreadInfo)o;
+                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, 0, (uint)SelectedRows.Count);
+                editorControl.Invoke(new Action(() => { 
+                    editorControl.SetReadOnly(true);                    
+                }));                
+                
+                foreach (ResXStringGridRow row in SelectedRows) {
+                    if (!row.IsNewRow) {
+                        string oldValue = (string)row.Cells[ValueColumnName].Value;
+                        row.Cells[ValueColumnName].Value = nfo.Service.Translate(nfo.FromLanguage, nfo.ToLanguage, (string)row.Cells[ValueColumnName].Value);
+
+                        StringValueChanged(row, oldValue, (string)row.Cells[ValueColumnName].Value);
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("Translated \"{0}\" as \"{1}\" ", oldValue, row.Cells[ValueColumnName].Value);
+                    }
+                    completed++;
+                    editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, completed, (uint)SelectedRows.Count);                    
+                }
+            } catch (Exception ex) {
+                string text;
+                if (ex is CannotParseResponseException) {
+                    CannotParseResponseException cpex = ex as CannotParseResponseException;
+                    text = string.Format("Server response cannot be parsed: {0}.\nFull response:\n{1}", ex.Message, cpex.FullResponse);
+                } else {
+                    text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                }
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                editorControl.Invoke(new Action(() => { VisualLocalizer.Library.MessageBox.ShowError(text); }));
+            } finally {
+                editorControl.Invoke(new Action(() => { 
+                    editorControl.SetReadOnly(false);                    
+                }));
+                if (completed > 0) NotifyDataChanged(); 
+                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, (uint)SelectedRows.Count, (uint)SelectedRows.Count);
+                System.Threading.Thread.Sleep(500);
+                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 0, "Ready", (uint)SelectedRows.Count, (uint)SelectedRows.Count);
+            }
+        }
+
+        private void editorControl_InlineRequested(INLINEKIND kind) {
+            DialogResult result = VisualLocalizer.Library.MessageBox.Show("This operation is irreversible, cannot be undone globally, only using undo managers in open files. Do you want to proceed?",
+                null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND, OLEMSGICON.OLEMSGICON_WARNING);
+            
+            if (result == DialogResult.Yes) {
+                try {
+                    ReferenceCounterThreadSuspended = true;
+
+                    if ((kind & INLINEKIND.INLINE) == INLINEKIND.INLINE) {
+                        UpdateReferencesCount(SelectedRows);
+
+                        List<CodeReferenceResultItem> totalList = new List<CodeReferenceResultItem>();
+
+                        foreach (ResXStringGridRow row in SelectedRows) {
+                            if (!row.IsNewRow) {
+                                totalList.AddRange(row.CodeReferences);
+                            }
+                        }
+                        BatchInliner inliner = new BatchInliner(totalList);
+
+                        int errors = 0;
+                        inliner.Inline(totalList, false, ref errors);
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("Inlining of selected rows finished - found {0} references, {1} finished successfuly", totalList.Count, totalList.Count - errors);
+                    }
+                    if ((kind & INLINEKIND.REMOVE) == INLINEKIND.REMOVE) {
+                        RemoveStringsUndoUnit removeUnit = null;
+                        editorControl_RemoveRequested(REMOVEKIND.REMOVE, false, out removeUnit);
+                    }
+
+                    StringInlinedUndoItem undoItem = new StringInlinedUndoItem(SelectedRows.Count);
+                    editorControl.Editor.AddUndoUnit(undoItem);
+                } catch (Exception ex) {
+                    string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                    VisualLocalizer.Library.MessageBox.ShowError(text);
+                } finally {
+                    ReferenceCounterThreadSuspended = false;
+                }
+            }
+        }
+
+        private void ResXStringGrid_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e) {
+            if (ignoreColumnWidthChange) return;
+            if (e.Column.Name == ReferencesColumnName) return;
+
+            resizeColumnsFavore(Columns[e.Column.Index + 1].Name);
+        }
+
+        private void ResXStringGrid_Resize(object sender, EventArgs e) {
+            resizeColumnsFavore(ValueColumnName);
+        }
+
+        private bool ignoreColumnWidthChange;
+        private void resizeColumnsFavore(string columnName) {
+            int restWidth = 0;
+            foreach (DataGridViewColumn col in Columns)
+                if (col.Name != columnName) restWidth += col.Width;
+
+            ignoreColumnWidthChange = true;
+            Columns[columnName].Width = this.ClientSize.Width - restWidth - this.RowHeadersWidth;
+            ignoreColumnWidthChange = false;
         }
 
         #endregion
+
+        private class TranslatingThreadInfo {
+            public ITranslatorService Service { get; set; }
+            public string FromLanguage { get; set; }
+            public string ToLanguage { get; set; }
+        }
     }
 }

@@ -31,7 +31,13 @@ namespace VisualLocalizer.Components {
         public ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
             this.DisplayName = displayName;
             this.InternalProjectItem = projectItem;
-            this.DesignerItem = InternalProjectItem.ProjectItems.Item(InternalProjectItem.Properties.Item("CustomToolOutput").Value);
+
+            if (string.IsNullOrEmpty((string)InternalProjectItem.Properties.Item("CustomToolOutput").Value)) {
+                this.DesignerItem = null;
+            } else {
+                this.DesignerItem = InternalProjectItem.ProjectItems.Item(InternalProjectItem.Properties.Item("CustomToolOutput").Value);
+            }
+
             this.MarkedInternalInReferencedProject = internalInReferenced;
         }
 
@@ -126,9 +132,11 @@ namespace VisualLocalizer.Components {
                 }
             }
 
-            RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
-                RunCustomTool();
-            });            
+            if (DesignerItem != null) {
+                RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+                    RunCustomTool();
+                });
+            }
         }
 
         public void AddString(string key, string value) {
@@ -278,6 +286,8 @@ namespace VisualLocalizer.Components {
         private CodeNamespace designerNamespaceElement = null;
         private CodeClass designerClassElement = null;
         private string GetPropertyNameForKey(string key) {
+            if (DesignerItem == null) return key;
+
             if (designerNamespaceElement == null || designerClassElement == null) {                
                 foreach (CodeElement e in DesignerItem.FileCodeModel.CodeElements)
                     if (e.Kind == vsCMElement.vsCMElementNamespace && e.FullName == Namespace) {
@@ -294,19 +304,19 @@ namespace VisualLocalizer.Components {
                 if (designerClassElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
             }
 
-            CodeProperty propertyElement = null;
+            CodeProperty foundElement = null;
             foreach (CodeElement e in designerClassElement.Children)
                 if (e.Kind == vsCMElement.vsCMElementProperty) {
-                    propertyElement = (CodeProperty)e;
+                    CodeProperty propertyElement = (CodeProperty)e;
                     string getterText = propertyElement.GetText();
                     Match matchResult = Regex.Match(getterText, @"^\s*get\s*\{\s*return\s*\w+\.GetString\("""+key+@""",\s*\w+\);\s*\}\s*$");
                     if (matchResult.Success) {
+                        foundElement = propertyElement;
                         break;
                     }                    
                 }
-            if (propertyElement == null) throw new InvalidOperationException(string.Format("Cannot find property for key {0}.", key));
 
-            return propertyElement.Name;
+            return foundElement == null ? key : foundElement.Name;
         }
 
         public static bool IsItemResX(ProjectItem item) {
@@ -330,7 +340,7 @@ namespace VisualLocalizer.Components {
             string path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();
 
             bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;
-            bool inter = item.Properties.Item("CustomTool").Value.ToString() != StringConstants.PublicResXTool;
+            bool inter = (string)item.Properties.Item("CustomTool").Value != StringConstants.PublicResXTool;
 
             bool internalInReferenced = inter && referenced;
 
@@ -340,6 +350,8 @@ namespace VisualLocalizer.Components {
         }        
 
         private void resolveNamespaceClass() {
+            if (DesignerItem == null) return;
+
             if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) {
                 RunCustomTool();
             }

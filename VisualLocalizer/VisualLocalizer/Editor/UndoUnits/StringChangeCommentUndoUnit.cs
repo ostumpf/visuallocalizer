@@ -5,6 +5,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
 using System.Resources;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -39,9 +40,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
             SourceRow.Cells[Grid.CommentColumnName].Value = to;
             Grid.ValidateRow(SourceRow);
             Grid.NotifyDataChanged();
+            Grid.SetContainingTabPageSelected();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
         }
-
-
 
         public override string GetUndoDescription() {
             return string.Format("Comment of \"{0}\" changed", Key);

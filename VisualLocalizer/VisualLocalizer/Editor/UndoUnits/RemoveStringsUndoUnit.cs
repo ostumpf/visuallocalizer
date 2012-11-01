@@ -30,7 +30,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 Grid.ValidateRow(element);
             }
             Grid.ResumeLayout();
-            Grid.NotifyDataChanged();            
+            Grid.NotifyDataChanged();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} string rows", Elements.Count);
+            Grid.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
@@ -43,6 +46,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
             }
             Grid.ResumeLayout();
             Grid.NotifyDataChanged();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-deleted {0} string rows", Elements.Count);
+            Grid.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

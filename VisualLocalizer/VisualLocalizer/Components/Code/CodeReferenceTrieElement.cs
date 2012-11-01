@@ -19,6 +19,7 @@ namespace VisualLocalizer.Components {
     }
 
     public class CodeReferenceInfo {
+        public string Key { get; set; }
         public string Value { get; set; }
         public ResXProjectItem Origin { get; set; }
     }

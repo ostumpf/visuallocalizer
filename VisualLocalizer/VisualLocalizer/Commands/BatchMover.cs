@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Windows.Forms;
 using VisualLocalizer.Gui;
+using System.Collections;
 
 namespace VisualLocalizer.Commands {
     internal sealed class BatchMover {
@@ -23,9 +24,9 @@ namespace VisualLocalizer.Commands {
         private Dictionary<string, StringBuilder> filesCache;
         private Dictionary<string, List<string>> externalUsingsPlan;
         private List<ResXProjectItem> modifiedResxItems;
-        private DataGridViewRowCollection rows;
+        private IList rows;
 
-        public BatchMover(DataGridViewRowCollection rows, bool useFullName, bool markUncheckedStringsWithComment) {
+        public BatchMover(IList rows, bool useFullName, bool markUncheckedStringsWithComment) {
             this.MarkUncheckedStringsWithComment = markUncheckedStringsWithComment;
             this.UseFullName = useFullName;
             this.rows = rows;
@@ -39,7 +40,10 @@ namespace VisualLocalizer.Commands {
         }        
 
         public void Move(List<CodeStringResultItem> dataList, ref int errorRows) {
-            
+            Func<IList, int, CodeStringResultItem> getter = new Func<IList, int, CodeStringResultItem>((list, index) => {
+                return (list[index] as DataGridViewCheckedRow<CodeStringResultItem>).DataSourceItem;
+            });
+
             for (int i = dataList.Count - 1; i >= 0; i--) {
                 int newItemLength = -1;
                 try {
@@ -53,12 +57,12 @@ namespace VisualLocalizer.Commands {
                         Validate(resultItem);
 
                         keyConflict = resultItem.DestinationItem.StringKeyInConflict(resultItem.Key, resultItem.Value);
-                        if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE) 
+                        if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE)
                             throw new InvalidOperationException(string.Format("Key \"{0}\" already exists with different value.", resultItem.Key));
                         resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key);
 
                         NamespacesList usedNamespaces = GetUsedNamespacesFor(resultItem);
-                        
+
                         if (UseFullName) {
                             referenceText = resultItem.DestinationItem.Namespace + "." + resultItem.DestinationItem.Class + "." + resultItem.Key;
                             addNamespace = false;
@@ -158,11 +162,12 @@ namespace VisualLocalizer.Commands {
                         resultItem.DestinationItem.AddString(resultItem.Key, resultItem.Value);
                     }
 
-                    if (newItemLength != -1) rows.SetItemFinished<CodeStringResultItem>(i, newItemLength);
                 } catch (Exception ex) {
-                    if (newItemLength != -1) rows.SetItemFinished<CodeStringResultItem>(i, newItemLength);
                     errorRows++;
                     VLOutputWindow.VisualLocalizerPane.WriteLine(ex.Message);
+                } finally {
+                    if (newItemLength != -1)
+                        AbstractCheckedGridViewEx.SetItemFinished(rows, getter, i, newItemLength);
                 }
             }
 

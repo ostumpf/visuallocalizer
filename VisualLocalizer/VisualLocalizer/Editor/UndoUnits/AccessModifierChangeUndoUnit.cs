@@ -5,6 +5,7 @@ using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -25,12 +26,12 @@ namespace VisualLocalizer.Editor.UndoUnits {
         
         public override void Undo() {
             AccessModifierBox.Tag = SELECTION_CHANGE_INITIATOR.UNDO_MANAGER;
-            AccessModifierBox.SelectedItem = OldValue;
+            AccessModifierBox.SelectedItem = OldValue;            
         }
 
         public override void Redo() {
             AccessModifierBox.Tag = SELECTION_CHANGE_INITIATOR.UNDO_MANAGER;
-            AccessModifierBox.SelectedItem = NewValue;
+            AccessModifierBox.SelectedItem = NewValue;            
         }
 
         public override string GetUndoDescription() {

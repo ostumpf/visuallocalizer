@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -25,11 +26,17 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public override void Undo() {
             Item.DataNode.Comment = OldComment;
             Item.SubItems["Comment"].Text = OldComment;
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
             Item.DataNode.Comment = NewComment;
             Item.SubItems["Comment"].Text = NewComment;
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

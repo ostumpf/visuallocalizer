@@ -34,7 +34,7 @@ namespace VisualLocalizer.Editor {
             ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
             subSize.Name = "Size";
             if (info != null) subSize.Text = GetFileSize(info.Length);
-            item.SubItems.Add(subSize);
+            item.SubItems.Insert(2, subSize);
 
             return item;
         }

@@ -6,17 +6,19 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Windows.Forms;
+using System.Collections;
 
 namespace VisualLocalizer.Gui {
     internal static class AbstractCheckedGridViewEx {
-        public static void SetItemFinished<T>(this DataGridViewRowCollection rows, int index, int newLength) where T : AbstractResultItem {
-            AbstractResultItem resultItem = (rows[index] as DataGridViewCheckedRow<T>).DataSourceItem;
+        public static void SetItemFinished<T>(IList rows,Func<IList, int, T> itemGetter, int index, int newLength) where T : AbstractResultItem {
+            T resultItem = itemGetter(rows, index); 
             TextSpan currentReplaceSpan = resultItem.ReplaceSpan;
 
             int diff = currentReplaceSpan.iEndLine - currentReplaceSpan.iStartLine;
             for (int i = index - 1; i >= 0; i--) {
-                AbstractResultItem item = (rows[i] as DataGridViewCheckedRow<T>).DataSourceItem;
+                T item = itemGetter(rows, i); 
                 if (item.AbsoluteCharOffset < resultItem.AbsoluteCharOffset) continue;
+                if (item.SourceItem != resultItem.SourceItem) continue;
 
                 item.AbsoluteCharOffset += newLength - resultItem.AbsoluteCharLength;
 

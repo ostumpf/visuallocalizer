@@ -63,13 +63,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\AbstractBatchCommand.cs" />
+    <Compile Include="Commands\AbstractBatchReferenceProcessor.cs" />
     <Compile Include="Commands\AbstractCommand.cs" />
     <Compile Include="Commands\BatchInlineCommand.cs" />
     <Compile Include="Commands\BatchInliner.cs" />
     <Compile Include="Commands\BatchMoveCommand.cs" />
     <Compile Include="Commands\BatchMover.cs" />
+    <Compile Include="Commands\BatchReferenceReplacer.cs" />
     <Compile Include="Commands\InlineCommand.cs" />
     <Compile Include="Commands\MoveToResourcesCommand.cs" />
+    <Compile Include="Commands\ReferenceLister.cs" />
     <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
     <Compile Include="Components\Code\CodeReferenceLookuper.cs" />
     <Compile Include="Components\Code\CodeReferenceTrieElement.cs" />
@@ -118,6 +121,8 @@
     <Compile Include="Editor\UndoUnits\RenameKeyUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringChangeCommentUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringChangeValueUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\StringInlinedUndoItem.cs" />
+    <Compile Include="Editor\UndoUnits\StringRenameKeyInCodeUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringRenameKeyUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringRowAddUndoUnit.cs" />
     <Compile Include="Editor\VsColorTable.cs" />
@@ -159,6 +164,12 @@
     <Compile Include="Gui\NewImageWindow.Designer.cs">
       <DependentUpon>NewImageWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gui\NewLanguagePair.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\NewLanguagePair.Designer.cs">
+      <DependentUpon>NewLanguagePair.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\SelectResourceFileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -168,7 +179,16 @@
     <Compile Include="Components\VLOutputWindow.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Commands\MenuManager.cs" />
-    <Compile Include="Settings\SettingsManager.cs">
+    <Compile Include="Settings\EditorSettingsManager.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Settings\FilterSettingsManager.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Settings\GeneralSettingsManager.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Settings\AbstractSettingsManager.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Settings\Settings.cs" />
@@ -194,6 +214,10 @@
       <DependentUpon>NewImageWindow.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Gui\NewLanguagePair.resx">
+      <DependentUpon>NewLanguagePair.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Gui\SelectResourceFileForm.resx">
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -216,6 +240,10 @@
     <ProjectReference Include="..\VLlib\VLlib.csproj">
       <Project>{3B87EC9A-D56C-4225-9323-CA157901244F}</Project>
       <Name>VLlib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\VLtranslat\VLtranslat.csproj">
+      <Project>{1CC2F57A-2299-418C-9E4B-D8375EBA4712}</Project>
+      <Name>VLtranslat</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

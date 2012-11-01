@@ -24,7 +24,7 @@ namespace VisualLocalizer.Library {
         protected HashSet<DataGridViewRow> errorRows = new HashSet<DataGridViewRow>();
         protected DataGridViewRow previouslySelectedRow = null;
 
-        public AbstractCheckedGridView() {
+        public AbstractCheckedGridView(bool showContextColumn) {
             this.EnableHeadersVisualStyles = true;
             this.AutoGenerateColumns = false;
             this.AllowUserToAddRows = false;
@@ -37,7 +37,8 @@ namespace VisualLocalizer.Library {
             this.AllowUserToResizeColumns = true;
             this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             this.ScrollBars = ScrollBars.Both;
-            
+            this.ShowContextColumn = showContextColumn;
+
             this.MouseMove += new MouseEventHandler(RowHeaderMouseMove);
             this.SelectionChanged += new EventHandler(RowSelectionChanged);
 
@@ -89,7 +90,7 @@ namespace VisualLocalizer.Library {
             DataGridViewCheckBoxColumn checkColumn = new DataGridViewCheckBoxColumn(false);
             checkColumn.MinimumWidth = 50;
             checkColumn.Width = 50;
-            checkColumn.Name = CheckBoxColumnName;            
+            checkColumn.Name = CheckBoxColumnName;
             checkColumn.HeaderCell = CheckHeader;
             checkColumn.ToolTipText = null;
             checkColumn.SortMode = DataGridViewColumnSortMode.Programmatic;
@@ -106,17 +107,19 @@ namespace VisualLocalizer.Library {
             lineColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             lineColumn.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             this.Columns.Add(lineColumn);
-            
+
             DataGridViewTextBoxColumn contextColumn = new DataGridViewTextBoxColumn();
             contextColumn.MinimumWidth = 40;
             contextColumn.Width = 350;
             contextColumn.HeaderText = "Context";
-            contextColumn.Name = ContextColumnName;            
+            contextColumn.Name = ContextColumnName;
+            contextColumn.Visible = ShowContextColumn;
             this.Columns.Add(contextColumn);
+
         }
 
         protected virtual void RowSelectionChanged(object sender, EventArgs e) {
-            if (!Columns.Contains(ContextColumnName)) return;
+            if (!Columns.Contains(ContextColumnName) || !Columns[ContextColumnName].Visible) return;
 
             if (previouslySelectedRow != null) {
                 DataGridViewDynamicWrapCell cell = previouslySelectedRow.Cells[ContextColumnName] as DataGridViewDynamicWrapCell;
@@ -152,7 +155,7 @@ namespace VisualLocalizer.Library {
 
         protected override void OnSorted(EventArgs e) {
             base.OnSorted(e);
-            if (this.SortedColumn.Name != CheckBoxColumnName) {
+            if (this.SortedColumn.Name != CheckBoxColumnName && !string.IsNullOrEmpty(CheckBoxColumnName)) {
                 CheckHeader.SortGlyphDirection = SortOrder.None;
             }
         }        
@@ -256,6 +259,10 @@ namespace VisualLocalizer.Library {
             get { return "Context"; }
         }
 
+        public bool ShowContextColumn {
+            get;
+            private set;
+        }
     }
 
    

@@ -22,12 +22,14 @@ namespace VisualLocalizer.Editor.UndoUnits {
             Item.RemoveKind = REMOVEKIND.REMOVE;
 
             RemoveUnit.Redo();
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
             Item.RemoveKind = REMOVEKIND.REMOVE;
 
             RemoveUnit.Undo();
+            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

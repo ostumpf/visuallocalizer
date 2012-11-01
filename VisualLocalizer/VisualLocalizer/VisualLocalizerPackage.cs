@@ -36,8 +36,15 @@ namespace VisualLocalizer
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
     [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false, 
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
-    [ProvideProfile(typeof(SettingsManager),"BatchMoveFilter","Visual Localizer",114,115,false,DescriptionResourceID=116)]
-  
+    
+    [ProvideProfile(typeof(GeneralSettingsManager), "VisualLocalizer", "GeneralSettings", 114, 115, false, DescriptionResourceID = 116)]
+    [ProvideProfile(typeof(FilterSettingsManager), "VisualLocalizer", "FilterSettings", 117, 118, true, DescriptionResourceID = 119,
+        AlternateParent = "VisualLocalizer_GeneralSettings")]
+    [ProvideProfile(typeof(EditorSettingsManager), "VisualLocalizer", "Editor", 127, 128, true, DescriptionResourceID = 129,
+        AlternateParent = "VisualLocalizer_GeneralSettings")]    
+    [ProvideOptionPage(typeof(FilterSettingsManager), "VisualLocalizer", "BatchToolWindows", 123, 124, false)]    
+    [ProvideOptionPage(typeof(EditorSettingsManager), "VisualLocalizer", "Editor", 123, 126, false)]
+
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
     public sealed class VisualLocalizerPackage : Package
     {
@@ -53,14 +60,15 @@ namespace VisualLocalizer
 
         protected override void Initialize() {
             instance = this;
-            
-            base.Initialize();
-            try {                
+                        
+            try {
+                base.Initialize();
+
                 ActivityLogger.Source = "Visual Localizer";                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
                            
                 InitBaseServices();
-                new SettingsManager().LoadSettingsFromStorage();
+                new GeneralSettingsManager().LoadSettingsFromStorage();
 
                 menuManager = new MenuManager();
                 RegisterEditorFactory(new ResXEditorFactory());
@@ -115,5 +123,5 @@ namespace VisualLocalizer
         }
     }
 
-    public enum VS_VERSION {VS2008,VS2010,VS2011,UNKNOWN}
+    public enum VS_VERSION { VS2008, VS2010, VS2011, UNKNOWN }
 }

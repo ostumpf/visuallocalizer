@@ -24,7 +24,7 @@ namespace VisualLocalizer.Gui {
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
         private bool valueAdded = false;
 
-        public BatchMoveToResourcesToolGrid() : base(new DestinationKeyValueConflictResolver()) {                        
+        public BatchMoveToResourcesToolGrid() : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {                        
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -51,6 +51,7 @@ namespace VisualLocalizer.Gui {
             loadedItems.Clear();            
             CheckedRowsCount = 0;
             SuspendLayout();
+            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
 
             foreach (CodeStringResultItem item in value) {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
@@ -86,14 +87,14 @@ namespace VisualLocalizer.Gui {
                 if (destinationCell.Items.Count > 0)
                     destinationCell.Value = destinationCell.Items[0].ToString();
                 row.Cells.Add(destinationCell);
-
+                
                 DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
                 contextCell.Value = item.Context;
                 contextCell.RelativeLine = item.ContextRelativeLine;
                 contextCell.FullText = item.Context;
                 contextCell.SetWrapContents(false);
                 row.Cells.Add(contextCell);
-
+                                    
                 DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
                 row.Cells.Add(cell);
                 Rows.Add(row);

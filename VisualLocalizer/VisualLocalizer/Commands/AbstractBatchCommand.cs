@@ -17,7 +17,7 @@ namespace VisualLocalizer.Commands {
         protected abstract void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
 
-        public virtual void Process() {
+        public virtual void Process(bool verbose) {
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
@@ -30,21 +30,21 @@ namespace VisualLocalizer.Commands {
             currentlyProcessedItem = currentDocument.ProjectItem;
         }
 
-        public virtual void Process(Array selectedItems) {
+        public virtual void Process(Array selectedItems, bool verbose) {
             if (selectedItems == null) throw new ArgumentException("No selected items");
 
             foreach (UIHierarchyItem o in selectedItems) {
                 if (o.Object is ProjectItem) {
                     ProjectItem item = (ProjectItem)o.Object;
-                    Process(item);
+                    Process(item, verbose);
                 } else if (o.Object is Project) {
                     Project proj = (Project)o.Object;
-                    Process(proj);
+                    Process(proj, verbose);
                 } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
             }            
         }
 
-        public virtual void ProcessSelection() {
+        public virtual void ProcessSelection(bool verbose) {
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
@@ -81,19 +81,19 @@ namespace VisualLocalizer.Commands {
             return (startOffset > bottom) || (endOffset <= top);
         }
 
-        protected virtual void Process(Project project) {
+        protected virtual void Process(Project project, bool verbose) {
             if (project.Kind != VSLangProj.PrjKind.prjKindCSharpProject)
                 throw new InvalidOperationException("Selected project is not a C# project.");
 
-            Process(project.ProjectItems);
+            Process(project.ProjectItems, verbose);
         }
 
-        protected virtual void Process(ProjectItems items) {
+        protected virtual void Process(ProjectItems items, bool verbose) {
             if (items == null) return;            
 
             foreach (ProjectItem o in items) {
                 if (VLDocumentViewsManager.IsFileLocked(o.Properties.Item("FullPath").Value.ToString())) {
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", o.Name);
+                    if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", o.Name);
                     continue;
                 }
                 bool ok = true;
@@ -102,20 +102,20 @@ namespace VisualLocalizer.Commands {
                     ok = ok && o.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
                 }
                 if (ok) {
-                    Process(o);
-                    Process(o.ProjectItems);
+                    Process(o, verbose);
+                    Process(o.ProjectItems, verbose);
                 }
             }
         }
 
-        protected virtual void Process(ProjectItem projectItem, Predicate<CodeElement> exploreable) {
+        protected virtual void Process(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
             FileCodeModel2 codeModel = projectItem.FileCodeModel as FileCodeModel2;
             if (codeModel == null) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
                 return;
             }
             currentlyProcessedItem = projectItem;
-            VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
 
             foreach (CodeElement2 codeElement in codeModel.CodeElements) {
                 if (codeElement.Kind == vsCMElement.vsCMElementNamespace || codeElement.Kind == vsCMElement.vsCMElementClass ||
@@ -126,8 +126,8 @@ namespace VisualLocalizer.Commands {
             currentlyProcessedItem = null;
         }
 
-        protected virtual void Process(ProjectItem projectItem) {
-            Process(projectItem, (e) => { return true; });
+        protected virtual void Process(ProjectItem projectItem, bool verbose) {
+            Process(projectItem, (e) => { return true; }, verbose);
         }
 
         protected virtual void Explore(CodeElement2 parentElement, CodeElement2 parentNamespace,Predicate<CodeElement> exploreable, bool isLocalizableFalse) {

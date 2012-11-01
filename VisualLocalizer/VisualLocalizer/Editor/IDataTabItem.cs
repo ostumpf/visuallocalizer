@@ -27,5 +27,6 @@ namespace VisualLocalizer.Editor {
         bool DataReadOnly { get; set; }
         void NotifyDataChanged();
         void NotifyItemsStateChanged();
+        void SetContainingTabPageSelected();
     }
 }

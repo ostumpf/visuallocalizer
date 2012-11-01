@@ -22,7 +22,8 @@ namespace VisualLocalizer.Editor {
         protected KeyValueConflictResolver conflictResolver;
         protected ListViewKeyItem CurrentlyEditedItem;
         protected MenuItem renameContextMenuItem, editCommentContextMenuItem, openContextMenuItem, cutContextMenuItem,
-            copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem;
+            copyContextMenuItem, pasteContextMenuItem, deleteContextMenu, deleteContextMenuItem, deleteExcludeContextMenuItem, 
+            deleteRemoveContextMenuItem;
 
         public AbstractListView(ResXEditorControl editorControl) {
             this.conflictResolver = editorControl.conflictResolver;
@@ -46,30 +47,46 @@ namespace VisualLocalizer.Editor {
             editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
 
             renameContextMenuItem = new MenuItem("Rename");
+            renameContextMenuItem.Shortcut = Shortcut.F2;
             renameContextMenuItem.Click += new EventHandler((o, e) => { SelectedItems[0].BeginEdit(); });
 
             editCommentContextMenuItem = new MenuItem("Edit comment");
+            editCommentContextMenuItem.Shortcut = Shortcut.F3;
             editCommentContextMenuItem.Click += new EventHandler(editCommentContextMenuItem_Click);
 
             openContextMenuItem = new MenuItem("Open");
+            openContextMenuItem.Shortcut = Shortcut.F11;
             openContextMenuItem.Click += new EventHandler(openContextMenuItem_Click);
 
             cutContextMenuItem = new MenuItem("Cut");
+            cutContextMenuItem.Shortcut = Shortcut.CtrlX;
             cutContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCut(); });
 
             copyContextMenuItem = new MenuItem("Copy");
+            copyContextMenuItem.Shortcut = Shortcut.CtrlC;
             copyContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCopy(); });
 
             pasteContextMenuItem = new MenuItem("Paste");
+            pasteContextMenuItem.Shortcut = Shortcut.CtrlV;
             pasteContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecutePaste(); });
 
-            deleteContextMenuItem = new MenuItem("Remove");
-            deleteContextMenuItem.MenuItems.Add("Remove resource(s)", 
-                new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE); }));
-            deleteContextMenuItem.MenuItems.Add("Remove && exclude resource(s)", 
-                new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.EXCLUDE); }));
-            deleteContextMenuItem.MenuItems.Add("Remove && delete resource(s)", 
-                new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.DELETE_FILE | REMOVEKIND.EXCLUDE); }));
+            deleteContextMenu = new MenuItem("Remove");
+
+            deleteContextMenuItem = new MenuItem("Remove resource(s)");
+            deleteContextMenuItem.Shortcut = Shortcut.Del; 
+            deleteContextMenuItem.Click += new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE); });
+
+            deleteExcludeContextMenuItem = new MenuItem("Remove && exclude resource(s)");
+            deleteExcludeContextMenuItem.Click += new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.EXCLUDE); });
+            deleteExcludeContextMenuItem.Shortcut = Shortcut.CtrlE;
+
+            deleteRemoveContextMenuItem = new MenuItem("Remove && delete resource(s)");
+            deleteRemoveContextMenuItem.Click+=new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.DELETE_FILE | REMOVEKIND.EXCLUDE); });
+            deleteRemoveContextMenuItem.Shortcut = Shortcut.ShiftDel;
+
+            deleteContextMenu.MenuItems.Add(deleteContextMenuItem);
+            deleteContextMenu.MenuItems.Add(deleteExcludeContextMenuItem);
+            deleteContextMenu.MenuItems.Add(deleteRemoveContextMenuItem);
 
             ContextMenu contextMenu = new ContextMenu();
             contextMenu.MenuItems.Add(openContextMenuItem);
@@ -80,8 +97,8 @@ namespace VisualLocalizer.Editor {
             contextMenu.MenuItems.Add("-");
             contextMenu.MenuItems.Add(renameContextMenuItem);
             contextMenu.MenuItems.Add(editCommentContextMenuItem);
-            contextMenu.MenuItems.Add("-");            
-            contextMenu.MenuItems.Add(deleteContextMenuItem);
+            contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(deleteContextMenu);
             contextMenu.Popup += new EventHandler(contextMenu_Popup);
             this.ContextMenu = contextMenu;
 
@@ -121,7 +138,7 @@ namespace VisualLocalizer.Editor {
             ListViewKeyItem item = new ListViewKeyItem(this);
             item.Text = key;            
             item.DataNode = value;
-            item.Name = value.FileRef != null ? Path.GetFileName(value.FileRef.FileName) : Path.GetRandomFileName();
+            item.Name = value.FileRef != null ? Path.GetFullPath(value.FileRef.FileName) : Path.GetRandomFileName();
             item.ImageKey = item.Name;            
 
             ListViewItem.ListViewSubItem subKey = new ListViewItem.ListViewSubItem();
@@ -227,6 +244,16 @@ namespace VisualLocalizer.Editor {
             if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
         }
 
+        public void SetContainingTabPageSelected() {
+            TabPage page = Parent as TabPage;
+            if (page == null) return;
+
+            TabControl tabControl = page.Parent as TabControl;
+            if (tabControl == null) return;
+
+            tabControl.SelectedTab = page;
+        }
+
         #endregion
 
         #region protected members - virtual
@@ -249,7 +276,12 @@ namespace VisualLocalizer.Editor {
             commentHeader.Width = 250;
             commentHeader.Name = "Comment";
             this.Columns.Add(commentHeader);
-        }        
+        }
+
+        protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e) {
+            contextMenu_Popup(null, null);
+            base.OnPreviewKeyDown(e);
+        }
 
         #endregion
 
@@ -272,7 +304,7 @@ namespace VisualLocalizer.Editor {
         public void ListItemKeyRenamed(ListViewKeyItem item) {
             ListViewRenameKeyUndoUnit unit = new ListViewRenameKeyUndoUnit(this, item, item.BeforeEditValue, item.AfterEditValue);
             editorControl.Editor.AddUndoUnit(unit);
-        }
+        }      
 
         #endregion
 
@@ -297,6 +329,7 @@ namespace VisualLocalizer.Editor {
                 item.SubItems["Comment"].Text = win.Comment;
 
                 NotifyDataChanged();
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", item.Key);
             }
         }
 
@@ -309,17 +342,18 @@ namespace VisualLocalizer.Editor {
 
             Window win = VisualLocalizerPackage.Instance.DTE.OpenFile(null, item.DataNode.FileRef.FileName);
             if (win != null) win.Activate();
+
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Opened resource file \"{0}\"", item.DataNode.FileRef.FileName);
         }        
 
         protected void contextMenu_Popup(object sender, EventArgs e) {
-            renameContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly;
-            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly;
-            openContextMenuItem.Enabled = SelectedItems.Count == 1;
+            renameContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly && !IsEditing;
+            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly && !IsEditing; ;
+            openContextMenuItem.Enabled = SelectedItems.Count == 1 && !IsEditing;
+            deleteContextMenu.Enabled = SelectedItems.Count >= 1 && !DataReadOnly && !IsEditing;
 
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            deleteContextMenuItem.Enabled = SelectedItems.Count >= 1 && !DataReadOnly;
-
+            copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
         }
 
@@ -349,6 +383,7 @@ namespace VisualLocalizer.Editor {
 
                 Validate(item);
                 NotifyDataChanged();
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", item.BeforeEditValue, item.AfterEditValue);
             }
             CurrentlyEditedItem = null;
             NotifyItemsStateChanged();
@@ -401,8 +436,10 @@ namespace VisualLocalizer.Editor {
                         ItemsRemoved(removedItems);
                         NotifyItemsStateChanged();
                         NotifyDataChanged();
+
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("Removed {0} resource files", removedItems.Count);
                     }
-                }
+                }                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

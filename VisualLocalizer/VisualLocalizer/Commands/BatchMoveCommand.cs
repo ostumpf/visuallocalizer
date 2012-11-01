@@ -17,31 +17,31 @@ namespace VisualLocalizer.Commands {
             private set;
         }
 
-        public override void Process() {
-            base.Process();
+        public override void Process(bool verbose) {
+            base.Process(verbose);
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");            
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");            
 
             Results = new List<CodeStringResultItem>();
 
-            Process(currentlyProcessedItem);
+            Process(currentlyProcessedItem, verbose);
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });            
             Results.ForEach((item) => {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
             });
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
-        public override void ProcessSelection() {
-            base.ProcessSelection();
+        public override void ProcessSelection(bool verbose) {
+            base.ProcessSelection(verbose);
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on text selection of active document ");
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on text selection of active document ");
 
             Results = new List<CodeStringResultItem>();
 
-            Process(currentlyProcessedItem, IntersectsWithSelection);
+            Process(currentlyProcessedItem, IntersectsWithSelection, verbose);
 
             Results.RemoveAll((item) => {
                 bool empty = item.Value.Trim().Length == 0;
@@ -51,21 +51,21 @@ namespace VisualLocalizer.Commands {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
             });
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
-        public override void Process(Array selectedItems) {
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on selected items from Solution Explorer");
+        public override void Process(Array selectedItems, bool verbose) {
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on selected items from Solution Explorer");
             Results = new List<CodeStringResultItem>();
             
-            base.Process(selectedItems);
+            base.Process(selectedItems, verbose);
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
             Results.ForEach((item) => {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
             });
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
         }
 
         protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,

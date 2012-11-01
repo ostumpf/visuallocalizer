@@ -23,7 +23,7 @@ namespace VisualLocalizer.Gui {
             nameOk = true;
 
             formatBox.Items.Add(new FormatBoxItem() { Text = "PNG", Value = System.Drawing.Imaging.ImageFormat.Png, Extensions = new string[] { ".png" } });
-            formatBox.Items.Add(new FormatBoxItem() { Text = "JPEG", Value = System.Drawing.Imaging.ImageFormat.Jpeg, Extensions = new string[] { ".jpeg", ".jpg" } });
+            formatBox.Items.Add(new FormatBoxItem() { Text = "JPEG", Value = System.Drawing.Imaging.ImageFormat.Jpeg, Extensions = new string[] { ".jpg", ".jpeg" } });
             formatBox.Items.Add(new FormatBoxItem() { Text = "GIF", Value = System.Drawing.Imaging.ImageFormat.Gif, Extensions = new string[] { ".gif" } });
             formatBox.Items.Add(new FormatBoxItem() { Text = "TIFF", Value = System.Drawing.Imaging.ImageFormat.Tiff, Extensions = new string[] { ".tiff", ".tif" } });
             formatBox.Items.Add(new FormatBoxItem() { Text = "BMP", Value = System.Drawing.Imaging.ImageFormat.Bmp, Extensions = new string[] { ".bmp" } });

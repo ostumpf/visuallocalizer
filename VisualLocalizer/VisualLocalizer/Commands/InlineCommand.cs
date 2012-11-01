@@ -35,7 +35,7 @@ namespace VisualLocalizer.Commands {
                         inlineSpan.iStartIndex + text.Length);
                     Marshal.ThrowExceptionForHR(hr);
 
-                    CreateInlineUndoUnit(resultItem.ReferenceText);                    
+                    CreateInlineUndoUnit(resultItem.FullReferenceText);                    
                 } catch (Exception) {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Exception caught, rolling back...");
                     
@@ -86,7 +86,7 @@ namespace VisualLocalizer.Commands {
             List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(1);
             unitsRemoved = true;
 
-            InlineUndoUnit newUnit = new InlineUndoUnit(key);
+            InlineUndoUnit newUnit = new InlineUndoUnit(key, false);
             newUnit.AppendUnits.AddRange(units);
             undoManager.Add(newUnit);
 

@@ -9,25 +9,25 @@ using VisualLocalizer.Library;
 using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
-    internal sealed class BatchInlineCommand : AbstractBatchCommand {
+    internal class BatchInlineCommand : AbstractBatchCommand {
 
         public List<CodeReferenceResultItem> Results {
             get;
-            private set;
+            protected set;
         }
         private Dictionary<Project, Trie<CodeReferenceTrieElement>> trieCache = new Dictionary<Project, Trie<CodeReferenceTrieElement>>();
-        private Dictionary<CodeElement, NamespacesList> codeUsingsCache = new Dictionary<CodeElement, NamespacesList>();
+        protected Dictionary<CodeElement, NamespacesList> codeUsingsCache = new Dictionary<CodeElement, NamespacesList>();
 
-        public override void Process() {
-            base.Process();            
+        public override void Process(bool verbose) {
+            base.Process(verbose);            
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on active document... ");
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on active document... ");
             if (currentlyProcessedItem.Document.ReadOnly)
                 throw new Exception("Cannot perform this operation - active document is readonly");
 
             Results = new List<CodeReferenceResultItem>();
 
-            Process(currentlyProcessedItem);
+            Process(currentlyProcessedItem, verbose);
 
             Results.ForEach((item) => {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
@@ -35,14 +35,14 @@ namespace VisualLocalizer.Commands {
 
             trieCache.Clear();
             codeUsingsCache.Clear();
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
-        public override void Process(Array selectedItems) {            
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on selection");
+        public override void Process(Array selectedItems, bool verbose) {            
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on selection");
             Results = new List<CodeReferenceResultItem>();
 
-            base.Process(selectedItems);
+            base.Process(selectedItems, verbose);
 
             Results.ForEach((item) => {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
@@ -50,17 +50,17 @@ namespace VisualLocalizer.Commands {
 
             trieCache.Clear();
             codeUsingsCache.Clear();
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline completed - found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline completed - found {0} items to be moved", Results.Count);
         }
 
-        public override void ProcessSelection() {
-            base.ProcessSelection();
+        public override void ProcessSelection(bool verbose) {
+            base.ProcessSelection(verbose);
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on text selection of active document ");
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on text selection of active document ");
 
             Results = new List<CodeReferenceResultItem>();
 
-            Process(currentlyProcessedItem, IntersectsWithSelection);
+            Process(currentlyProcessedItem, IntersectsWithSelection, verbose);
 
             Results.RemoveAll((item) => {
                 bool empty = item.Value.Trim().Length == 0;
@@ -70,10 +70,10 @@ namespace VisualLocalizer.Commands {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
             });
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
-        private Trie<CodeReferenceTrieElement> PutResourceFilesInCache() {
+        protected Trie<CodeReferenceTrieElement> PutResourceFilesInCache() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
                 var resxItems = currentlyProcessedItem.GetResXItemsAround(false);
                 trieCache.Add(currentlyProcessedItem.ContainingProject, resxItems.CreateTrie());
@@ -81,7 +81,7 @@ namespace VisualLocalizer.Commands {
             return trieCache[currentlyProcessedItem.ContainingProject]; 
         }
 
-        private NamespacesList PutCodeUsingsInCache(CodeElement parentNamespace, CodeElement codeClassOrStruct) {
+        protected NamespacesList PutCodeUsingsInCache(CodeElement parentNamespace, CodeElement codeClassOrStruct) {
             if (parentNamespace == null) {
                 if (!codeUsingsCache.ContainsKey(codeClassOrStruct)) {
                     codeUsingsCache.Add(codeClassOrStruct, (null as CodeNamespace).GetUsedNamespaces(currentlyProcessedItem));

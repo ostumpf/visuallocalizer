@@ -5,6 +5,8 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Resources;
 using VisualLocalizer.Library;
+using VisualLocalizer.Commands;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -19,17 +21,45 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         public ResXStringGridRow SourceRow { get; private set; }
         public ResXStringGrid Grid { get; private set; }
-
-        public override void Undo() {
-            ChangeColumnValue(NewKey, OldKey);
+       
+        public override void Undo() {                       
+            UpdateSourceReferences(NewKey, OldKey);
         }
 
         public override void Redo() {
-            ChangeColumnValue(OldKey, NewKey);
+            UpdateSourceReferences(OldKey, NewKey);
+        }
+
+        private void UpdateSourceReferences(string from, string to) {
+            try {                
+                Grid.ReferenceCounterThreadSuspended = true;
+                Grid.UpdateReferencesCount(SourceRow);
+
+                ChangeColumnValue(from, to);
+
+                if (SourceRow.ErrorSet.Count == 0) {
+                    int errors = 0;
+                    int count = SourceRow.CodeReferences.Count;
+                    SourceRow.CodeReferences.ForEach((item) => { item.KeyAfterRename = to; });
+
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(SourceRow.CodeReferences);
+                    replacer.Inline(SourceRow.CodeReferences, true, ref errors);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                }
+                
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                Grid.ReferenceCounterThreadSuspended = false;
+            }
         }
 
         private void ChangeColumnValue(string from, string to) {
-            if (!string.IsNullOrEmpty(to)) {
+            if (!string.IsNullOrEmpty(to)) {                
                 SourceRow.DataSourceItem.Name = to;
                 SourceRow.Status = ResXStringGridRow.STATUS.OK;
             } else {
@@ -39,6 +69,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
             SourceRow.Cells[Grid.KeyColumnName].Value = to;
             Grid.ValidateRow(SourceRow);
             Grid.NotifyDataChanged();
+            Grid.SetContainingTabPageSelected();
+
+            if (SourceRow.ErrorSet.Count == 0) SourceRow.LastValidKey = to;
         }
     }
 }

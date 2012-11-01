@@ -35,6 +35,7 @@ namespace VisualLocalizer.Gui {
         }
 
         public int OnShow(int fShow) {
+            //VisualLocalizer.Library.MessageBox.Show(VisualLocalizerPackage.VisualStudioVersion.ToString() + " " + fShow + " " + prevfShow);
             if (VisualLocalizerPackage.VisualStudioVersion == VS_VERSION.VS2008) {
                 if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow != (int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
                     if (WindowHidden != null) WindowHidden(this, null);
