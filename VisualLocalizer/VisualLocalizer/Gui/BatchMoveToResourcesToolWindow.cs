@@ -26,7 +26,7 @@ namespace VisualLocalizer.Gui {
     internal sealed class BatchMoveToResourcesToolWindow : AbstractCodeToolWindow<BatchMoveToResourcesToolPanel> {
         
         private readonly string[] NAMESPACE_POLICY_ITEMS = { "Add using block if neccessary", "Use full class name" };
-        private readonly string[] REMEMBER_OPTIONS = { "(None)", "Mark with " + StringConstants.NoLocalizationComment };
+        private readonly string[] REMEMBER_OPTIONS = { "(None)", "Mark with " + StringConstants.LocalizationComment };
         private string currentNamespacePolicy,currentRememberOption;
         private CommandID runCommandID;
         private OleMenuCommandService menuService;        
@@ -56,6 +56,12 @@ namespace VisualLocalizer.Gui {
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRememberUncheckedListID,
                 new EventHandler(getRememberOptionsItems), null, menuService);
 
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRestoreUncheckedID,
+                new EventHandler(restoreUnchecked), null, menuService);
+
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRemoveUncheckedID,
+                new EventHandler(removeUnchecked), null, menuService);
+
             OleMenuCommand cmd = MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRememberUncheckedID,
                 new EventHandler(handleRememberOptionCommand), null, menuService);            
           
@@ -70,7 +76,15 @@ namespace VisualLocalizer.Gui {
             OleMenuCommand cmd = sender as OleMenuCommand;
             panel.FilterVisible = !panel.FilterVisible;            
             cmd.Text = panel.FilterVisible ? "Hide filter" : "Show filter";            
-        } 
+        }
+
+        private void removeUnchecked(object sender, EventArgs e) {
+            panel.ToolGrid.RemoveUncheckedRows(true);
+        }
+
+        private void restoreUnchecked(object sender, EventArgs e) {
+            panel.ToolGrid.RestoreRemovedRows();
+        }
 
         protected override void OnWindowHidden(object sender, EventArgs e) {
             panel.ToolGrid.Unload();

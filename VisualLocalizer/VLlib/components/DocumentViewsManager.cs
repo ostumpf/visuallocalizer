@@ -54,22 +54,26 @@ namespace VisualLocalizer.Library {
             IVsWindowFrame frame = GetWindowFrameForFile(file, forceOpen);
             if (frame != null) {
                 IVsTextLines lines = null;
-
+                
                 object docData;
                 int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
                 Marshal.ThrowExceptionForHR(hr);
 
-                var buffer = docData as VsTextBuffer;
-
-                if (buffer == null) {
+                lines = docData as IVsTextLines;
+                if (lines == null) {
                     var bufferProvider = docData as IVsTextBufferProvider;
 
                     if (bufferProvider != null) {
                         hr = bufferProvider.GetTextBuffer(out lines);
                         Marshal.ThrowExceptionForHR(hr);
                     }
-                } else {
-                    lines = (IVsTextLines)buffer;
+                }
+                if (lines == null) {
+                    IVsTextView view = VsShellUtilities.GetTextView(frame);
+                    if (view != null) {
+                        hr = view.GetBuffer(out lines);
+                        Marshal.ThrowExceptionForHR(hr);
+                    }
                 }
 
                 return lines;

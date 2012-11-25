@@ -20,13 +20,21 @@ namespace VisualLocalizer.Gui {
         private Color errorColor = Color.FromArgb(255, 200, 200);
         private Color existingKeyColor = Color.FromArgb(213, 255, 213);
         private CONTAINS_KEY_RESULT keyConflict;
+        
+        private CodeStringResultItem resultItem;
+        private ReferenceString referenceText;
 
-        public SelectResourceFileForm(List<string> keys, string value,Project project) {
+        public SelectResourceFileForm(Project project, CodeStringResultItem resultItem) {
             InitializeComponent();
+            this.resultItem = resultItem;
+            this.referenceText = new ReferenceString();
 
-            keyBox.Items.AddRange(keys.ToArray());
+            foreach (string s in resultItem.GetKeyNameSuggestions())
+                keyBox.Items.Add(s);
+
             keyBox.SelectedIndex = 0;
-            valueBox.Text = value;            
+           
+            valueBox.Text = resultItem.Value;            
 
             List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
             List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
@@ -131,11 +139,16 @@ namespace VisualLocalizer.Gui {
 
                 ok = ident && !overwriteButton.Visible;
 
-                if (!usingBox.Checked) {
-                    referenceLabel.Text = item.Namespace + "." + item.Class + "." + keyBox.Text;
-                } else
-                    referenceLabel.Text = item.Class + "." + keyBox.Text;
+                referenceText.ClassPart = item.Class;
+                referenceText.KeyPart = keyBox.Text;
 
+                if (!usingBox.Checked || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    referenceText.NamespacePart = item.Namespace;
+                } else {
+                    referenceText.NamespacePart = null;
+                }
+
+                referenceLabel.Text = resultItem.GetReferenceText(referenceText);
             }
 
             okButton.Enabled = ok;

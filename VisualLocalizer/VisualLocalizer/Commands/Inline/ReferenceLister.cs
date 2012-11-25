@@ -7,6 +7,9 @@ using EnvDTE80;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using System.Resources;
+using VisualLocalizer.Extensions;
+using System.Collections;
+using VisualLocalizer.Components.AspxParser;
 
 namespace VisualLocalizer.Commands {
     internal sealed class ReferenceLister : BatchInlineCommand {
@@ -15,6 +18,9 @@ namespace VisualLocalizer.Commands {
 
         public void Process(List<Project> projects, Trie<CodeReferenceTrieElement> trie) {
             this.trie = trie;
+            searchedProjectItems.Clear();
+            configurations.Clear();
+
             Results = new List<CodeReferenceResultItem>();            
 
             foreach (Project project in projects) {
@@ -40,11 +46,7 @@ namespace VisualLocalizer.Commands {
             if (items == null) return;
 
             foreach (ProjectItem o in items) {
-                bool ok = true;
-                for (short i = 0; i < o.FileCount; i++) {
-                    ok = ok && o.get_FileNames(i).ToLowerInvariant().EndsWith(StringConstants.CsExtension);
-                    ok = ok && o.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
-                }
+                bool ok = o.CanShowCodeContextMenu();
                 if (ok) {
                     Process(o, verbose);
                     Process(o.ProjectItems, verbose);
@@ -56,17 +58,8 @@ namespace VisualLocalizer.Commands {
             Process(project.ProjectItems, false);
         }
 
-        protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, 
-            CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
-            NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
-
-            CodeReferenceLookuper lookuper = new CodeReferenceLookuper(functionText, startPoint,
-                trie, usedNamespaces, parentNamespace, isWithinLocFalse, currentlyProcessedItem.ContainingProject);
-            lookuper.SourceItem = currentlyProcessedItem;
-
-            var list = lookuper.LookForReferences();            
-            Results.AddRange(list);
+        protected override Trie<CodeReferenceTrieElement> GetActualTrie() {
+            return trie;
         }
-        
     }
 }

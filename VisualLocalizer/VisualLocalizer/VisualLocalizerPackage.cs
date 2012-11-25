@@ -20,8 +20,8 @@ using VisualLocalizer.Settings;
 namespace VisualLocalizer
 {
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [DefaultRegistryRoot("Software\\Microsoft\\VisualStudio\\9.0")]
-    [InstalledProductRegistration(false, "#110", "#112", "1.0", IconResourceID = 400)]
+    [DefaultRegistryRoot("Software\\Microsoft\\VisualStudio\\9.0")]    
+    [InstalledProductRegistration(true, "#110", "#112", "1.0", IconResourceID = 400,LanguageIndependentName="Visual Localizer")]
     [ProvideLoadKey("Standard", "1.0", "Visual Localizer", "Ondrej Stumpf", 111)]
     [ProvideMenuResource(1000, 1)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]  
@@ -46,7 +46,7 @@ namespace VisualLocalizer
     [ProvideOptionPage(typeof(EditorSettingsManager), "VisualLocalizer", "Editor", 123, 126, false)]
 
     [Guid("68c95c48-9295-49a0-a2ed-81da6e651374")]
-    public sealed class VisualLocalizerPackage : Package
+    public sealed class VisualLocalizerPackage : Package,IVsInstalledProduct
     {
         internal MenuManager menuManager;
         internal EnvDTE80.DTE2 DTE;
@@ -80,7 +80,7 @@ namespace VisualLocalizer
             }
         }
 
-        private void InitBaseServices() {
+        private void InitBaseServices() {           
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
@@ -120,6 +120,31 @@ namespace VisualLocalizer
                 }
                 return version.Value;
             }
+        }
+
+        public int IdBmpSplash(out uint pIdBmp) {
+            pIdBmp = 400;
+            return VSConstants.S_OK;
+        }
+
+        public int IdIcoLogoForAboutbox(out uint pIdIco) {
+            pIdIco = 400;
+            return VSConstants.S_OK;
+        }
+
+        public int OfficialName(out string pbstrName) {
+            pbstrName = "Visual Localizer";
+            return VSConstants.S_OK;
+        }
+
+        public int ProductDetails(out string pbstrProductDetails) {
+            pbstrProductDetails = "Tool for advanced manipulation with resources.";
+            return VSConstants.S_OK;
+        }
+
+        public int ProductID(out string pbstrPID) {
+            pbstrPID = "1.0";
+            return VSConstants.S_OK;
         }
     }
 

@@ -20,12 +20,14 @@ namespace VisualLocalizer.Commands {
 
         public override void Process() {
             base.Process();
+            if (currentCodeModel == null)
+                throw new Exception("Current document has no CodeModel.");
 
             CodeReferenceResultItem resultItem = GetCodeReferenceResultItem();
             if (resultItem != null) {
                 try {
                     TextSpan inlineSpan = resultItem.ReplaceSpan;
-                    string text = "\"" + resultItem.Value.ConvertUnescapeSequences() + "\"";
+                    string text = "\"" + resultItem.Value.ConvertCSharpUnescapeSequences() + "\"";
 
                     int hr = textLines.ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
                         Marshal.StringToBSTR(text), text.Length, null);
@@ -64,20 +66,20 @@ namespace VisualLocalizer.Commands {
 
             if (ok) {
                 CodeNamespace codeNamespace = codeClass.GetNamespace();
-                CodeReferenceLookuper lookuper = new CodeReferenceLookuper(text, startPoint,
-                    currentDocument.ProjectItem.GetResXItemsAround(false).CreateTrie(),
-                    codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), codeNamespace, false, currentDocument.ProjectItem.ContainingProject);
-                List<CodeReferenceResultItem> items = lookuper.LookForReferences();
+                /*   CodeReferenceLookuper lookuper = new CodeReferenceLookuper(text, startPoint,
+                       currentDocument.ProjectItem.GetResXItemsAround(false).CreateTrie(),
+                       codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), codeNamespace, false, currentDocument.ProjectItem.ContainingProject);
+                   List<CodeReferenceResultItem> items = lookuper.LookForReferences();
 
-                foreach (CodeReferenceResultItem item in items) {
-                    if (item.ReplaceSpan.Contains(selectionSpan)) {
-                        result = item;
-                        result.SourceItem = currentDocument.ProjectItem;
-                        break;
-                    }
-                }
+                   foreach (CodeReferenceResultItem item in items) {
+                       if (item.ReplaceSpan.Contains(selectionSpan)) {
+                           result = item;
+                           result.SourceItem = currentDocument.ProjectItem;
+                           break;
+                       }
+                   }
+               }*/
             }
-
             return result;
         }
 

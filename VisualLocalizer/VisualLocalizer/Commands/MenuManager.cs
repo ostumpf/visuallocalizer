@@ -13,20 +13,23 @@ using VisualLocalizer.Library;
 using Microsoft.VisualStudio.Shell.Interop;
 using VisualLocalizer.Gui;
 using Microsoft.VisualStudio;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
     internal sealed class MenuManager {
 
-        private MoveToResourcesCommand moveToResourcesCommand;
+        private CSharpMoveToResourcesCommand csharpMoveToResourcesCommand;
+        private AspNetMoveToResourcesCommand aspNetMoveToResourcesCommand;
         private InlineCommand inlineCommand;
         private BatchMoveCommand batchMoveCommand;
         private BatchInlineCommand batchInlineCommand;
 
-        public MenuManager() {            
-            this.moveToResourcesCommand = new MoveToResourcesCommand();
+        public MenuManager() {
             this.inlineCommand = new InlineCommand();
             this.batchMoveCommand = new BatchMoveCommand();
             this.batchInlineCommand = new BatchInlineCommand();
+            this.csharpMoveToResourcesCommand = new CSharpMoveToResourcesCommand();
+            this.aspNetMoveToResourcesCommand = new AspNetMoveToResourcesCommand();            
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.CodeMenu, null,
@@ -36,7 +39,7 @@ namespace VisualLocalizer.Commands {
                 PackageCommandIDs.SolExpMenu, null,
                 new EventHandler(solExpMenuQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
-            ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
+           ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.MoveCodeMenuItem,
                 new EventHandler(moveToResourcesClick), null, VisualLocalizerPackage.Instance.menuService);
 
@@ -93,11 +96,13 @@ namespace VisualLocalizer.Commands {
         }      
 
         private void codeMenuQueryStatus(object sender, EventArgs args) {
-            bool ok = VisualLocalizerPackage.Instance.DTE.ActiveDocument.FullName.ToLowerInvariant().EndsWith(StringConstants.CsExtension);
-            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem != null;
-            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject != null;
-            ok = ok && VisualLocalizerPackage.Instance.DTE.ActiveDocument.ProjectItem.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
-            (sender as OleMenuCommand).Supported = ok;
+            Document doc=VisualLocalizerPackage.Instance.DTE.ActiveDocument;
+            
+            OleMenuCommand cmd=(OleMenuCommand)sender;
+            bool supported=doc.ProjectItem.CanShowCodeContextMenu();
+            
+            cmd.Supported = supported;
+            cmd.Visible = supported;
         }
 
         private void selectionCodeQueryStatus(object sender, EventArgs args) {
@@ -122,17 +127,14 @@ namespace VisualLocalizer.Commands {
         private void solExpMenuQueryStatus(object sender, EventArgs args) {
             Array selectedItems = (Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems;
             bool ok = selectedItems.Length > 0;
-
+      
             foreach (UIHierarchyItem o in selectedItems) {
                 if (o.Object is ProjectItem) {
-                    ProjectItem item = (ProjectItem)o.Object;
-                    for (short i = 0; i < item.FileCount; i++) {
-                        ok = ok && item.get_FileNames(i).ToLowerInvariant().EndsWith(StringConstants.CsExtension);
-                        ok = ok && item.ContainingProject.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
-                    }
+                    ProjectItem item = (ProjectItem)o.Object;                    
+                    ok = ok && item.CanShowCodeContextMenu();
                 } else if (o.Object is Project) {
                     Project proj = (Project)o.Object;
-                    ok = ok && proj.Kind == VSLangProj.PrjKind.prjKindCSharpProject;
+                    ok = ok && proj.IsKnownProjectType();
                 } else throw new Exception("Unexpected project item type: "+o.Object.GetVisualBasicType());               
             }
 
@@ -141,7 +143,12 @@ namespace VisualLocalizer.Commands {
       
         private void moveToResourcesClick(object sender, EventArgs args) {
             try {
-                moveToResourcesCommand.Process();
+                Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
+                if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
+                    aspNetMoveToResourcesCommand.Process();
+                } else {
+                    csharpMoveToResourcesCommand.Process();
+                }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

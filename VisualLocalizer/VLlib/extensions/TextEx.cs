@@ -50,62 +50,11 @@ namespace VisualLocalizer.Library {
             return !char.IsControl(c) && c != '\\' && c != '\"';
         }
 
-        public static List<string> CreateKeySuggestions(this string value, string namespaceElement, string classElement, string methodElement) {
-            List<string> suggestions = new List<string>();
-
-            StringBuilder builder1 = new StringBuilder();
-            StringBuilder builder2 = new StringBuilder();
-            bool upper = true;
-
-            foreach (char c in value)
-                if (c.CanBePartOfIdentifier()) {
-                    if (upper) {
-                        builder1.Append(char.ToUpperInvariant(c));
-                    } else {
-                        builder1.Append(c);
-                    }
-                    builder2.Append(c);
-                    upper = false;
-                } else {
-                    upper = true;
-                    builder2.Append('_');
-                }
-            
-            string valueKey1 = builder1.ToString();            
-            string valueKey2 = builder2.ToString();
-
-            suggestions.Add(valueKey1);
-            suggestions.Add(valueKey2);
-
-            suggestions.Add(methodElement);
-
-            suggestions.Add(methodElement + "_" + valueKey1);
-            suggestions.Add(methodElement + "_" + valueKey2);
-
-            suggestions.Add(classElement + "_" + valueKey1);
-            suggestions.Add(classElement + "_" + valueKey2);
-
-            suggestions.Add(classElement + "_" + methodElement + "_" + valueKey1);
-            suggestions.Add(classElement + "_" + methodElement + "_" + valueKey2);
-
-            if (namespaceElement != null) {
-                string nmspc = namespaceElement.Replace('.', '_');
-                
-                suggestions.Add(nmspc + "_" + classElement + "_" + methodElement + "_" + valueKey1);
-                suggestions.Add(nmspc + "_" + classElement + "_" + methodElement + "_" + valueKey2);
-
-                suggestions.Add(nmspc + "_" + methodElement + "_" + valueKey1);
-                suggestions.Add(nmspc + "_" + methodElement + "_" + valueKey2);
-            }
-
-            for (int i = 0; i < suggestions.Count; i++)
-                if (!csharp.IsValidIdentifier(suggestions[i]))
-                    suggestions[i] = "_" + suggestions[i];
-
-            return suggestions;
+        public static string ConvertAspNetUnescapeSequences(this string text) {
+            return text.Replace("\"", "&quot;");
         }
 
-        public static string ConvertUnescapeSequences(this string text) {
+        public static string ConvertCSharpUnescapeSequences(this string text) {
             StringBuilder b = new StringBuilder();
 
             foreach (char c in text) {
@@ -132,7 +81,7 @@ namespace VisualLocalizer.Library {
             return b.ToString();
         }
 
-        public static string ConvertEscapeSequences(this string text,bool isVerbatim) {
+        public static string ConvertCSharpEscapeSequences(this string text,bool isVerbatim) {
             string resultText;
             if (isVerbatim) {
                 resultText = text.Replace("\"\"", "\"");                
@@ -231,6 +180,12 @@ namespace VisualLocalizer.Library {
             if (!ident.IsValidIdentifier()) ident = "_" + ident;
 
             return ident;
+        }
+
+        public static bool EndsWithAny(this string text, string[] extensions) {
+            foreach (string ext in extensions)
+                if (text.EndsWith(ext)) return true;
+            return false;
         }
     }
 }

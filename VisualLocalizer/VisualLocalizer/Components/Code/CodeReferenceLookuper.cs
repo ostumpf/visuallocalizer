@@ -5,19 +5,26 @@ using System.Text;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using EnvDTE;
+using VisualLocalizer.Components.AspxParser;
 
 namespace VisualLocalizer.Components {
-    internal class CodeReferenceLookuper : AbstractCodeLookuper {
+    internal class CodeReferenceLookuper<T> : AbstractCodeLookuper where T:CodeReferenceResultItem, new() {
 
-        public CodeReferenceLookuper(string text, TextPoint startPoint, Trie<CodeReferenceTrieElement> Trie,
-            NamespacesList usedNamespaces, CodeNamespace codeNamespace, bool isWithinLocFalse,Project project) {
+        public CodeReferenceLookuper(string text, TextPoint startPoint, Trie<CodeReferenceTrieElement> Trie, NamespacesList usedNamespaces, bool isWithinLocFalse, Project project)
+        : this(text, startPoint.LineCharOffset - 1, startPoint.Line, startPoint.AbsoluteCharOffset + startPoint.Line - 2, Trie, usedNamespaces, isWithinLocFalse, project) 
+        {}
+
+        public CodeReferenceLookuper(string text, BlockSpan blockSpan, Trie<CodeReferenceTrieElement> Trie, NamespacesList usedNamespaces, Project project)
+            : this(text, blockSpan.StartIndex-1, blockSpan.StartLine, blockSpan.AbsoluteCharOffset, Trie, usedNamespaces, false, project) { }
+
+        protected CodeReferenceLookuper(string text, int currentIndex, int currentLine, int currentOffset, 
+            Trie<CodeReferenceTrieElement> Trie, NamespacesList usedNamespaces, bool isWithinLocFalse, Project project) {
             this.text = text;
-            this.CurrentIndex = startPoint.LineCharOffset - 1;
-            this.CurrentLine = startPoint.Line;
-            this.CurrentAbsoluteOffset = startPoint.AbsoluteCharOffset + startPoint.Line - 2;
+            this.CurrentIndex = currentIndex;
+            this.CurrentLine = currentLine;
+            this.CurrentAbsoluteOffset = currentOffset;
             this.Trie = Trie;
             this.UsedNamespaces = usedNamespaces;
-            this.CodeNamespace = codeNamespace;
             this.IsWithinLocFalse = isWithinLocFalse;
             this.Project = project;
         }
@@ -29,9 +36,8 @@ namespace VisualLocalizer.Components {
         protected int ReferenceStartIndex { get; set; }
         protected int ReferenceStartOffset { get; set; }
         protected int AbsoluteReferenceLength { get; set; }
-        protected CodeNamespace CodeNamespace { get; set; }
-
-        public List<CodeReferenceResultItem> LookForReferences() {
+        
+        public List<T> LookForReferences() {
             bool insideComment = false, insideString = false, isVerbatimString = false;
             bool skipLine = false;
             currentChar = '?';
@@ -39,7 +45,7 @@ namespace VisualLocalizer.Components {
             previousPreviousChar = '?';
             previousPreviousPreviousChar = '?';
             stringStartChar = '?';
-            List<CodeReferenceResultItem> list = new List<CodeReferenceResultItem>();
+            List<T> list = new List<T>();
             CodeReferenceTrieElement currentElement = Trie.Root; 
             StringBuilder prefixBuilder = new StringBuilder();
             string prefix = null;
@@ -123,7 +129,7 @@ namespace VisualLocalizer.Components {
             return nfo;
         }
 
-        protected void AddResult(List<CodeReferenceResultItem> list, string referenceText,string prefix, List<CodeReferenceInfo> trieElementInfos) {            
+        protected virtual T AddResult(List<T> list, string referenceText,string prefix, List<CodeReferenceInfo> trieElementInfos) {            
             CodeReferenceInfo info = null;
             string[] t = referenceText.Split('.');
             if (t.Length != 2) throw new Exception("Code parse error.");
@@ -134,13 +140,13 @@ namespace VisualLocalizer.Components {
 
                 if (item != null) {
                     info = GetInfoWithNamespace(trieElementInfos, item.Namespace);
-                    if (info == null) return;
+                    if (info == null) return null;
                 }
             } else {
                 string aliasNamespace = UsedNamespaces.GetNamespace(prefix);
                 if (!string.IsNullOrEmpty(aliasNamespace)) {
                     info = GetInfoWithNamespace(trieElementInfos, aliasNamespace);
-                    if (info == null) return;                    
+                    if (info == null) return null;                    
                 } else {
                     foreach (var i in trieElementInfos)
                         if (i.Origin.Namespace == prefix) {
@@ -150,10 +156,10 @@ namespace VisualLocalizer.Components {
 
                     if (info == null) {
                         UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(prefix + "." + referenceClass, Project);
-                        if (item == null) return;
+                        if (item == null) return null;
 
                         info = GetInfoWithNamespace(trieElementInfos, item.Namespace + "." + prefix);
-                        if (info == null) return;                                 
+                        if (info == null) return null;                                 
                     }
                 }                
             }
@@ -165,7 +171,7 @@ namespace VisualLocalizer.Components {
                 span.iEndLine = CurrentLine - 1;
                 span.iEndIndex = CurrentIndex + 1;
 
-                var resultItem = new CodeReferenceResultItem();
+                var resultItem = new T();
                 resultItem.Value = info.Value;
                 resultItem.SourceItem = this.SourceItem;
                 resultItem.ReplaceSpan = span;
@@ -183,6 +189,8 @@ namespace VisualLocalizer.Components {
                 }
 
                 list.Add(resultItem);
+
+                return resultItem;
             } else throw new Exception("Cannot determine reference target.");
         }
         

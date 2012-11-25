@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
+using VisualLocalizer.Extensions;
 using System.Resources;
 using System.Collections;
 using VSLangProj;
@@ -167,7 +168,14 @@ namespace VisualLocalizer.Editor {
         public bool HasDesignerClass {
             get {                                
                 if (ProjectItem != null && ProjectItem.Properties!=null) {
-                    return !string.IsNullOrEmpty((string)ProjectItem.Properties.Item("CustomToolOutput").Value);
+                    if (ProjectItem.ContainingProject != null && 
+                        ProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject)  {
+                        string relative = (string)ProjectItem.Properties.Item("RelativeURL").Value;
+                        
+                        return !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);                        
+                    } else {
+                        return !string.IsNullOrEmpty((string)ProjectItem.Properties.Item("CustomToolOutput").Value);
+                    }
                 } else return false;
             }
         }

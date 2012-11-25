@@ -33,5 +33,49 @@ namespace VisualLocalizer.Extensions {
             trie.CreatePredecessorsAndShortcuts();
             return trie;
         }
+
+        public static bool CanShowCodeContextMenu(this ProjectItem projectItem) {
+            if (projectItem == null) return false;
+            if (projectItem.ContainingProject == null) return false;
+            if (!projectItem.ContainingProject.IsKnownProjectType()) return false;
+
+            return projectItem.IsContainer() || projectItem.GetFileType() != FILETYPE.UNKNOWN;
+        }        
+
+        public static bool IsContainer(this ProjectItem item) {
+            if (item == null) return false;
+            
+            string kind = item.Kind.ToUpper();
+            return (kind == StringConstants.PhysicalFolder || kind == StringConstants.VirtualFolder || kind == StringConstants.Subproject);
+        }
+
+        public static FILETYPE GetFileType(this ProjectItem item) {
+            if (item == null) return FILETYPE.UNKNOWN;
+            if (item.Kind.ToUpper() != StringConstants.PhysicalFile) return FILETYPE.UNKNOWN;
+
+            string s = ((string)item.Properties.Item("FullPath").Value).ToLowerInvariant();
+            return s.GetFileType();
+        }
+
+        public static FILETYPE GetFileType(this string filename) {
+            string s = filename.ToLower();
+            if (s.EndsWithAny(StringConstants.CsExtensions)) {
+                return FILETYPE.CSHARP;
+            } else if (s.EndsWithAny(StringConstants.AspxExtensions)) {
+                return FILETYPE.ASPX;
+            } else if (s.EndsWithAny(StringConstants.RazorExtensions)) {
+                return FILETYPE.RAZOR;
+            } else {
+                return FILETYPE.UNKNOWN;
+            }
+        }
+
+        public static bool IsKnownProjectType(this Project project) {
+            if (project == null) return false;
+            string pkind = project.Kind.ToUpper();
+            return pkind == StringConstants.WindowsCSharpProject
+                || pkind == StringConstants.WebSiteProject
+                || pkind == StringConstants.WebApplicationProject;
+        }
     }
 }

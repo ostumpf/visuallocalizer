@@ -23,8 +23,10 @@ namespace VisualLocalizer.Gui {
         private Dictionary<string, ResXProjectItem> resxItemsCache = new Dictionary<string, ResXProjectItem>();        
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
         private bool valueAdded = false;
+        private BatchMoveToResourcesToolPanel parentToolPanel;
 
-        public BatchMoveToResourcesToolGrid() : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {                        
+        public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel) : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
+            this.parentToolPanel = panel;
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -66,7 +68,8 @@ namespace VisualLocalizer.Gui {
                 row.Cells.Add(lineCell);
 
                 DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
-                foreach (string key in item.Value.CreateKeySuggestions(item.NamespaceElement == null ? null : (item.NamespaceElement as CodeNamespace).FullName, item.ClassOrStructElementName, item.VariableElementName == null ? item.MethodElementName : item.VariableElementName)) {
+                
+                foreach (string key in item.GetKeyNameSuggestions()) {
                     keyCell.Items.Add(key);
                     if (keyCell.Value == null)
                         keyCell.Value = key;
@@ -112,6 +115,7 @@ namespace VisualLocalizer.Gui {
             }
 
             UpdateCheckHeader();
+            parentToolPanel.SettingsUpdated();
 
             this.ClearSelection();            
             this.ResumeLayout();            
@@ -139,13 +143,21 @@ namespace VisualLocalizer.Gui {
             return check;
         }
 
-        public void CheckByPredicate(Predicate<DataGridViewKeyValueRow<CodeStringResultItem>> test, bool checkResult) {
+        public void CheckByPredicate(CheckBox originatingBox, Predicate<DataGridViewKeyValueRow<CodeStringResultItem>> test) {
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {                
                 if (test(row)) {
+                    if (originatingBox.Checked) {
+                        row.InfluencingCheckboxes.Add(originatingBox); 
+                    } else {
+                        row.InfluencingCheckboxes.Remove(originatingBox); 
+                    }
+
+                    bool check = row.InfluencingCheckboxes.Count == 0;
                     bool oldValue = (bool)row.Cells[CheckBoxColumnName].Value;
-                    row.Cells[CheckBoxColumnName].Value = checkResult;
-                    if (oldValue && !checkResult) CheckedRowsCount--;
-                    if (!oldValue && checkResult) CheckedRowsCount++;
+                    
+                    row.Cells[CheckBoxColumnName].Value = check;
+                    if (oldValue && !check) CheckedRowsCount--;
+                    if (!oldValue && check) CheckedRowsCount++;                    
                 }
             }
             UpdateCheckHeader();
@@ -204,6 +216,28 @@ namespace VisualLocalizer.Gui {
         public bool IsRowMatchingRegexpInstance(DataGridViewKeyValueRow<CodeStringResultItem> row, SettingsObject.RegexpInstance regexpInstance) {
             string value = (string)row.Cells[ValueColumnName].Value;
             return Regex.IsMatch(value, regexpInstance.Regexp) == regexpInstance.MustMatch;
+        }
+
+        public bool IsRowFromAspNetTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            return row.DataSourceItem is AspNetStringResultItem;
+        }
+
+        public bool IsRowAspClientCommentTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            return row.DataSourceItem.ComesFromClientComment;
+        }
+
+        public bool IsRowAspElementTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
+            return aitem != null && aitem.ComesFromElement;
+        }
+
+        public bool IsRowAspExpressionTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
+            return aitem != null && aitem.ComesFromInlineExpression;
+        }
+
+        public bool IsRowDesignerFileTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {            
+            return row.DataSourceItem.ComesFromDesignerFile;
         }
 
         #endregion
@@ -340,7 +374,7 @@ namespace VisualLocalizer.Gui {
                 foreach (ProjectItem projectItem in items) {
                     var resxItem = ResXProjectItem.ConvertToResXItem(projectItem, project);
                     resxItems.Add(resxItem.ToString());
-                    resxItemsCache.Add(resxItem.ToStringValue, resxItem);
+                    resxItemsCache.Add(resxItem.ToString(), resxItem);
                 }
                 destinationItemsCache.Add(project, resxItems);
             }

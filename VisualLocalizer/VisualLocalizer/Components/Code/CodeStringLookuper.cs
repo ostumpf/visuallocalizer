@@ -9,28 +9,11 @@ using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Components {
 
-    internal class CodeStringLookuper : AbstractCodeLookuper {
-        
-        public CodeStringLookuper(string text, TextPoint startPoint, CodeNamespace namespaceElement,
-            string classOrStructElement, string methodElement, string variableElement, bool isWithinLocFalse) {
+    internal abstract class CodeStringLookuper<T> : AbstractCodeLookuper where T:CodeStringResultItem,new() {
 
-            this.text = text;
-            this.CurrentIndex = startPoint.LineCharOffset - 1;
-            this.CurrentLine = startPoint.Line;
-            this.CurrentAbsoluteOffset = startPoint.AbsoluteCharOffset + startPoint.Line - 2;
-            this.namespaceElement = namespaceElement;
-            this.classOrStructElement = classOrStructElement;
-            this.methodElement = methodElement;
-            this.variableElement = variableElement;
-            this.IsWithinLocFalse = isWithinLocFalse;
-        }
-       
-        protected CodeNamespace namespaceElement;
-        protected string classOrStructElement;
-        protected string methodElement;
-        protected string variableElement;        
+        protected string ClassOrStructElement { get; set; }
 
-        public List<CodeStringResultItem> LookForStrings() {
+        public List<T> LookForStrings() {
             bool insideComment = false, insideString = false, isVerbatimString = false;
             bool skipLine = false;
             currentChar = '?';
@@ -38,7 +21,7 @@ namespace VisualLocalizer.Components {
             previousPreviousChar = '?';
             previousPreviousPreviousChar = '?';
             stringStartChar = '?';
-            List<CodeStringResultItem> list = new List<CodeStringResultItem>();
+            List<T> list = new List<T>();
 
             StringBuilder builder = null;
             StringBuilder commentBuilder = null;
@@ -65,7 +48,7 @@ namespace VisualLocalizer.Components {
                         if (commentBuilder == null) commentBuilder = new StringBuilder();
                         commentBuilder.Append(currentChar);
                     } else if (commentBuilder != null) {
-                        lastCommentUnlocalizable = "/" + commentBuilder.ToString() + "/" == StringConstants.NoLocalizationComment;
+                        lastCommentUnlocalizable = "/" + commentBuilder.ToString() + "/" == StringConstants.CSharpLocalizationComment;
                         commentBuilder = null;
                         unlocalizableJustSet=true;
                     }                    
@@ -99,7 +82,7 @@ namespace VisualLocalizer.Components {
             return list;
         }
         
-        protected void AddResult(List<CodeStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
+        protected virtual T AddResult(List<T> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
             string value = originalValue;
             if (value.StartsWith("@")) value = value.Substring(1);
             value = value.Substring(1, value.Length - 2);            
@@ -110,21 +93,21 @@ namespace VisualLocalizer.Components {
             span.iEndLine = CurrentLine-1;
             span.iEndIndex = CurrentIndex + (isVerbatimString ? 0 : 1);
 
-            var resultItem = new CodeStringResultItem();
-            resultItem.Value = value.ConvertEscapeSequences(isVerbatimString);
+            var resultItem = new T();
+            resultItem.Value = value.ConvertCSharpEscapeSequences(isVerbatimString);
             resultItem.SourceItem = this.SourceItem;
-            resultItem.ReplaceSpan = span;
-            resultItem.ClassOrStructElementName = classOrStructElement;
-            resultItem.MethodElementName = methodElement;
-            resultItem.NamespaceElement = namespaceElement;
-            resultItem.VariableElementName = variableElement;
+            resultItem.ComesFromDesignerFile = this.SourceItemGenerated;
+            resultItem.ReplaceSpan = span;            
             resultItem.AbsoluteCharOffset = StringStartAbsoluteOffset - (isVerbatimString ? 1 : 0);
             resultItem.AbsoluteCharLength = originalValue.Length;
             resultItem.WasVerbatim = isVerbatimString;
             resultItem.IsWithinLocalizableFalse = IsWithinLocFalse;
             resultItem.IsMarkedWithUnlocalizableComment = isUnlocalizableCommented;
+            resultItem.ClassOrStructElementName = ClassOrStructElement;
 
             list.Add(resultItem);
+
+            return resultItem;
         }
 
         

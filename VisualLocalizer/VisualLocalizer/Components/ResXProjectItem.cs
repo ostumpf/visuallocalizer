@@ -320,24 +320,29 @@ namespace VisualLocalizer.Components {
         }
 
         public static bool IsItemResX(ProjectItem item) {
-            string customTool = null, customToolOutput = null, extension = null;
-            foreach (Property prop in item.Properties) {
-                if (prop.Name == "CustomTool")
-                    customTool = prop.Value.ToString();
-                if (prop.Name == "CustomToolOutput")
-                    customToolOutput = prop.Value.ToString();
-                if (prop.Name == "Extension")
-                    extension = prop.Value.ToString();
-            }
-            return (!string.IsNullOrEmpty(customToolOutput) && !string.IsNullOrEmpty(customTool) && !string.IsNullOrEmpty(extension)
-                && (customTool == StringConstants.InternalResXTool || customTool == StringConstants.PublicResXTool)
-                && extension == StringConstants.ResXExtension);
+            if (item == null) return false;
+            if (item.Properties == null) return false;
+
+            string ext = null;
+            foreach (Property prop in item.Properties)
+                if (prop.Name == "Extension") {
+                    ext = (string)item.Properties.Item("Extension").Value;    
+                }
+
+            return ext == StringConstants.ResXExtension;
         }
 
         public static ResXProjectItem ConvertToResXItem(ProjectItem item,Project relationProject) {
-            Uri projectUri = new Uri(item.ContainingProject.FileName);
+            string projectPath=item.ContainingProject.Properties.Item("FullPath").Value.ToString();
+            Uri projectUri = new Uri(projectPath, UriKind.Absolute);
             Uri itemUri = new Uri(item.Properties.Item("FullPath").Value.ToString());
-            string path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();
+            
+            string path;
+            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                path = projectUri.MakeRelativeUri(itemUri).ToString();
+            } else {
+                path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();
+            }
 
             bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;
             bool inter = (string)item.Properties.Item("CustomTool").Value != StringConstants.PublicResXTool;
@@ -350,8 +355,21 @@ namespace VisualLocalizer.Components {
         }        
 
         private void resolveNamespaceClass() {
-            if (DesignerItem == null) return;
+            if (DesignerItem == null) {
+                if (InternalProjectItem != null && InternalProjectItem.ContainingProject != null &&
+                    InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    string relative = (string)InternalProjectItem.Properties.Item("RelativeURL").Value;
 
+                    if (!string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder)) {
+                        _Class = Path.GetFileNameWithoutExtension((string)InternalProjectItem.Properties.Item("FullPath").Value);
+                        _Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
+                    } else {
+                        _Class = "!";
+                        _Namespace = "!";
+                    }                    
+                }
+                return;
+            }
             if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) {
                 RunCustomTool();
             }
@@ -369,16 +387,14 @@ namespace VisualLocalizer.Components {
                     }
                 }
             }
-        }
-
-        public string ToStringValue {
-            get {
-                return (MarkedInternalInReferencedProject ? "(internal) " : "") + DisplayName;
-            }
-        }
+        }     
 
         public override string ToString() {
-            return ToStringValue;
+            return (MarkedInternalInReferencedProject ? "(internal) " : "") + DisplayName;
+        }
+
+        public override int GetHashCode() {
+            return InternalProjectItem.GetHashCode();
         }
 
         public override bool Equals(object obj) {

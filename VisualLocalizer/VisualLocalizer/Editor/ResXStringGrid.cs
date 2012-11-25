@@ -370,14 +370,21 @@ namespace VisualLocalizer.Editor {
 
         protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {
             base.OnCellBeginEdit(e);
-            
-            if (e.ColumnIndex == 0) {
-                ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
-                if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
 
-                ReferenceCounterThreadSuspended = true;
-                UpdateReferencesCount(row);
-            }         
+            try {
+                if (e.ColumnIndex == 0) {
+                    ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
+                    if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
+
+                    ReferenceCounterThreadSuspended = true;
+                    UpdateReferencesCount(row);
+                }
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            }
         }
 
         protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
@@ -504,7 +511,7 @@ namespace VisualLocalizer.Editor {
                     foreach (ResXStringGridRow row in rows) {
                         if (row.IsNewRow) continue;
                         row.CodeReferences.Clear();                        
-                        row.UpdateReferenceCount();
+                        row.UpdateReferenceCount(false);
                     }
                 } else {
                     Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
@@ -529,7 +536,7 @@ namespace VisualLocalizer.Editor {
                         row.CodeReferences.AddRange(referenceLister.Results.Where((item) => { 
                             return item.Key == row.Key || (row.ErrorSet.Count > 0 && item.Key == row.LastValidKey); 
                         }));
-                        row.UpdateReferenceCount();                        
+                        row.UpdateReferenceCount(true);                        
                     }
                 }
             }
@@ -622,7 +629,12 @@ namespace VisualLocalizer.Editor {
         #region private members        
 
         private void ReferenceLookuperThread() {
-            UpdateReferencesCount(Rows);
+            try {
+                UpdateReferencesCount(Rows);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}. The thread is terminated.", ex.GetType().Name, ex.Message);
+                return;
+            }
             while (!IsDisposed) {
                 try {
                     System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
@@ -766,8 +778,8 @@ namespace VisualLocalizer.Editor {
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing; ;
-            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly;
-            inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
+            editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly && !Columns[CurrentCellAddress.X].ReadOnly;
+            inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && editorControl.Editor.HasDesignerClass;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
             translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
         }

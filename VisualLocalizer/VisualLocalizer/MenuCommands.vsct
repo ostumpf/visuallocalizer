@@ -26,13 +26,34 @@
     </Menus>   
 
     <Buttons>
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="2" type="Button">
+      
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="1" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchInlineRemoveUnchecked</CommandName>
+          <ButtonText>Restore unchecked</ButtonText>
+          <ToolTipText>Puts all previusly removed rows back to table</ToolTipText>
+        </Strings>
+      </Button>
+
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchInlineRemoveUnchecked</CommandName>
+          <ButtonText>Remove unchecked</ButtonText>
+          <ToolTipText>Removes unchecked rows from table for better clarity</ToolTipText>
+        </Strings>
+      </Button>    
+
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="3" type="Button">
         <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchInlineRun</CommandName>
           <ButtonText>Run</ButtonText>
-          <ToolTipText>Run</ToolTipText>
+          <ToolTipText>Inlines all checked rows from tables</ToolTipText>
         </Strings>
       </Button>
     </Buttons>
@@ -57,7 +78,7 @@
     </Menus>
 
     <Combos>
-      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="2" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="4" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
         <CommandFlag>CaseSensitive</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
@@ -76,8 +97,28 @@
       </Combo>
     </Combos>
     
-    <Buttons>      
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="1" type="Button">
+    <Buttons>
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="1" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveToResourcesRestoreUnchecked</CommandName>
+          <ButtonText>Restore unchecked</ButtonText>
+          <ToolTipText>Puts all previusly removed rows back to table</ToolTipText>
+        </Strings>
+      </Button>
+
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveToResourcesRemoveUnchecked</CommandName>
+          <ButtonText>Remove unchecked</ButtonText>
+          <ToolTipText>Removes unchecked rows from table for better clarity</ToolTipText>
+        </Strings>
+      </Button>
+
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="3" type="Button">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>                
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>TextOnly</CommandFlag>        
@@ -95,42 +136,28 @@
           <CommandName>BatchMoveToResourcesRun</CommandName>
           <ButtonText>Run</ButtonText>          
         </Strings>           
-      </Button>
-
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunVerbatimizeUncheckedID" priority="2" type="Button">
-        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunMenuGroupID"/>
-        <CommandFlag>TextOnly</CommandFlag>        
-        <Strings>
-          <CommandName>BatchMoveToolbarRunVerbatimizeUnchecked</CommandName>
-          <ButtonText>Run &amp;&amp; convert unchecked items to verbatim</ButtonText>
-        </Strings>
-      </Button>
+      </Button>      
 
     </Buttons>
     <Bitmaps>
       <Bitmap guid="guidImages" href="Resources\run.png"/>
     </Bitmaps>
   </Commands>
-  
+
   <Commands package="VLPackageGuid">
     <Groups>    
       <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
       </Group>
-      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x200">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
-      </Group>
-      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
-      </Group>
-
+      
       <Group guid="VLCommandSetGuid" id="solutionExpSubmenuGroup" priority="0x001">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenu"/>
       </Group>
-
-      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+    
+      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x500">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>       
       </Group>
+
       <Group guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup" priority="0x001">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
       </Group>
@@ -155,7 +182,6 @@
       </Button>
 
 
-
       <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button" priority="1">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
@@ -163,7 +189,7 @@
           <ButtonText>Move to resources...</ButtonText>
         </Strings>
       </Button>
-
+   
       <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button" priority="2">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
@@ -231,6 +257,36 @@
     </Menus>    
   </Commands>
 
+  <CommandPlacements>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_SOURCE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_CODEBLOCK"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
+    </CommandPlacement>    
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIITEM"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBITEMNODE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBPROJECT"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBFOLDER"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
+    </CommandPlacement>
+  </CommandPlacements>
+  
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="VLPackageGuid" value="{68c95c48-9295-49a0-a2ed-81da6e651374}" />
@@ -264,10 +320,10 @@
       <IDSymbol name="BatchMoveToolbarModesListID" value="0x1004" />
       <IDSymbol name="BatchMoveToolbarModeID" value="0x1005" />
       <IDSymbol name="BatchMoveToolbarShowFilterID" value="0x1006" />
-      <IDSymbol name="BatchMoveToolbarRunVerbatimizeUncheckedID" value="0x1007" />            
       <IDSymbol name="BatchMoveToolbarRunMenuID" value="0x1009" />
       <IDSymbol name="BatchMoveToolbarRunMenuGroupID" value="0x1010" />
-      <IDSymbol name="BatchMoveToolbarRunVerbatimizeCheckedID" value="0x1011" />
+      <IDSymbol name="BatchMoveToolbarRemoveUncheckedID" value="0x1014" />
+      <IDSymbol name="BatchMoveToolbarRestoreUncheckedID" value="0x1015" />
 
       <IDSymbol name="BatchMoveToolbarRememberUncheckedListID" value="0x1012" />
       <IDSymbol name="BatchMoveToolbarRememberUncheckedID" value="0x1013" />
@@ -276,11 +332,18 @@
     <GuidSymbol name="BatchInlineToolbarCmdSet" value="{F2983E9C-E545-4d2f-A5F2-D04683356AD0}">
       <IDSymbol name="BatchInlineToolbarID" value="0x2001" />
       <IDSymbol name="BatchInlineToolbarGroupID" value="0x2003" />
-      <IDSymbol name="BatchInlineToolbarRunID" value="0x2002" />      
+      <IDSymbol name="BatchInlineToolbarRunID" value="0x2002" />
+      <IDSymbol name="BatchInlineToolbarRemoveUncheckedID" value="0x2004" />
+      <IDSymbol name="BatchInlineToolbarPutBackUncheckedID" value="0x2005" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >
       <IDSymbol name="runPng" value="1" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidAspEditorMenu" value="{D7E8C5E1-BDB8-11D0-9C88-0000F8040A53}">
+      <IDSymbol name="IDM_ASP_SOURCE" value ="0x0035"/>
+      <IDSymbol name="IDM_ASP_CODEBLOCK" value ="0x036"/>
     </GuidSymbol>
   </Symbols>
 

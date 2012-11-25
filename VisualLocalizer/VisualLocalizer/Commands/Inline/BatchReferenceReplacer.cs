@@ -6,6 +6,7 @@ using VisualLocalizer.Components;
 using System.Collections;
 using VisualLocalizer.Library;
 using VisualLocalizer.Editor.UndoUnits;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Commands {
     internal sealed class BatchReferenceReplacer : AbstractBatchReferenceProcessor {
@@ -22,8 +23,11 @@ namespace VisualLocalizer.Commands {
         }
 
         public override string GetReplaceString(CodeReferenceResultItem item) {
-            string prefix = item.OriginalReferenceText.Substring(0, item.OriginalReferenceText.LastIndexOf('.'));
-            return prefix + "." + item.KeyAfterRename;
+            return item.GetReferenceAfterRename(item.KeyAfterRename);
+        }
+
+        public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {
+            return item.GetInlineReplaceSpan(true, out absoluteStartIndex, out absoluteLength);
         }
 
         public override AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange) {

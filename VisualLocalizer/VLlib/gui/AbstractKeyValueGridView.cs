@@ -16,7 +16,31 @@ namespace VisualLocalizer.Library {
 
         public AbstractKeyValueGridView(bool showContextColumn, KeyValueConflictResolver resolver) : base(showContextColumn) {            
             this.ConflictResolver = resolver;            
-        }        
+        }
+
+        public override void RemoveUncheckedRows(bool remember) {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return;
+
+            foreach (DataGridViewKeyValueRow<ItemType> row in Rows) {
+                bool check = (bool)row.Cells[CheckBoxColumnName].Value;
+                if (!check) {
+                    ConflictResolver.TryAdd(row.Key, null, row);
+                    row.Cells[KeyColumnName].Tag = null;
+                }
+            }
+
+            base.RemoveUncheckedRows(remember);
+        }
+
+        public override void RestoreRemovedRows() {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return;
+           
+            base.RestoreRemovedRows();
+
+            foreach (DataGridViewKeyValueRow<ItemType> row in Rows) {
+                if (row.Cells[KeyColumnName].Tag==null) Validate(row);
+            }
+        }
 
         protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
             base.OnCellEndEdit(e);

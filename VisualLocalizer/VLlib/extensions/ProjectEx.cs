@@ -24,7 +24,7 @@ namespace VisualLocalizer.Library {
             if (includeReferenced) {
                 List<Project> referencedProjects = project.GetReferencedProjects();
                 foreach (Project referencedProj in referencedProjects) {
-                    if (referencedProj.Kind == VSLangProj.PrjKind.prjKindCSharpProject && referencedProj.UniqueName != project.UniqueName) {
+                    if (referencedProj.UniqueName != project.UniqueName) {
                         List<ProjectItem> l = GetFilesOf(referencedProj.ProjectItems, test);
                         l.Reverse();
                         list.AddRange(l);
@@ -42,7 +42,7 @@ namespace VisualLocalizer.Library {
                     if (test==null || test(item)) {
                         list.Add(item);
                     } else {
-                        if (item.ProjectItems.Count > 0)
+                        if (item.ProjectItems != null && item.ProjectItems.Count > 0)
                             list.AddRange(GetFilesOf(item.ProjectItems, test));
                     }
                 }
@@ -56,10 +56,13 @@ namespace VisualLocalizer.Library {
                 throw new ArgumentNullException("project");
 
             List<Project> list = new List<Project>();
+                        
             VSProject proj = project.Object as VSProject;
-            if (proj == null)
-                throw new ArgumentException(string.Format("Project {0} is not sufficiently initialized.", project.Name));
-
+            if (proj == null) {
+                proj = project as VSProject;
+                return list;
+            }
+            
             if (proj.References != null) {
                 foreach (Reference r in proj.References)
                     if (r.SourceProject != null)
@@ -95,6 +98,27 @@ namespace VisualLocalizer.Library {
 
         public static bool IsUserDefined(this Solution solution) {
             return solution != null && !string.IsNullOrEmpty(solution.FileName);
+        }
+
+        public static bool IsGenerated(this ProjectItem item) {
+            if (item == null) return false;
+
+            bool isCustomToolOutput = false;
+            bool isDependant = false;
+            bool isAspxCodeBehind = false;
+
+            foreach (Property prop in item.Properties) {
+                if (prop.Name == "IsCustomToolOutput") {
+                    isCustomToolOutput = (bool)prop.Value;                  
+                }
+                if (prop.Name == "IsDependentFile") {
+                    isDependant = (bool)prop.Value;
+                }
+                if (prop.Name == "SubType") {
+                    isAspxCodeBehind = (string)prop.Value=="ASPXCodeBehind";
+                }
+            }
+            return isCustomToolOutput || (isDependant && !isAspxCodeBehind);
         }
     }
 }

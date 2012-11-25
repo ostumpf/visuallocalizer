@@ -11,6 +11,8 @@ using System.IO;
 using System.Windows.Forms;
 using VisualLocalizer.Gui;
 using System.Collections;
+using EnvDTE;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
     internal sealed class BatchMover {
@@ -49,7 +51,7 @@ namespace VisualLocalizer.Commands {
                 try {
                     CodeStringResultItem resultItem = dataList[i];
                     string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
-                    string referenceText = null;
+                    ReferenceString referenceText = null;
                     bool addNamespace = false;
                     CONTAINS_KEY_RESULT keyConflict = CONTAINS_KEY_RESULT.DOESNT_EXIST;
 
@@ -63,18 +65,18 @@ namespace VisualLocalizer.Commands {
 
                         NamespacesList usedNamespaces = GetUsedNamespacesFor(resultItem);
 
-                        if (UseFullName) {
-                            referenceText = resultItem.DestinationItem.Namespace + "." + resultItem.DestinationItem.Class + "." + resultItem.Key;
+                        if (UseFullName || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                            referenceText = new ReferenceString(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key);
                             addNamespace = false;
                         } else {
                             addNamespace = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key,
-                                resultItem.SourceItem.ContainingProject, out referenceText);
+                                    resultItem.SourceItem.ContainingProject, out referenceText);                            
                         }
                         if (addNamespace) {
-                            if (resultItem.NamespaceElement == null) {
+                            if (!(resultItem is CSharpStringResultItem) || ((CSharpStringResultItem)resultItem).NamespaceElement == null) {
                                 usedNamespacesCache[resultItem.SourceItem].Add(resultItem.DestinationItem.Namespace, null);
                             } else {
-                                usedNamespacesCache[resultItem.NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
+                                usedNamespacesCache[((CSharpStringResultItem)resultItem).NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
                             }
                         }
                     }
@@ -94,11 +96,10 @@ namespace VisualLocalizer.Commands {
                         }
 
                         if (resultItem.MoveThisItem) {
-                            MoveToResource(buffersCache[path], resultItem, referenceText);
-                            newItemLength = referenceText.Length;
+                            newItemLength = MoveToResource(buffersCache[path], resultItem, referenceText);
 
                             if (addNamespace) {
-                                resultItem.SourceItem.Document.AddUsingBlock(resultItem.DestinationItem.Namespace);
+                                AddUsingBlockTo(resultItem);                                
                                 for (int j = i; j >= 0; j--) {
                                     var item = dataList[j];
                                     TextSpan ts = new TextSpan();
@@ -121,8 +122,8 @@ namespace VisualLocalizer.Commands {
                             newUnit.AppendUnits.AddRange(units);
                             undoManagersCache[path].Add(newUnit);
                         } else if (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
-                            MarkAsNoLoc(buffersCache[path], resultItem);
-                            newItemLength = resultItem.AbsoluteCharLength + StringConstants.NoLocalizationComment.Length;
+                            int c = MarkAsNoLoc(buffersCache[path], resultItem);
+                            newItemLength = resultItem.AbsoluteCharLength + c;
 
                             List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
                             MarkAsNotLocalizedStringUndoUnit newUnit = new MarkAsNotLocalizedStringUndoUnit(resultItem.Value);
@@ -138,9 +139,11 @@ namespace VisualLocalizer.Commands {
 
                         if (resultItem.MoveThisItem) {
                             StringBuilder b = filesCache[path];
+
+                            string insertText=resultItem.GetReferenceText(referenceText);
                             b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
-                            b.Insert(resultItem.AbsoluteCharOffset, referenceText);
-                            newItemLength = referenceText.Length;
+                            b.Insert(resultItem.AbsoluteCharOffset, insertText);
+                            newItemLength = insertText.Length;
 
                             if (addNamespace) {
                                 if (!externalUsingsPlan.ContainsKey(path))
@@ -149,8 +152,8 @@ namespace VisualLocalizer.Commands {
                             }
                         } else if (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
                             StringBuilder b = filesCache[path];
-                            b.Insert(resultItem.AbsoluteCharOffset, StringConstants.NoLocalizationComment);
-                            newItemLength = resultItem.AbsoluteCharLength + StringConstants.NoLocalizationComment.Length;
+                            b.Insert(resultItem.AbsoluteCharOffset, resultItem.NoLocalizationComment);
+                            newItemLength = resultItem.AbsoluteCharLength + resultItem.NoLocalizationComment.Length;
                         }
                     }
 
@@ -174,25 +177,34 @@ namespace VisualLocalizer.Commands {
             modifiedResxItems.ForEach((item) => { item.EndBatch(); });
             foreach (var pair in externalUsingsPlan)
                 foreach (string nmspc in pair.Value) {
-                    filesCache[pair.Key].Insert(0, string.Format("using {0};{1}", nmspc, Environment.NewLine));
+                    AddUsingBlockTo(pair.Key, nmspc);
                 }
             foreach (var pair in filesCache) {
                 File.WriteAllText(pair.Key, pair.Value.ToString());
             }
             if (errorRows > 0) throw new Exception("Error occured while processing some rows - see Output window for details."); 
-        }
+        }        
 
         private NamespacesList GetUsedNamespacesFor(CodeStringResultItem resultItem) {
-            if (resultItem.NamespaceElement == null) {
+            if (resultItem is CSharpStringResultItem) {
+                CSharpStringResultItem citem = (CSharpStringResultItem)resultItem;
+
+                if (citem.NamespaceElement == null) {
+                    if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
+                        usedNamespacesCache.Add(resultItem.SourceItem, citem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                    }
+                    return usedNamespacesCache[resultItem.SourceItem];
+                } else {
+                    if (!usedNamespacesCache.ContainsKey(citem.NamespaceElement)) {
+                        usedNamespacesCache.Add(citem.NamespaceElement, citem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                    }
+                    return usedNamespacesCache[citem.NamespaceElement];
+                }
+            } else {
                 if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
-                    usedNamespacesCache.Add(resultItem.SourceItem, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                    usedNamespacesCache.Add(resultItem.SourceItem, (resultItem as AspNetStringResultItem).DeclaredNamespaces);
                 }
                 return usedNamespacesCache[resultItem.SourceItem];
-            } else {
-                if (!usedNamespacesCache.ContainsKey(resultItem.NamespaceElement)) {
-                    usedNamespacesCache.Add(resultItem.NamespaceElement, resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
-                }
-                return usedNamespacesCache[resultItem.NamespaceElement];
             }
         }
 
@@ -205,16 +217,54 @@ namespace VisualLocalizer.Commands {
                 throw new InvalidOperationException(string.Format("on key \"{0}\": \"{1}\"", resultItem.Key, resultItem.ErrorText));
         }
 
-        private void MarkAsNoLoc(IVsTextLines textLines, CodeStringResultItem resultItem) {
+        private int MarkAsNoLoc(IVsTextLines textLines, CodeStringResultItem resultItem) {
             int hr = textLines.ReplaceLines(resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex, resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex,
-                Marshal.StringToBSTR(StringConstants.NoLocalizationComment), StringConstants.NoLocalizationComment.Length, new TextSpan[1]);
+                Marshal.StringToBSTR(resultItem.NoLocalizationComment), resultItem.NoLocalizationComment.Length, new TextSpan[1]);
             Marshal.ThrowExceptionForHR(hr);
+
+            return resultItem.NoLocalizationComment.Length;
         }
 
-        private void MoveToResource(IVsTextLines textLines, CodeStringResultItem resultItem, string referenceText) {
+        private void AddUsingBlockTo(string filename, string nmspc) {
+            FILETYPE type = filename.GetFileType();
+            switch (type) {
+                case FILETYPE.CSHARP:
+                    filesCache[filename].Insert(0, string.Format(StringConstants.CSharpUsingBlockFormat, nmspc));
+                    break;
+                case FILETYPE.ASPX:
+                    filesCache[filename].Insert(0, string.Format(StringConstants.AspImportDirectiveFormat, nmspc));
+                    break;
+                case FILETYPE.RAZOR:
+                    break;             
+            }
+        }
+
+        private void AddUsingBlockTo(CodeStringResultItem resultItem) {
+            CSharpStringResultItem citem = resultItem as CSharpStringResultItem;
+            AspNetStringResultItem aitem = resultItem as AspNetStringResultItem;
+
+            if (citem != null) {
+                citem.SourceItem.Document.AddUsingBlock(citem.DestinationItem.Namespace);
+            } else if (aitem != null) {
+                IVsTextLines textLines = buffersCache[(string)aitem.SourceItem.Properties.Item("FullPath").Value];
+                string text = string.Format(StringConstants.AspImportDirectiveFormat, resultItem.DestinationItem.Namespace);
+
+                object otp;
+                int hr = textLines.CreateTextPoint(0, 0, out otp);
+                Marshal.ThrowExceptionForHR(hr);
+
+                TextPoint tp = (TextPoint)otp;
+                tp.CreateEditPoint().Insert(text);                
+            }
+        }                
+
+        private int MoveToResource(IVsTextLines textLines, CodeStringResultItem resultItem, ReferenceString referenceText) {
+            string newText = resultItem.GetReferenceText(referenceText);
             int hr = textLines.ReplaceLines(resultItem.ReplaceSpan.iStartLine, resultItem.ReplaceSpan.iStartIndex, resultItem.ReplaceSpan.iEndLine, resultItem.ReplaceSpan.iEndIndex,
-                        Marshal.StringToBSTR(referenceText), referenceText.Length, new TextSpan[] { resultItem.ReplaceSpan });
+                            Marshal.StringToBSTR(newText), newText.Length, new TextSpan[] { resultItem.ReplaceSpan });
             Marshal.ThrowExceptionForHR(hr);
+
+            return newText.Length;
         }
     }
 }

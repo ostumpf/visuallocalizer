@@ -7,6 +7,7 @@ using System.Collections;
 using VisualLocalizer.Library;
 using System.Windows.Forms;
 using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Commands {
     internal sealed class BatchInliner : AbstractBatchReferenceProcessor {
@@ -28,7 +29,11 @@ namespace VisualLocalizer.Commands {
         }
 
         public override string GetReplaceString(CodeReferenceResultItem item) {
-            return item.GetQuotedValue();
+            return item.GetInlineValue();
+        }
+
+        public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {
+            return item.GetInlineReplaceSpan(false, out absoluteStartIndex, out absoluteLength);
         }
 
         public override AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange) {

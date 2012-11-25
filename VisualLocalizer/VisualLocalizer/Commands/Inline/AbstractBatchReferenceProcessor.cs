@@ -29,6 +29,7 @@ namespace VisualLocalizer.Commands {
 
         public abstract CodeReferenceResultItem GetItemFromList(IList list, int index);
         public abstract string GetReplaceString(CodeReferenceResultItem item);
+        public abstract TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength);
         public abstract AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange);
       
         public void Inline(List<CodeReferenceResultItem> dataList, bool externalChange, ref int errorRows) {            
@@ -39,7 +40,8 @@ namespace VisualLocalizer.Commands {
                     CodeReferenceResultItem resultItem = dataList[i];
 
                     if (resultItem.MoveThisItem) {
-                        TextSpan inlineSpan = resultItem.ReplaceSpan;
+                        int absoluteStartIndex, absoluteLength;
+                        TextSpan inlineSpan = GetInlineReplaceSpan(resultItem, out absoluteStartIndex, out absoluteLength);
                         string text = GetReplaceString(resultItem); 
                         newItemLength = text.Length;
 
@@ -70,8 +72,8 @@ namespace VisualLocalizer.Commands {
                                 filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
                             }
                             StringBuilder b = filesCache[path];
-                            b = b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
-                            b = b.Insert(resultItem.AbsoluteCharOffset, text);
+                            b = b.Remove(absoluteStartIndex, absoluteLength);
+                            b = b.Insert(absoluteStartIndex, text);
                             filesCache[path] = b;
                         }
                     }

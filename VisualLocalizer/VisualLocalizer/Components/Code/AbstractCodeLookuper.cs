@@ -8,13 +8,14 @@ namespace VisualLocalizer.Components {
     internal abstract class AbstractCodeLookuper {
         
         public ProjectItem SourceItem { get; set; }
+        public bool SourceItemGenerated { get; set; }
         protected int CurrentLine { get; set; }
         protected int CurrentIndex { get; set; }
         protected int CurrentAbsoluteOffset { get; set; }
         protected int StringStartLine { get; set; }
         protected int StringStartIndex { get; set; }
         protected int StringStartAbsoluteOffset { get; set; }
-        protected bool IsWithinLocFalse { get; set; }
+        protected bool IsWithinLocFalse { get; set; }        
 
         protected string text;
         protected char currentChar, previousChar, previousPreviousChar,previousPreviousPreviousChar, stringStartChar;

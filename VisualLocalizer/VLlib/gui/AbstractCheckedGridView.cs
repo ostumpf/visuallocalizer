@@ -23,6 +23,7 @@ namespace VisualLocalizer.Library {
         protected Color ExistingKeySameValueColor = Color.FromArgb(213, 255, 213);
         protected HashSet<DataGridViewRow> errorRows = new HashSet<DataGridViewRow>();
         protected DataGridViewRow previouslySelectedRow = null;
+        protected List<DataGridViewRow> removedRows;
 
         public AbstractCheckedGridView(bool showContextColumn) {
             this.EnableHeadersVisualStyles = true;
@@ -41,6 +42,8 @@ namespace VisualLocalizer.Library {
 
             this.MouseMove += new MouseEventHandler(RowHeaderMouseMove);
             this.SelectionChanged += new EventHandler(RowSelectionChanged);
+
+            this.removedRows = new List<DataGridViewRow>();
 
             ErrorToolTip = new ToolTip();
             ErrorToolTip.InitialDelay = 0;
@@ -78,6 +81,36 @@ namespace VisualLocalizer.Library {
                 list.Add(GetResultItemFromRow(row));
 
             return list;
+        }
+
+        public virtual void RemoveUncheckedRows(bool remember) {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return;
+
+            List<DataGridViewRow> rowsToRemove = new List<DataGridViewRow>();
+            foreach (DataGridViewRow row in Rows) {
+                bool check = (bool)row.Cells[CheckBoxColumnName].Value;
+                if (!check) {
+                    rowsToRemove.Add(row);
+                    if (remember) removedRows.Add(row);
+                }
+            }
+
+            foreach (DataGridViewRow row in rowsToRemove) {
+                Rows.Remove(row);
+            }
+
+            UpdateCheckHeader();
+        }
+
+        public virtual void RestoreRemovedRows() {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return;
+
+            foreach (DataGridViewRow row in removedRows) {
+                Rows.Add(row);
+            }
+
+            removedRows.Clear();
+            UpdateCheckHeader();
         }
 
         public abstract void SetData(List<ItemType> list);

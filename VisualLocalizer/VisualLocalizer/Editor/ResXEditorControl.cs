@@ -190,7 +190,9 @@ namespace VisualLocalizer.Editor {
             codeGenerationBox.SelectedIndexChanged += new EventHandler(noFocusBoxSelectedIndexChanged);
             codeGenerationBox.SelectedIndexChanged += new EventHandler(codeGenerationBox_SelectedIndexChanged);
             codeGenerationBox.Margin = new Padding(2);
-            if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) codeGenerationBox.Enabled = false;
+
+            if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined())
+                codeGenerationBox.Enabled = false;
 
             toolStrip.Items.Add(codeGenerationBox);
         }        
@@ -242,6 +244,9 @@ namespace VisualLocalizer.Editor {
         }
 
         public void SetData(Dictionary<string, ResXDataNode> data) {
+            if (Editor.ProjectItem.ContainingProject != null && Editor.ProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject)
+                codeGenerationBox.Enabled = false;
+
             codeGenerationBox.Tag = SELECTION_CHANGE_INITIATOR.INITIALIZER;
             codeGenerationBox.SelectedItem = GetResXCodeGenerationMode();
 
@@ -754,6 +759,7 @@ namespace VisualLocalizer.Editor {
         private string previousValue = null;       
         private void codeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return;
+            if (!codeGenerationBox.Enabled) return;
 
             try {
                 ProjectItem documentItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(Editor.FileName);
@@ -790,6 +796,7 @@ namespace VisualLocalizer.Editor {
 
         private string GetResXCodeGenerationMode() {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return null;
+            if (!codeGenerationBox.Enabled) return null;
 
             try {
                 ProjectItem documentItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(Editor.FileName);

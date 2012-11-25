@@ -26,10 +26,24 @@ namespace VisualLocalizer.Gui {
             OleMenuCommandService menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRunID,
                 new EventHandler(runClick), null, menuService);
+
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRemoveUncheckedID,
+                new EventHandler(removeUnchecked), null, menuService);
+
+            MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarPutBackUncheckedID,
+                new EventHandler(restoreUnchecked), null, menuService);
         }
 
         protected override void OnWindowHidden(object sender, EventArgs e) {
             VLDocumentViewsManager.ReleaseLocks();
+        }
+
+        private void removeUnchecked(object sender, EventArgs e) {
+            panel.RemoveUncheckedRows(true);
+        }
+
+        private void restoreUnchecked(object sender, EventArgs e) {
+            panel.RestoreRemovedRows();
         }
 
         private void runClick(object sender, EventArgs e) {

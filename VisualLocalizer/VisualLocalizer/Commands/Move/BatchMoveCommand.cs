@@ -8,13 +8,15 @@ using VisualLocalizer.Components;
 using EnvDTE80;
 using System.ComponentModel;
 using Microsoft.VisualStudio.TextManager.Interop;
+using System.Collections;
+using VisualLocalizer.Components.AspxParser;
 
 namespace VisualLocalizer.Commands {    
     internal sealed class BatchMoveCommand : AbstractBatchCommand {
 
         public List<CodeStringResultItem> Results {
             get;
-            private set;
+            set;
         }
 
         public override void Process(bool verbose) {
@@ -68,23 +70,35 @@ namespace VisualLocalizer.Commands {
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
         }
 
-        protected override void Lookup(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
+        public override IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
 
-            var lookuper = new CodeStringLookuper(functionText, startPoint, parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
+            var lookuper = new CSharpStringLookuper(functionText, startPoint, parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
+            return onLookuperCreated(lookuper);
+        }
+
+        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            var lookuper = new AspNetCodeStringLookuper(functionText, blockSpan, declaredNamespaces, className);
+            return onLookuperCreated(lookuper);
+        }
+
+        private IList onLookuperCreated<T>(CodeStringLookuper<T> lookuper) where T : CodeStringResultItem, new() {
             lookuper.SourceItem = currentlyProcessedItem;
+            lookuper.SourceItemGenerated = currentlyProcessedItem.IsGenerated();
 
             var list = lookuper.LookForStrings();
-            EditPoint2 editPoint = (EditPoint2)startPoint.CreateEditPoint();
-            foreach (var item in list)
-                AddContextToItem(item, editPoint);
-
-            Results.AddRange(list);
+            
+            foreach (T item in list) {
+                Results.Add(item);
+            }
+            
+            return list;
         }
- 
+
+        public void AddToResults<T>(T resultItem) where T : CodeStringResultItem, new() {
+            resultItem.SourceItem = currentlyProcessedItem;
+            Results.Add(resultItem);
+        }
     }
 
-   
-
-   
 }

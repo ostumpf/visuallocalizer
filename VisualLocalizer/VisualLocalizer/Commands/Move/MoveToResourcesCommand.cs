@@ -23,47 +23,47 @@ using System.Drawing;
 
 namespace VisualLocalizer.Commands {
 
-    internal sealed class MoveToResourcesCommand : AbstractCommand {
+    internal abstract class MoveToResourcesCommand<T> : AbstractCommand where T:CodeStringResultItem, new() {
 
+        protected abstract T GetReplaceStringItem();
+        
         public override void Process() {
             base.Process();
 
-            CodeStringResultItem resultItem = GetReplaceStringItem();
+            T resultItem = GetReplaceStringItem();
 
             if (resultItem != null) {                
                 TextSpan replaceSpan = resultItem.ReplaceSpan;
-                string referencedCodeText = resultItem.Value;                
-             
-                SelectResourceFileForm f = new SelectResourceFileForm(
-                    referencedCodeText.CreateKeySuggestions(resultItem.NamespaceElement == null ? null : (resultItem.NamespaceElement as CodeNamespace).FullName,
-                        resultItem.ClassOrStructElementName, resultItem.MethodElementName == null ? resultItem.VariableElementName : resultItem.MethodElementName),
-                    referencedCodeText,
-                    currentDocument.ProjectItem.ContainingProject
-                );
+                string referencedCodeText = resultItem.Value;
+                resultItem.SourceItem = currentDocument.ProjectItem;
+
+                SelectResourceFileForm f = new SelectResourceFileForm(currentDocument.ProjectItem.ContainingProject, resultItem);
                 System.Windows.Forms.DialogResult result = f.ShowDialog(System.Windows.Forms.Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd)));
 
                 if (result == System.Windows.Forms.DialogResult.OK) {
                     bool unitsFromStackRemoved = false;
                     bool unitMovedToResource = false;
-                    string referenceText;
+                    ReferenceString referenceText;
                     bool addNamespace = false;
 
-                    try {                        
-                        if (f.UsingFullName) {
-                            referenceText = f.SelectedItem.Namespace + "." + f.SelectedItem.Class + "." + f.Key;
+                    try {
+                        if (f.UsingFullName || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                            referenceText = new ReferenceString(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key);
                             addNamespace = false;
                         } else {
-                            NamespacesList usedNamespaces = resultItem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem);
+                            NamespacesList usedNamespaces = resultItem.GetUsedNamespaces();
                             addNamespace = usedNamespaces.ResolveNewElement(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key,
                                 currentDocument.ProjectItem.ContainingProject, out referenceText);
                         }
 
+                        string newText = resultItem.GetReferenceText(referenceText);
+
                         int hr = textLines.ReplaceLines(replaceSpan.iStartLine, replaceSpan.iStartIndex, replaceSpan.iEndLine, replaceSpan.iEndIndex,
-                            Marshal.StringToBSTR(referenceText), referenceText.Length, new TextSpan[] { replaceSpan });                        
+                            Marshal.StringToBSTR(newText), newText.Length, new TextSpan[] { replaceSpan });                        
                         Marshal.ThrowExceptionForHR(hr);                        
 
                         hr = textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
-                            replaceSpan.iStartLine, replaceSpan.iStartIndex + referenceText.Length);
+                            replaceSpan.iStartLine, replaceSpan.iStartIndex + newText.Length);
                         Marshal.ThrowExceptionForHR(hr);
                         
                         if (addNamespace) {
@@ -139,40 +139,7 @@ namespace VisualLocalizer.Commands {
             undoManager.Add(newUnit);
 
             return unitsRemoved;
-        } 
+        }        
 
-        private string TrimAtAndApos(string value) {
-            if (value.StartsWith("@")) value = value.Substring(1);
-            return value.Substring(1, value.Length - 2);
-        }
-
-        private CodeStringResultItem GetReplaceStringItem() {
-            string text;
-            TextPoint startPoint;
-            string codeFunctionName;
-            string codeVariableName;
-            CodeElement2 codeClass;
-            TextSpan selectionSpan;
-            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass,out selectionSpan);
-            CodeStringResultItem result = null;
-
-            if (ok) {
-                CodeStringLookuper lookuper = new CodeStringLookuper(text, startPoint,
-                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName, false);
-                List<CodeStringResultItem> items = lookuper.LookForStrings();
-
-                foreach (CodeStringResultItem item in items) {
-                    if (item.ReplaceSpan.Contains(selectionSpan)) {
-                        result = item;
-                        result.SourceItem = currentDocument.ProjectItem;
-                        break;
-                    }
-                }
-            }
-
-            return result;
-             
-        }
-       
     }
 }

@@ -17,12 +17,12 @@ namespace VisualLocalizer.Library {
             }
             set {
                 _FullText = value;
-                FullTextLines = _FullText.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+                if (value!=null) FullTextLines = _FullText.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             }
         }
 
         public void SetWrapContents(bool wrap) {
-            if (!wrap) {                                
+            if (!wrap && FullTextLines != null && RelativeLine < FullTextLines.Length) {                                
                 Value = FullTextLines[RelativeLine];
                 Style.WrapMode = DataGridViewTriState.False;
             } else {

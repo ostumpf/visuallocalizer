@@ -18,10 +18,10 @@ namespace VisualLocalizer.Editor {
             CodeReferences = new List<CodeReferenceResultItem>();
         }
 
-        public void UpdateReferenceCount() {
+        public void UpdateReferenceCount(bool determinated) {
             if (DataGridView==null) return;
             ResXStringGrid stringGrid=(ResXStringGrid)DataGridView;
-            if (ErrorSet.Count == 0) {
+            if (ErrorSet.Count == 0 && determinated) {
                 Cells[stringGrid.ReferencesColumnName].Value = CodeReferences.Count;
             } else {
                 Cells[stringGrid.ReferencesColumnName].Value = "?";

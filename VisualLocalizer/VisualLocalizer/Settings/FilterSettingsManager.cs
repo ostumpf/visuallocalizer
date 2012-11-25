@@ -41,6 +41,12 @@ namespace VisualLocalizer.Settings {
                         SettingsObject.Instance.FilterOutSpecificComment = ReadBoolFromRegKey(filtersKey, "FilterOutSpecificComment");
                         SettingsObject.Instance.ShowFilterContext = ReadBoolFromRegKey(filtersKey, "ShowFilterContext");
 
+                        SettingsObject.Instance.FilterOutAspClientComment = ReadBoolFromRegKey(filtersKey, "FilterOutAspClientComment");
+                        SettingsObject.Instance.FilterOutAspElement = ReadBoolFromRegKey(filtersKey, "FilterOutAspElement");
+                        SettingsObject.Instance.FilterOutAspInlineExpr = ReadBoolFromRegKey(filtersKey, "FilterOutAspInlineExpr");
+                        SettingsObject.Instance.FilterOutAspNet = ReadBoolFromRegKey(filtersKey, "FilterOutAspNet");
+                        SettingsObject.Instance.FilterOutDesignerFile = ReadBoolFromRegKey(filtersKey, "FilterOutDesignerFile");
+
                         SettingsObject.Instance.FilterRegexps.Clear();
                         int count = ReadIntFromRegKey(filtersKey, "RegexpCount");
                         for (int i = 0; i < count; i++) {
@@ -73,6 +79,11 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.FilterOutVerbatim = ReadBoolFromXml(reader, "FilterOutVerbatim");
             SettingsObject.Instance.FilterOutSpecificComment = ReadBoolFromXml(reader, "FilterOutSpecificComment");
             SettingsObject.Instance.ShowFilterContext = ReadBoolFromXml(reader, "ShowFilterContext");
+            SettingsObject.Instance.FilterOutAspClientComment = ReadBoolFromXml(reader, "FilterOutAspClientComment");
+            SettingsObject.Instance.FilterOutAspElement = ReadBoolFromXml(reader, "FilterOutAspElement");
+            SettingsObject.Instance.FilterOutAspInlineExpr = ReadBoolFromXml(reader, "FilterOutAspInlineExpr");
+            SettingsObject.Instance.FilterOutAspNet = ReadBoolFromXml(reader, "FilterOutAspNet");
+            SettingsObject.Instance.FilterOutDesignerFile = ReadBoolFromXml(reader, "FilterOutDesignerFile");
 
             SettingsObject.Instance.MarkNotLocalizableStringsIndex = ReadIntFromXml(reader, "MarkNotLocalizableStringsIndex");
             SettingsObject.Instance.NamespacePolicyIndex = ReadIntFromXml(reader, "NamespacePolicyIndex");
@@ -107,6 +118,11 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.FilterOutSpecificComment = true;
             SettingsObject.Instance.BatchMoveSplitterDistance = 130;
             SettingsObject.Instance.ShowFilterContext = true;
+            SettingsObject.Instance.FilterOutAspClientComment = true;
+            SettingsObject.Instance.FilterOutAspElement = false;
+            SettingsObject.Instance.FilterOutAspInlineExpr = false;
+            SettingsObject.Instance.FilterOutAspNet = false;
+            SettingsObject.Instance.FilterOutDesignerFile = true;
 
             SettingsObject.Instance.FilterRegexps.Clear();
 
@@ -129,6 +145,11 @@ namespace VisualLocalizer.Settings {
                 WriteBoolToRegKey(filterKey, "FilterOutCaps", SettingsObject.Instance.FilterOutCaps);
                 WriteBoolToRegKey(filterKey, "FilterOutSpecificComment", SettingsObject.Instance.FilterOutSpecificComment);
                 WriteBoolToRegKey(filterKey, "ShowFilterContext", SettingsObject.Instance.ShowFilterContext);
+                WriteBoolToRegKey(filterKey, "FilterOutAspClientComment", SettingsObject.Instance.FilterOutAspClientComment);
+                WriteBoolToRegKey(filterKey, "FilterOutAspElement", SettingsObject.Instance.FilterOutAspElement);
+                WriteBoolToRegKey(filterKey, "FilterOutAspInlineExpr", SettingsObject.Instance.FilterOutAspInlineExpr);
+                WriteBoolToRegKey(filterKey, "FilterOutAspNet", SettingsObject.Instance.FilterOutAspNet);
+                WriteBoolToRegKey(filterKey, "FilterOutDesignerFile", SettingsObject.Instance.FilterOutDesignerFile);
 
                 int count = ReadIntFromRegKey(filterKey, "RegexpCount");
                 for (int i = 0; i < count; i++) {
@@ -157,6 +178,11 @@ namespace VisualLocalizer.Settings {
             WriteBoolToXml(writer, "FilterOutNoLetters", SettingsObject.Instance.FilterOutNoLetters);
             WriteBoolToXml(writer, "FilterOutSpecificComment", SettingsObject.Instance.FilterOutSpecificComment);
             WriteBoolToXml(writer, "ShowFilterContext", SettingsObject.Instance.ShowFilterContext);
+            WriteBoolToXml(writer, "FilterOutAspClientComment", SettingsObject.Instance.FilterOutAspClientComment);
+            WriteBoolToXml(writer, "FilterOutAspElement", SettingsObject.Instance.FilterOutAspElement);
+            WriteBoolToXml(writer, "FilterOutAspInlineExpr", SettingsObject.Instance.FilterOutAspInlineExpr);
+            WriteBoolToXml(writer, "FilterOutAspNet", SettingsObject.Instance.FilterOutAspNet);
+            WriteBoolToXml(writer, "FilterOutDesignerFile", SettingsObject.Instance.FilterOutDesignerFile);
 
             WriteIntToXml(writer, "RegexpCount", SettingsObject.Instance.FilterRegexps.Count);
             WriteIntToXml(writer, "MarkNotLocalizableStringsIndex", SettingsObject.Instance.MarkNotLocalizableStringsIndex);

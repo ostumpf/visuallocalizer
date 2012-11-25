@@ -28,10 +28,10 @@ namespace VisualLocalizer.Library {
             return null;
         }
 
-        public bool ResolveNewElement(string newNamespace, string newClass, string newKey, Project project, out string referenceText) {
-            referenceText = newClass + "." + newKey;
+        public bool ResolveNewElement(string newNamespace, string newClass, string newKey, Project project, out ReferenceString referenceText) {
+            referenceText = new ReferenceString(newClass, newKey);
             bool addNamespace = true;
-
+            
             foreach (UsedNamespaceItem item in this) {
                 string fullName = item.Namespace + "." + newClass;
                 CodeType codeType = null;
@@ -40,17 +40,17 @@ namespace VisualLocalizer.Library {
                 } catch {
                     codeType = null;
                 }
-                if (codeType != null) {
+                if (codeType != null && string.IsNullOrEmpty(item.Alias)) {
                     if (item.Namespace == newNamespace) {
                         addNamespace = false;
-                        if (!string.IsNullOrEmpty(item.Alias)) referenceText = item.Alias + "." + referenceText;
+                        if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
                     } else {
                         addNamespace = false;
                         string newAlias = GetAlias(newNamespace);
                         if (!string.IsNullOrEmpty(newAlias)) {
-                            referenceText = newAlias + "." + referenceText;
+                            referenceText.NamespacePart = newAlias;
                         } else {
-                            referenceText = newNamespace + "." + referenceText;
+                            referenceText.NamespacePart = newNamespace;
                         }
                     }
                     break;
@@ -85,5 +85,23 @@ namespace VisualLocalizer.Library {
 
         public string Namespace { get; set; }
         public string Alias { get; set; }
+    }
+
+    public class ReferenceString {
+
+        public ReferenceString() : this(null, null, null) { }
+
+        public ReferenceString(string classPart, string keyPart) : this(null, classPart, keyPart) {}
+        
+        public ReferenceString(string namespacePart, string classPart, string keyPart) {
+            this.NamespacePart = namespacePart;
+            this.ClassPart = classPart;
+            this.KeyPart = keyPart;
+        }
+
+        public string NamespacePart { get; set; }
+        public string ClassPart { get; set; }
+        public string KeyPart { get; set; }
+
     }
 }

@@ -109,6 +109,61 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        private bool _FilterOutAspNet;
+        public bool FilterOutAspNet {
+            get {
+                return _FilterOutAspNet;
+            }
+            set {
+                _FilterOutAspNet = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutAspElement;
+        public bool FilterOutAspElement {
+            get {
+                return _FilterOutAspElement;
+            }
+            set {
+                _FilterOutAspElement = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutAspClientComment;
+        public bool FilterOutAspClientComment {
+            get {
+                return _FilterOutAspClientComment;
+            }
+            set {
+                _FilterOutAspClientComment = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutAspInlineExpr;
+        public bool FilterOutAspInlineExpr {
+            get {
+                return _FilterOutAspInlineExpr;
+            }
+            set {
+                _FilterOutAspInlineExpr = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutDesignerFile;
+        public bool FilterOutDesignerFile {
+            get {
+                return _FilterOutDesignerFile;
+            }
+            set {
+                _FilterOutDesignerFile = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
         private bool _ShowFilterContext;
         public bool ShowFilterContext {
             get {

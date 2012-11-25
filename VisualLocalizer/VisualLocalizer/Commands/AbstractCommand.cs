@@ -25,9 +25,7 @@ namespace VisualLocalizer.Commands {
             currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
-            currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
-            if (currentCodeModel == null)
-                throw new Exception("Current document has no CodeModel.");
+            currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;           
             if (currentDocument.ReadOnly)
                 throw new Exception("Cannot perform this operation - active document is readonly");
 
