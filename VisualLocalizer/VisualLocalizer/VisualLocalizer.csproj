@@ -75,10 +75,6 @@
     <Compile Include="Commands\Inline\InlineCommand.cs" />
     <Compile Include="Commands\Move\MoveToResourcesCommand.cs" />
     <Compile Include="Commands\Inline\ReferenceLister.cs" />
-    <Compile Include="Components\AspxParser\IAspxHandler.cs" />
-    <Compile Include="Components\AspxParser\Parser.cs" />
-    <Compile Include="Components\AspxParser\Types.cs" />
-    <Compile Include="Components\AspxParser\WebConfig.cs" />
     <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
     <Compile Include="Components\Code\AspNetCodeExplorer.cs" />
     <Compile Include="Components\Code\AspNetCodeStringLookuper.cs" />

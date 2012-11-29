@@ -5,7 +5,7 @@ using System.Text;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using EnvDTE;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Components {
     internal class CodeReferenceLookuper<T> : AbstractCodeLookuper where T:CodeReferenceResultItem, new() {
@@ -51,11 +51,11 @@ namespace VisualLocalizer.Components {
             string prefix = null;
             char lastNonWhitespaceChar = '?';
 
-            for (int i = 0; i < text.Length; i++) {
+            for (globalIndex = 0; globalIndex < text.Length; globalIndex++) {
                 previousPreviousPreviousChar = previousPreviousChar;
                 previousPreviousChar = previousChar;
                 previousChar = currentChar;
-                currentChar = text[i];
+                currentChar = text[globalIndex];
 
                 if (skipLine) {
                     if (currentChar == '\n') {
@@ -99,8 +99,8 @@ namespace VisualLocalizer.Components {
                                     }
                                 }
                             }
-                            
-                            if (currentElement.IsTerminal && (i == text.Length - 1 || !text[i + 1].CanBePartOfIdentifier())) {
+
+                            if (currentElement.IsTerminal && (globalIndex == text.Length - 1 || !text[globalIndex + 1].CanBePartOfIdentifier())) {
                                 AddResult(list, currentElement.Word, prefix, currentElement.Infos);
                             }                                                           
                         }

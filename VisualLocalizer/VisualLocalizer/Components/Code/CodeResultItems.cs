@@ -5,7 +5,7 @@ using System.Text;
 using EnvDTE;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Library;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Components {
     internal abstract class AbstractResultItem {
@@ -127,10 +127,15 @@ namespace VisualLocalizer.Components {
     internal sealed class AspNetStringResultItem : CodeStringResultItem {
         public NamespacesList DeclaredNamespaces { get; set; }
         public bool ComesFromElement { get; set; }
-        public bool ComesFromInlineExpression { get; set; }        
+        public bool ComesFromInlineExpression { get; set; }
+        public string ElementPrefix { get; set; }
+        public bool LocalizabilityProved { get; set; }
+        public bool ComesFromPlainText { get; set; }
+        public bool ComesFromDirective { get; set; }
+        public bool ComesFromCodeBlock { get; set; }
 
         public override string GetReferenceText(ReferenceString referenceText) {
-            if (ComesFromElement) {
+            if (!ComesFromCodeBlock) {
                 if (SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
                     return string.Format(StringConstants.AspElementExpressionFormat, referenceText.NamespacePart, referenceText.ClassPart, referenceText.KeyPart);
                 } else {
@@ -152,7 +157,7 @@ namespace VisualLocalizer.Components {
 
         public override string NoLocalizationComment {
             get {
-                if (ComesFromElement) {
+                if (!ComesFromCodeBlock) {
                     return StringConstants.AspNetLocalizationComment;
                 } else {
                     return StringConstants.CSharpLocalizationComment;
@@ -191,7 +196,7 @@ namespace VisualLocalizer.Components {
     internal sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
         public bool ComesFromInlineExpression { get; set; }
         public bool ComesFromWebSiteResourceReference { get; set; }
-        public BlockSpan InlineReplaceSpan { get; set; }
+        public BlockSpan InlineReplaceSpan { get; set; }        
 
         public override string GetInlineValue() {
             if (ComesFromInlineExpression) {

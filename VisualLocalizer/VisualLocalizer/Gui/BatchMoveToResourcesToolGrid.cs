@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Gui {
 
@@ -59,7 +60,7 @@ namespace VisualLocalizer.Gui {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
                 row.DataSourceItem = item;
 
-                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
+                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();                
                 checkCell.Value = item.MoveThisItem;
                 row.Cells.Add(checkCell);
 
@@ -240,6 +241,17 @@ namespace VisualLocalizer.Gui {
             return row.DataSourceItem.ComesFromDesignerFile;
         }
 
+        public bool IsRowAspPlainTextTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
+            return aitem != null && aitem.ComesFromPlainText;
+        }
+
+        // !!! EXCEPTION - returns negation!!!!
+        public bool IsRowAspTypeProvedTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
+            return aitem != null && !aitem.LocalizabilityProved && (aitem.ComesFromElement || aitem.ComesFromDirective);
+        }
+
         #endregion
 
         #region overridable members
@@ -368,13 +380,11 @@ namespace VisualLocalizer.Gui {
         }
         
         private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, Project project) {
-            if (!destinationItemsCache.ContainsKey(project)) {
-                List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
+            if (!destinationItemsCache.ContainsKey(project)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
-                foreach (ProjectItem projectItem in items) {
-                    var resxItem = ResXProjectItem.ConvertToResXItem(projectItem, project);
-                    resxItems.Add(resxItem.ToString());
-                    resxItemsCache.Add(resxItem.ToString(), resxItem);
+                foreach (ResXProjectItem projectItem in project.GetResXItemsAround(true)) {
+                    resxItems.Add(projectItem.ToString());
+                    resxItemsCache.Add(projectItem.ToString(), projectItem);
                 }
                 destinationItemsCache.Add(project, resxItems);
             }
@@ -389,6 +399,14 @@ namespace VisualLocalizer.Gui {
                 if (!comboBoxCell.Items.Contains(e.FormattedValue)) {
                     comboBoxCell.Items.Insert(0, e.FormattedValue);
                     valueAdded = true;
+                }
+            }
+            if (Columns[e.ColumnIndex].Name == CheckBoxColumnName && CheckBoxColumnName != null) {
+                bool newVal = (bool)e.FormattedValue;
+                var row = Rows[e.RowIndex] as DataGridViewKeyValueRow<CodeStringResultItem>;
+                if (row != null) {
+                    foreach (CheckBox box in row.InfluencingCheckboxes)
+                        box.CheckState = CheckState.Indeterminate;
                 }
             }
         }

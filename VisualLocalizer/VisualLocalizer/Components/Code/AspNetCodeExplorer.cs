@@ -9,7 +9,7 @@ using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Runtime.InteropServices;
 using System.IO;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 using System.Reflection;
 using System.ComponentModel;
 using System.Collections;
@@ -21,19 +21,20 @@ namespace VisualLocalizer.Components {
         private NamespacesList declaredNamespaces = new NamespacesList();
         private string ClassFileName = null;
         private Dictionary<string, Type> typesCache = new Dictionary<string, Type>();
-        private string fileText, fullPath;        
+        private string fileText, fullPath;
+        private WebConfig webConfig;
 
         private AspNetCodeExplorer() { }
 
         private static AspNetCodeExplorer instance;
         public static AspNetCodeExplorer Instance {
-            get {
+            get {                
                 if (instance == null) instance = new AspNetCodeExplorer();
                 return instance;
             }
         }
 
-        public void Explore(AbstractBatchCommand parentCommand, ProjectItem projectItem, WebConfig webConfig, int maxLine, int maxIndex) {
+        public void Explore(AbstractBatchCommand parentCommand, ProjectItem projectItem, int maxLine, int maxIndex) {
             fullPath = (string)projectItem.Properties.Item("FullPath").Value;
             if (string.IsNullOrEmpty(fullPath)) throw new Exception("Cannot process item " + projectItem.Name);
 
@@ -41,6 +42,7 @@ namespace VisualLocalizer.Components {
             this.declaredNamespaces.Clear();
             this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
 
+            webConfig = new WebConfig(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
             fileText = null;
 
             if (RDTManager.IsFileOpen(fullPath)) {
@@ -59,19 +61,25 @@ namespace VisualLocalizer.Components {
 
             Parser parser = new Parser(fileText, this, maxLine, maxIndex);
             parser.Process();
+
+            webConfig.ClearCache();
         }
 
-        public void Explore(AbstractBatchCommand parentCommand, ProjectItem projectItem, WebConfig webConfig) {
-            Explore(parentCommand, projectItem, webConfig, int.MaxValue, int.MaxValue);
+        public void Explore(AbstractBatchCommand parentCommand, ProjectItem projectItem) {
+            Explore(parentCommand, projectItem, int.MaxValue, int.MaxValue);
         }
+
+        public bool StopRequested { get { return false;  } }
 
         public void OnCodeBlock(CodeBlockContext context) {
             context.InnerBlockSpan.Move(1, 1);
             
             IList list = parentCommand.LookupInAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
-            
-            foreach (AbstractResultItem item in list)
+
+            foreach (AspNetStringResultItem item in list) {
                 item.ComesFromClientComment = context.WithinClientSideComment;
+                item.ComesFromCodeBlock = true;
+            }
 
             AddContextToItems((IEnumerable)list);
         }
@@ -84,36 +92,29 @@ namespace VisualLocalizer.Components {
             foreach (AttributeInfo info in context.Attributes) {
                 if (info.ContainsAspTags) continue;
 
-                AddResult(info, context.BlockSpan, context.WithinClientSideComment, false);
+                AspNetStringResultItem item = AddResult(info, null, context.WithinClientSideComment, false, false, true);
+                if (item != null) item.ComesFromDirective = true;
             }
         }
 
         public void OnElementBegin(ElementContext context) {
             if (parentCommand is BatchMoveCommand) {
-                if (context.Prefix == "asp") {
-                    if (!typesCache.ContainsKey(context.ElementName)) {
-                        Type type = Type.GetType(string.Format(StringConstants.AspAssemblyQualifiedNameFormat, context.ElementName), false, true);
-                        typesCache.Add(context.ElementName, type);
-                    }
-                    Type elementType = typesCache[context.ElementName];
+                foreach (var info in context.Attributes) {
+                    if (info.ContainsAspTags) continue;
 
-                    if (elementType != null) {
-                        foreach (var info in context.Attributes) {
-                            if (info.ContainsAspTags) continue;
-                            if (StringConstants.AspUnlocalizableAttributes.Contains(info.Name, StringIgnoreCaseComparer.Instance)) continue;
+                    
+                    if (Settings.SettingsObject.Instance.UseReflectionInAsp) {
+                        PropertyInfo propInfo;
+                        bool? isString = webConfig.IsTypeof(context.Prefix, context.ElementName, info.Name, typeof(string), out propInfo);
 
-                            PropertyInfo propInfo = elementType.GetProperty(info.Name, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                            if (propInfo != null && propInfo.PropertyType == typeof(string)) {
-                                AddResult(info, context.BlockSpan, context.WithinClientSideComment, HasLocalizableFalse(propInfo));
-                            }
+                        AspNetStringResultItem newItem = null;
+                        if (isString == null || isString.Value) {
+                            newItem = AddResult(info, context, false);                            
                         }
-                    }
-                } else {
-                    foreach (var info in context.Attributes) {
-                        if (info.ContainsAspTags) continue;
-                        
-                        AddResult(info, context.BlockSpan, context.WithinClientSideComment, false);                        
-                    }
+                        if (newItem != null) newItem.LocalizabilityProved = isString.HasValue && isString.Value;
+                    } else {
+                        AddResult(info, context, false);
+                    }                    
                 }
             }
         }
@@ -153,11 +154,17 @@ namespace VisualLocalizer.Components {
         }
 
         public void OnPlainText(PlainTextContext context) {
+            if (parentCommand is BatchMoveCommand) {
+                var newItem = AddResult(new AttributeInfo() { BlockSpan = context.BlockSpan, Name = context.Text, Value = context.Text },
+                    null, context.WithinClientSideComment, false, false, false);
+                if (newItem != null) {
+                    newItem.ComesFromPlainText = true;
+                    newItem.ComesFromElement = false;
+                }
+            }
         }
 
-        public void OnElementEnd(EndElementContext context) {
-        }
-
+        public void OnElementEnd(EndElementContext context) { }
 
         private bool HasLocalizableFalse(PropertyInfo propInfo) {
             object[] objects = propInfo.GetCustomAttributes(typeof(LocalizableAttribute), true);
@@ -170,34 +177,42 @@ namespace VisualLocalizer.Components {
             } else return false;
         }
 
-        private void AddResult(AttributeInfo info, BlockSpan elementSpan, bool withinClientSideComment, bool propertyLocalizableFalse) {
-            if (!(parentCommand is BatchMoveCommand)) return;
+        private AspNetStringResultItem AddResult(AttributeInfo info, string elementPrefix, bool comesFromClientComment,
+            bool propertyLocalizableFalse, bool comesFromElement, bool stripApos) {
+            if (!(parentCommand is BatchMoveCommand)) return null;
 
             BatchMoveCommand bCmd = (BatchMoveCommand)parentCommand;
-            info.BlockSpan.Move(1, 0);
+            if (stripApos) info.BlockSpan.Move(1, 0);
 
-            TextSpan span = new TextSpan();            
+            TextSpan span = new TextSpan();
             span.iStartLine = info.BlockSpan.StartLine;
-            span.iStartIndex = info.BlockSpan.StartIndex + 1;
+            span.iStartIndex = info.BlockSpan.StartIndex + (stripApos ? 1 : 0);
             span.iEndLine = info.BlockSpan.EndLine;
-            span.iEndIndex = info.BlockSpan.EndIndex - 1;
+            span.iEndIndex = info.BlockSpan.EndIndex - (stripApos ? 1 : 0);
 
             AspNetStringResultItem resultItem = new AspNetStringResultItem();
-            resultItem.Value = info.Value;            
+            resultItem.Value = info.Value;
             resultItem.ReplaceSpan = span;
-            resultItem.AbsoluteCharOffset = info.BlockSpan.AbsoluteCharOffset + 2;
+            resultItem.AbsoluteCharOffset = info.BlockSpan.AbsoluteCharOffset + (stripApos ? 2 : 0);
             resultItem.AbsoluteCharLength = info.Value.Length;
             resultItem.WasVerbatim = false;
             resultItem.IsWithinLocalizableFalse = propertyLocalizableFalse;
             resultItem.IsMarkedWithUnlocalizableComment = info.IsMarkedWithUnlocalizableComment;
             resultItem.ClassOrStructElementName = ClassFileName;
             resultItem.DeclaredNamespaces = declaredNamespaces;
-            resultItem.ComesFromElement = true;
-            resultItem.ComesFromClientComment = withinClientSideComment;            
-
+            resultItem.ComesFromElement = comesFromElement;
+            resultItem.ComesFromClientComment = comesFromClientComment;
+            resultItem.ElementPrefix = elementPrefix;
+           
             AddContextToItem(resultItem);
 
             bCmd.AddToResults(resultItem);
+
+            return resultItem;
+        }
+
+        private AspNetStringResultItem AddResult(AttributeInfo info, ElementContext elementContext, bool propertyLocalizableFalse) {
+            return AddResult(info, elementContext.Prefix, elementContext.WithinClientSideComment, propertyLocalizableFalse, true, true);
         }
     
         public void AddContextToItems(IEnumerable items) {
@@ -207,11 +222,12 @@ namespace VisualLocalizer.Components {
         }
 
         private void AddContextToItem(AbstractResultItem item) {
+            if (!Settings.SettingsObject.Instance.ShowFilterContext) return;
             item.ContextRelativeLine = 0;
 
             int currentPos = item.AbsoluteCharOffset;
             string currentLine = GetLine(ref currentPos, 0);
-            currentLine = currentLine.Substring(0, item.ReplaceSpan.iStartIndex) + StringConstants.ContextSubstituteText + currentLine.Substring(item.ReplaceSpan.iEndIndex);
+            currentLine = currentLine.Substring(0, item.ReplaceSpan.iStartIndex) + StringConstants.ContextSubstituteText;
 
             StringBuilder context = new StringBuilder();
             context.Append(currentLine.Trim());
@@ -229,7 +245,9 @@ namespace VisualLocalizer.Components {
                 }
             }
 
-            currentPos = item.AbsoluteCharOffset;
+            currentPos = item.AbsoluteCharOffset+item.AbsoluteCharLength;
+            currentLine = GetLine(ref currentPos, 0);
+            context.Append(currentLine.Substring(item.ReplaceSpan.iEndIndex));
 
             while ((currentLine = GetLine(ref currentPos, +1)) != null && botLines < NumericConstants.ContextLineRadius) {
                 string lineText = currentLine.ToString().Trim();

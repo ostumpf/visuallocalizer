@@ -19,6 +19,7 @@ using System.Collections;
 using System.Drawing;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Editor {    
 
@@ -495,6 +496,8 @@ namespace VisualLocalizer.Editor {
             ProjectItem thisItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(editorControl.Editor.FileName);
             if (thisItem != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) {
                 ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(thisItem, thisItem.ContainingProject);
+                resxItem.ResolveNamespaceClass(thisItem.ContainingProject.GetResXItemsAround(false));
+
                 List<Project> projects = new List<Project>();
 
                 projects.Add(thisItem.ContainingProject);

@@ -8,7 +8,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using VisualLocalizer.Extensions;
 using System.Collections;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Text.RegularExpressions;
 
@@ -79,7 +79,7 @@ namespace VisualLocalizer.Commands {
 
         protected virtual Trie<CodeReferenceTrieElement> GetActualTrie() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
-                var resxItems = currentlyProcessedItem.GetResXItemsAround(false);
+                var resxItems = currentlyProcessedItem.ContainingProject.GetResXItemsAround(false);
                 trieCache.Add(currentlyProcessedItem.ContainingProject, resxItems.CreateTrie());
             }
             return trieCache[currentlyProcessedItem.ContainingProject]; 
@@ -131,7 +131,7 @@ namespace VisualLocalizer.Commands {
 
         public IList ParseResourceExpression(string text, BlockSpan blockSpan) {
             List<AspNetCodeReferenceResultItem> list = new List<AspNetCodeReferenceResultItem>();
-            if (!Regex.IsMatch(text, @"\s*\w+\s*:\s*\w+\s*,\s*\w+\s*")) return list;
+            if (!Regex.IsMatch(text, @"\s*Resources\s*:\s*\w+\s*,\s*\w+\s*")) return list;
 
             int whitespaceLeft;
             int whitespaceRight;

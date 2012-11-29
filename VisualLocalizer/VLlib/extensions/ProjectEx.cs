@@ -30,7 +30,8 @@ namespace VisualLocalizer.Library {
                         list.AddRange(l);
                     }
                 }
-            }
+            }          
+
             return list;
         }
 

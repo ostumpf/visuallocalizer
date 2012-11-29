@@ -4,21 +4,21 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 
-namespace VisualLocalizer.Components.AspxParser {
+namespace VisualLocalizer.Library.AspxParser {
     public sealed class Parser {
 
         private string text;
         private IAspxHandler handler;
 
-        private int currentLine, currentIndex, currentOffset, aposCount, maxLine, maxIndex;
+        private int currentLine, currentIndex, currentOffset, aposCount, maxLine, maxIndex, plaintTextStartCorrection;
         private char currentChar;
         private bool withinAspElement, withinAspDirective, withinCodeBlock, withinOutputElement, withinAspTags, attributeValueContainsOutput,
-            withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue;
+            withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText;
         private OutputElementKind outputElementKind;
         private StringBuilder codeBuilder, backupBuilder, plainTextBuilder, attributeNameBuilder, attributeValueBuilder;
         private List<AttributeInfo> attributes;
         private string elementName, elementPrefix;
-        private BlockSpan currentAttributeBlockSpan, externalSpan, internalSpan, backupSpan;
+        private BlockSpan currentAttributeBlockSpan, externalSpan, internalSpan, backupSpan, plainTextSpan;
 
         public Parser(string text, IAspxHandler handler, int maxLine, int maxIndex) {
             this.text = text;
@@ -46,12 +46,17 @@ namespace VisualLocalizer.Components.AspxParser {
             for (int i = 0; i < text.Length; i++) {
                 currentChar = text[i];
                 if (currentLine > maxLine || (currentLine == maxLine && currentIndex > maxIndex)) endRequested = true;
+                if (handler.StopRequested) endRequested = true;
 
                 if (!withinServerComment)
                     if (withinOutputElement || withinCodeBlock) {
                         codeBuilder.Append(currentChar);
-                    } else if (!withinAspElement && !withinAspDirective && endRequested) {
-                        break;
+                    } else if (!withinAspElement && !withinAspDirective) {
+                        if (endRequested) {
+                            break;
+                        } else if (withinPlainText) {
+                            plainTextBuilder.Append(currentChar);
+                        }
                     }                
 
                 if (!withinServerComment && (withinAspDirective || withinAspElement)) {
@@ -63,8 +68,9 @@ namespace VisualLocalizer.Components.AspxParser {
                     justEnteredAspTags = false;
                 }
                 
-                if (!withinAspTags) {
+                if (!withinAspTags) {                    
                     if (currentChar == '%' && GetCodeBack(1) == '<') {
+                        EndPlainText(-1,2);
                         if (GetCodeForth(1) == '-' && GetCodeForth(2) == '-') {
                             withinServerComment = true;
                             withinAspTags = true;
@@ -82,6 +88,8 @@ namespace VisualLocalizer.Components.AspxParser {
                     }
                 } else {
                     if (currentChar == '>' && GetCodeBack(1) == '%') {
+                        StartPlainText(1, 0);
+
                         if (!withinServerComment) {
                             withinAspTags = false;
                             justEnteredAspTags = false;
@@ -111,43 +119,69 @@ namespace VisualLocalizer.Components.AspxParser {
 
             if (withinAspElement && currentChar == '>' && aposCount % 2 == 0) {
                 HitEnd(ref externalSpan, 0);
+                StartPlainText(1, 0);
 
                 if (string.IsNullOrEmpty(elementName) && attributeNameBuilder.Length > 0) {
                     elementName = attributeNameBuilder.ToString();
                     attributeNameBuilder.Length = 0;
-                }
+                }               
 
                 if (withinEndAspElement) {
-                    handler.OnElementEnd(new EndElementContext() {
-                        BlockSpan = externalSpan,
-                        ElementName = elementName,
-                        Prefix = elementPrefix,
-                        WithinClientSideComment = withinClientComment
-                    });
+                    if (elementName.ToLower() == "script") {
+                        withinCodeBlock = false;
+                        HitEnd(ref externalSpan, -8);
+                        HitEnd(ref internalSpan, -8);
+                        handler.OnCodeBlock(new CodeBlockContext() {
+                            BlockText = codeBuilder.ToString(0, codeBuilder.Length-8),
+                            InnerBlockSpan = internalSpan,
+                            OuterBlockSpan = externalSpan,
+                            WithinClientSideComment = withinClientComment
+                        });
+                        externalSpan = null;
+                        internalSpan = null;
+                        codeBuilder.Length = 0;
+                    } else {
+                        handler.OnElementEnd(new EndElementContext() {
+                            BlockSpan = externalSpan,
+                            ElementName = elementName,
+                            Prefix = elementPrefix,
+                            WithinClientSideComment = withinClientComment
+                        });                        
+                    }
+                    externalSpan = null;
                 } else {
-                    handler.OnElementBegin(new ElementContext() {
-                        Attributes = attributes,
-                        BlockSpan = externalSpan,
-                        ElementName = elementName,
-                        Prefix = elementPrefix,
-                        WithinClientSideComment = withinClientComment
-                    });                    
+                    if (elementName.ToLower() == "script") {
+                        withinCodeBlock = true;
+                        externalSpan = null;
+                        HitStart(ref externalSpan, 0);
+                        HitStart(ref internalSpan, 0);
+                    } else {
+                        handler.OnElementBegin(new ElementContext() {
+                            Attributes = attributes,
+                            BlockSpan = externalSpan,
+                            ElementName = elementName,
+                            Prefix = elementPrefix,
+                            WithinClientSideComment = withinClientComment
+                        });
+                        externalSpan = null;
+                    }
                 }
                 
                 withinAspElement = false;
-                withinEndAspElement = false;
-                externalSpan = null;
+                withinEndAspElement = false;                
             }
 
             if (!withinAspElement && !withinAspTags && GetCodeBack(1) == '<' &&
                 (currentChar.CanBePartOfIdentifier() || currentChar == '/' || (currentChar == '!' && GetCodeForth(1) != '-'))) {
+                EndPlainText(-1, 2);
+
                 withinAspElement = true;
                 elementName = null;
                 elementPrefix = null;
                 withinAttributeName = true;
-                aposCount = 0;
+                aposCount = 0;               
                 HitStart(ref externalSpan, -1);
-
+               
                 if (currentChar == '/') {
                     withinEndAspElement = true;
                     attributes = null;
@@ -156,6 +190,39 @@ namespace VisualLocalizer.Components.AspxParser {
                     attributes = new List<AttributeInfo>();
                 }
             }        
+        }
+
+        private void StartPlainText(int blockCorrection, int textCorrection) {
+            HitStart(ref plainTextSpan, blockCorrection);
+            plainTextBuilder.Length = 0;
+            withinPlainText = true;
+            plaintTextStartCorrection = Math.Abs(textCorrection);
+        }
+
+        private void EndPlainText(int blockCorrection, int textCorrection) {
+            withinPlainText = false;
+
+            if (plainTextSpan == null) {
+                plainTextBuilder.Length = 0;
+                return;
+            }
+
+            HitEnd(ref plainTextSpan, blockCorrection);
+
+            textCorrection = Math.Abs(textCorrection);
+         
+            if (plainTextBuilder.Length > 0 && plainTextBuilder.Length - textCorrection - plaintTextStartCorrection>= 0) {
+                string text = plainTextBuilder.ToString(plaintTextStartCorrection, plainTextBuilder.Length - textCorrection - plaintTextStartCorrection); 
+                if (text.Trim() != string.Empty) {
+                    handler.OnPlainText(new PlainTextContext() {
+                        Text = text,
+                        WithinClientSideComment = withinClientComment,
+                        BlockSpan = plainTextSpan
+                    });                    
+                }
+            }
+            plainTextSpan = null;
+            plainTextBuilder.Length = 0;
         }
 
         private void ReactToBeginningOfAspTags() {
@@ -187,7 +254,6 @@ namespace VisualLocalizer.Components.AspxParser {
                     codeBuilder.Length = 0;
                     withinCodeBlock = false;
                 }
-                
                 HitStart(ref internalSpan, 1);               
             }                              
         }
@@ -248,10 +314,12 @@ namespace VisualLocalizer.Components.AspxParser {
             if (!withinClientComment) {
                 if (currentChar == '-' && GetCodeBack(1) == '-' && GetCodeBack(2) == '!' && GetCodeBack(3) == '<') {
                     withinClientComment = true;
+                    EndPlainText(-3, 4);
                 }
             } else {
                 if (currentChar == '>' && GetCodeBack(1) == '-' && GetCodeBack(2) == '-') {
-                    withinClientComment = false;                    
+                    withinClientComment = false;
+                    StartPlainText(1, 0);
                 }
             }
         }

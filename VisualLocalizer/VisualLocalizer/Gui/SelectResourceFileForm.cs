@@ -10,6 +10,7 @@ using VisualLocalizer.Editor;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using EnvDTE;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Gui {
 
@@ -24,7 +25,7 @@ namespace VisualLocalizer.Gui {
         private CodeStringResultItem resultItem;
         private ReferenceString referenceText;
 
-        public SelectResourceFileForm(Project project, CodeStringResultItem resultItem) {
+        public SelectResourceFileForm(ProjectItem projectItem, CodeStringResultItem resultItem) {
             InitializeComponent();
             this.resultItem = resultItem;
             this.referenceText = new ReferenceString();
@@ -34,13 +35,10 @@ namespace VisualLocalizer.Gui {
 
             keyBox.SelectedIndex = 0;
            
-            valueBox.Text = resultItem.Value;            
+            valueBox.Text = resultItem.Value;
 
-            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
-            List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
-            foreach (ProjectItem item in items) {
-                var resxItem = ResXProjectItem.ConvertToResXItem(item, project);                
-                comboBox.Items.Add(resxItem);
+            foreach (var item in projectItem.ContainingProject.GetResXItemsAround(true)) {
+                comboBox.Items.Add(item);
             }
 
             if (comboBox.Items.Count > 0)
@@ -142,10 +140,15 @@ namespace VisualLocalizer.Gui {
                 referenceText.ClassPart = item.Class;
                 referenceText.KeyPart = keyBox.Text;
 
-                if (!usingBox.Checked || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                    referenceText.NamespacePart = item.Namespace;
+                if (string.IsNullOrEmpty(item.Namespace) && resultItem.SourceItem.ContainingProject.Kind.ToUpper() != StringConstants.WebSiteProject) {
+                    ok = false;
+                    errorText = "Cannot reference resources in this file";
                 } else {
-                    referenceText.NamespacePart = null;
+                    if (!usingBox.Checked || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                        referenceText.NamespacePart = item.Namespace;
+                    } else {
+                        referenceText.NamespacePart = null;
+                    }
                 }
 
                 referenceLabel.Text = resultItem.GetReferenceText(referenceText);

@@ -37,7 +37,7 @@ namespace VisualLocalizer.Commands {
                 string referencedCodeText = resultItem.Value;
                 resultItem.SourceItem = currentDocument.ProjectItem;
 
-                SelectResourceFileForm f = new SelectResourceFileForm(currentDocument.ProjectItem.ContainingProject, resultItem);
+                SelectResourceFileForm f = new SelectResourceFileForm(currentDocument.ProjectItem, resultItem);
                 System.Windows.Forms.DialogResult result = f.ShowDialog(System.Windows.Forms.Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd)));
 
                 if (result == System.Windows.Forms.DialogResult.OK) {

@@ -167,6 +167,8 @@ namespace VisualLocalizer.Commands {
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
+            } finally {
+                VLDocumentViewsManager.ReleaseLocks();
             }
         }
 

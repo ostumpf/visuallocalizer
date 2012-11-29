@@ -9,7 +9,7 @@ using EnvDTE80;
 using System.ComponentModel;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Collections;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Commands {    
     internal sealed class BatchMoveCommand : AbstractBatchCommand {

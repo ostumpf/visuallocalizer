@@ -8,15 +8,28 @@ using EnvDTE;
 
 namespace VisualLocalizer.Extensions {
     public static class ProjectItemEx {
-        public static List<ResXProjectItem> GetResXItemsAround(this ProjectItem item, bool includeInternal) {
-            List<ProjectItem> items = item.ContainingProject.GetFiles(ResXProjectItem.IsItemResX, true);
+        public static List<ResXProjectItem> GetResXItemsAround(this Project project, bool includeInternal) {
+            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
             List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
             items.ForEach((i) => {
-                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(i, item.ContainingProject);
+                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(i, project);
                 if (!resxItem.MarkedInternalInReferencedProject || includeInternal) {
                     resxItems.Add(resxItem);
                 }
             });
+
+            resxItems.Sort(new Comparison<ResXProjectItem>((a, b) => {
+                bool isAneutral = !a.IsCultureSpecific();
+                bool isBneutral = !b.IsCultureSpecific();
+                if (isAneutral == isBneutral) {
+                    return a.InternalProjectItem.Name.CompareTo(b.InternalProjectItem.Name);
+                } else {
+                    return isBneutral ? 1 : -1;
+                }
+            }));
+
+            resxItems.ForEach((item) => { item.ResolveNamespaceClass(resxItems); });
+
             return resxItems;
         }
 

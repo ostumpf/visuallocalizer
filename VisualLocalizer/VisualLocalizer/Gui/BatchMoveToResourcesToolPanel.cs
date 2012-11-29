@@ -23,7 +23,7 @@ namespace VisualLocalizer.Gui {
         private SplitContainer splitContainer;
         private bool SplitterMoving;
         private CheckBox comesFromElementBox, comesFromDesignerFileBox, comesFromAspNetBox, 
-            comesFromInlineExprBox, comesFromAspClientCommentBox;
+            comesFromInlineExprBox, comesFromAspClientCommentBox, comesFromAspPlainTextBox, isLocalizabilityProvedBox;
 
         public BatchMoveToResourcesToolPanel() {
             this.SuspendLayout();
@@ -94,6 +94,12 @@ namespace VisualLocalizer.Gui {
             comesFromAspClientCommentBox.Checked = SettingsObject.Instance.FilterOutAspClientComment;
             ToolGrid.CheckByPredicate(comesFromAspClientCommentBox, ToolGrid.IsRowAspClientCommentTest);
 
+            isLocalizabilityProvedBox.Checked = SettingsObject.Instance.FilterOutAspNotProved;
+            ToolGrid.CheckByPredicate(isLocalizabilityProvedBox, ToolGrid.IsRowAspTypeProvedTest);
+
+            comesFromAspPlainTextBox.Checked = SettingsObject.Instance.FilterOutAspPlainText;
+            ToolGrid.CheckByPredicate(comesFromAspPlainTextBox, ToolGrid.IsRowAspPlainTextTest);
+
             splitContainer.SuspendLayout();
             regexTable.Controls.Clear();            
             regexTable.RowStyles.Clear();
@@ -120,7 +126,8 @@ namespace VisualLocalizer.Gui {
             filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); 
             filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
-            filterPanel.RowCount = 6;
+            filterPanel.RowCount = 7;
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -129,74 +136,112 @@ namespace VisualLocalizer.Gui {
             filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             localizableBox = new CheckBox();
-            localizableBox.Text = "Filter out string literals within element decorated with [Localizable(false)]";
+            localizableBox.Text = "Check off literals within elements decorated with [Localizable(false)]";
             localizableBox.AutoSize = true;
             localizableBox.AutoEllipsis = true;
+            localizableBox.ThreeState = true;
+            localizableBox.AutoCheck = false;
             localizableBox.Click += new EventHandler(localizableBox_Click);
             filterPanel.Controls.Add(localizableBox, 0, 0);
 
             verbatimBox = new CheckBox();
-            verbatimBox.Text = "Filter out verbatim string literals";
+            verbatimBox.Text = @"Check off verbatim literals (@"")";
             verbatimBox.AutoSize = true;
             verbatimBox.AutoEllipsis = true;
+            verbatimBox.ThreeState = true;
+            verbatimBox.AutoCheck = false;
             verbatimBox.Click += new EventHandler(verbatimBox_Click);
             filterPanel.Controls.Add(verbatimBox, 1, 0);
 
             noLettersBox = new CheckBox();
-            noLettersBox.Text = "Filter out string literals not containing any letters (e.g. 127.0.0.1)";
+            noLettersBox.Text = "Check off literals not containing any letters (e.g. 127.0.0.1)";
             noLettersBox.AutoSize = true;
             noLettersBox.AutoEllipsis = true;
+            noLettersBox.ThreeState = true;
+            noLettersBox.AutoCheck = false;
             noLettersBox.Click += new EventHandler(noLettersBox_Click);
             filterPanel.Controls.Add(noLettersBox, 0, 1);
 
             capsBox = new CheckBox();
-            capsBox.Text = "Filter out string literals containing only capital letters, symbols and punctuation";
+            capsBox.Text = "Check off literals containing only capital letters, symbols and punctuation";
             capsBox.AutoSize = true;
             capsBox.AutoEllipsis = true;
+            capsBox.ThreeState = true;
+            capsBox.AutoCheck = false;
             capsBox.Click += new EventHandler(capsBox_Click);
             filterPanel.Controls.Add(capsBox, 1, 1);
 
             commentBox = new CheckBox();
-            commentBox.Text = "Filter out string literals preceded by " + StringConstants.LocalizationComment; 
+            commentBox.Text = "Check off literals preceded by " + StringConstants.LocalizationComment; 
             commentBox.AutoSize = true;
             commentBox.AutoEllipsis = true;
+            commentBox.ThreeState = true;
+            commentBox.AutoCheck = false;
             commentBox.Click += new EventHandler(commentBox_Click);
             filterPanel.Controls.Add(commentBox, 0, 2);
 
             comesFromAspNetBox = new CheckBox();
-            comesFromAspNetBox.Text = "Filter out string literals coming from ASP .NET files";
+            comesFromAspNetBox.Text = "Check off literals coming from ASP .NET files";
             comesFromAspNetBox.AutoSize = true;
             comesFromAspNetBox.AutoEllipsis = true;
+            comesFromAspNetBox.ThreeState = true;
+            comesFromAspNetBox.AutoCheck = false;
             comesFromAspNetBox.Click += new EventHandler(comesFromAspNetBox_Click);
             filterPanel.Controls.Add(comesFromAspNetBox, 1, 2);
 
             comesFromDesignerFileBox = new CheckBox();
-            comesFromDesignerFileBox.Text = "Filter out string literals coming from Designer files";
+            comesFromDesignerFileBox.Text = "Check off literals coming from Designer files";
             comesFromDesignerFileBox.AutoSize = true;
             comesFromDesignerFileBox.AutoEllipsis = true;
+            comesFromDesignerFileBox.ThreeState = true;
+            comesFromDesignerFileBox.AutoCheck = false;
             comesFromDesignerFileBox.Click += new EventHandler(comesFromDesignerFileBox_Click);
             filterPanel.Controls.Add(comesFromDesignerFileBox, 0, 3);
 
             comesFromAspClientCommentBox = new CheckBox();
-            comesFromAspClientCommentBox.Text = "Filter out string literals occuring within client-side comments of ASP .NET files";
+            comesFromAspClientCommentBox.Text = "Check off literals occuring within client-side comments of ASP .NET files";
             comesFromAspClientCommentBox.AutoSize = true;
             comesFromAspClientCommentBox.AutoEllipsis = true;
+            comesFromAspClientCommentBox.ThreeState = true;
+            comesFromAspClientCommentBox.AutoCheck = false;
             comesFromAspClientCommentBox.Click +=new EventHandler(comesFromAspClientCommentBox_Click);
             filterPanel.Controls.Add(comesFromAspClientCommentBox, 1, 3);
 
             comesFromElementBox = new CheckBox();
-            comesFromElementBox.Text = "Filter out string literals coming from <asp:???> elements";
+            comesFromElementBox.Text = "Check off literals coming from web file elements";
             comesFromElementBox.AutoSize = true;
             comesFromElementBox.AutoEllipsis = true;
+            comesFromElementBox.ThreeState = true;
+            comesFromElementBox.AutoCheck = false;
             comesFromElementBox.Click += new EventHandler(comesFromElementBox_Click);
             filterPanel.Controls.Add(comesFromElementBox, 0, 4);
 
             comesFromInlineExprBox = new CheckBox();
-            comesFromInlineExprBox.Text = "Filter out string literals coming from ASP .NET inline expressions (<%=, <%:, <%$)";
+            comesFromInlineExprBox.Text = "Check off literals coming from ASP .NET inline expressions (<%=, <%:, <%$)";
             comesFromInlineExprBox.AutoSize = true;
             comesFromInlineExprBox.AutoEllipsis = true;
+            comesFromInlineExprBox.ThreeState = true;
+            comesFromInlineExprBox.AutoCheck = false;
             comesFromInlineExprBox.Click += new EventHandler(comesFromInlineExprBox_Click);
             filterPanel.Controls.Add(comesFromInlineExprBox, 1, 4);
+
+            comesFromAspPlainTextBox = new CheckBox();
+            comesFromAspPlainTextBox.Text = "Check off literals coming from ASP .NET plain text (between elements)";
+            comesFromAspPlainTextBox.AutoSize = true;
+            comesFromAspPlainTextBox.AutoEllipsis = true;
+            comesFromAspPlainTextBox.ThreeState = true;
+            comesFromAspPlainTextBox.AutoCheck = false;
+            comesFromAspPlainTextBox.Click += new EventHandler(comesFromAspPlainText_Click);
+            filterPanel.Controls.Add(comesFromAspPlainTextBox, 0, 5);
+
+            isLocalizabilityProvedBox = new CheckBox();
+            isLocalizabilityProvedBox.Text = "Check off ASP .NET literals, whose attribute's type could not be determined or is not string";
+            isLocalizabilityProvedBox.AutoSize = true;
+            isLocalizabilityProvedBox.AutoEllipsis = true;
+            isLocalizabilityProvedBox.ThreeState = true;
+            isLocalizabilityProvedBox.AutoCheck = false;
+            isLocalizabilityProvedBox.Click += new EventHandler(isLocalizabilityProved_Click);
+            filterPanel.Controls.Add(isLocalizabilityProvedBox, 1, 5);
 
             regexLabel = new Label();
             regexLabel.Text = "Filter by regular expression:";
@@ -221,57 +266,79 @@ namespace VisualLocalizer.Gui {
             addRegexpButton.Click += new EventHandler(addRegexpButton_Click);
             regexTable.Controls.Add(addRegexpButton, 1, 0);
 
-            filterPanel.Controls.Add(regexTable, 0, 5);
+            filterPanel.Controls.Add(regexTable, 0, 6);
             filterPanel.SetColumnSpan(regexTable, 2);
         }
 
+        private void isLocalizabilityProved_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutAspNotProved = !SettingsObject.Instance.FilterOutAspNotProved;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspNotProved;
+            ToolGrid.CheckByPredicate(isLocalizabilityProvedBox, ToolGrid.IsRowAspTypeProvedTest);
+        }
+
+        private void comesFromAspPlainText_Click(object sender, EventArgs e) {
+            SettingsObject.Instance.FilterOutAspPlainText = !SettingsObject.Instance.FilterOutAspPlainText;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspPlainText;
+            ToolGrid.CheckByPredicate(comesFromAspPlainTextBox, ToolGrid.IsRowAspPlainTextTest);
+        }
+
         private void comesFromInlineExprBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspInlineExpr = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutAspInlineExpr = !SettingsObject.Instance.FilterOutAspInlineExpr;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspInlineExpr;
             ToolGrid.CheckByPredicate(comesFromInlineExprBox, ToolGrid.IsRowAspExpressionTest);
         }
 
         private void comesFromElementBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspElement = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutAspElement = !SettingsObject.Instance.FilterOutAspElement;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspElement;
             ToolGrid.CheckByPredicate(comesFromElementBox, ToolGrid.IsRowAspElementTest);
         }
 
         private void comesFromAspClientCommentBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspClientComment = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutAspClientComment = !SettingsObject.Instance.FilterOutAspClientComment;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspClientComment;
             ToolGrid.CheckByPredicate(comesFromAspClientCommentBox, ToolGrid.IsRowAspClientCommentTest);
         }
 
         private void comesFromDesignerFileBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutDesignerFile = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutDesignerFile = !SettingsObject.Instance.FilterOutDesignerFile;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutDesignerFile;
             ToolGrid.CheckByPredicate(comesFromDesignerFileBox, ToolGrid.IsRowDesignerFileTest);
         }
 
         private void comesFromAspNetBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspNet = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutAspNet = !SettingsObject.Instance.FilterOutAspNet;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspNet;
             ToolGrid.CheckByPredicate(comesFromAspNetBox, ToolGrid.IsRowFromAspNetTest);
         }
 
         private void commentBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutSpecificComment = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutSpecificComment = !SettingsObject.Instance.FilterOutSpecificComment;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutSpecificComment;
             ToolGrid.CheckByPredicate(commentBox, ToolGrid.IsRowMarkedWithUnlocCommentTest);
         }
 
         private void capsBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutCaps = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutCaps = !SettingsObject.Instance.FilterOutCaps;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutCaps;
             ToolGrid.CheckByPredicate(capsBox, ToolGrid.IsRowCapitalsTest);
         }
 
         private void noLettersBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutNoLetters = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutNoLetters = !SettingsObject.Instance.FilterOutNoLetters;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutNoLetters;
             ToolGrid.CheckByPredicate(noLettersBox, ToolGrid.IsRowNoLettersTest);
         }
 
         private void localizableBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutUnlocalizable = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutUnlocalizable = !SettingsObject.Instance.FilterOutUnlocalizable;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutUnlocalizable;
             ToolGrid.CheckByPredicate(localizableBox, ToolGrid.IsRowUnlocalizableTest);
         }
 
         private void verbatimBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutVerbatim = (sender as CheckBox).Checked;
+            SettingsObject.Instance.FilterOutVerbatim = !SettingsObject.Instance.FilterOutVerbatim;
+            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutVerbatim;
             ToolGrid.CheckByPredicate(verbatimBox, ToolGrid.IsRowVerbatimTest);
         }
 

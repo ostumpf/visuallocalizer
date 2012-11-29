@@ -122,13 +122,17 @@ namespace VisualLocalizer.Commands {
                             newUnit.AppendUnits.AddRange(units);
                             undoManagersCache[path].Add(newUnit);
                         } else if (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
-                            int c = MarkAsNoLoc(buffersCache[path], resultItem);
-                            newItemLength = resultItem.AbsoluteCharLength + c;
+                            AspNetStringResultItem aitem = resultItem as AspNetStringResultItem;
 
-                            List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
-                            MarkAsNotLocalizedStringUndoUnit newUnit = new MarkAsNotLocalizedStringUndoUnit(resultItem.Value);
-                            newUnit.AppendUnits.AddRange(units);
-                            undoManagersCache[path].Add(newUnit);
+                            if (resultItem is CSharpStringResultItem || (aitem != null && aitem.ComesFromCodeBlock)) {
+                                int c = MarkAsNoLoc(buffersCache[path], resultItem);
+                                newItemLength = resultItem.AbsoluteCharLength + c;
+
+                                List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
+                                MarkAsNotLocalizedStringUndoUnit newUnit = new MarkAsNotLocalizedStringUndoUnit(resultItem.Value);
+                                newUnit.AppendUnits.AddRange(units);
+                                undoManagersCache[path].Add(newUnit);
+                            }
                         }
                     } else {
                         if (resultItem.MoveThisItem || (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment)) {
@@ -151,9 +155,13 @@ namespace VisualLocalizer.Commands {
                                 externalUsingsPlan[path].Add(resultItem.DestinationItem.Namespace);
                             }
                         } else if (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
-                            StringBuilder b = filesCache[path];
-                            b.Insert(resultItem.AbsoluteCharOffset, resultItem.NoLocalizationComment);
-                            newItemLength = resultItem.AbsoluteCharLength + resultItem.NoLocalizationComment.Length;
+                             AspNetStringResultItem aitem = resultItem as AspNetStringResultItem;
+
+                             if (resultItem is CSharpStringResultItem || (aitem != null && aitem.ComesFromCodeBlock)) {
+                                 StringBuilder b = filesCache[path];
+                                 b.Insert(resultItem.AbsoluteCharOffset, resultItem.NoLocalizationComment);
+                                 newItemLength = resultItem.AbsoluteCharLength + resultItem.NoLocalizationComment.Length;
+                             }
                         }
                     }
 

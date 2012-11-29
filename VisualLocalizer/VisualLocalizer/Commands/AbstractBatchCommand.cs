@@ -9,7 +9,7 @@ using VisualLocalizer.Components;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Collections;
 using VisualLocalizer.Extensions;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Commands {
     internal abstract class AbstractBatchCommand {
@@ -17,16 +17,14 @@ namespace VisualLocalizer.Commands {
         protected ProjectItem currentlyProcessedItem;
         protected VirtualPoint selectionTopPoint, selectionBotPoint;
         protected HashSet<ProjectItem> searchedProjectItems = new HashSet<ProjectItem>();
-        protected Dictionary<Project, WebConfig> configurations = new Dictionary<Project, WebConfig>();
-
+      
         public abstract IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
         public abstract IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
 
         public virtual void Process(bool verbose) {
             searchedProjectItems.Clear();
-            configurations.Clear();
-
+           
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
@@ -41,8 +39,7 @@ namespace VisualLocalizer.Commands {
 
         public virtual void Process(Array selectedItems, bool verbose) {
             searchedProjectItems.Clear();
-            configurations.Clear();
-
+          
             if (selectedItems == null) throw new ArgumentException("No selected items");
 
             foreach (UIHierarchyItem o in selectedItems) {
@@ -58,8 +55,7 @@ namespace VisualLocalizer.Commands {
 
         public virtual void ProcessSelection(bool verbose) {
             searchedProjectItems.Clear();
-            configurations.Clear();
-
+            
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
@@ -138,13 +134,10 @@ namespace VisualLocalizer.Commands {
 
         protected void ProcessAspNet(ProjectItem projectItem, bool verbose) {
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
-            if (!configurations.ContainsKey(projectItem.ContainingProject)) {
-                configurations.Add(projectItem.ContainingProject, WebConfig.Load(projectItem.ContainingProject));
-            }
-
+           
             currentlyProcessedItem = projectItem;
 
-            AspNetCodeExplorer.Instance.Explore(this, projectItem, configurations[projectItem.ContainingProject]);
+            AspNetCodeExplorer.Instance.Explore(this, projectItem);
 
             currentlyProcessedItem = null;
         }

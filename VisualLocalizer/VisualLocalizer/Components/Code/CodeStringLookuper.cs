@@ -28,11 +28,11 @@ namespace VisualLocalizer.Components {
             bool lastCommentUnlocalizable = false;
             bool stringMarkedUnlocalized = false;
 
-            for (int i = 0; i < text.Length; i++) {
+            for (globalIndex = 0; globalIndex < text.Length; globalIndex++) {
                 previousPreviousPreviousChar = previousPreviousChar;
                 previousPreviousChar = previousChar;
                 previousChar = currentChar;
-                currentChar = text[i];
+                currentChar = text[globalIndex];
 
                 if (skipLine) {
                     if (currentChar == '\n') {

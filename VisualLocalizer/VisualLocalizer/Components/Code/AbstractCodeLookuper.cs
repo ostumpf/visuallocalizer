@@ -20,6 +20,7 @@ namespace VisualLocalizer.Components {
         protected string text;
         protected char currentChar, previousChar, previousPreviousChar,previousPreviousPreviousChar, stringStartChar;
         private int sameCharInLine = 0;
+        protected int globalIndex;
 
         protected void Move() {
             CurrentIndex++;
@@ -52,7 +53,7 @@ namespace VisualLocalizer.Components {
             } else if ((currentChar == '\"' || currentChar == '\'') && !insideComment) {
                 if (insideString) {
                     if (stringStartChar == currentChar && !isVerbatimString) {
-                        if (previousChar != '\\' || (previousChar == '\\' && previousPreviousChar == '\\'))
+                        if (CountBack('\\', globalIndex) % 2 == 0)
                             insideString = false;
                     }
                 } else {
@@ -76,5 +77,16 @@ namespace VisualLocalizer.Components {
                 }
             }
         }
+
+        private int CountBack(char c, int k) {
+            k--;
+            int count = 0;
+            while (k >= 0 && text[k] == c) {
+                count++;
+                k--;
+            }
+            return count;
+        }
+
     }
 }

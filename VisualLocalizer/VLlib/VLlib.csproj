@@ -57,6 +57,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -73,6 +74,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="algorithms\Trie.cs" />
+    <Compile Include="AspxParser\IAspxHandler.cs" />
+    <Compile Include="AspxParser\Parser.cs" />
+    <Compile Include="AspxParser\TagPrefixDefinition.cs" />
+    <Compile Include="AspxParser\Types.cs" />
+    <Compile Include="AspxParser\WebConfig.cs" />
     <Compile Include="components\AbstractUndoUnit.cs" />
     <Compile Include="components\ActivityLogger.cs" />
     <Compile Include="components\AbstractEditor.cs">

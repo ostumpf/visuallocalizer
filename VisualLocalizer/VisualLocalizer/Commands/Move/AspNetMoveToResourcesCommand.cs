@@ -6,7 +6,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Runtime.InteropServices;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Commands {
     internal sealed class AspNetMoveToResourcesCommand : MoveToResourcesCommand<AspNetStringResultItem> {
@@ -22,7 +22,7 @@ namespace VisualLocalizer.Commands {
             BatchMoveCommand batchMoveInstance = new BatchMoveCommand();
             batchMoveInstance.Results = new List<CodeStringResultItem>();
 
-            AspNetCodeExplorer.Instance.Explore(batchMoveInstance, currentDocument.ProjectItem, WebConfig.Load(currentDocument.ProjectItem.ContainingProject),
+            AspNetCodeExplorer.Instance.Explore(batchMoveInstance, currentDocument.ProjectItem,
                 selectionSpan.iEndLine, selectionSpan.iEndIndex);
             foreach (AspNetStringResultItem resultItem in batchMoveInstance.Results) {
                 if (resultItem.ReplaceSpan.Contains(selectionSpan)) {

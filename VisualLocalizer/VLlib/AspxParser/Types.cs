@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TextManager.Interop;
 using System.Collections.Generic;
-namespace VisualLocalizer.Components.AspxParser {
+
+namespace VisualLocalizer.Library.AspxParser {
     public enum OutputElementKind { PLAIN, HTML_ESCAPED, EXPRESSION }
 
     public class BlockSpan {

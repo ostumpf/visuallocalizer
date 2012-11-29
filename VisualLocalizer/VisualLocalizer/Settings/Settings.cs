@@ -164,6 +164,39 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        private bool _UseReflectionInAsp;
+        public bool UseReflectionInAsp {
+            get {
+                return _UseReflectionInAsp;
+            }
+            set {
+                _UseReflectionInAsp = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutAspPlainText;
+        public bool FilterOutAspPlainText {
+            get {
+                return _FilterOutAspPlainText;
+            }
+            set {
+                _FilterOutAspPlainText = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _FilterOutAspNotProved;
+        public bool FilterOutAspNotProved {
+            get {
+                return _FilterOutAspNotProved;
+            }
+            set {
+                _FilterOutAspNotProved = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
         private bool _ShowFilterContext;
         public bool ShowFilterContext {
             get {

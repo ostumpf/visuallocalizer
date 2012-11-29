@@ -9,7 +9,7 @@ using VisualLocalizer.Library;
 using System.Resources;
 using VisualLocalizer.Extensions;
 using System.Collections;
-using VisualLocalizer.Components.AspxParser;
+using VisualLocalizer.Library.AspxParser;
 
 namespace VisualLocalizer.Commands {
     internal sealed class ReferenceLister : BatchInlineCommand {
@@ -19,8 +19,7 @@ namespace VisualLocalizer.Commands {
         public void Process(List<Project> projects, Trie<CodeReferenceTrieElement> trie) {
             this.trie = trie;
             searchedProjectItems.Clear();
-            configurations.Clear();
-
+       
             Results = new List<CodeReferenceResultItem>();            
 
             foreach (Project project in projects) {

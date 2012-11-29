@@ -24,11 +24,10 @@ namespace VisualLocalizer.Components {
 
     public class ResXProjectItem {
 
-        private string _Namespace,_Class;
         private Dictionary<string, ResXDataNode> data;                
         private bool dataChangedInBatchMode;
 
-        public ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
+        private ResXProjectItem(ProjectItem projectItem, string displayName,bool internalInReferenced) {
             this.DisplayName = displayName;
             this.InternalProjectItem = projectItem;
 
@@ -41,6 +40,17 @@ namespace VisualLocalizer.Components {
             this.MarkedInternalInReferencedProject = internalInReferenced;
         }
 
+        public bool IsCultureSpecific() {
+            return Regex.IsMatch(InternalProjectItem.Name, @".*\..+\.resx", RegexOptions.IgnoreCase);                       
+        }
+
+        public string GetCultureNeutralName() {
+            Match m = Regex.Match(InternalProjectItem.Name, @"(.*)\..+(\.resx)", RegexOptions.IgnoreCase);
+            if (!m.Success || m.Groups.Count<=2) throw new Exception("Project item is culture neutral!");
+
+            return m.Groups[1].Value+m.Groups[2].Value;
+        }
+
         public ProjectItem InternalProjectItem {
             get;
             private set;
@@ -49,28 +59,18 @@ namespace VisualLocalizer.Components {
         public string DisplayName {
             get;
             private set;
-        }        
-        
-        public string Namespace {
-            get {
-                if (_Namespace == null) {
-                    resolveNamespaceClass();                   
-                }
+        }
 
-                return _Namespace;
-            }
+        public string Namespace {
+            get;
+            private set;
         }
 
         public string Class {
-            get {
-                if (_Class == null) {
-                    resolveNamespaceClass();
-                }
-
-                return _Class;
-            }
+            get;
+            private set;
         }
-        
+
         public bool MarkedInternalInReferencedProject {
             get;
             private set;
@@ -326,13 +326,14 @@ namespace VisualLocalizer.Components {
             string ext = null;
             foreach (Property prop in item.Properties)
                 if (prop.Name == "Extension") {
-                    ext = (string)item.Properties.Item("Extension").Value;    
+                    ext = (string)item.Properties.Item("Extension").Value;
+                    break;
                 }
 
             return ext == StringConstants.ResXExtension;
         }
 
-        public static ResXProjectItem ConvertToResXItem(ProjectItem item,Project relationProject) {
+        public static ResXProjectItem ConvertToResXItem(ProjectItem item, Project relationProject) {
             string projectPath=item.ContainingProject.Properties.Item("FullPath").Value.ToString();
             Uri projectUri = new Uri(projectPath, UriKind.Absolute);
             Uri itemUri = new Uri(item.Properties.Item("FullPath").Value.ToString());
@@ -349,45 +350,73 @@ namespace VisualLocalizer.Components {
 
             bool internalInReferenced = inter && referenced;
 
-            ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);                       
+            ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);            
 
             return resxitem;
-        }        
+        }
 
-        private void resolveNamespaceClass() {
+        public void ResolveNamespaceClass(List<ResXProjectItem> neutralItems) {
+            Class = null;
+            Namespace = null;
+
             if (DesignerItem == null) {
                 if (InternalProjectItem != null && InternalProjectItem.ContainingProject != null &&
                     InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
                     string relative = (string)InternalProjectItem.Properties.Item("RelativeURL").Value;
 
                     if (!string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder)) {
-                        _Class = Path.GetFileNameWithoutExtension((string)InternalProjectItem.Properties.Item("FullPath").Value);
-                        _Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
+                        Class = Path.GetFileNameWithoutExtension((string)InternalProjectItem.Properties.Item("FullPath").Value);
+                        Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
                     } else {
-                        _Class = "!";
-                        _Namespace = "!";
-                    }                    
+                        Class = "!";
+                        Namespace = "!";
+                    }
                 }
-                return;
-            }
-            if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) {
-                RunCustomTool();
-            }
-            CodeElement nmspcElemet = null;
-            foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
-                _Namespace = element.FullName;
-                nmspcElemet = element;
-                break;
-            }
-            if (nmspcElemet != null) {
-                foreach (CodeElement child in nmspcElemet.Children) {
-                    if (child.Kind == vsCMElement.vsCMElementClass) {
-                        _Class = child.Name;
-                        break;
+
+            } else {
+                if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) RunCustomTool();
+
+                if (IsCultureSpecific()) {
+                    string cultureNeutralName = GetCultureNeutralName();
+                    ResXProjectItem neutralItem = null;
+                    foreach (ResXProjectItem item in neutralItems) {
+                        if (item.IsCultureSpecific()) continue;
+
+                        string neutralDir = Path.GetFullPath(Path.GetDirectoryName((string)item.InternalProjectItem.Properties.Item("FullPath").Value));
+                        string specificDir = Path.GetFullPath(Path.GetDirectoryName((string)InternalProjectItem.Properties.Item("FullPath").Value));
+                        
+                        if (neutralDir == specificDir && item.InternalProjectItem.Name.ToLowerInvariant() == cultureNeutralName.ToLowerInvariant()) {
+                            neutralItem = item;
+                            break;
+                        }
+                    }
+
+                    if (neutralItem != null) {
+                        DesignerItem = neutralItem.DesignerItem;
+                    } else {
+                        Namespace = null;
+                        Class = cultureNeutralName.Substring(0, cultureNeutralName.IndexOf('.'));
+                        return;
+                    }
+                } 
+
+                CodeElement nmspcElemet = null;
+                foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
+                    Namespace = element.FullName;
+                    nmspcElemet = element;
+                    break;
+                }
+                if (nmspcElemet != null) {
+                    foreach (CodeElement child in nmspcElemet.Children) {
+                        if (child.Kind == vsCMElement.vsCMElementClass) {
+                            Class = child.Name;
+                            break;
+                        }
                     }
                 }
             }
-        }     
+
+        }  
 
         public override string ToString() {
             return (MarkedInternalInReferencedProject ? "(internal) " : "") + DisplayName;

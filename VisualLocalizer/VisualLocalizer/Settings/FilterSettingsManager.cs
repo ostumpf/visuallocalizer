@@ -18,7 +18,7 @@ namespace VisualLocalizer.Settings {
 
         private TableLayoutPanel tablePanel;
         private bool closed = true;
-        private CheckBox contextBox;
+        private CheckBox contextBox, reflectionBox;
 
         #region IProfileManager
 
@@ -39,13 +39,17 @@ namespace VisualLocalizer.Settings {
                         SettingsObject.Instance.FilterOutCaps = ReadBoolFromRegKey(filtersKey, "FilterOutCaps");
                         SettingsObject.Instance.FilterOutNoLetters = ReadBoolFromRegKey(filtersKey, "FilterOutNoLetters");
                         SettingsObject.Instance.FilterOutSpecificComment = ReadBoolFromRegKey(filtersKey, "FilterOutSpecificComment");
+
                         SettingsObject.Instance.ShowFilterContext = ReadBoolFromRegKey(filtersKey, "ShowFilterContext");
+                        SettingsObject.Instance.UseReflectionInAsp = ReadBoolFromRegKey(filtersKey, "UseReflectionInAsp");
 
                         SettingsObject.Instance.FilterOutAspClientComment = ReadBoolFromRegKey(filtersKey, "FilterOutAspClientComment");
                         SettingsObject.Instance.FilterOutAspElement = ReadBoolFromRegKey(filtersKey, "FilterOutAspElement");
                         SettingsObject.Instance.FilterOutAspInlineExpr = ReadBoolFromRegKey(filtersKey, "FilterOutAspInlineExpr");
                         SettingsObject.Instance.FilterOutAspNet = ReadBoolFromRegKey(filtersKey, "FilterOutAspNet");
                         SettingsObject.Instance.FilterOutDesignerFile = ReadBoolFromRegKey(filtersKey, "FilterOutDesignerFile");
+                        SettingsObject.Instance.FilterOutAspPlainText = ReadBoolFromRegKey(filtersKey, "FilterOutAspPlainText");
+                        SettingsObject.Instance.FilterOutAspNotProved = ReadBoolFromRegKey(filtersKey, "FilterOutAspNotProved");
 
                         SettingsObject.Instance.FilterRegexps.Clear();
                         int count = ReadIntFromRegKey(filtersKey, "RegexpCount");
@@ -79,11 +83,15 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.FilterOutVerbatim = ReadBoolFromXml(reader, "FilterOutVerbatim");
             SettingsObject.Instance.FilterOutSpecificComment = ReadBoolFromXml(reader, "FilterOutSpecificComment");
             SettingsObject.Instance.ShowFilterContext = ReadBoolFromXml(reader, "ShowFilterContext");
+            SettingsObject.Instance.UseReflectionInAsp = ReadBoolFromXml(reader, "UseReflectionInAsp");
+            
             SettingsObject.Instance.FilterOutAspClientComment = ReadBoolFromXml(reader, "FilterOutAspClientComment");
             SettingsObject.Instance.FilterOutAspElement = ReadBoolFromXml(reader, "FilterOutAspElement");
             SettingsObject.Instance.FilterOutAspInlineExpr = ReadBoolFromXml(reader, "FilterOutAspInlineExpr");
             SettingsObject.Instance.FilterOutAspNet = ReadBoolFromXml(reader, "FilterOutAspNet");
             SettingsObject.Instance.FilterOutDesignerFile = ReadBoolFromXml(reader, "FilterOutDesignerFile");
+            SettingsObject.Instance.FilterOutAspNotProved = ReadBoolFromXml(reader, "FilterOutAspNotProved");
+            SettingsObject.Instance.FilterOutAspPlainText = ReadBoolFromXml(reader, "FilterOutAspPlainText");
 
             SettingsObject.Instance.MarkNotLocalizableStringsIndex = ReadIntFromXml(reader, "MarkNotLocalizableStringsIndex");
             SettingsObject.Instance.NamespacePolicyIndex = ReadIntFromXml(reader, "NamespacePolicyIndex");
@@ -116,8 +124,13 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.FilterOutUnlocalizable = false;
             SettingsObject.Instance.FilterOutVerbatim = false;
             SettingsObject.Instance.FilterOutSpecificComment = true;
+            SettingsObject.Instance.FilterOutAspPlainText = true;
+            SettingsObject.Instance.FilterOutAspNotProved = true;
+
             SettingsObject.Instance.BatchMoveSplitterDistance = 130;
             SettingsObject.Instance.ShowFilterContext = true;
+            SettingsObject.Instance.UseReflectionInAsp = true;
+
             SettingsObject.Instance.FilterOutAspClientComment = true;
             SettingsObject.Instance.FilterOutAspElement = false;
             SettingsObject.Instance.FilterOutAspInlineExpr = false;
@@ -145,11 +158,14 @@ namespace VisualLocalizer.Settings {
                 WriteBoolToRegKey(filterKey, "FilterOutCaps", SettingsObject.Instance.FilterOutCaps);
                 WriteBoolToRegKey(filterKey, "FilterOutSpecificComment", SettingsObject.Instance.FilterOutSpecificComment);
                 WriteBoolToRegKey(filterKey, "ShowFilterContext", SettingsObject.Instance.ShowFilterContext);
+                WriteBoolToRegKey(filterKey, "UseReflectionInAsp", SettingsObject.Instance.UseReflectionInAsp);
                 WriteBoolToRegKey(filterKey, "FilterOutAspClientComment", SettingsObject.Instance.FilterOutAspClientComment);
                 WriteBoolToRegKey(filterKey, "FilterOutAspElement", SettingsObject.Instance.FilterOutAspElement);
                 WriteBoolToRegKey(filterKey, "FilterOutAspInlineExpr", SettingsObject.Instance.FilterOutAspInlineExpr);
                 WriteBoolToRegKey(filterKey, "FilterOutAspNet", SettingsObject.Instance.FilterOutAspNet);
                 WriteBoolToRegKey(filterKey, "FilterOutDesignerFile", SettingsObject.Instance.FilterOutDesignerFile);
+                WriteBoolToRegKey(filterKey, "FilterOutAspNotProved", SettingsObject.Instance.FilterOutAspNotProved);
+                WriteBoolToRegKey(filterKey, "FilterOutAspPlainText", SettingsObject.Instance.FilterOutAspPlainText);
 
                 int count = ReadIntFromRegKey(filterKey, "RegexpCount");
                 for (int i = 0; i < count; i++) {
@@ -178,11 +194,14 @@ namespace VisualLocalizer.Settings {
             WriteBoolToXml(writer, "FilterOutNoLetters", SettingsObject.Instance.FilterOutNoLetters);
             WriteBoolToXml(writer, "FilterOutSpecificComment", SettingsObject.Instance.FilterOutSpecificComment);
             WriteBoolToXml(writer, "ShowFilterContext", SettingsObject.Instance.ShowFilterContext);
+            WriteBoolToXml(writer, "UseReflectionInAsp", SettingsObject.Instance.UseReflectionInAsp);
             WriteBoolToXml(writer, "FilterOutAspClientComment", SettingsObject.Instance.FilterOutAspClientComment);
             WriteBoolToXml(writer, "FilterOutAspElement", SettingsObject.Instance.FilterOutAspElement);
             WriteBoolToXml(writer, "FilterOutAspInlineExpr", SettingsObject.Instance.FilterOutAspInlineExpr);
             WriteBoolToXml(writer, "FilterOutAspNet", SettingsObject.Instance.FilterOutAspNet);
             WriteBoolToXml(writer, "FilterOutDesignerFile", SettingsObject.Instance.FilterOutDesignerFile);
+            WriteBoolToXml(writer, "FilterOutAspPlainText", SettingsObject.Instance.FilterOutAspPlainText);
+            WriteBoolToXml(writer, "FilterOutAspNotProved", SettingsObject.Instance.FilterOutAspNotProved);
 
             WriteIntToXml(writer, "RegexpCount", SettingsObject.Instance.FilterRegexps.Count);
             WriteIntToXml(writer, "MarkNotLocalizableStringsIndex", SettingsObject.Instance.MarkNotLocalizableStringsIndex);
@@ -235,7 +254,14 @@ namespace VisualLocalizer.Settings {
             contextBox.Margin = new Padding(3, 3, 0, 0);
             contextBox.AutoSize = true;
 
+            reflectionBox = new CheckBox();
+            reflectionBox.Text = "Use reflection to determine types of attributes in ASP .NET elements\n(potentially slow)";
+            reflectionBox.CheckAlign = ContentAlignment.TopLeft;
+            reflectionBox.Margin = new Padding(3, 3, 0, 0);            
+            reflectionBox.AutoSize = true;
+
             generalInnerPanel.Controls.Add(contextBox);
+            generalInnerPanel.Controls.Add(reflectionBox);
             generalBox.Controls.Add(generalInnerPanel);
 
             tablePanel.Controls.Add(generalBox, 0, 0);            
@@ -243,6 +269,7 @@ namespace VisualLocalizer.Settings {
 
         private void PopulateTable() {
             contextBox.Checked = SettingsObject.Instance.ShowFilterContext;
+            reflectionBox.Checked = SettingsObject.Instance.UseReflectionInAsp;
         }
 
         protected override void OnActivate(CancelEventArgs e) {
@@ -265,6 +292,7 @@ namespace VisualLocalizer.Settings {
                 SettingsObject.Instance.IgnorePropertyChanges = true;
 
                 SettingsObject.Instance.ShowFilterContext = contextBox.Checked;
+                SettingsObject.Instance.UseReflectionInAsp = reflectionBox.Checked;
 
                 SettingsObject.Instance.IgnorePropertyChanges = false;
                 SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
