@@ -73,28 +73,35 @@ namespace VisualLocalizer.Commands {
         public override IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
 
-            var lookuper = new CSharpStringLookuper(functionText, startPoint, parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
-            return onLookuperCreated(lookuper);
-        }
+            if (!generatedProjectItems.ContainsKey(currentlyProcessedItem)) {
+                generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
+            }
 
-        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
-            var lookuper = new AspNetCodeStringLookuper(functionText, blockSpan, declaredNamespaces, className);
-            return onLookuperCreated(lookuper);
-        }
-
-        private IList onLookuperCreated<T>(CodeStringLookuper<T> lookuper) where T : CodeStringResultItem, new() {
-            lookuper.SourceItem = currentlyProcessedItem;
-            lookuper.SourceItemGenerated = currentlyProcessedItem.IsGenerated();
-
-            var list = lookuper.LookForStrings();
-            
-            foreach (T item in list) {
+            var list = CSharpStringLookuper.Instance.Run(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem], functionText, startPoint, 
+                parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
+     
+            foreach (CSharpStringResultItem item in list) {
                 Results.Add(item);
             }
-            
+
             return list;
         }
 
+        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            if (!generatedProjectItems.ContainsKey(currentlyProcessedItem)) {
+                generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
+            }
+
+            var list = AspNetCodeStringLookuper.Instance.Run(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem],
+                functionText, blockSpan, declaredNamespaces, className);
+
+            foreach (AspNetStringResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }
+       
         public void AddToResults<T>(T resultItem) where T : CodeStringResultItem, new() {
             resultItem.SourceItem = currentlyProcessedItem;
             Results.Add(resultItem);

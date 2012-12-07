@@ -63,19 +63,23 @@ namespace VisualLocalizer.Commands {
                 CodeFunction2 codeFunction = (CodeFunction2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementFunction);
                 codeFunctionName = codeFunction.Name;
                 codeClass = codeFunction.GetClass();
-
-                startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+                
                 text = codeFunction.GetText();
-                ok = true;
+                if (!string.IsNullOrEmpty(text)) {
+                    startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+                    ok = true;
+                }
             } catch (Exception) {
                 try {
                     CodeProperty codeProperty = (CodeProperty)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementProperty);
                     codeFunctionName = codeProperty.Name;
                     codeClass = codeProperty.GetClass();
-
-                    startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
+                    
                     text = codeProperty.GetText();
-                    ok = true;
+                    if (!string.IsNullOrEmpty(text)) {
+                        startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
+                        ok = true;
+                    }
                 } catch (Exception) {
                     try {
                         CodeVariable2 codeVariable = (CodeVariable2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementVariable);
@@ -84,10 +88,11 @@ namespace VisualLocalizer.Commands {
                             codeVariable.InitExpression != null) {
 
                             codeVariableName = codeVariable.Name;
-                            text = codeVariable.GetText();
-                            startPoint = codeVariable.StartPoint;
                             codeClass = codeVariable.GetClass();
-                            if (codeClass.Kind == vsCMElement.vsCMElementClass)
+                            startPoint = codeVariable.StartPoint;
+                            
+                            text = codeVariable.GetText();                                                        
+                            if (codeClass.Kind == vsCMElement.vsCMElementClass && !string.IsNullOrEmpty(text))
                                 ok = true;
                         }
                     } catch (Exception) {

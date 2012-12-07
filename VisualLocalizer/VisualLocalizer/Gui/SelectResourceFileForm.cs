@@ -140,11 +140,11 @@ namespace VisualLocalizer.Gui {
                 referenceText.ClassPart = item.Class;
                 referenceText.KeyPart = keyBox.Text;
 
-                if (string.IsNullOrEmpty(item.Namespace) && resultItem.SourceItem.ContainingProject.Kind.ToUpper() != StringConstants.WebSiteProject) {
+                if (string.IsNullOrEmpty(item.Namespace)) {
                     ok = false;
                     errorText = "Cannot reference resources in this file";
-                } else {
-                    if (!usingBox.Checked || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                } else {                    
+                    if (!usingBox.Checked || resultItem.MustUseFullName) {
                         referenceText.NamespacePart = item.Namespace;
                     } else {
                         referenceText.NamespacePart = null;

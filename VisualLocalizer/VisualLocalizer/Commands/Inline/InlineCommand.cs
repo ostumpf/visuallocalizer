@@ -16,18 +16,19 @@ using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
    
-    internal sealed class InlineCommand : AbstractCommand {          
+    internal abstract class InlineCommand<T> : AbstractCommand where T:CodeReferenceResultItem {
+
+        public abstract T GetCodeReferenceResultItem();
 
         public override void Process() {
-            base.Process();
-            if (currentCodeModel == null)
-                throw new Exception("Current document has no CodeModel.");
+            base.Process();            
 
-            CodeReferenceResultItem resultItem = GetCodeReferenceResultItem();
+            T resultItem = GetCodeReferenceResultItem();
             if (resultItem != null) {
                 try {
-                    TextSpan inlineSpan = resultItem.ReplaceSpan;
-                    string text = "\"" + resultItem.Value.ConvertCSharpUnescapeSequences() + "\"";
+                    int x,y;
+                    TextSpan inlineSpan = resultItem.GetInlineReplaceSpan(false, out x, out y);
+                    string text = resultItem.GetInlineValue();
 
                     int hr = textLines.ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
                         Marshal.StringToBSTR(text), text.Length, null);
@@ -52,36 +53,7 @@ namespace VisualLocalizer.Commands {
                     throw;
                 }
             } else throw new Exception("This part of code cannot be inlined");        
-        }
-
-        private CodeReferenceResultItem GetCodeReferenceResultItem() {
-            string text;
-            TextPoint startPoint;
-            string codeFunctionName;
-            string codeVariableName;
-            CodeElement2 codeClass;
-            TextSpan selectionSpan;
-            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan);
-            CodeReferenceResultItem result = null;
-
-            if (ok) {
-                CodeNamespace codeNamespace = codeClass.GetNamespace();
-                /*   CodeReferenceLookuper lookuper = new CodeReferenceLookuper(text, startPoint,
-                       currentDocument.ProjectItem.GetResXItemsAround(false).CreateTrie(),
-                       codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), codeNamespace, false, currentDocument.ProjectItem.ContainingProject);
-                   List<CodeReferenceResultItem> items = lookuper.LookForReferences();
-
-                   foreach (CodeReferenceResultItem item in items) {
-                       if (item.ReplaceSpan.Contains(selectionSpan)) {
-                           result = item;
-                           result.SourceItem = currentDocument.ProjectItem;
-                           break;
-                       }
-                   }
-               }*/
-            }
-            return result;
-        }
+        }        
 
         private bool CreateInlineUndoUnit(string key) {
             bool unitsRemoved = false;

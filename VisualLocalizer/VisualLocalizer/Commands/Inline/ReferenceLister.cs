@@ -15,18 +15,21 @@ namespace VisualLocalizer.Commands {
     internal sealed class ReferenceLister : BatchInlineCommand {
 
         private Trie<CodeReferenceTrieElement> trie;
+        private ResXProjectItem prefferedResXItem;
 
-        public void Process(List<Project> projects, Trie<CodeReferenceTrieElement> trie) {
+        public void Process(List<Project> projects, Trie<CodeReferenceTrieElement> trie, ResXProjectItem prefferedResXItem) {
             this.trie = trie;
+            this.prefferedResXItem = prefferedResXItem; 
             searchedProjectItems.Clear();
-       
+            generatedProjectItems.Clear();
+
             Results = new List<CodeReferenceResultItem>();            
 
             foreach (Project project in projects) {
                 Process(project, false);
             }
-
-            codeUsingsCache.Clear();            
+            
+            codeUsingsCache.Clear();      
         }
 
         public override void Process(bool verbose) {
@@ -60,5 +63,28 @@ namespace VisualLocalizer.Commands {
         protected override Trie<CodeReferenceTrieElement> GetActualTrie() {
             return trie;
         }
+
+        public override IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
+            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
+            NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
+            var list = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+
+            foreach (CSharpCodeReferenceResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }
+
+        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
+            var list = CodeReferenceLookuper<AspNetCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+
+            foreach (AspNetCodeReferenceResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }      
     }
 }

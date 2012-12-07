@@ -7,11 +7,11 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Library;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
-    internal sealed class CSharpMoveToResourcesCommand : MoveToResourcesCommand<CSharpStringResultItem> {
-              
-        protected override CSharpStringResultItem GetReplaceStringItem() {
+    internal sealed class CSharpInlineCommand : InlineCommand<CSharpCodeReferenceResultItem> {
+        public override CSharpCodeReferenceResultItem GetCodeReferenceResultItem() {
             if (currentCodeModel == null)
                 throw new Exception("Current document has no CodeModel.");
 
@@ -22,13 +22,16 @@ namespace VisualLocalizer.Commands {
             CodeElement2 codeClass;
             TextSpan selectionSpan;
             bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan);
-            CSharpStringResultItem result = null;
+            CSharpCodeReferenceResultItem result = null;
 
             if (ok) {
-                List<CSharpStringResultItem> items = CSharpStringLookuper.Instance.Run(currentDocument.ProjectItem, currentDocument.ProjectItem.IsGenerated(), text, startPoint,
-                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName, false);                
+                CodeNamespace codeNamespace = codeClass.GetNamespace();
 
-                foreach (CSharpStringResultItem item in items) {
+                List<CSharpCodeReferenceResultItem> items = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentDocument.ProjectItem, text, startPoint, currentDocument.ProjectItem.ContainingProject.GetResXItemsAround(false).CreateTrie(),
+                    codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), false, currentDocument.ProjectItem.ContainingProject, null);
+                
+
+                foreach (CSharpCodeReferenceResultItem item in items) {
                     if (item.ReplaceSpan.Contains(selectionSpan)) {
                         result = item;
                         result.SourceItem = currentDocument.ProjectItem;
@@ -36,9 +39,8 @@ namespace VisualLocalizer.Commands {
                     }
                 }
             }
-
+        
             return result;
-
         }
     }
 }

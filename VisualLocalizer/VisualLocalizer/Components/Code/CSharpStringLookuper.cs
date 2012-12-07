@@ -11,10 +11,22 @@ namespace VisualLocalizer.Components {
         private CodeNamespace namespaceElement;        
         private string methodElement;
         private string variableElement;
+        private static CSharpStringLookuper instance;
 
-        public CSharpStringLookuper(string text, TextPoint startPoint, CodeNamespace namespaceElement,
+        private CSharpStringLookuper() { }
+
+        public static CSharpStringLookuper Instance {
+            get {
+                if (instance == null) instance = new CSharpStringLookuper();
+                return instance;
+            }
+        }
+
+        public List<CSharpStringResultItem> Run(ProjectItem projectItem, bool isGenerated, string text, TextPoint startPoint, CodeNamespace namespaceElement,
             string classOrStructElement, string methodElement, string variableElement, bool isWithinLocFalse) {
 
+            this.SourceItemGenerated = isGenerated;
+            this.SourceItem = projectItem;
             this.text = text;
             this.CurrentIndex = startPoint.LineCharOffset - 1;
             this.CurrentLine = startPoint.Line;
@@ -24,6 +36,8 @@ namespace VisualLocalizer.Components {
             this.methodElement = methodElement;
             this.variableElement = variableElement;
             this.IsWithinLocFalse = isWithinLocFalse;
+
+            return LookForStrings();
         }
 
         protected override CSharpStringResultItem AddResult(List<CSharpStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {

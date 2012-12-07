@@ -65,6 +65,8 @@
     <Compile Include="Commands\AbstractBatchCommand.cs" />
     <Compile Include="Commands\Inline\AbstractBatchReferenceProcessor.cs" />
     <Compile Include="Commands\AbstractCommand.cs" />
+    <Compile Include="Commands\Inline\AspNetInlineCommand.cs" />
+    <Compile Include="Commands\Inline\CSharpInlineCommand.cs" />
     <Compile Include="Commands\Move\AspNetMoveToResourcesCommand.cs" />
     <Compile Include="Commands\Inline\BatchInlineCommand.cs" />
     <Compile Include="Commands\Inline\BatchInliner.cs" />

@@ -17,7 +17,7 @@ namespace VisualLocalizer.Commands {
 
         public List<CodeReferenceResultItem> Results {
             get;
-            protected set;
+            set;
         }
         private Dictionary<Project, Trie<CodeReferenceTrieElement>> trieCache = new Dictionary<Project, Trie<CodeReferenceTrieElement>>();
         protected Dictionary<CodeElement, NamespacesList> codeUsingsCache = new Dictionary<CodeElement, NamespacesList>();
@@ -39,6 +39,7 @@ namespace VisualLocalizer.Commands {
 
             trieCache.Clear();
             codeUsingsCache.Clear();
+            
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
@@ -74,6 +75,8 @@ namespace VisualLocalizer.Commands {
                 VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
             });
 
+            trieCache.Clear();
+            codeUsingsCache.Clear();
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
@@ -102,32 +105,25 @@ namespace VisualLocalizer.Commands {
         public override IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName,bool isWithinLocFalse) {
             Trie<CodeReferenceTrieElement> trie = GetActualTrie();
             NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
+            var list = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject, null);
 
-            CodeReferenceLookuper<CSharpCodeReferenceResultItem> lookuper = 
-                new CodeReferenceLookuper<CSharpCodeReferenceResultItem>(functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject);
-
-            return onLookuperCreated(lookuper);
-        }
-
-        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
-            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
-            CodeReferenceLookuper<AspNetCodeReferenceResultItem> lookuper =
-                new CodeReferenceLookuper<AspNetCodeReferenceResultItem>(functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject);
-
-            return onLookuperCreated(lookuper);
-        }
-
-        private IList onLookuperCreated<T>(CodeReferenceLookuper<T> lookuper) where T : CodeReferenceResultItem, new() {
-            lookuper.SourceItem = currentlyProcessedItem;
-            lookuper.SourceItemGenerated = currentlyProcessedItem.IsGenerated();
-
-            var list = lookuper.LookForReferences();
-            foreach (T item in list) {
+            foreach (CSharpCodeReferenceResultItem item in list) {
                 Results.Add(item);
             }
 
             return list;
         }
+
+        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
+            var list = CodeReferenceLookuper<AspNetCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject, null);
+
+            foreach (AspNetCodeReferenceResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }      
 
         public IList ParseResourceExpression(string text, BlockSpan blockSpan) {
             List<AspNetCodeReferenceResultItem> list = new List<AspNetCodeReferenceResultItem>();
@@ -153,8 +149,11 @@ namespace VisualLocalizer.Commands {
 
             CodeReferenceInfo info = null;
             foreach (var nfo in e.Infos) {
-                if (nfo.Origin.Namespace == prefix)
-                    info = nfo;
+                if (nfo.Origin.Namespace == prefix) {
+                    if (info == null || info.Origin.IsCultureSpecific()) {
+                        info = nfo;
+                    } 
+                }
             }
             if (info == null) return list;
 
@@ -163,13 +162,13 @@ namespace VisualLocalizer.Commands {
             span.iStartLine = blockSpan.StartLine;
             span.iStartIndex = blockSpan.StartIndex + whitespaceLeft;
             span.iEndLine = blockSpan.EndLine;
-            span.iEndIndex = blockSpan.EndIndex - whitespaceRight - 1;
+            span.iEndIndex = blockSpan.EndIndex - whitespaceRight + 1;
 
             resultItem.Value = info.Value;
             resultItem.SourceItem = currentlyProcessedItem;
             resultItem.ReplaceSpan = span;
             resultItem.AbsoluteCharOffset = blockSpan.AbsoluteCharOffset + whitespaceLeft;
-            resultItem.AbsoluteCharLength = blockSpan.AbsoluteCharLength - whitespaceLeft - whitespaceRight;
+            resultItem.AbsoluteCharLength = blockSpan.AbsoluteCharLength - whitespaceLeft - whitespaceRight + 1;
             resultItem.DestinationItem = info.Origin;
             resultItem.FullReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, key);
             resultItem.IsWithinLocalizableFalse = false;

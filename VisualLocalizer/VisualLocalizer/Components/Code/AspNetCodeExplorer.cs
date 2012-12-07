@@ -23,6 +23,7 @@ namespace VisualLocalizer.Components {
         private Dictionary<string, Type> typesCache = new Dictionary<string, Type>();
         private string fileText, fullPath;
         private WebConfig webConfig;
+        private ProjectItem projectItem;
 
         private AspNetCodeExplorer() { }
 
@@ -41,6 +42,7 @@ namespace VisualLocalizer.Components {
             this.parentCommand = parentCommand;
             this.declaredNamespaces.Clear();
             this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
+            this.projectItem = projectItem;
 
             webConfig = new WebConfig(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
             fileText = null;
@@ -76,9 +78,12 @@ namespace VisualLocalizer.Components {
             
             IList list = parentCommand.LookupInAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
 
-            foreach (AspNetStringResultItem item in list) {
-                item.ComesFromClientComment = context.WithinClientSideComment;
-                item.ComesFromCodeBlock = true;
+            foreach (AbstractResultItem item in list) {
+                AspNetStringResultItem aitem = item as AspNetStringResultItem;
+                if (aitem != null) {
+                    aitem.ComesFromClientComment = context.WithinClientSideComment;
+                    aitem.ComesFromCodeBlock = true;
+                }
             }
 
             AddContextToItems((IEnumerable)list);
@@ -87,13 +92,33 @@ namespace VisualLocalizer.Components {
         public void OnPageDirective(DirectiveContext context) {
             if (context.DirectiveName == "Import" && context.Attributes.Exists((info) => { return info.Name == "Namespace"; })) {
                 declaredNamespaces.Add(new UsedNamespaceItem(context.Attributes.Find((info) => { return info.Name == "Namespace"; }).Value, null));
+            }            
+            if (context.DirectiveName == "Register") {
+                string assembly = null, nmspc = null, src = null, tagName = null, tagPrefix = null;
+                foreach (AttributeInfo info in context.Attributes) {
+                    if (info.Name == "Assembly") assembly = info.Value;
+                    if (info.Name == "Namespace") nmspc = info.Value;
+                    if (info.Name == "Src") src = info.Value;
+                    if (info.Name == "TagName") tagName = info.Value;
+                    if (info.Name == "TagPrefix") tagPrefix = info.Value;
+                }
+                if (!string.IsNullOrEmpty(tagPrefix)) {
+                    if (!string.IsNullOrEmpty(assembly) && !string.IsNullOrEmpty(nmspc)) {
+                        webConfig.AddTagPrefixDefinition(new TagPrefixAssemblyDefinition(assembly, nmspc, tagPrefix));
+                    } else if (!string.IsNullOrEmpty(tagName) && !string.IsNullOrEmpty(src)) {
+                        webConfig.AddTagPrefixDefinition(new TagPrefixSourceDefinition(projectItem.ContainingProject, 
+                            VisualLocalizerPackage.Instance.DTE.Solution, tagName, src, tagPrefix));
+                    }
+                }
             }
 
-            foreach (AttributeInfo info in context.Attributes) {
-                if (info.ContainsAspTags) continue;
+            if (parentCommand is BatchMoveCommand) {
+                foreach (AttributeInfo info in context.Attributes) {
+                    if (info.ContainsAspTags) continue;
 
-                AspNetStringResultItem item = AddResult(info, null, context.WithinClientSideComment, false, false, true);
-                if (item != null) item.ComesFromDirective = true;
+                    AspNetStringResultItem item = AddResult(info, null, context.WithinClientSideComment, false, false, true);
+                    if (item != null) item.ComesFromDirective = true;
+                }
             }
         }
 
@@ -101,8 +126,8 @@ namespace VisualLocalizer.Components {
             if (parentCommand is BatchMoveCommand) {
                 foreach (var info in context.Attributes) {
                     if (info.ContainsAspTags) continue;
+                    if (shouldIgnoreThisAttribute(context.ElementName, info.Name)) continue;
 
-                    
                     if (Settings.SettingsObject.Instance.UseReflectionInAsp) {
                         PropertyInfo propInfo;
                         bool? isString = webConfig.IsTypeof(context.Prefix, context.ElementName, info.Name, typeof(string), out propInfo);
@@ -117,6 +142,20 @@ namespace VisualLocalizer.Components {
                     }                    
                 }
             }
+        }
+
+        private bool shouldIgnoreThisAttribute(string elementName, string attributeName) {
+            bool ignore = false;
+            foreach (string token in StringConstants.AspNetIgnoredAttributes) {
+                string[] t = token.Split(':');
+                if (t.Length != 2) continue;
+
+                if ((t[0] == "*" || t[0] == elementName) && (t[1] == "*" || t[1] == attributeName)) {
+                    ignore = true;
+                    break;
+                }
+            }
+            return ignore;
         }
 
         public void OnOutputElement(OutputElementContext context) {

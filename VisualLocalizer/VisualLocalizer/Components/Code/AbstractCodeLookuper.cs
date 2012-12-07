@@ -6,9 +6,9 @@ using EnvDTE;
 
 namespace VisualLocalizer.Components {
     internal abstract class AbstractCodeLookuper {
-        
-        public ProjectItem SourceItem { get; set; }
-        public bool SourceItemGenerated { get; set; }
+
+        protected ProjectItem SourceItem { get; set; }
+        protected bool SourceItemGenerated { get; set; }
         protected int CurrentLine { get; set; }
         protected int CurrentIndex { get; set; }
         protected int CurrentAbsoluteOffset { get; set; }

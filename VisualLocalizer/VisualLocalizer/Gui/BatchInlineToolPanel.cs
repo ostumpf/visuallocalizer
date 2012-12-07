@@ -7,6 +7,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Settings;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Gui {
     
@@ -15,6 +16,17 @@ namespace VisualLocalizer.Gui {
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
 
         public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowFilterContext) {
+            this.MultiSelect = true;
+            this.MouseUp += new MouseEventHandler(OnContextMenuShow);
+
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem stateMenu = new MenuItem("State");
+            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => { setCheckStateOfSelected(true); }));
+            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => { setCheckStateOfSelected(false); }));
+            contextMenu.MenuItems.Add(stateMenu);            
+
+            this.ContextMenu = contextMenu;
         }
 
         protected override void InitializeColumns() {
@@ -127,6 +139,10 @@ namespace VisualLocalizer.Gui {
             this.ResumeLayout(true);
             this.OnResize(null);
             NotifyErrorRowsChanged();
+
+            if (SortedColumn != null) {
+                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            }
         }
 
         protected override CodeReferenceResultItem GetResultItemFromRow(DataGridViewRow row) {

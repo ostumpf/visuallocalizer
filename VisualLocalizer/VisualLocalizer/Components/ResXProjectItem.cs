@@ -256,9 +256,7 @@ namespace VisualLocalizer.Components {
                 data.Clear();
                 data = null;
             }
-            IsLoaded = false;
-            designerNamespaceElement = null;
-            designerClassElement = null;
+            IsLoaded = false;           
         }
 
         public Dictionary<string, string> GetAllStringReferences() {
@@ -267,9 +265,8 @@ namespace VisualLocalizer.Components {
             if (!IsLoaded) Load();
 
             foreach (var pair in data) {
-                if (pair.Value.HasValue<string>()) {
-                    string property = GetPropertyNameForKey(pair.Value.Name);
-                    string reference = Class + "." + property;
+                if (pair.Value.HasValue<string>()) {                    
+                    string reference = Class + "." + pair.Value.Name;
 
                     if (AllReferences.ContainsKey(reference)) {
                         AllReferences.Remove(reference);
@@ -281,43 +278,7 @@ namespace VisualLocalizer.Components {
             if (!wasLoaded) Unload();
 
             return AllReferences;
-        }
-
-        private CodeNamespace designerNamespaceElement = null;
-        private CodeClass designerClassElement = null;
-        private string GetPropertyNameForKey(string key) {
-            if (DesignerItem == null) return key;
-
-            if (designerNamespaceElement == null || designerClassElement == null) {                
-                foreach (CodeElement e in DesignerItem.FileCodeModel.CodeElements)
-                    if (e.Kind == vsCMElement.vsCMElementNamespace && e.FullName == Namespace) {
-                        designerNamespaceElement = (CodeNamespace)e;
-                        break;
-                    }
-                if (designerNamespaceElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
-                
-                foreach (CodeElement e in designerNamespaceElement.Children)
-                    if (e.Kind == vsCMElement.vsCMElementClass && e.Name == Class) {
-                        designerClassElement = (CodeClass)e;
-                        break;
-                    }
-                if (designerClassElement == null) throw new InvalidOperationException("Unexpected structure of ResX designer file.");
-            }
-
-            CodeProperty foundElement = null;
-            foreach (CodeElement e in designerClassElement.Children)
-                if (e.Kind == vsCMElement.vsCMElementProperty) {
-                    CodeProperty propertyElement = (CodeProperty)e;
-                    string getterText = propertyElement.GetText();
-                    Match matchResult = Regex.Match(getterText, @"^\s*get\s*\{\s*return\s*\w+\.GetString\("""+key+@""",\s*\w+\);\s*\}\s*$");
-                    if (matchResult.Success) {
-                        foundElement = propertyElement;
-                        break;
-                    }                    
-                }
-
-            return foundElement == null ? key : foundElement.Name;
-        }
+        }     
 
         public static bool IsItemResX(ProjectItem item) {
             if (item == null) return false;
@@ -366,10 +327,14 @@ namespace VisualLocalizer.Components {
 
                     if (!string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder)) {
                         Class = Path.GetFileNameWithoutExtension((string)InternalProjectItem.Properties.Item("FullPath").Value);
+                        if (IsCultureSpecific()) {
+                            Class = GetCultureNeutralName();
+                            Class = Class.Substring(0, Class.IndexOf('.'));
+                        }
                         Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
                     } else {
-                        Class = "!";
-                        Namespace = "!";
+                        Class = null;
+                        Namespace = null;
                     }
                 }
 
@@ -393,12 +358,14 @@ namespace VisualLocalizer.Components {
 
                     if (neutralItem != null) {
                         DesignerItem = neutralItem.DesignerItem;
+
                     } else {
                         Namespace = null;
                         Class = cultureNeutralName.Substring(0, cultureNeutralName.IndexOf('.'));
                         return;
                     }
-                } 
+                }
+                if (DesignerItem == null) return;
 
                 CodeElement nmspcElemet = null;
                 foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
@@ -427,7 +394,11 @@ namespace VisualLocalizer.Components {
         }
 
         public override bool Equals(object obj) {
-            return ReferenceEquals(this, obj);
+            if (obj == null) return false;
+            ResXProjectItem copy = obj as ResXProjectItem;
+
+            if (copy == null) return false;
+            return InternalProjectItem.Equals(copy.InternalProjectItem);
         }
        
     }

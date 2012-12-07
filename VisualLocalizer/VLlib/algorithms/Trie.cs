@@ -55,12 +55,17 @@ namespace VisualLocalizer.Library {
             for (int i = 0; i < text.Length; i++) {
                 char c = text[i];
                 if (e.Successors.ContainsKey(c)) {
+                    if (c == '.') e.CanBeFollowedByWhitespace = true;
                     e = (ElementType)e.Successors[c];
+                    if (c == '.') e.CanBeFollowedByWhitespace = true;
                 } else {
                     ElementType newElement = new ElementType();
                     newElement.Word = text.Substring(0, i + 1);
+
+                    if (c == '.') e.CanBeFollowedByWhitespace = true;
                     e.Successors.Add(c, newElement);
                     e = newElement;
+                    if (c == '.') e.CanBeFollowedByWhitespace = true;
                 }
             }
             e.IsTerminal = true;
@@ -78,6 +83,7 @@ namespace VisualLocalizer.Library {
         public TrieElement Predecessor { get; set; }
         public TrieElement Shortcut { get; set; }
         public bool IsTerminal { get; set; }
+        public bool CanBeFollowedByWhitespace { get; set; }        
         public string Word { get; set; }      
 
         public TrieElement() {

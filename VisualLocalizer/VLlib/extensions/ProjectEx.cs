@@ -10,7 +10,10 @@ using System.Diagnostics;
 
 namespace VisualLocalizer.Library {
     public static class ProjectEx {
-       
+
+        private const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
+        private const string WebSiteProject = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
+
         public static List<ProjectItem> GetFiles(this Project project,Predicate<ProjectItem> test,bool includeReferenced) {
             if (project == null)
                 throw new ArgumentNullException("project");
@@ -74,11 +77,18 @@ namespace VisualLocalizer.Library {
         }
 
         public static ProjectItem AddResourceDir(this Project project, string subdir) {
-            ProjectItem resItem = null;
-            if (project.ProjectItems.ContainsItem("Resources")) {
-                resItem = project.ProjectItems.Item("Resources");
+            string resourcesFolder;
+            if (project.Kind.ToUpperInvariant() == WebSiteProject) {
+                resourcesFolder = GlobalWebSiteResourcesFolder;
             } else {
-                resItem = project.ProjectItems.AddFolder("Resources", null);   
+                resourcesFolder = "Resources";
+            }
+
+            ProjectItem resItem = null;
+            if (project.ProjectItems.ContainsItem(resourcesFolder)) {
+                resItem = project.ProjectItems.Item(resourcesFolder);
+            } else {
+                resItem = project.ProjectItems.AddFolder(resourcesFolder, null);
             }
 
             ProjectItem subItem = null;

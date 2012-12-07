@@ -35,10 +35,12 @@ namespace VisualLocalizer.Commands {
             if (resultItem != null) {                
                 TextSpan replaceSpan = resultItem.ReplaceSpan;
                 string referencedCodeText = resultItem.Value;
-                resultItem.SourceItem = currentDocument.ProjectItem;
+                resultItem.SourceItem = currentDocument.ProjectItem;                
 
                 SelectResourceFileForm f = new SelectResourceFileForm(currentDocument.ProjectItem, resultItem);
                 System.Windows.Forms.DialogResult result = f.ShowDialog(System.Windows.Forms.Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd)));
+
+                resultItem.DestinationItem = f.SelectedItem;
 
                 if (result == System.Windows.Forms.DialogResult.OK) {
                     bool unitsFromStackRemoved = false;
@@ -47,15 +49,16 @@ namespace VisualLocalizer.Commands {
                     bool addNamespace = false;
 
                     try {
-                        if (f.UsingFullName || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                        if (f.UsingFullName || resultItem.MustUseFullName) {
                             referenceText = new ReferenceString(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key);
                             addNamespace = false;
                         } else {
                             NamespacesList usedNamespaces = resultItem.GetUsedNamespaces();
                             addNamespace = usedNamespaces.ResolveNewElement(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key,
                                 currentDocument.ProjectItem.ContainingProject, out referenceText);
+                            referenceText.NamespacePart = null;
                         }
-
+                        
                         string newText = resultItem.GetReferenceText(referenceText);
 
                         int hr = textLines.ReplaceLines(replaceSpan.iStartLine, replaceSpan.iStartIndex, replaceSpan.iEndLine, replaceSpan.iEndIndex,
@@ -67,7 +70,7 @@ namespace VisualLocalizer.Commands {
                         Marshal.ThrowExceptionForHR(hr);
                         
                         if (addNamespace) {
-                            currentDocument.AddUsingBlock(f.SelectedItem.Namespace);
+                            resultItem.AddUsingBlock(textLines);
                         }                        
 
                         if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {

@@ -42,7 +42,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
                     item.DataNode.FileRef != null && File.Exists(item.DataNode.FileRef.FileName)) {
 
                     ProjectItem newItem = item.NeighborItems.AddFromFile(Path.GetFullPath(item.DataNode.FileRef.FileName));
-                    newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;    
+
+                    if (newItem.ContainingProject != null && newItem.ContainingProject.Kind.ToUpperInvariant() != StringConstants.WebSiteProject) {
+                        newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                    }
                 }
 
                 AbstractListView ListView = item.AbstractListView;

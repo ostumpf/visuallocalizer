@@ -20,12 +20,14 @@ namespace VisualLocalizer.Commands {
 
         private CSharpMoveToResourcesCommand csharpMoveToResourcesCommand;
         private AspNetMoveToResourcesCommand aspNetMoveToResourcesCommand;
-        private InlineCommand inlineCommand;
+        private CSharpInlineCommand csharpInlineCommand;
+        private AspNetInlineCommand aspNetInlineCommand;
         private BatchMoveCommand batchMoveCommand;
         private BatchInlineCommand batchInlineCommand;
 
         public MenuManager() {
-            this.inlineCommand = new InlineCommand();
+            this.csharpInlineCommand = new CSharpInlineCommand();
+            this.aspNetInlineCommand = new AspNetInlineCommand();
             this.batchMoveCommand = new BatchMoveCommand();
             this.batchInlineCommand = new BatchInlineCommand();
             this.csharpMoveToResourcesCommand = new CSharpMoveToResourcesCommand();
@@ -161,7 +163,12 @@ namespace VisualLocalizer.Commands {
 
         private void inlineClick(object sender, EventArgs args) {
             try {
-                inlineCommand.Process();
+                Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
+                if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
+                    aspNetInlineCommand.Process();
+                } else {
+                    csharpInlineCommand.Process();
+                }                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -211,6 +218,7 @@ namespace VisualLocalizer.Commands {
                 if (win != null) {
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
+                
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {                
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);

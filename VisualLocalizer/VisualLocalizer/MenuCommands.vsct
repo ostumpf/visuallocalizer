@@ -12,6 +12,9 @@
       <Group guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID" priority="0x0000">
         <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarID"/>
       </Group>
+      <Group guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID" priority="0x0000">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuID"/>
+      </Group>
     </Groups>
 
     <Menus>
@@ -23,26 +26,33 @@
           <CommandName>Batch Inline Tool Window Toolbar</CommandName>
         </Strings>
       </Menu>
+      <Menu guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuID" type="MenuController" priority="2">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextIsAnchorCommand</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings></Strings>
+      </Menu>
     </Menus>   
 
     <Buttons>
       
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="1" type="Button">
-        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchInlineRemoveUnchecked</CommandName>
-          <ButtonText>Restore unchecked</ButtonText>
+          <ButtonText>Restore unchecked rows</ButtonText>
           <ToolTipText>Puts all previusly removed rows back to table</ToolTipText>
         </Strings>
       </Button>
 
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="2" type="Button">
-        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="1" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchInlineRemoveUnchecked</CommandName>
-          <ButtonText>Remove unchecked</ButtonText>
+          <ButtonText>Remove unchecked rows</ButtonText>
           <ToolTipText>Removes unchecked rows from table for better clarity</ToolTipText>
         </Strings>
       </Button>    
@@ -63,7 +73,10 @@
     <Groups>
       <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID" priority="0x0000">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID"/>
-      </Group>     
+      </Group>
+      <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID" priority="0x0000">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID"/>
+      </Group>
     </Groups>
 
     <Menus>
@@ -74,7 +87,14 @@
           <ButtonText>Batch Move Tool Window Toolbar</ButtonText>
           <CommandName>Batch Move Tool Window Toolbar</CommandName>
         </Strings>
-      </Menu>      
+      </Menu>
+      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID" type="MenuController" priority="2">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextIsAnchorCommand</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings></Strings>
+      </Menu>
     </Menus>
 
     <Combos>
@@ -97,24 +117,24 @@
       </Combo>
     </Combos>
     
-    <Buttons>
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="1" type="Button">
-        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+    <Buttons>      
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchMoveToResourcesRestoreUnchecked</CommandName>
-          <ButtonText>Restore unchecked</ButtonText>
-          <ToolTipText>Puts all previusly removed rows back to table</ToolTipText>
+          <ButtonText>Restore unchecked rows</ButtonText>
+          <ToolTipText>Puts all previously removed rows back to the table</ToolTipText>
         </Strings>
       </Button>
 
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="2" type="Button">
-        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="1" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchMoveToResourcesRemoveUnchecked</CommandName>
-          <ButtonText>Remove unchecked</ButtonText>
-          <ToolTipText>Removes unchecked rows from table for better clarity</ToolTipText>
+          <ButtonText>Remove unchecked rows</ButtonText>
+          <ToolTipText>Removes unchecked rows from the table for better clarity</ToolTipText>
         </Strings>
       </Button>
 
@@ -324,7 +344,9 @@
       <IDSymbol name="BatchMoveToolbarRunMenuGroupID" value="0x1010" />
       <IDSymbol name="BatchMoveToolbarRemoveUncheckedID" value="0x1014" />
       <IDSymbol name="BatchMoveToolbarRestoreUncheckedID" value="0x1015" />
-
+      <IDSymbol name="BatchMoveToolbarUncheckedMenuID" value="0x1016" />
+      <IDSymbol name="BatchMoveToolbarUncheckedMenuGroupID" value="0x1017" />
+      
       <IDSymbol name="BatchMoveToolbarRememberUncheckedListID" value="0x1012" />
       <IDSymbol name="BatchMoveToolbarRememberUncheckedID" value="0x1013" />
     </GuidSymbol>
@@ -335,6 +357,8 @@
       <IDSymbol name="BatchInlineToolbarRunID" value="0x2002" />
       <IDSymbol name="BatchInlineToolbarRemoveUncheckedID" value="0x2004" />
       <IDSymbol name="BatchInlineToolbarPutBackUncheckedID" value="0x2005" />
+      <IDSymbol name="BatchInlineToolbarUncheckedMenuID" value="0x2006" />
+      <IDSymbol name="BatchInlineToolbarUncheckedMenuGroupID" value="0x2007" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >

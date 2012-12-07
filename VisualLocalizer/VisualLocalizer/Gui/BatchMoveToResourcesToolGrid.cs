@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Extensions;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Gui {
 
@@ -25,17 +26,37 @@ namespace VisualLocalizer.Gui {
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
         private bool valueAdded = false;
         private BatchMoveToResourcesToolPanel parentToolPanel;
+        private MenuItem destinationContextMenu;
 
         public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel) : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
             this.parentToolPanel = panel;
+            this.MultiSelect = true;
+        
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
+            this.SortCompare += new DataGridViewSortCompareEventHandler(BatchMoveToResourcesToolGrid_SortCompare);
+            this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
             DataGridViewKeyValueRow<CodeReferenceResultItem> template = new DataGridViewKeyValueRow<CodeReferenceResultItem>();
             template.MinimumHeight = 24;
             this.RowTemplate = template;
+
+            ContextMenu contextMenu = new ContextMenu();
+            
+            MenuItem stateMenu = new MenuItem("State");
+            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => { setCheckStateOfSelected(true); }));
+            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => { setCheckStateOfSelected(false); }));
+            contextMenu.MenuItems.Add(stateMenu);
+
+            destinationContextMenu = new MenuItem("Common destination");
+            contextMenu.MenuItems.Add(destinationContextMenu);
+            contextMenu.Popup += new EventHandler(ContextMenu_Popup);
+
+            this.ContextMenu = contextMenu;
         }
+
+        
 
         #region public members
 
@@ -53,20 +74,25 @@ namespace VisualLocalizer.Gui {
             resxItemsCache.Clear();
             loadedItems.Clear();            
             CheckedRowsCount = 0;
-            SuspendLayout();
+            SuspendLayout();            
+
             if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
 
             foreach (CodeStringResultItem item in value) {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
-                row.DataSourceItem = item;
+                row.DataSourceItem = item;                
 
                 DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();                
                 checkCell.Value = item.MoveThisItem;
                 row.Cells.Add(checkCell);
 
+                DataGridViewTextBoxCell locProbCell = new DataGridViewTextBoxCell();
+                locProbCell.Value = string.Format("{0}%", item.GetLocalizationRatio());
+                row.Cells.Add(locProbCell);
+
                 DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
                 lineCell.Value = item.ReplaceSpan.iStartLine + 1;
-                row.Cells.Add(lineCell);
+                row.Cells.Add(lineCell);                
 
                 DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
                 
@@ -103,6 +129,7 @@ namespace VisualLocalizer.Gui {
                 row.Cells.Add(cell);
                 Rows.Add(row);
 
+                locProbCell.ReadOnly = true;
                 valueCell.ReadOnly = false;
                 sourceCell.ReadOnly = true;
                 lineCell.ReadOnly = true;
@@ -121,6 +148,10 @@ namespace VisualLocalizer.Gui {
             this.ClearSelection();            
             this.ResumeLayout();            
             this.OnResize(null);
+
+            if (SortedColumn != null) {
+                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            }
         }
 
         private bool TestFilterRow(DataGridViewKeyValueRow<CodeStringResultItem> row) {
@@ -259,33 +290,42 @@ namespace VisualLocalizer.Gui {
         protected override void InitializeColumns() {
             base.InitializeColumns();
 
+            DataGridViewComboBoxColumn locProbColumn = new DataGridViewComboBoxColumn();
+            locProbColumn.MinimumWidth = 40;
+            locProbColumn.HeaderText = "";
+            locProbColumn.Width = 40;
+            locProbColumn.Name = LocProbColumnName;
+            locProbColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            locProbColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.Columns.Insert(1, locProbColumn);
+            
             DataGridViewComboBoxColumn keyColumn = new DataGridViewComboBoxColumn();
             keyColumn.MinimumWidth = 150;
             keyColumn.HeaderText = "Resource Key";
             keyColumn.Name = KeyColumnName;
             keyColumn.SortMode = DataGridViewColumnSortMode.Automatic;
-            this.Columns.Insert(2, keyColumn);
+            this.Columns.Insert(3, keyColumn);
 
             DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
             valueColumn.MinimumWidth = 250;
             valueColumn.HeaderText = "Resource Value";
             valueColumn.Name = ValueColumnName;
             valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Insert(3, valueColumn);
+            this.Columns.Insert(4, valueColumn);
 
             DataGridViewTextBoxColumn sourceColumn = new DataGridViewTextBoxColumn();
             sourceColumn.MinimumWidth = 150;
             sourceColumn.HeaderText = "Source File";
             sourceColumn.Name = "SourceItem";
-            this.Columns.Insert(4, sourceColumn);
+            this.Columns.Insert(5, sourceColumn);
 
             DataGridViewComboBoxColumn destinationColumn = new DataGridViewComboBoxColumn();
             destinationColumn.MinimumWidth = 250;
             destinationColumn.HeaderText = "Destination File";
-            destinationColumn.Name = "DestinationItem";
+            destinationColumn.Name = DestinationColumnName;
             destinationColumn.SortMode = DataGridViewColumnSortMode.Automatic;
             destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            this.Columns.Insert(5, destinationColumn);
+            this.Columns.Insert(6, destinationColumn);
 
             DataGridViewColumn column = new DataGridViewColumn();
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -300,7 +340,7 @@ namespace VisualLocalizer.Gui {
             item.Key = row.Key;
             item.Value = row.Value;
 
-            string dest = (string)row.Cells["DestinationItem"].Value;
+            string dest = (string)row.Cells[DestinationColumnName].Value;
             if (!string.IsNullOrEmpty(dest) && resxItemsCache.ContainsKey(dest))
                 item.DestinationItem = resxItemsCache[dest];
             else
@@ -320,11 +360,18 @@ namespace VisualLocalizer.Gui {
                     valueAdded = false;
                 }
             }
+            if (Columns[e.ColumnIndex].Name == CheckBoxColumnName && CheckBoxColumnName != null) {                
+                var row = Rows[e.RowIndex] as DataGridViewKeyValueRow<CodeStringResultItem>;
+                if (row != null) {
+                    foreach (CheckBox box in row.InfluencingCheckboxes)
+                        box.CheckState = CheckState.Indeterminate;
+                }
+            }
             base.OnCellEndEdit(e);
         }
 
         protected override void Validate(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            object dest = row.Cells["DestinationItem"].Value;
+            object dest = row.Cells[DestinationColumnName].Value;
             bool existsSameValue = false; 
             string destError = "Destination file not set";
             if (dest == null) {
@@ -383,8 +430,11 @@ namespace VisualLocalizer.Gui {
             if (!destinationItemsCache.ContainsKey(project)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
                 foreach (ResXProjectItem projectItem in project.GetResXItemsAround(true)) {
-                    resxItems.Add(projectItem.ToString());
-                    resxItemsCache.Add(projectItem.ToString(), projectItem);
+                    if (!string.IsNullOrEmpty(projectItem.Class) && !string.IsNullOrEmpty(projectItem.Namespace)) {
+                        string key = projectItem.ToString();
+                        resxItems.Add(key);
+                        if (!resxItemsCache.ContainsKey(key)) resxItemsCache.Add(key, projectItem);
+                    }
                 }
                 destinationItemsCache.Add(project, resxItems);
             }
@@ -400,14 +450,19 @@ namespace VisualLocalizer.Gui {
                     comboBoxCell.Items.Insert(0, e.FormattedValue);
                     valueAdded = true;
                 }
-            }
-            if (Columns[e.ColumnIndex].Name == CheckBoxColumnName && CheckBoxColumnName != null) {
-                bool newVal = (bool)e.FormattedValue;
-                var row = Rows[e.RowIndex] as DataGridViewKeyValueRow<CodeStringResultItem>;
-                if (row != null) {
-                    foreach (CheckBox box in row.InfluencingCheckboxes)
-                        box.CheckState = CheckState.Indeterminate;
-                }
+            }            
+        }
+
+        private void BatchMoveToResourcesToolGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e) {
+            if (e.Column.Name == LocProbColumnName) {
+                int val1;
+                if (!int.TryParse(((string)e.CellValue1).TrimEnd('%'), out val1)) val1 = 0;
+
+                int val2;
+                if (!int.TryParse(((string)e.CellValue2).TrimEnd('%'), out val2)) val2 = 0;
+
+                e.SortResult = val1.CompareTo(val2);
+                e.Handled = true;
             }
         }
 
@@ -424,8 +479,41 @@ namespace VisualLocalizer.Gui {
                 ComboBox box = e.Control as ComboBox;
                 box.DropDownStyle = ComboBoxStyle.DropDown;                     
             }            
+        }        
+
+        private void ContextMenu_Popup(object sender, EventArgs e) {
+            destinationContextMenu.MenuItems.Clear();
+            if (SelectedRows.Count == 0) return;
+
+            HashSet<string> options = new HashSet<string>();
+            var destCell = SelectedRows[0].Cells[DestinationColumnName] as DataGridViewComboBoxCell;
+            foreach (string dest in destCell.Items) {
+                if (!string.IsNullOrEmpty(dest)) {
+                    options.Add(dest);
+                }
+            }
+            
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
+                DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)row.Cells[DestinationColumnName];
+                options.IntersectWith(cell.Items.Cast<string>());
+            }
+
+            destinationContextMenu.Enabled = options.Count > 0;
+            foreach (string item in options) {
+                MenuItem menuItem = new MenuItem(item);
+                menuItem.Tag = resxItemsCache[item];
+                menuItem.Click += new EventHandler((o, a) => { setDestinationOfSelected((ResXProjectItem)(o as MenuItem).Tag); });                
+                destinationContextMenu.MenuItems.Add(menuItem);
+            }
+        }        
+
+        private void setDestinationOfSelected(ResXProjectItem item) {
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
+                row.Cells[DestinationColumnName].Value = item.ToString();
+                Validate(row);
+            }            
         }
-        
+
         public override string CheckBoxColumnName {
             get { return "MoveThisItem"; }
         }
@@ -436,7 +524,16 @@ namespace VisualLocalizer.Gui {
 
         public override string ValueColumnName {
             get { return "Value"; }
-        }        
+        }
+
+        public string LocProbColumnName {
+            get { return "LocalizationProbability"; }
+        }
+
+        public string DestinationColumnName {
+            get { return "Destination"; }
+        }
+        
     }
 
     

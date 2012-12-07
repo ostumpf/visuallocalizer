@@ -20,6 +20,7 @@ namespace VisualLocalizer.Commands {
             TextSpan selectionSpan = spans[0];
 
             BatchMoveCommand batchMoveInstance = new BatchMoveCommand();
+            batchMoveInstance.SetCurrentProjectItem(currentDocument.ProjectItem);
             batchMoveInstance.Results = new List<CodeStringResultItem>();
 
             AspNetCodeExplorer.Instance.Explore(batchMoveInstance, currentDocument.ProjectItem,

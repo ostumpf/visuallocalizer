@@ -96,6 +96,7 @@ namespace VisualLocalizer.Library {
             }
 
             foreach (DataGridViewRow row in rowsToRemove) {
+                row.ErrorText = null;
                 Rows.Remove(row);
             }
 
@@ -160,7 +161,7 @@ namespace VisualLocalizer.Library {
             }
 
             DataGridViewRow row = null;
-            if (SelectedRows.Count > 0)
+            if (SelectedRows.Count == 1)
                 row = SelectedRows[0];
 
             if (row != null) {
@@ -259,6 +260,32 @@ namespace VisualLocalizer.Library {
                 CheckHeader.Checked = false;
             } else {
                 CheckHeader.Checked = null;
+            }
+        }
+
+        protected void setCheckStateOfSelected(bool p) {
+            if (string.IsNullOrEmpty(CheckBoxColumnName)) return;
+
+            foreach (DataGridViewRow row in SelectedRows) {
+                row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value;
+                row.Cells[CheckBoxColumnName].Value = p;
+                OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));
+            }
+            UpdateCheckHeader();
+        }
+
+        protected void OnContextMenuShow(object sender, MouseEventArgs e) {
+            if (e.Button == MouseButtons.Right) {
+                HitTestInfo hitTest = this.HitTest(e.X, e.Y);
+                if (hitTest != null && hitTest.Type == DataGridViewHitTestType.Cell && hitTest.RowIndex >= 0 && hitTest.ColumnIndex >= 0) {
+                    bool isRowSelected = Rows[hitTest.RowIndex].Selected;
+                    if (!isRowSelected) {
+                        this.ClearSelection();
+                        Rows[hitTest.RowIndex].Selected = true;
+                    }
+
+                    this.ContextMenu.Show(this, e.Location);
+                }
             }
         }
 

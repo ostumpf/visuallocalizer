@@ -6,6 +6,9 @@ using EnvDTE;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.AspxParser;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer.Components {
     internal abstract class AbstractResultItem {
@@ -13,11 +16,19 @@ namespace VisualLocalizer.Components {
             MoveThisItem = true;
         }
 
+        [LocalizationWeight(0.2)]
         public bool ComesFromDesignerFile { get; set; }
-        public bool ComesFromClientComment { get; set; }
-        public bool MoveThisItem { get; set; }
-        public bool IsWithinLocalizableFalse { get; set; }        
+
+        [LocalizationWeight(0.6)]
+        public bool ComesFromClientComment { get; set; }        
+
+        [LocalizationWeight(0.4)]
+        public bool IsWithinLocalizableFalse { get; set; }
+
+        [LocalizationWeight(0.8)]
         public bool IsMarkedWithUnlocalizableComment { get; set; }
+
+        public bool MoveThisItem { get; set; }
         public ProjectItem SourceItem { get; set; }
         public ResXProjectItem DestinationItem { get; set; }
         public TextSpan ReplaceSpan { get; set; }        
@@ -29,7 +40,9 @@ namespace VisualLocalizer.Components {
         public string Key { get; set; }
     }
 
-    internal abstract class CodeStringResultItem : AbstractResultItem {                
+    internal abstract class CodeStringResultItem : AbstractResultItem {
+        private const int MAX_RATIO = 100;
+
         public bool WasVerbatim { get; set; }
         public string ErrorText { get; set; }
         public string ClassOrStructElementName { get; set; }       
@@ -38,6 +51,68 @@ namespace VisualLocalizer.Components {
         public abstract List<string> GetKeyNameSuggestions();
         public abstract NamespacesList GetUsedNamespaces();
         public abstract string NoLocalizationComment { get; }
+        public abstract bool MustUseFullName { get; }
+        public abstract void AddUsingBlock(IVsTextLines textLines); 
+
+        public int GetLocalizationRatio() {
+            Type t = this.GetType();
+        
+            int count = 0;
+            double sum = 0;
+
+            countLocProbability(t.GetProperties(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance), ref count, ref sum);
+            countLocProbability(t.GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.GetField | BindingFlags.Instance), ref count, ref sum);
+            CustomLocProbabilityEval(ref count, ref sum);
+
+            bool onlyWhitespace = true;
+            bool onlyDigits = true;
+            bool onlyCapitalsAndInterpunction = true;
+
+            foreach (char c in Value) {
+                if (!char.IsWhiteSpace(c)) {
+                    onlyWhitespace = false;
+                    if (!char.IsDigit(c) && c != ',' && c != '.') onlyDigits = false;
+                    if (!char.IsUpper(c) && !char.IsPunctuation(c) && !char.IsSymbol(c)) onlyCapitalsAndInterpunction = false;
+                }
+            }
+
+            if (onlyWhitespace || onlyDigits || onlyCapitalsAndInterpunction) {
+                count++;
+                sum += 1;
+            }            
+
+            if (count == 0) {
+                return MAX_RATIO;
+            } else {
+                int result = (int)(MAX_RATIO - MAX_RATIO * (sum / count));
+                return Math.Min(100, Math.Max(0, result));
+            }
+        }
+
+        private void countLocProbability(MemberInfo[] members, ref int count, ref double sum) {
+            foreach (MemberInfo info in members) {
+                if (info.MemberType != MemberTypes.Field && info.MemberType != MemberTypes.Property) continue;
+
+                PropertyInfo propInfo = info as PropertyInfo;
+                FieldInfo fieldInfo = info as FieldInfo;
+                bool value = false;
+
+                if (propInfo != null && propInfo.PropertyType.IsAssignableFrom(typeof(bool))) value = (bool)propInfo.GetValue(this, null);
+                if (fieldInfo != null && fieldInfo.FieldType.IsAssignableFrom(typeof(bool))) value = (bool)fieldInfo.GetValue(this);
+                if (!value) continue;
+
+                object[] attrs = info.GetCustomAttributes(typeof(LocalizationWeightAttribute), true);
+                if (attrs.Length == 1) {
+                    LocalizationWeightAttribute lw = (LocalizationWeightAttribute)attrs[0];
+                    count++;
+                    sum += lw.Weight;
+                }
+            }
+
+        }
+
+        protected virtual void CustomLocProbabilityEval(ref int count, ref double sum) {
+        }
 
         protected List<string> InternalGetKeyNameSuggestions(string value, string namespaceElement, string classElement, string methodElement) {
             List<string> suggestions = new List<string>();
@@ -121,26 +196,51 @@ namespace VisualLocalizer.Components {
             return NamespaceElement.GetUsedNamespaces(SourceItem);
         }
 
-        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }
+        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }        
+
+        public override bool MustUseFullName { 
+            get { return false; }
+        }
+
+        public override void AddUsingBlock(IVsTextLines textLines) {
+            SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);            
+        }
     }
 
     internal sealed class AspNetStringResultItem : CodeStringResultItem {
         public NamespacesList DeclaredNamespaces { get; set; }
+                
         public bool ComesFromElement { get; set; }
+
+        [LocalizationWeight(0.8)]
         public bool ComesFromInlineExpression { get; set; }
-        public string ElementPrefix { get; set; }
+        
         public bool LocalizabilityProved { get; set; }
+
+        [LocalizationWeight(0.4)]
         public bool ComesFromPlainText { get; set; }
+
+        [LocalizationWeight(0.8)]
         public bool ComesFromDirective { get; set; }
+
+        [LocalizationWeight(0.1)]
         public bool ComesFromCodeBlock { get; set; }
 
+        public string ElementPrefix { get; set; }        
+        
         public override string GetReferenceText(ReferenceString referenceText) {
-            if (!ComesFromCodeBlock) {
+            if (!ComesFromCodeBlock && !ComesFromInlineExpression) {
+                string reference;
                 if (SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                    return string.Format(StringConstants.AspElementExpressionFormat, referenceText.NamespacePart, referenceText.ClassPart, referenceText.KeyPart);
+                    reference = string.Format(StringConstants.AspElementExpressionFormat, referenceText.NamespacePart, referenceText.ClassPart, referenceText.KeyPart);
                 } else {
-                    return string.Format(StringConstants.AspElementReferenceFormat,
+                    reference = string.Format(StringConstants.AspElementReferenceFormat,
                         (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart);
+                }
+                if (ComesFromPlainText) {
+                    return string.Format(StringConstants.AspLiteralFormat, reference);
+                } else {
+                    return reference;
                 }
             } else {
                 return (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart;
@@ -163,6 +263,37 @@ namespace VisualLocalizer.Components {
                     return StringConstants.CSharpLocalizationComment;
                 }
             }
+        }
+
+        protected override void CustomLocProbabilityEval(ref int count, ref double sum) {
+            if (string.IsNullOrEmpty(ElementPrefix) && ComesFromElement) {
+                count++;
+                sum += 2;
+            }
+            if (ComesFromElement && !LocalizabilityProved && SettingsObject.Instance.UseReflectionInAsp) {
+                count++;
+                sum += 1;
+            }
+        }
+
+        public override bool MustUseFullName {
+            get {
+                bool forceAspExpression = SourceItem != null;
+                forceAspExpression = forceAspExpression && SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject;
+                forceAspExpression = forceAspExpression && !ComesFromCodeBlock && !ComesFromInlineExpression;
+                return forceAspExpression;
+            }
+        }
+
+        public override void AddUsingBlock(IVsTextLines textLines) {            
+            string text = string.Format(StringConstants.AspImportDirectiveFormat, DestinationItem.Namespace);
+
+            object otp;
+            int hr = textLines.CreateTextPoint(0, 0, out otp);
+            Marshal.ThrowExceptionForHR(hr);
+
+            TextPoint tp = (TextPoint)otp;
+            tp.CreateEditPoint().Insert(text);
         }
     }
 
@@ -234,6 +365,20 @@ namespace VisualLocalizer.Components {
 
             string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf(splitChar));
             return prefix + splitChar + newKey;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property|AttributeTargets.Field)]
+    internal sealed class LocalizationWeightAttribute : System.Attribute {
+        public LocalizationWeightAttribute(double weight) {
+            if (weight < 0 || weight > 1) throw new ArgumentOutOfRangeException("weight");
+
+            this.Weight = weight;
+        }
+
+        public double Weight {
+            get;
+            private set;
         }
     }
 }

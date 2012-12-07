@@ -9,30 +9,40 @@ namespace VisualLocalizer.Library {
     public static class CodeModelEx {
 
         public static string GetText(this CodeFunction2 codeFunction) {
-            TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
-            TextPoint endPoint = codeFunction.GetEndPoint(vsCMPart.vsCMPartBody);
+            try {
+                TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+                TextPoint endPoint = codeFunction.GetEndPoint(vsCMPart.vsCMPartBody);
 
-            string functionText = startPoint.CreateEditPoint().GetText(endPoint);
-
-            return functionText;
+                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
+                return functionText;
+            } catch (Exception) {
+                return null;
+            }            
         }
 
         public static string GetText(this CodeProperty codeProperty) {
-            TextPoint startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
-            TextPoint endPoint = codeProperty.GetEndPoint(vsCMPart.vsCMPartBody);
+            try {
+                TextPoint startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
+                TextPoint endPoint = codeProperty.GetEndPoint(vsCMPart.vsCMPartBody);
 
-            string functionText = startPoint.CreateEditPoint().GetText(endPoint);
-
-            return functionText;
+                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
+                return functionText;
+            } catch (Exception) {
+                return null;
+            }     
         }
 
         public static string GetText(this CodeVariable2 codeVariable) {
-            TextPoint startPoint = codeVariable.StartPoint;
-            TextPoint endPoint = codeVariable.EndPoint;
+            try {
+                TextPoint startPoint = codeVariable.StartPoint;
+                TextPoint endPoint = codeVariable.EndPoint;
 
-            string functionText = startPoint.CreateEditPoint().GetText(endPoint);
+                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
 
-            return functionText;
+                return functionText;
+            } catch (Exception) {
+                return null;
+            }
         }
 
         public static CodeElement2 GetClass(this CodeFunction2 codeFunction) {

@@ -33,13 +33,14 @@ namespace VisualLocalizer.Editor {
             get;
             private set;
         }
-
+       
         public override void LoadFile(string path) {
             base.LoadFile(path);
             
             ResXResourceReader reader = null;
             try {
                 ProjectItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(FileName);
+
                 Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>();
                 
                 reader = new ResXResourceReader(path);
@@ -163,22 +164,7 @@ namespace VisualLocalizer.Editor {
                 default:
                     return base.GetSystemCommandStatus(cmdID);
             }            
-        }
-
-        public bool HasDesignerClass {
-            get {                                
-                if (ProjectItem != null && ProjectItem.Properties!=null) {
-                    if (ProjectItem.ContainingProject != null && 
-                        ProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject)  {
-                        string relative = (string)ProjectItem.Properties.Item("RelativeURL").Value;
-                        
-                        return !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);                        
-                    } else {
-                        return !string.IsNullOrEmpty((string)ProjectItem.Properties.Item("CustomToolOutput").Value);
-                    }
-                } else return false;
-            }
-        }
+        }      
 
         public override bool ExecuteSystemCommand(Microsoft.VisualStudio.VSConstants.VSStd97CmdID cmdID) {
             switch (cmdID) {

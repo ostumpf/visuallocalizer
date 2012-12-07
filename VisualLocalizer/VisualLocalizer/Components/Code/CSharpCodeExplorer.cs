@@ -104,7 +104,7 @@ namespace VisualLocalizer.Components {
         }
 
         private void Explore(AbstractBatchCommand parentCommand, CodeProperty codeProperty, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
-            bool propertyLocalizableFalse = HasLocalizableFalseAttribute(codeProperty as CodeElement);
+            bool propertyLocalizableFalse = HasLocalizableFalseAttribute(codeProperty as CodeElement);            
             if (codeProperty.Getter != null) Explore(parentCommand, codeProperty.Getter as CodeFunction2, parentNamespace, codeClassOrStruct, exploreable, isLocalizableFalse || propertyLocalizableFalse);
             if (codeProperty.Setter != null) Explore(parentCommand, codeProperty.Setter as CodeFunction2, parentNamespace, codeClassOrStruct, exploreable, isLocalizableFalse || propertyLocalizableFalse);
         }
@@ -117,6 +117,8 @@ namespace VisualLocalizer.Components {
             if (!exploreable(codeVariable as CodeElement)) return;
 
             string initExpression = codeVariable.GetText();
+            if (string.IsNullOrEmpty(initExpression)) return;
+
             TextPoint startPoint = codeVariable.StartPoint;
             bool variableLocalizableFalse = HasLocalizableFalseAttribute(codeVariable as CodeElement);
 
@@ -132,6 +134,8 @@ namespace VisualLocalizer.Components {
             if (!exploreable(codeFunction as CodeElement)) return;
 
             string functionText = codeFunction.GetText();
+            if (string.IsNullOrEmpty(functionText)) return;
+
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
             bool functionLocalizableFalse = HasLocalizableFalseAttribute(codeFunction as CodeElement);
 

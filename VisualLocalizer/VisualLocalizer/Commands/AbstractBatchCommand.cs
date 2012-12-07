@@ -17,14 +17,20 @@ namespace VisualLocalizer.Commands {
         protected ProjectItem currentlyProcessedItem;
         protected VirtualPoint selectionTopPoint, selectionBotPoint;
         protected HashSet<ProjectItem> searchedProjectItems = new HashSet<ProjectItem>();
-      
+        protected Dictionary<ProjectItem, bool> generatedProjectItems = new Dictionary<ProjectItem, bool>();
+
         public abstract IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
         public abstract IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
 
+        public void SetCurrentProjectItem(ProjectItem projectItem) {
+            currentlyProcessedItem = projectItem;
+        }
+
         public virtual void Process(bool verbose) {
             searchedProjectItems.Clear();
-           
+            generatedProjectItems.Clear();
+
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
@@ -39,7 +45,8 @@ namespace VisualLocalizer.Commands {
 
         public virtual void Process(Array selectedItems, bool verbose) {
             searchedProjectItems.Clear();
-          
+            generatedProjectItems.Clear();
+
             if (selectedItems == null) throw new ArgumentException("No selected items");
 
             foreach (UIHierarchyItem o in selectedItems) {
@@ -55,7 +62,8 @@ namespace VisualLocalizer.Commands {
 
         public virtual void ProcessSelection(bool verbose) {
             searchedProjectItems.Clear();
-            
+            generatedProjectItems.Clear();
+
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");

@@ -58,7 +58,7 @@ namespace VisualLocalizer.Gui {
 
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRestoreUncheckedID,
                 new EventHandler(restoreUnchecked), null, menuService);
-
+            
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRemoveUncheckedID,
                 new EventHandler(removeUnchecked), null, menuService);
 

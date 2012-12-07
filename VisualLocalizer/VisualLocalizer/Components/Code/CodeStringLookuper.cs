@@ -13,7 +13,7 @@ namespace VisualLocalizer.Components {
 
         protected string ClassOrStructElement { get; set; }
 
-        public List<T> LookForStrings() {
+        protected List<T> LookForStrings() {
             bool insideComment = false, insideString = false, isVerbatimString = false;
             bool skipLine = false;
             currentChar = '?';

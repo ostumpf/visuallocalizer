@@ -6,6 +6,9 @@ using EnvDTE;
 
 namespace VisualLocalizer.Library {
     public class NamespacesList : List<UsedNamespaceItem> {
+        private const string WebSiteProjectGuid = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
+        private const string GlobalWebSiteResourcesNamespace = "Resources";
+
         public void Add(string namespaceName, string alias) {
             Add(new UsedNamespaceItem(namespaceName, alias));
         }
@@ -31,29 +34,34 @@ namespace VisualLocalizer.Library {
         public bool ResolveNewElement(string newNamespace, string newClass, string newKey, Project project, out ReferenceString referenceText) {
             referenceText = new ReferenceString(newClass, newKey);
             bool addNamespace = true;
-            
+
             foreach (UsedNamespaceItem item in this) {
-                string fullName = item.Namespace + "." + newClass;
-                CodeType codeType = null;
-                try {
-                    codeType = project.CodeModel.CodeTypeFromFullName(fullName);
-                } catch {
-                    codeType = null;
-                }
-                if (codeType != null && string.IsNullOrEmpty(item.Alias)) {
-                    if (item.Namespace == newNamespace) {
-                        addNamespace = false;
-                        if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
-                    } else {
-                        addNamespace = false;
-                        string newAlias = GetAlias(newNamespace);
-                        if (!string.IsNullOrEmpty(newAlias)) {
-                            referenceText.NamespacePart = newAlias;
-                        } else {
-                            referenceText.NamespacePart = newNamespace;
-                        }
+                if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+                    referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
+                    return false;
+                } else {
+                    string fullName = item.Namespace + "." + newClass;
+                    CodeType codeType = null;
+                    try {
+                        codeType = project.CodeModel.CodeTypeFromFullName(fullName);
+                    } catch {
+                        codeType = null;
                     }
-                    break;
+                    if (codeType != null && string.IsNullOrEmpty(item.Alias)) {
+                        if (item.Namespace == newNamespace) {
+                            addNamespace = false;
+                            if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
+                        } else {
+                            addNamespace = false;
+                            string newAlias = GetAlias(newNamespace);
+                            if (!string.IsNullOrEmpty(newAlias)) {
+                                referenceText.NamespacePart = newAlias;
+                            } else {
+                                referenceText.NamespacePart = newNamespace;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
 
@@ -62,15 +70,19 @@ namespace VisualLocalizer.Library {
 
         public UsedNamespaceItem ResolveNewReference(string referenceClassAndNmspc, Project project) {
             foreach (UsedNamespaceItem item in this) {
-                string fullName = item.Namespace + "." + referenceClassAndNmspc;
-                CodeType codeType = null;
-                try {
-                    codeType = project.CodeModel.CodeTypeFromFullName(fullName);
-                } catch {
-                    codeType = null;
-                }
-                if (codeType != null) {
-                    return item;              
+                if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+                    return item;
+                } else {
+                    string fullName = item.Namespace + "." + referenceClassAndNmspc;
+                    CodeType codeType = null;
+                    try {
+                        codeType = project.CodeModel.CodeTypeFromFullName(fullName);
+                    } catch {
+                        codeType = null;
+                    }
+                    if (codeType != null) {
+                        return item;
+                    }
                 }
             }
             return null;

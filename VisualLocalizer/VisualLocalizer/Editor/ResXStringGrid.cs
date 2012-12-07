@@ -182,9 +182,12 @@ namespace VisualLocalizer.Editor {
         }
 
         public void EndAdd() {
+            if (SortedColumn != null) {
+                SortedColumn.HeaderCell.SortGlyphDirection = SortOrder.None;
+            }
             this.ResumeLayout();
             ReferenceCounterThreadSuspended = false;
-            if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start();         
+            if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start();                    
         }
 
         public COMMAND_STATUS CanCutOrCopy {
@@ -493,7 +496,7 @@ namespace VisualLocalizer.Editor {
         }
 
         public void UpdateReferencesCount(IList rows) {            
-            ProjectItem thisItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(editorControl.Editor.FileName);
+            ProjectItem thisItem = editorControl.Editor.ProjectItem;
             if (thisItem != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) {
                 ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(thisItem, thisItem.ContainingProject);
                 resxItem.ResolveNamespaceClass(thisItem.ContainingProject.GetResXItemsAround(false));
@@ -510,10 +513,16 @@ namespace VisualLocalizer.Editor {
                     }
                 }
 
-                if (!editorControl.Editor.HasDesignerClass) {
+                bool impliedDesignerItem = false;
+                if (thisItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    string relative = (string)thisItem.Properties.Item("RelativeURL").Value;
+                    impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
+                }
+
+                if (resxItem.DesignerItem == null && !impliedDesignerItem) {
                     foreach (ResXStringGridRow row in rows) {
                         if (row.IsNewRow) continue;
-                        row.CodeReferences.Clear();                        
+                        row.CodeReferences.Clear();
                         row.UpdateReferenceCount(false);
                     }
                 } else {
@@ -531,15 +540,15 @@ namespace VisualLocalizer.Editor {
                     }
                     trie.CreatePredecessorsAndShortcuts();
 
-                    referenceLister.Process(projects, trie);
+                    referenceLister.Process(projects, trie, resxItem);
 
                     foreach (ResXStringGridRow row in rows) {
                         if (row.IsNewRow) continue;
                         row.CodeReferences.Clear();
-                        row.CodeReferences.AddRange(referenceLister.Results.Where((item) => { 
-                            return item.Key == row.Key || (row.ErrorSet.Count > 0 && item.Key == row.LastValidKey); 
+                        row.CodeReferences.AddRange(referenceLister.Results.Where((item) => {
+                            return item.Key == row.Key || (row.ErrorSet.Count > 0 && item.Key == row.LastValidKey);
                         }));
-                        row.UpdateReferenceCount(true);                        
+                        row.UpdateReferenceCount(true);
                     }
                 }
             }
@@ -563,9 +572,12 @@ namespace VisualLocalizer.Editor {
 
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
-            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);            
+            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
+            
+            ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(editorControl.Editor.ProjectItem, editorControl.Editor.ProjectItem.ContainingProject);
+            resxItem.ResolveNamespaceClass(editorControl.Editor.ProjectItem.ContainingProject.GetResXItemsAround(false));
 
-            if (row.ErrorSet.Count == 0) {
+            if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                 int errors=0;
                 int count = row.CodeReferences.Count;
                 row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
@@ -627,25 +639,41 @@ namespace VisualLocalizer.Editor {
             get { return "References"; }
         }
 
+        public bool AreReferencesKnownOnSelected {
+            get {
+                bool ok = true;
+                foreach (DataGridViewRow row in SelectedRows) {
+                    object o = row.Cells[ReferencesColumnName].Value;
+                    if (o == null) {
+                        ok = false;
+                        break;
+                    }
+
+                    string s = o.ToString();
+                    int iv;
+                    ok = ok && !string.IsNullOrEmpty(s) && int.TryParse(s, out iv);
+                }
+                return ok;
+            }
+        }
+
         #endregion
 
         #region private members        
 
         private void ReferenceLookuperThread() {
-            try {
-                UpdateReferencesCount(Rows);
-            } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}. The thread is terminated.", ex.GetType().Name, ex.Message);
-                return;
-            }
+            bool init = true;
             while (!IsDisposed) {
                 try {
+                    if (init) {
+                        UpdateReferencesCount(Rows);
+                        init = false;
+                    }
                     System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
                     if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
                         UpdateReferencesCount(Rows);
                 } catch (Exception ex) {
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);
-                    // termination of IDE
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);                    
                 }
             }
             VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(editorControl.Editor.FileName));
@@ -782,7 +810,7 @@ namespace VisualLocalizer.Editor {
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing; ;
             editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly && !Columns[CurrentCellAddress.X].ReadOnly;
-            inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && editorControl.Editor.HasDesignerClass;            
+            inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && AreReferencesKnownOnSelected;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
             translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
         }

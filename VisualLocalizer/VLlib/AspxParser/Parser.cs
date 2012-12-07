@@ -13,7 +13,8 @@ namespace VisualLocalizer.Library.AspxParser {
         private int currentLine, currentIndex, currentOffset, aposCount, maxLine, maxIndex, plaintTextStartCorrection;
         private char currentChar;
         private bool withinAspElement, withinAspDirective, withinCodeBlock, withinOutputElement, withinAspTags, attributeValueContainsOutput,
-            withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText;
+            withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText,
+            hardStop, softStop;
         private OutputElementKind outputElementKind;
         private StringBuilder codeBuilder, backupBuilder, plainTextBuilder, attributeNameBuilder, attributeValueBuilder;
         private List<AttributeInfo> attributes;
@@ -41,20 +42,22 @@ namespace VisualLocalizer.Library.AspxParser {
             attributeValueBuilder = new StringBuilder();
             
             bool justEnteredAspTags = false;
-            bool endRequested = false;
+            softStop = false;
+            hardStop = false;
 
             for (int i = 0; i < text.Length; i++) {
+                if (hardStop) break;
+
                 currentChar = text[i];
-                if (currentLine > maxLine || (currentLine == maxLine && currentIndex > maxIndex)) endRequested = true;
-                if (handler.StopRequested) endRequested = true;
+                if (currentLine > maxLine || (currentLine == maxLine && currentIndex > maxIndex)) 
+                    softStop = true;
+                if (handler.StopRequested) softStop = true;
 
                 if (!withinServerComment)
                     if (withinOutputElement || withinCodeBlock) {
                         codeBuilder.Append(currentChar);
                     } else if (!withinAspElement && !withinAspDirective) {
-                        if (endRequested) {
-                            break;
-                        } else if (withinPlainText) {
+                        if (withinPlainText) {
                             plainTextBuilder.Append(currentChar);
                         }
                     }                
@@ -94,7 +97,7 @@ namespace VisualLocalizer.Library.AspxParser {
                             withinAspTags = false;
                             justEnteredAspTags = false;
                             
-                            HitEnd(ref externalSpan, 0);
+                            HitEnd(ref externalSpan, 1);
                             if (internalSpan != null) HitEnd(ref internalSpan, -2);
 
                             ReactToEndOfAspTags();
@@ -119,14 +122,14 @@ namespace VisualLocalizer.Library.AspxParser {
 
             if (withinAspElement && currentChar == '>' && aposCount % 2 == 0) {
                 HitEnd(ref externalSpan, 0);
-                StartPlainText(1, 0);
+                StartPlainText(1, 0);                
 
                 if (string.IsNullOrEmpty(elementName) && attributeNameBuilder.Length > 0) {
                     elementName = attributeNameBuilder.ToString();
                     attributeNameBuilder.Length = 0;
                 }               
 
-                if (withinEndAspElement) {
+                if (withinEndAspElement) {                        
                     if (elementName.ToLower() == "script") {
                         withinCodeBlock = false;
                         HitEnd(ref externalSpan, -8);
@@ -146,8 +149,11 @@ namespace VisualLocalizer.Library.AspxParser {
                             ElementName = elementName,
                             Prefix = elementPrefix,
                             WithinClientSideComment = withinClientComment
-                        });                        
+                        });
+                        codeBuilder.Length = 0;
                     }
+                    
+                    if (softStop) hardStop = true;
                     externalSpan = null;
                 } else {
                     if (elementName.ToLower() == "script") {
@@ -164,6 +170,8 @@ namespace VisualLocalizer.Library.AspxParser {
                             WithinClientSideComment = withinClientComment
                         });
                         externalSpan = null;
+                        codeBuilder.Length = 0;
+                        if (softStop) hardStop = true;
                     }
                 }
                 
@@ -218,9 +226,11 @@ namespace VisualLocalizer.Library.AspxParser {
                         Text = text,
                         WithinClientSideComment = withinClientComment,
                         BlockSpan = plainTextSpan
-                    });                    
+                    });
+                    if (softStop) hardStop = true;
                 }
             }
+            
             plainTextSpan = null;
             plainTextBuilder.Length = 0;
         }
@@ -271,8 +281,11 @@ namespace VisualLocalizer.Library.AspxParser {
                     WithinClientSideComment = withinClientComment,
                     WithinElementsAttribute = withinAspElement && aposCount % 2 == 1
                 });
-                
+
+                if (softStop) hardStop = true;
                 withinOutputElement = false;
+                internalSpan = null;
+                externalSpan = null;
                 if (withinAttributeValue) attributeValueContainsOutput = true;
                 codeBuilder.Length = 0;
             }
@@ -284,6 +297,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     WithinClientSideComment = withinClientComment
                 });
 
+                if (softStop) hardStop = true;
                 externalSpan = null;
                 elementName = null;
                 attributes = null;
@@ -298,6 +312,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     WithinClientSideComment = withinClientComment
                 });
 
+                if (softStop) hardStop = true;
                 externalSpan = null;
                 internalSpan = null;
                 withinCodeBlock = false;

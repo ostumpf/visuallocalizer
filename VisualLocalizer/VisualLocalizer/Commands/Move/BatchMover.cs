@@ -65,12 +65,13 @@ namespace VisualLocalizer.Commands {
 
                         NamespacesList usedNamespaces = GetUsedNamespacesFor(resultItem);
 
-                        if (UseFullName || resultItem.SourceItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                        if (UseFullName || resultItem.MustUseFullName) {
                             referenceText = new ReferenceString(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key);
                             addNamespace = false;
                         } else {
                             addNamespace = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key,
-                                    resultItem.SourceItem.ContainingProject, out referenceText);                            
+                                    resultItem.SourceItem.ContainingProject, out referenceText);
+                            referenceText.NamespacePart = null;
                         }
                         if (addNamespace) {
                             if (!(resultItem is CSharpStringResultItem) || ((CSharpStringResultItem)resultItem).NamespaceElement == null) {
@@ -99,7 +100,7 @@ namespace VisualLocalizer.Commands {
                             newItemLength = MoveToResource(buffersCache[path], resultItem, referenceText);
 
                             if (addNamespace) {
-                                AddUsingBlockTo(resultItem);                                
+                                resultItem.AddUsingBlock(buffersCache[(string)resultItem.SourceItem.Properties.Item("FullPath").Value]);                            
                                 for (int j = i; j >= 0; j--) {
                                     var item = dataList[j];
                                     TextSpan ts = new TextSpan();
@@ -245,26 +246,7 @@ namespace VisualLocalizer.Commands {
                 case FILETYPE.RAZOR:
                     break;             
             }
-        }
-
-        private void AddUsingBlockTo(CodeStringResultItem resultItem) {
-            CSharpStringResultItem citem = resultItem as CSharpStringResultItem;
-            AspNetStringResultItem aitem = resultItem as AspNetStringResultItem;
-
-            if (citem != null) {
-                citem.SourceItem.Document.AddUsingBlock(citem.DestinationItem.Namespace);
-            } else if (aitem != null) {
-                IVsTextLines textLines = buffersCache[(string)aitem.SourceItem.Properties.Item("FullPath").Value];
-                string text = string.Format(StringConstants.AspImportDirectiveFormat, resultItem.DestinationItem.Namespace);
-
-                object otp;
-                int hr = textLines.CreateTextPoint(0, 0, out otp);
-                Marshal.ThrowExceptionForHR(hr);
-
-                TextPoint tp = (TextPoint)otp;
-                tp.CreateEditPoint().Insert(text);                
-            }
-        }                
+        }                        
 
         private int MoveToResource(IVsTextLines textLines, CodeStringResultItem resultItem, ReferenceString referenceText) {
             string newText = resultItem.GetReferenceText(referenceText);

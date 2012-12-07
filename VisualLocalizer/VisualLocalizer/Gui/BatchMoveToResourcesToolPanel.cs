@@ -145,7 +145,7 @@ namespace VisualLocalizer.Gui {
             filterPanel.Controls.Add(localizableBox, 0, 0);
 
             verbatimBox = new CheckBox();
-            verbatimBox.Text = @"Check off verbatim literals (@"")";
+            verbatimBox.Text = @"Check off verbatim literals (@"""")";
             verbatimBox.AutoSize = true;
             verbatimBox.AutoEllipsis = true;
             verbatimBox.ThreeState = true;

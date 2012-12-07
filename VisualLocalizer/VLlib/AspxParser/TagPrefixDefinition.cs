@@ -135,7 +135,7 @@ namespace VisualLocalizer.Library.AspxParser {
 
             Type propertyType = ReflectionCache.Instance.Types[attributeName];
 
-            return propertyType == type;
+            return propertyType == null ? null : (bool?)(propertyType == type);
         }
     }
 

@@ -489,7 +489,7 @@ namespace VisualLocalizer.Editor {
                     File.Copy(file, copyFileName);
 
                     ProjectItem newItem = folder.ProjectItems.AddFromFile(copyFileName);
-                    newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                    setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
 
                     addedListItem = addExistingItem(list, copyFileName, type, showThumbnails);
                 } else {
@@ -502,7 +502,7 @@ namespace VisualLocalizer.Editor {
 
                         if (folder != null) {
                             ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
-                            newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                            setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                             fullPath = newItem.Properties.Item("FullPath").Value.ToString();
                         } else {
                             fullPath = file;
@@ -510,7 +510,7 @@ namespace VisualLocalizer.Editor {
                     } else {
                         if (!folder.ProjectItems.ContainsItem(Path.GetFileName(localFile))) {
                             ProjectItem newItem = folder.ProjectItems.AddFromFile(localFile);
-                            newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                            setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                         }
                     }
 
@@ -529,13 +529,20 @@ namespace VisualLocalizer.Editor {
                     addedListItem = addExistingItem(list, file, type, showThumbnails);
                 } else {
                     ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
-                    newItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                    setBuildAction(newItem, prjBuildAction.prjBuildActionNone);                    
                     string fullPath = newItem.Properties.Item("FullPath").Value.ToString();
 
                     addedListItem = addExistingItem(list, fullPath, type, showThumbnails);
                 }
             }
             return addedListItem;
+        }
+
+        private void setBuildAction(ProjectItem item, prjBuildAction prjBuildAction) {
+            if (item == null) return;
+            if (item.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
+
+            item.Properties.Item("BuildAction").Value = prjBuildAction;
         }
 
         private string GenerateCopyFileName(string file) {
@@ -647,7 +654,7 @@ namespace VisualLocalizer.Editor {
                 Window newImageWindow = newImageItem.Open(null);
                 if (newImageWindow != null) newImageWindow.Activate();
 
-                newImageItem.Properties.Item("BuildAction").Value = prjBuildAction.prjBuildActionNone;
+                setBuildAction(newImageItem, prjBuildAction.prjBuildActionNone);                
 
                 return addExistingItem(listView, newImagePath, resourceType, true);
             }
@@ -760,6 +767,7 @@ namespace VisualLocalizer.Editor {
         private void codeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return;
             if (!codeGenerationBox.Enabled) return;
+            if (Editor.ProjectItem.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
 
             try {
                 ProjectItem documentItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(Editor.FileName);
@@ -924,10 +932,10 @@ namespace VisualLocalizer.Editor {
         }
 
         private void UpdateToolStripButtonsEnable(object sender, EventArgs e) {
-            bool selectedString = tabs.SelectedTab.Text.Equals("Strings");
+            bool selectedString = stringGrid.Visible;
             IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
 
-            inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && Editor.HasDesignerClass;
+            inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && stringGrid.AreReferencesKnownOnSelected;
             removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
             removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
             removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;

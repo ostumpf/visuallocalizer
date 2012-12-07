@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
+using System.Collections.Generic;
 
 namespace VisualLocalizer {
     public static class Guids {
@@ -41,6 +42,7 @@ namespace VisualLocalizer {
         public const int BatchMoveToolbarRememberUncheckedID = 0x1013;
         public const int BatchMoveToolbarRemoveUncheckedID = 0x1014;
         public const int BatchMoveToolbarRestoreUncheckedID = 0x1015;
+        public const int BatchMoveToolbarUncheckedMenuID = 0x1016;
 
         public const int BatchInlineToolbarID = 0x2001;
         public const int BatchInlineToolbarRunID = 0x2002;
@@ -72,15 +74,16 @@ namespace VisualLocalizer {
 
         public const string AspElementReferenceFormat = "<%= {0} %>";
         public const string AspElementExpressionFormat = "<%$ {0}:{1},{2} %>";
-        public const string AspImportDirectiveFormat = "<%@ Import Namespace=\"{0}\" %>\r\n";        
+        public const string AspImportDirectiveFormat = "<%@ Import Namespace=\"{0}\" %>\r\n";
+        public const string AspLiteralFormat = "<asp:Literal runat=\"server\" Text=\"{0}\"/>";
 
         public const string CSharpUsingBlockFormat = "using {0};\r\n";
 
-        public static readonly string[] AspUnlocalizableAttributes = { "id", "name" };
+        public static readonly string[] AspNetIgnoredAttributes = { "*:ID", "*:Name" };
 
         public const string ContextSubstituteText = "**RESOURCE REFERENCE**";
         public const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
-        public const string GlobalWebSiteResourcesNamespace = "Resources";
+        public const string GlobalWebSiteResourcesNamespace = "Resources";        
     }
 
     public static class NumericConstants {
