@@ -190,10 +190,7 @@ namespace VisualLocalizer.Editor {
             codeGenerationBox.SelectedIndexChanged += new EventHandler(noFocusBoxSelectedIndexChanged);
             codeGenerationBox.SelectedIndexChanged += new EventHandler(codeGenerationBox_SelectedIndexChanged);
             codeGenerationBox.Margin = new Padding(2);
-
-            if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined())
-                codeGenerationBox.Enabled = false;
-
+            
             toolStrip.Items.Add(codeGenerationBox);
         }        
        
@@ -244,7 +241,7 @@ namespace VisualLocalizer.Editor {
         }
 
         public void SetData(Dictionary<string, ResXDataNode> data) {
-            if (Editor.ProjectItem.ContainingProject != null && Editor.ProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject)
+            if (Editor.ProjectItem.Object ==null || (Editor.ProjectItem.ContainingProject != null && Editor.ProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject))
                 codeGenerationBox.Enabled = false;
 
             codeGenerationBox.Tag = SELECTION_CHANGE_INITIATOR.INITIALIZER;
@@ -415,7 +412,7 @@ namespace VisualLocalizer.Editor {
 
         private void addExistingFiles(IEnumerable<string> files) {
             Project project = null;
-            bool userDefinedSolution=VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined();
+            bool userDefinedSolution=VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem);
             if (userDefinedSolution) {
                 project = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(Editor.FileName).ContainingProject;
             }
@@ -613,7 +610,7 @@ namespace VisualLocalizer.Editor {
                     }
 
                     ListViewKeyItem newItem;
-                    if (!solution.IsUserDefined()) {
+                    if (!solution.ContainsProjectItem(Editor.ProjectItem)) {
                         newItem = addNewImageNoSolution(imageName, resourceType, listView, resourceSubfolder, win);
                     } else {
                         newItem = addNewImageWithSolution(imageName, solution, resourceType, listView, resourceSubfolder, win);
@@ -765,7 +762,7 @@ namespace VisualLocalizer.Editor {
         
         private string previousValue = null;       
         private void codeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
-            if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return;
+            if (!VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem)) return;
             if (!codeGenerationBox.Enabled) return;
             if (Editor.ProjectItem.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
 
@@ -803,7 +800,7 @@ namespace VisualLocalizer.Editor {
         #endregion
 
         private string GetResXCodeGenerationMode() {
-            if (!VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) return null;
+            if (!VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem)) return null;
             if (!codeGenerationBox.Enabled) return null;
 
             try {

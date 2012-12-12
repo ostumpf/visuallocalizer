@@ -51,7 +51,7 @@ namespace VisualLocalizer.Extensions {
             if (projectItem == null) return false;
             if (projectItem.ContainingProject == null) return false;
             if (!projectItem.ContainingProject.IsKnownProjectType()) return false;
-
+            
             return projectItem.IsContainer() || projectItem.GetFileType() != FILETYPE.UNKNOWN;
         }        
 

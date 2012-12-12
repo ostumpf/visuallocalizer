@@ -107,8 +107,13 @@ namespace VisualLocalizer.Library {
             return false;
         }
 
-        public static bool IsUserDefined(this Solution solution) {
-            return solution != null && !string.IsNullOrEmpty(solution.FileName);
+        public static bool ContainsProjectItem(this Solution solution, ProjectItem item) {
+            if (solution == null) return false;
+            if (!solution.IsOpen) return false;
+            if (item == null) return false;
+            if (item.Object == null) return false;
+            ProjectItem found = solution.FindProjectItem((string)item.Properties.Item("FullPath").Value);
+            return found != null;
         }
 
         public static bool IsGenerated(this ProjectItem item) {

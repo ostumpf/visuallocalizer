@@ -112,12 +112,6 @@
         "Entry"
         {
         "MsmKey" = "8:_2A0D8F20B013E55BF6C0A140BD495941"
-        "OwnerKey" = "8:_FA97DBCDF1424AA5E590A05940DB0715"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_2A0D8F20B013E55BF6C0A140BD495941"
         "OwnerKey" = "8:_A29754F4221E41E8B46F6EB7E196E22D"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -275,12 +269,6 @@
         {
         "MsmKey" = "8:_6ACB2BF4C56550BE4B1FB7A10EDD895B"
         "OwnerKey" = "8:_A29754F4221E41E8B46F6EB7E196E22D"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_78D6C13AF6CBDFAECC0661490C07A127"
-        "OwnerKey" = "8:_FA97DBCDF1424AA5E590A05940DB0715"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -579,18 +567,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_FA97DBCDF1424AA5E590A05940DB0715"
-        "OwnerKey" = "8:_BD2089A323CD4FEC89F872A0808EEED0"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_FA97DBCDF1424AA5E590A05940DB0715"
-        "OwnerKey" = "8:_F6559EB288AB4C1A924DDDB75555A64C"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_FEE46C5F0D9D67D8BC65F59C497C2CDB"
         "OwnerKey" = "8:_2A0D8F20B013E55BF6C0A140BD495941"
         "MsmSig" = "8:_UNDEFINED"
@@ -629,12 +605,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_D7D8FEF811E1E61E66455D126C1B5BBC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_FA97DBCDF1424AA5E590A05940DB0715"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1117,26 +1087,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_78D6C13AF6CBDFAECC0661490C07A127"
-            {
-            "SourcePath" = "8:webproperties.tlb"
-            "TargetName" = "8:webproperties.tlb"
-            "Tag" = "8:"
-            "Folder" = "8:_80A5FC2511FA492398FEE924973330FC"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:2"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_80547835A725CD1690E675697269B93D"
             {
             "AssemblyRegister" = "3:1"
@@ -1296,7 +1246,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:VLlib, Version=1.1.0.0, Culture=neutral, PublicKeyToken=ff10bf3efa191a65, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:VLlib, Version=1.2.0.0, Culture=neutral, PublicKeyToken=ff10bf3efa191a65, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_D7D8FEF811E1E61E66455D126C1B5BBC"
@@ -1340,37 +1290,6 @@
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A6E53CB5207E48639988DCCFA0E47725"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_FA97DBCDF1424AA5E590A05940DB0715"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:VsWebSite.Interop, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-                "ScatterAssemblies"
-                {
-                    "_FA97DBCDF1424AA5E590A05940DB0715"
-                    {
-                    "Name" = "8:VsWebSite.Interop.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:VsWebSite.Interop.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_80A5FC2511FA492398FEE924973330FC"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1451,10 +1370,10 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Visual Localizer"
         "ProductCode" = "8:{60B82522-0064-47DD-90FC-F598E32234D6}"
-        "PackageCode" = "8:{7F52FD46-D2EB-4A1F-8D71-66860DEA3F6B}"
+        "PackageCode" = "8:{EFC23870-65A9-4C66-A846-1574F589C504}"
         "UpgradeCode" = "8:{5B9F28D9-AB2E-4877-8D44-E5C9237FE906}"
         "RestartWWWService" = "11:FALSE"
-        "RemovePreviousVersions" = "11:FALSE"
+        "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"

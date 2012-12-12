@@ -497,7 +497,7 @@ namespace VisualLocalizer.Editor {
 
         public void UpdateReferencesCount(IList rows) {            
             ProjectItem thisItem = editorControl.Editor.ProjectItem;
-            if (thisItem != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.IsUserDefined()) {
+            if (thisItem.Object != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(thisItem)) {
                 ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(thisItem, thisItem.ContainingProject);
                 resxItem.ResolveNamespaceClass(thisItem.ContainingProject.GetResXItemsAround(false));
 
@@ -573,21 +573,22 @@ namespace VisualLocalizer.Editor {
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
-            
-            ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(editorControl.Editor.ProjectItem, editorControl.Editor.ProjectItem.ContainingProject);
-            resxItem.ResolveNamespaceClass(editorControl.Editor.ProjectItem.ContainingProject.GetResXItemsAround(false));
 
-            if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
-                int errors=0;
-                int count = row.CodeReferences.Count;
-                row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
+            if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem)) {
+                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(editorControl.Editor.ProjectItem, editorControl.Editor.ProjectItem.ContainingProject);
+                resxItem.ResolveNamespaceClass(editorControl.Editor.ProjectItem.ContainingProject.GetResXItemsAround(false));
 
-                BatchReferenceReplacer replacer = new BatchReferenceReplacer(row.CodeReferences);
-                replacer.Inline(row.CodeReferences, true, ref errors);
-                
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+                    int errors = 0;
+                    int count = row.CodeReferences.Count;
+                    row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
+
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(row.CodeReferences);
+                    replacer.Inline(row.CodeReferences, true, ref errors);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                }                
             }
-
             editorControl.Editor.AddUndoUnit(unit);
         }
 
