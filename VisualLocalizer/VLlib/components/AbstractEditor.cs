@@ -725,14 +725,7 @@ namespace VisualLocalizer.Library {
         public virtual bool ExecuteCopy() {
             return true;
         }
-
-        private IVsStatusbar _StatusBar;
-        public IVsStatusbar StatusBar {
-            get {
-                if (_StatusBar == null) _StatusBar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-                return _StatusBar;
-            }
-        }
+      
     }
 
     public enum COMMAND_STATUS { ENABLED, DISABLED, UNSUPPORTED };

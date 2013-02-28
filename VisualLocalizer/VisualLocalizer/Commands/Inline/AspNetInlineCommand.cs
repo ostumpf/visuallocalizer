@@ -18,7 +18,7 @@ namespace VisualLocalizer.Commands {
             TextSpan selectionSpan = spans[0];
 
             BatchInlineCommand batchInlineInstance = new BatchInlineCommand();
-            batchInlineInstance.SetCurrentProjectItem(currentDocument.ProjectItem);
+            batchInlineInstance.ReinitializeWith(currentDocument.ProjectItem);
             batchInlineInstance.Results = new List<CodeReferenceResultItem>();
 
             AspNetCodeExplorer.Instance.Explore(batchInlineInstance, currentDocument.ProjectItem,

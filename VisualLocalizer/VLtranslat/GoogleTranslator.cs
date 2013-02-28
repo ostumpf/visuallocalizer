@@ -31,7 +31,9 @@ namespace VisualLocalizer.Translate {
             try {
                 reader = new StreamReader(response.GetResponseStream());
                 fullResponse = reader.ReadToEnd();
-                List<object> resp = ParseJSONArray(fullResponse);
+
+                int i = 0;
+                List<object> resp = ReadJSONArray(fullResponse, ref i);
                 List<object> first = (List<object>)resp[0];
                 List<object> firstFirst = (List<object>)first[0];
                 translatedText = (string)firstFirst[0];
@@ -41,54 +43,101 @@ namespace VisualLocalizer.Translate {
             } finally {
                 if (reader != null) reader.Close();
                 if (response != null) response.Close();
-            }
-
+            } 
+            
             return translatedText;
         }
 
-        private List<object> ParseJSONArray(string fullResponse) {
-            string delimitedElements = fullResponse.Substring(1, fullResponse.Length - 2);
-            string element = null;
-            int position = 0;
-            List<object> objects = new List<object>();
+        private List<object> ReadJSONArray(string text, ref int position) {
+            ReadChar(text, ref position, '[');
+            List<object> list = new List<object>();
 
-            while ((element = ReadJSONElement(delimitedElements, ref position)) != null) {
-                if (element.StartsWith("[") && element.EndsWith("]")) {                    
-                    objects.Add(ParseJSONArray(element));
+            while (true) {
+                if (GetAt(text, position) != ']' && GetAt(text, position) != ',') {
+                    list.Add(ReadJSONElement(text, ref position));
+                    ReadWhitespace(text, ref position);
+                }
+                if (GetAt(text, position)==']') {
+                    break;
+                } else if (GetAt(text, position) == ',') {
+                    position++;
                 } else {
-                    objects.Add(element);
+                    throw new Exception("JSON parser error, expected ',' or ']'");
                 }
             }
 
-            return objects;
+            ReadChar(text, ref position, ']');
+
+            return list;
         }
 
-        private string ReadJSONElement(string delimitedElements, ref int position) {
-            int priority = 0;
-            string element = null;
-            int start = position;
+        private object ReadJSONElement(string text, ref int position) {
+            ReadWhitespace(text, ref position);
+            char? c = GetAt(text, position);
 
-            while (position < delimitedElements.Length) {
-                if (delimitedElements[position] == '[') {
-                    priority++;
-                } else if (delimitedElements[position] == ']') {
-                    priority--;
-                } else if (delimitedElements[position] == ',' && priority == 0) {
-                    element = delimitedElements.Substring(start, position - start);
+            if (c == '"') {
+                return ReadJSONString(text, ref position);
+            } else if (c == '{') {
+            } else if (c == '[') {
+                return ReadJSONArray(text, ref position);
+            } else {
+                while (GetAt(text, position) != ',' && GetAt(text, position) != ']' && GetAt(text, position) != '}') {
                     position++;
-                    break;
-                } 
-                if (position == delimitedElements.Length - 1) {
-                    element = delimitedElements.Substring(start);
                 }
+            }
+            return "";
+        }
+
+        private string ReadJSONString(string text, ref int position) {
+            ReadChar(text, ref position, '"');
+            StringBuilder b = new StringBuilder();
+
+            while (true) {
+                char c = GetAt(text, position).Value;
+                bool print = true;
+
+                if (c == '"') break;
+                if (c == '\\') {
+                    position++;
+                    char? next = GetAt(text, position);
+                    switch (next) {
+                        case '"': b.Append('"'); position++; print = false; break;
+                        case '/': b.Append('/'); position++; print = false; break;
+                        case '\\': b.Append('\\'); position++; print = false; break;
+                        case 'r': b.Append('\r'); position++; print = false; break;
+                        case 'f': b.Append('\f'); position++; print = false; break;
+                        case 't': b.Append('\t'); position++; print = false; break;
+                        case 'b': b.Append('\b'); position++; print = false; break;
+                        case 'n': b.Append('\n'); position++; print = false; break;                        
+                    }
+                }
+
+                if (print) {
+                    b.Append(c);
+                    position++;
+                }
+            }
+            ReadChar(text, ref position, '"');
+            return b.ToString();
+        }
+
+        private void ReadChar(string text, ref int position, char c) {
+            ReadWhitespace(text, ref position);
+            if (GetAt(text, position) != c) throw new Exception("JSON parser error, expected '" + c + "'");
+            position++;
+        }
+
+        private void ReadWhitespace(string text, ref int position) {
+            while (char.IsWhiteSpace(GetAt(text, position).Value))
                 position++;
-            }
+        }
 
-            if (element!=null && element.StartsWith("\"") && element.EndsWith("\"")) {
-                element = element.Substring(1, element.Length - 2);
+        private char? GetAt(string text, int position) {
+            if (position >= 0 && position < text.Length) {
+                return text[position];
+            } else {
+                return null;
             }
-
-            return element;
         }
     }
 }

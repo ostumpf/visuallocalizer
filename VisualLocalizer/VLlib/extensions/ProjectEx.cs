@@ -112,29 +112,72 @@ namespace VisualLocalizer.Library {
             if (!solution.IsOpen) return false;
             if (item == null) return false;
             if (item.Object == null) return false;
-            ProjectItem found = solution.FindProjectItem((string)item.Properties.Item("FullPath").Value);
+            ProjectItem found = solution.FindProjectItem(item.GetFullPath());
             return found != null;
         }
 
         public static bool IsGenerated(this ProjectItem item) {
             if (item == null) return false;
+            try {
+                bool isCustomToolOutput = false;
+                bool isDependant = false;
+                bool isAspxCodeBehind = false;
 
-            bool isCustomToolOutput = false;
-            bool isDependant = false;
-            bool isAspxCodeBehind = false;
-
-            foreach (Property prop in item.Properties) {
-                if (prop.Name == "IsCustomToolOutput") {
-                    isCustomToolOutput = (bool)prop.Value;                  
+                foreach (Property prop in item.Properties) {
+                    if (prop.Name == "IsCustomToolOutput") {
+                        isCustomToolOutput = (bool)prop.Value;
+                    }
+                    if (prop.Name == "IsDependentFile") {
+                        isDependant = (bool)prop.Value;
+                    }
+                    if (prop.Name == "SubType") {
+                        isAspxCodeBehind = (string)prop.Value == "ASPXCodeBehind";
+                    }
                 }
-                if (prop.Name == "IsDependentFile") {
-                    isDependant = (bool)prop.Value;
-                }
-                if (prop.Name == "SubType") {
-                    isAspxCodeBehind = (string)prop.Value=="ASPXCodeBehind";
-                }
+                return isCustomToolOutput || (isDependant && !isAspxCodeBehind);
+            } catch (Exception) {
+                return false;
             }
-            return isCustomToolOutput || (isDependant && !isAspxCodeBehind);
+        }
+
+        public static string GetFullPath(this ProjectItem item) {
+            try {
+                return (string)item.Properties.Item("FullPath").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        public static string GetCustomTool(this ProjectItem item) {
+            try {
+                return (string)item.Properties.Item("CustomTool").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        public static string GetCustomToolOutput(this ProjectItem item) {
+            try {
+                return (string)item.Properties.Item("CustomToolOutput").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        public static string GetRelativeURL(this ProjectItem item) {
+            try {
+                return (string)item.Properties.Item("RelativeURL").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        public static bool GetIsDependent(this ProjectItem item) {
+            try {
+                return (bool)item.Properties.Item("IsDependentFile").Value;
+            } catch (Exception) {
+                return false;
+            }
         }
     }
 }

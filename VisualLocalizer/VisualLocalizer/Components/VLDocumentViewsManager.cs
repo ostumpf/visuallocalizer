@@ -51,6 +51,8 @@ namespace VisualLocalizer.Components {
         }
 
         public static void SetFileReadonly(string path, bool setreadonly) {
+            if (string.IsNullOrEmpty(path)) return;
+
             if (RDTManager.IsFileOpen(path)) {
                 IVsWindowFrame frame = DocumentViewsManager.GetWindowFrameForFile(path, false);
                 object docData;
@@ -78,6 +80,7 @@ namespace VisualLocalizer.Components {
         }
 
         public static bool IsFileLocked(string path) {
+            if (string.IsNullOrEmpty(path)) return false;
             return lockedDocuments.Contains(path) || lockedDocumentsWaiting.Contains(path);
         }
 
@@ -92,12 +95,7 @@ namespace VisualLocalizer.Components {
         }
 
         public static void SaveDataToBuffer(Dictionary<string, ResXDataNode> data, string file) {
-            IVsWindowFrame frame = GetWindowFrameForFile(file, false);
-            if (frame == null) throw new InvalidOperationException("Cannot get window frame - is file opened?");
-
-            object docData;
-            int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
-            Marshal.ThrowExceptionForHR(hr);
+            object docData = GetDocData(file);
 
             if (docData is ResXEditor) {
                 ResXEditor editor = docData as ResXEditor;
@@ -117,52 +115,44 @@ namespace VisualLocalizer.Components {
                     writer.Generate();
                     writer.Close();
 
-                    byte[] buffer = stream.ToArray();
-                    string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3);
-
-                    int lastLine, lastLineIndex;
-                    hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    TextSpan[] spans = null;
-                    hr = textLines.ReplaceLines(0, 0, lastLine, lastLineIndex, Marshal.StringToBSTR(text), text.Length, spans);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    IOleUndoManager manager;
-                    hr = textLines.GetUndoManager(out manager);
-                    Marshal.ThrowExceptionForHR(hr);
-
-                    manager.RemoveTopFromUndoStack(1);
+                    SaveStreamToBuffer(stream, textLines, true);
                 } finally {
                     if (stream != null) stream.Close();
                 }
-            }
-
-            
+            }            
         }
 
-        public static void LoadDataFromBuffer(ref Dictionary<string,ResXDataNode> data, string file) {            
-            IVsWindowFrame frame = GetWindowFrameForFile(file, false);
-            if (frame == null) throw new InvalidOperationException("Cannot get window frame - is file opened?");
+        public static void SaveStreamToBuffer(MemoryStream stream, IVsTextLines textLines, bool removeFromUndoStack) {
+            byte[] buffer = stream.ToArray();
+            string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3);
 
-            object docData;
-            int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+            int lastLine, lastLineIndex;
+            int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
             Marshal.ThrowExceptionForHR(hr);
+
+            TextSpan[] spans = null;
+            hr = textLines.ReplaceLines(0, 0, lastLine, lastLineIndex, Marshal.StringToBSTR(text), text.Length, spans);
+            Marshal.ThrowExceptionForHR(hr);
+
+            if (removeFromUndoStack) {
+                IOleUndoManager manager;
+                hr = textLines.GetUndoManager(out manager);
+                Marshal.ThrowExceptionForHR(hr);
+
+                manager.RemoveTopFromUndoStack(1);
+            }
+        }
+
+        public static void LoadDataFromBuffer(ref Dictionary<string,ResXDataNode> data, string file) {
+            object docData = GetDocData(file);
 
             if (docData is ResXEditor) {
                 ResXEditor editor = docData as ResXEditor;
                 data = editor.UIControl.GetData(false);
             } else {
                 IVsTextLines textLines = GetTextLinesFrom(docData);
-
-                int lastLine, lastLineIndex;
-                hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
-                Marshal.ThrowExceptionForHR(hr);
-
-                string textBuffer = "";
-                hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out textBuffer);
-                Marshal.ThrowExceptionForHR(hr);
-
+                string textBuffer = GetTextFrom(textLines);
+                
                 ResXResourceReader reader = null;
                 try {
                     data = new Dictionary<string, ResXDataNode>();
@@ -176,6 +166,29 @@ namespace VisualLocalizer.Components {
                 }
             }
             
+        }
+
+        public static string GetTextFrom(IVsTextLines textLines) {
+            int lastLine, lastLineIndex;
+            int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
+            Marshal.ThrowExceptionForHR(hr);
+
+            string textBuffer = "";
+            hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out textBuffer);
+            Marshal.ThrowExceptionForHR(hr);
+
+            return textBuffer;
+        }
+
+        public static object GetDocData(string file) {
+            IVsWindowFrame frame = GetWindowFrameForFile(file, false);
+            if (frame == null) throw new InvalidOperationException("Cannot get window frame - is file opened?");
+
+            object docData;
+            int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+            Marshal.ThrowExceptionForHR(hr);
+
+            return docData;
         }
 
         private static IVsTextLines GetTextLinesFrom(object docData) {

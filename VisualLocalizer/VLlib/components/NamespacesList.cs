@@ -35,11 +35,11 @@ namespace VisualLocalizer.Library {
             referenceText = new ReferenceString(newClass, newKey);
             bool addNamespace = true;
 
-            foreach (UsedNamespaceItem item in this) {
-                if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
-                    referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
-                    return false;
-                } else {
+            if (newNamespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+                referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
+                return false;
+            } else {
+                foreach (UsedNamespaceItem item in this) {
                     string fullName = item.Namespace + "." + newClass;
                     CodeType codeType = null;
                     try {
@@ -47,12 +47,11 @@ namespace VisualLocalizer.Library {
                     } catch {
                         codeType = null;
                     }
-                    if (codeType != null && string.IsNullOrEmpty(item.Alias)) {
+                    if (codeType != null) {
+                        addNamespace = false;
                         if (item.Namespace == newNamespace) {
-                            addNamespace = false;
                             if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
                         } else {
-                            addNamespace = false;
                             string newAlias = GetAlias(newNamespace);
                             if (!string.IsNullOrEmpty(newAlias)) {
                                 referenceText.NamespacePart = newAlias;
@@ -62,9 +61,9 @@ namespace VisualLocalizer.Library {
                         }
                         break;
                     }
+
                 }
             }
-
             return addNamespace;
         }
 

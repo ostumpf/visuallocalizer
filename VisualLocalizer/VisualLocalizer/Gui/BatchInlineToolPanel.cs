@@ -110,7 +110,7 @@ namespace VisualLocalizer.Gui {
 
                 DataGridViewTextBoxCell destinationCell = new DataGridViewTextBoxCell();
                 destinationCell.Value = item.DestinationItem.ToString();
-                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
+                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.GetFullPath(), true);
                 row.Cells.Add(destinationCell);
                 
                 DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();

@@ -45,7 +45,7 @@ namespace VisualLocalizer.Commands {
                         string text = GetReplaceString(resultItem); 
                         newItemLength = text.Length;
 
-                        string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
+                        string path = resultItem.SourceItem.GetFullPath();
                         if (RDTManager.IsFileOpen(path)) {
                             if (!buffersCache.ContainsKey(path)) {
                                 IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);

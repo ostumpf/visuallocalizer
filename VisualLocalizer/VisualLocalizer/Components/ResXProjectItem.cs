@@ -17,6 +17,8 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using System.Globalization;
 using System.ComponentModel.Design;
+using VisualLocalizer.Extensions;
+using VisualLocalizer.Commands;
 
 namespace VisualLocalizer.Components {
 
@@ -31,24 +33,55 @@ namespace VisualLocalizer.Components {
             this.DisplayName = displayName;
             this.InternalProjectItem = projectItem;
 
-            if (string.IsNullOrEmpty((string)InternalProjectItem.Properties.Item("CustomToolOutput").Value)) {
+            string customToolOutput=InternalProjectItem.GetCustomToolOutput();
+            if (string.IsNullOrEmpty(customToolOutput)) {
                 this.DesignerItem = null;
             } else {
-                this.DesignerItem = InternalProjectItem.ProjectItems.Item(InternalProjectItem.Properties.Item("CustomToolOutput").Value);
+                if (InternalProjectItem.ProjectItems.ContainsItem(customToolOutput)) {
+                    this.DesignerItem = InternalProjectItem.ProjectItems.Item(customToolOutput);
+                } else {
+                    this.DesignerItem = null;
+                }
             }
 
             this.MarkedInternalInReferencedProject = internalInReferenced;
         }
 
         public bool IsCultureSpecific() {
-            return Regex.IsMatch(InternalProjectItem.Name, @".*\..+\.resx", RegexOptions.IgnoreCase);                       
+            return InternalProjectItem.IsCultureSpecificResX();
         }
 
         public string GetCultureNeutralName() {
-            Match m = Regex.Match(InternalProjectItem.Name, @"(.*)\..+(\.resx)", RegexOptions.IgnoreCase);
-            if (!m.Success || m.Groups.Count<=2) throw new Exception("Project item is culture neutral!");
+            return InternalProjectItem.GetResXCultureNeutralName();
+        }
 
-            return m.Groups[1].Value+m.Groups[2].Value;
+        public bool IsProjectDefault(Project project) {
+            object parent = InternalProjectItem.Collection.Parent;
+            if (!(parent is ProjectItem)) return false;
+            if (InternalProjectItem.ContainingProject != project) return false;
+            if (InternalProjectItem.Name.ToLower() != "resources.resx") return false;
+
+            ProjectItem pitem = (ProjectItem)parent;
+            return pitem.Name == "Resources" && pitem.Kind.ToUpper() == StringConstants.PhysicalFolder;
+        }
+
+        public bool IsDependantOn(ProjectItem item) {
+            if (item == null) return false;
+            bool dep = InternalProjectItem.GetIsDependent();
+            if (!dep) return false;
+
+            object parent = InternalProjectItem.Collection.Parent;
+            if (!(parent is ProjectItem)) return false;
+
+            ProjectItem pitem = (ProjectItem)parent;
+            return pitem == item;
+        }
+
+        public void ModifyKey(string key, string newValue) {
+            if (data == null) throw new Exception("Cannot modify key " + key + " - data not loaded.");
+            if (!data.ContainsKey(key)) throw new Exception("Cannot modify key " + key + " - key does not exist.");
+
+            data[key] = new ResXDataNode(key, newValue);
         }
 
         public ProjectItem InternalProjectItem {
@@ -111,9 +144,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
-        private void Flush() {
+        public void Flush() {
             if (!dataChangedInBatchMode && IsInBatchMode) return;
-            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();  
+            string path = InternalProjectItem.GetFullPath();
             
             if (RDTManager.IsFileOpen(path)) {
                 VLDocumentViewsManager.SaveDataToBuffer(data, path);
@@ -133,7 +166,7 @@ namespace VisualLocalizer.Components {
             }
 
             if (DesignerItem != null) {
-                RDTManager.SilentlyModifyFile(DesignerItem.Properties.Item("FullPath").Value.ToString(), (string p) => {
+                RDTManager.SilentlyModifyFile(DesignerItem.GetFullPath(), (string p) => {
                     RunCustomTool();
                 });
             }
@@ -228,7 +261,7 @@ namespace VisualLocalizer.Components {
         public void Load() {
             if (IsLoaded) return;
 
-            string path = InternalProjectItem.Properties.Item("FullPath").Value.ToString();                        
+            string path = InternalProjectItem.GetFullPath();
 
             if (RDTManager.IsFileOpen(path)) {
                 VLDocumentViewsManager.LoadDataFromBuffer(ref data, path);
@@ -259,18 +292,16 @@ namespace VisualLocalizer.Components {
             IsLoaded = false;           
         }
 
-        public Dictionary<string, string> GetAllStringReferences() {
+        public Dictionary<string, string> GetAllStringReferences(bool addClass) {
             Dictionary<string, string> AllReferences = new Dictionary<string, string>();
             bool wasLoaded = IsLoaded;
             if (!IsLoaded) Load();
 
             foreach (var pair in data) {
-                if (pair.Value.HasValue<string>()) {                    
-                    string reference = Class + "." + pair.Value.Name;
+                if (pair.Value.HasValue<string>()) {
+                    string reference = (addClass ? Class + ".":"") + pair.Value.Name;
 
-                    if (AllReferences.ContainsKey(reference)) {
-                        AllReferences.Remove(reference);
-                    } else {
+                    if (!AllReferences.ContainsKey(reference)) {                       
                         AllReferences.Add(reference, pair.Value.GetValue<string>());
                     }
                 }
@@ -283,36 +314,42 @@ namespace VisualLocalizer.Components {
         public static bool IsItemResX(ProjectItem item) {
             if (item == null) return false;
             if (item.Properties == null) return false;
-
+            
             string ext = null;
             foreach (Property prop in item.Properties)
                 if (prop.Name == "Extension") {
                     ext = (string)item.Properties.Item("Extension").Value;
                     break;
                 }
+            if (ext == null) {
+                ext = Path.GetExtension(item.GetFullPath());
+            }
 
             return ext == StringConstants.ResXExtension;
         }
 
         public static ResXProjectItem ConvertToResXItem(ProjectItem item, Project relationProject) {
-            string projectPath=item.ContainingProject.Properties.Item("FullPath").Value.ToString();
-            Uri projectUri = new Uri(projectPath, UriKind.Absolute);
-            Uri itemUri = new Uri(item.Properties.Item("FullPath").Value.ToString());
+            if (item == null) return null;
             
+            string projectPath = item.ContainingProject.FullName;
+           
+            Uri projectUri = new Uri(projectPath, UriKind.Absolute);
+            Uri itemUri = new Uri(item.GetFullPath());
+          
             string path;
-            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {                
                 path = projectUri.MakeRelativeUri(itemUri).ToString();
             } else {
-                path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();
+                path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();          
             }
-
-            bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;
-            bool inter = (string)item.Properties.Item("CustomTool").Value != StringConstants.PublicResXTool;
-
+           
+            bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;          
+            bool inter = item.GetCustomTool() != StringConstants.PublicResXTool;
+          
             bool internalInReferenced = inter && referenced;
 
-            ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);            
-
+            ResXProjectItem resxitem = new ResXProjectItem(item, path,internalInReferenced);
+                     
             return resxitem;
         }
 
@@ -320,52 +357,10 @@ namespace VisualLocalizer.Components {
             Class = null;
             Namespace = null;
 
-            if (DesignerItem == null) {
-                if (InternalProjectItem != null && InternalProjectItem.ContainingProject != null &&
-                    InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                    string relative = (string)InternalProjectItem.Properties.Item("RelativeURL").Value;
+            if (IsCultureSpecific()) DesignerItem = getNeutralDesignerItem(neutralItems);
 
-                    if (!string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder)) {
-                        Class = Path.GetFileNameWithoutExtension((string)InternalProjectItem.Properties.Item("FullPath").Value);
-                        if (IsCultureSpecific()) {
-                            Class = GetCultureNeutralName();
-                            Class = Class.Substring(0, Class.IndexOf('.'));
-                        }
-                        Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
-                    } else {
-                        Class = null;
-                        Namespace = null;
-                    }
-                }
-
-            } else {
-                if (!File.Exists(DesignerItem.Properties.Item("FullPath").Value.ToString())) RunCustomTool();
-
-                if (IsCultureSpecific()) {
-                    string cultureNeutralName = GetCultureNeutralName();
-                    ResXProjectItem neutralItem = null;
-                    foreach (ResXProjectItem item in neutralItems) {
-                        if (item.IsCultureSpecific()) continue;
-
-                        string neutralDir = Path.GetFullPath(Path.GetDirectoryName((string)item.InternalProjectItem.Properties.Item("FullPath").Value));
-                        string specificDir = Path.GetFullPath(Path.GetDirectoryName((string)InternalProjectItem.Properties.Item("FullPath").Value));
-                        
-                        if (neutralDir == specificDir && item.InternalProjectItem.Name.ToLowerInvariant() == cultureNeutralName.ToLowerInvariant()) {
-                            neutralItem = item;
-                            break;
-                        }
-                    }
-
-                    if (neutralItem != null) {
-                        DesignerItem = neutralItem.DesignerItem;
-
-                    } else {
-                        Namespace = null;
-                        Class = cultureNeutralName.Substring(0, cultureNeutralName.IndexOf('.'));
-                        return;
-                    }
-                }
-                if (DesignerItem == null) return;
+            if (DesignerItem != null) {                
+                if (!File.Exists(DesignerItem.GetFullPath())) RunCustomTool();
 
                 CodeElement nmspcElemet = null;
                 foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
@@ -381,8 +376,44 @@ namespace VisualLocalizer.Components {
                         }
                     }
                 }
+            } else {
+                if (InternalProjectItem.ContainingProject != null &&
+                    InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    string relative = InternalProjectItem.GetRelativeURL();
+
+                    if (!string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder)) {
+                        Class = Path.GetFileNameWithoutExtension(InternalProjectItem.GetFullPath());
+                        if (IsCultureSpecific()) {
+                            Class = GetCultureNeutralName();
+                            Class = Class.Substring(0, Class.IndexOf('.'));
+                        }
+                        Namespace = StringConstants.GlobalWebSiteResourcesNamespace;
+                    } else {
+                        Class = null;
+                        Namespace = null;
+                    }
+                }
+            }         
+        }
+
+        private ProjectItem getNeutralDesignerItem(List<ResXProjectItem> neutralItems) {
+            string cultureNeutralName = GetCultureNeutralName();
+            ResXProjectItem neutralItem = null;
+            foreach (ResXProjectItem item in neutralItems) {
+                if (item.IsCultureSpecific()) continue;
+
+                string neutralDir = Path.GetFullPath(Path.GetDirectoryName(item.InternalProjectItem.GetFullPath()));
+                string specificDir = Path.GetFullPath(Path.GetDirectoryName(InternalProjectItem.GetFullPath()));
+
+                if (neutralDir == specificDir && item.InternalProjectItem.Name.ToLowerInvariant() == cultureNeutralName.ToLowerInvariant()) {
+                    neutralItem = item;
+                    break;
+                }
             }
 
+            if (neutralItem != null) {
+                return neutralItem.DesignerItem;
+            } else return null;
         }  
 
         public override string ToString() {
@@ -400,7 +431,24 @@ namespace VisualLocalizer.Components {
             if (copy == null) return false;
             return InternalProjectItem.Equals(copy.InternalProjectItem);
         }
-       
+
+
+        internal void AddAllStringReferencesUnique(List<AbstractTranslateInfoItem> outputData) {
+            bool wasLoaded = IsLoaded;
+            if (!IsLoaded) Load();
+
+            foreach (var pair in data) {
+                if (pair.Value.HasValue<string>()) {
+                    ResXTranslateInfoItem key = new ResXTranslateInfoItem();
+                    key.ResXItem = this;
+                    key.ResourceKey = pair.Key;
+                    key.DataKey = pair.Value.Name;
+                    key.Value = pair.Value.GetValue<string>();
+                    outputData.Add(key);
+                }
+            }
+            if (!wasLoaded) Unload();
+        }
     }
 
     

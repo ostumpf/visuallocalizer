@@ -29,7 +29,7 @@ namespace VisualLocalizer.Editor {
             IsDirty = true;            
         }
 
-        public ProjectItem ProjectItem {
+        public ResXProjectItem ProjectItem {
             get;
             private set;
         }
@@ -39,7 +39,11 @@ namespace VisualLocalizer.Editor {
             
             ResXResourceReader reader = null;
             try {
-                ProjectItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(FileName);
+                ProjectItem item = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(FileName); 
+                ProjectItem = ResXProjectItem.ConvertToResXItem(item, item.ContainingProject);
+
+                /*foreach (Property prop in ProjectItem.Properties)
+                    VisualLocalizer.Library.MessageBox.Show(prop.Name + ":" + prop.Value);*/
 
                 Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>();
                 

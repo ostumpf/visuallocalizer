@@ -19,29 +19,49 @@ using VisualLocalizer.Settings;
 
 namespace VisualLocalizer
 {
+    /// <summary>
+    /// Base class for registration in host VS environment.
+    /// </summary>
+
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [DefaultRegistryRoot("Software\\Microsoft\\VisualStudio\\9.0")]    
+
+    // registers product info - name, icon, description (visible in Help/About)
     [InstalledProductRegistration(true, "#110", "#112", "1.0", IconResourceID = 400,LanguageIndependentName="Visual Localizer")]
+    
+    // necessary in order to run in hosting environment
     [ProvideLoadKey("Standard", "1.0", "Visual Localizer", "Ondrej Stumpf", 111)]
+    
+    // registers menu items
     [ProvideMenuResource(1000, 1)]
+
+    // this GUID tells VS to load the package on startup
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]  
-    [ProvideOutputWindow(typeof(VisualLocalizerPackage),
-        typeof(Guids.VisualLocalizerWindowPane),
-        "#110",
-        ClearWithSolution=true,InitiallyInvisible=false)]
+
+    // creates "Visual Localizer" output pane in "Output" window
+    [ProvideOutputWindow(typeof(VisualLocalizerPackage), typeof(Guids.VisualLocalizerWindowPane), "#110", ClearWithSolution=true,InitiallyInvisible=false)]
+    
+    // registers single-view editor of ResX files
     [ProvideEditorFactory(typeof(ResXEditorFactory), 113, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]
     [ProvideEditorExtension(typeof(ResXEditorFactory), StringConstants.ResXExtension, 100)]
     [ProvideEditorLogicalView(typeof(ResXEditorFactory), "58F7A940-4755-4382-BCA6-ED89F035491E")]
+    
+    // registers tool window displayed on "Batch move to resources" command
     [ProvideToolWindow(typeof(BatchMoveToResourcesToolWindow),MultiInstances=false,
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
+
+    // registers tool window displayed on "Batch inline" command
     [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false, 
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
     
+    // registers settings (necessary in order to Import/Export settings work) - contains descriptions and names of nodes
     [ProvideProfile(typeof(GeneralSettingsManager), "VisualLocalizer", "GeneralSettings", 114, 115, false, DescriptionResourceID = 116)]
     [ProvideProfile(typeof(FilterSettingsManager), "VisualLocalizer", "FilterSettings", 117, 118, true, DescriptionResourceID = 119,
         AlternateParent = "VisualLocalizer_GeneralSettings")]
     [ProvideProfile(typeof(EditorSettingsManager), "VisualLocalizer", "Editor", 127, 128, true, DescriptionResourceID = 129,
         AlternateParent = "VisualLocalizer_GeneralSettings")]    
+    
+    // registers option pages accessible in Tools/Options
     [ProvideOptionPage(typeof(FilterSettingsManager), "VisualLocalizer", "BatchToolWindows", 123, 124, false)]    
     [ProvideOptionPage(typeof(EditorSettingsManager), "VisualLocalizer", "Editor", 123, 126, false)]
 
@@ -51,13 +71,14 @@ namespace VisualLocalizer
         internal MenuManager menuManager;
         internal EnvDTE80.DTE2 DTE;
         internal EnvDTE.UIHierarchy UIHierarchy;
-        internal OleMenuCommandService menuService;
-        internal IVsUIShell uiShell;
-        internal IVsRunningDocumentTable ivsRunningDocumentTable;
+        internal OleMenuCommandService menuService;        
         internal IVsUIHierWinClipboardHelper clipboardHelper;
 
         private static VisualLocalizerPackage instance;
 
+        /// <summary>
+        /// Run once on package startup.
+        /// </summary>
         protected override void Initialize() {
             instance = this;
                         
@@ -68,9 +89,14 @@ namespace VisualLocalizer
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Visual Localizer is being initialized...");
                            
                 InitBaseServices();
+
+                // load settings from registry
                 new GeneralSettingsManager().LoadSettingsFromStorage();
 
+                // register handlers for menu items
                 menuManager = new MenuManager();
+
+                // register as an editor for ResX files
                 RegisterEditorFactory(new ResXEditorFactory());
                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
@@ -84,11 +110,9 @@ namespace VisualLocalizer
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-            ivsRunningDocumentTable = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
             clipboardHelper = (IVsUIHierWinClipboardHelper)GetService(typeof(SVsUIHierWinClipboardHelper));
 
-            if (DTE == null || UIHierarchy == null || menuService == null || uiShell == null || ivsRunningDocumentTable == null || clipboardHelper==null)
+            if (DTE == null || UIHierarchy == null || menuService == null || clipboardHelper==null)
                 throw new Exception("Error during initialization of base services.");
         }
        
@@ -98,6 +122,7 @@ namespace VisualLocalizer
             }
         }
 
+        /// <returns>Visual Studio version determined from registry values.</returns>
         private static VS_VERSION? version = null;
         public static VS_VERSION VisualStudioVersion {
             get {
@@ -122,6 +147,8 @@ namespace VisualLocalizer
             }
         }
 
+        #region IVsInstalledProduct
+           
         public int IdBmpSplash(out uint pIdBmp) {
             pIdBmp = 400;
             return VSConstants.S_OK;
@@ -146,6 +173,8 @@ namespace VisualLocalizer
             pbstrPID = "1.0";
             return VSConstants.S_OK;
         }
+
+        #endregion
     }
 
     public enum VS_VERSION { VS2008, VS2010, VS2011, UNKNOWN }

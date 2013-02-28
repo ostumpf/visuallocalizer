@@ -93,8 +93,8 @@ namespace VisualLocalizer.Library.AspxParser {
             : base(TagPrefix) {
             this.TagName = TagName;
             this.Source = Source;
-      
-            string projPath = (string)Project.Properties.Item("FullPath").Value;
+
+            string projPath = Project.FullName;
             if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1); 
             string sourcePath = Source.Replace("~", projPath);
             ProjectItem sourceItem = solution.FindProjectItem(sourcePath);

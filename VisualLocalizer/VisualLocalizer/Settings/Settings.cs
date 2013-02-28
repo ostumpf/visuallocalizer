@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Settings {
     
@@ -13,13 +14,26 @@ namespace VisualLocalizer.Settings {
         public event Action SettingsLoaded;
 
         private static SettingsObject instance;
-        private SettingsObject() {
-            FilterRegexps = new List<RegexpInstance>();
-            LanguagePairs = new List<LanguagePair>();
-            FilterOutSpecificComment = true;
+        private SettingsObject() {            
+            LanguagePairs = new List<LanguagePair>();  
+            
+            CustomLocalizabilityCriteria = new List<LocalizationCustomCriterion>();
+            ResetCriteria();
         }
 
         public bool IgnorePropertyChanges { get; set; }
+        public Dictionary<string, LocalizationCriterion> CommonLocalizabilityCriteria { get; private set; }
+        public List<LocalizationCustomCriterion> CustomLocalizabilityCriteria { get; private set; }
+
+        public void ResetCriteria() {
+            CustomLocalizabilityCriteria.Clear();
+            CommonLocalizabilityCriteria = CSharpStringResultItem.GetCriteria();
+            var aspnetMembers = AspNetStringResultItem.GetCriteria();
+
+            foreach (var pair in aspnetMembers)
+                if (!CommonLocalizabilityCriteria.ContainsKey(pair.Key))
+                    CommonLocalizabilityCriteria.Add(pair.Key, pair.Value);
+        }
 
         private int _NamespacePolicyIndex;
         public int NamespacePolicyIndex {
@@ -54,115 +68,6 @@ namespace VisualLocalizer.Settings {
             }
         }
 
-        private bool _FilterOutVerbatim;
-        public bool FilterOutVerbatim {
-            get {
-                return _FilterOutVerbatim;
-            }
-            set {
-                _FilterOutVerbatim = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutSpecificComment;
-        public bool FilterOutSpecificComment {
-            get {
-                return _FilterOutSpecificComment;
-            }
-            set {
-                _FilterOutSpecificComment = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutNoLetters;
-        public bool FilterOutNoLetters {
-            get {
-                return _FilterOutNoLetters;
-            }
-            set {
-                _FilterOutNoLetters = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutUnlocalizable;
-        public bool FilterOutUnlocalizable {
-            get {
-                return _FilterOutUnlocalizable;
-            }
-            set {
-                _FilterOutUnlocalizable = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutCaps;
-        public bool FilterOutCaps {
-            get {
-                return _FilterOutCaps;
-            }
-            set {
-                _FilterOutCaps = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspNet;
-        public bool FilterOutAspNet {
-            get {
-                return _FilterOutAspNet;
-            }
-            set {
-                _FilterOutAspNet = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspElement;
-        public bool FilterOutAspElement {
-            get {
-                return _FilterOutAspElement;
-            }
-            set {
-                _FilterOutAspElement = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspClientComment;
-        public bool FilterOutAspClientComment {
-            get {
-                return _FilterOutAspClientComment;
-            }
-            set {
-                _FilterOutAspClientComment = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspInlineExpr;
-        public bool FilterOutAspInlineExpr {
-            get {
-                return _FilterOutAspInlineExpr;
-            }
-            set {
-                _FilterOutAspInlineExpr = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutDesignerFile;
-        public bool FilterOutDesignerFile {
-            get {
-                return _FilterOutDesignerFile;
-            }
-            set {
-                _FilterOutDesignerFile = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
 
         private bool _UseReflectionInAsp;
         public bool UseReflectionInAsp {
@@ -171,28 +76,6 @@ namespace VisualLocalizer.Settings {
             }
             set {
                 _UseReflectionInAsp = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspPlainText;
-        public bool FilterOutAspPlainText {
-            get {
-                return _FilterOutAspPlainText;
-            }
-            set {
-                _FilterOutAspPlainText = value;
-                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-            }
-        }
-
-        private bool _FilterOutAspNotProved;
-        public bool FilterOutAspNotProved {
-            get {
-                return _FilterOutAspNotProved;
-            }
-            set {
-                _FilterOutAspNotProved = value;
                 NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
@@ -207,8 +90,6 @@ namespace VisualLocalizer.Settings {
                 NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
-
-        public List<RegexpInstance> FilterRegexps { get; private set; }
 
         public List<LanguagePair> LanguagePairs { get; private set; }
 
@@ -248,12 +129,7 @@ namespace VisualLocalizer.Settings {
         public void NotifySettingsLoaded() {
             if (SettingsLoaded != null) SettingsLoaded();
         }
-
-        internal sealed class RegexpInstance {
-            public string Regexp { get; set; }
-            public bool MustMatch { get; set; }
-        }
-
+       
         internal sealed class LanguagePair {
             public string FromLanguage { get; set; }
             public string ToLanguage { get; set; }

@@ -34,7 +34,7 @@ namespace VisualLocalizer.Commands {
             Process(currentlyProcessedItem, verbose);
 
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
             });
 
             trieCache.Clear();
@@ -50,7 +50,7 @@ namespace VisualLocalizer.Commands {
             base.Process(selectedItems, verbose);
 
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
             });
 
             trieCache.Clear();
@@ -72,7 +72,7 @@ namespace VisualLocalizer.Commands {
                 return empty || IsItemOutsideSelection(item);
             });
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
             });
 
             trieCache.Clear();
@@ -82,7 +82,7 @@ namespace VisualLocalizer.Commands {
 
         protected virtual Trie<CodeReferenceTrieElement> GetActualTrie() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
-                var resxItems = currentlyProcessedItem.ContainingProject.GetResXItemsAround(false);
+                var resxItems = currentlyProcessedItem.ContainingProject.GetResXItemsAround(null, false);
                 trieCache.Add(currentlyProcessedItem.ContainingProject, resxItems.CreateTrie());
             }
             return trieCache[currentlyProcessedItem.ContainingProject]; 

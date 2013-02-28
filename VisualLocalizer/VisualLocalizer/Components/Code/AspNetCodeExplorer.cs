@@ -36,7 +36,7 @@ namespace VisualLocalizer.Components {
         }
 
         public void Explore(AbstractBatchCommand parentCommand, ProjectItem projectItem, int maxLine, int maxIndex) {
-            fullPath = (string)projectItem.Properties.Item("FullPath").Value;
+            fullPath = projectItem.GetFullPath();
             if (string.IsNullOrEmpty(fullPath)) throw new Exception("Cannot process item " + projectItem.Name);
 
             this.parentCommand = parentCommand;
@@ -116,7 +116,7 @@ namespace VisualLocalizer.Components {
                 foreach (AttributeInfo info in context.Attributes) {
                     if (info.ContainsAspTags) continue;
 
-                    AspNetStringResultItem item = AddResult(info, null, context.WithinClientSideComment, false, false, true);
+                    AspNetStringResultItem item = AddResult(info, null, context.DirectiveName, context.WithinClientSideComment, false, false, true);
                     if (item != null) item.ComesFromDirective = true;
                 }
             }
@@ -195,7 +195,7 @@ namespace VisualLocalizer.Components {
         public void OnPlainText(PlainTextContext context) {
             if (parentCommand is BatchMoveCommand) {
                 var newItem = AddResult(new AttributeInfo() { BlockSpan = context.BlockSpan, Name = context.Text, Value = context.Text },
-                    null, context.WithinClientSideComment, false, false, false);
+                    null, null, context.WithinClientSideComment, false, false, false);
                 if (newItem != null) {
                     newItem.ComesFromPlainText = true;
                     newItem.ComesFromElement = false;
@@ -216,7 +216,7 @@ namespace VisualLocalizer.Components {
             } else return false;
         }
 
-        private AspNetStringResultItem AddResult(AttributeInfo info, string elementPrefix, bool comesFromClientComment,
+        private AspNetStringResultItem AddResult(AttributeInfo info, string elementPrefix,string elementName, bool comesFromClientComment,
             bool propertyLocalizableFalse, bool comesFromElement, bool stripApos) {
             if (!(parentCommand is BatchMoveCommand)) return null;
 
@@ -242,7 +242,8 @@ namespace VisualLocalizer.Components {
             resultItem.ComesFromElement = comesFromElement;
             resultItem.ComesFromClientComment = comesFromClientComment;
             resultItem.ElementPrefix = elementPrefix;
-           
+            resultItem.ElementName = elementName;
+
             AddContextToItem(resultItem);
 
             bCmd.AddToResults(resultItem);
@@ -251,7 +252,7 @@ namespace VisualLocalizer.Components {
         }
 
         private AspNetStringResultItem AddResult(AttributeInfo info, ElementContext elementContext, bool propertyLocalizableFalse) {
-            return AddResult(info, elementContext.Prefix, elementContext.WithinClientSideComment, propertyLocalizableFalse, true, true);
+            return AddResult(info, elementContext.Prefix, elementContext.ElementName, elementContext.WithinClientSideComment, propertyLocalizableFalse, true, true);
         }
     
         public void AddContextToItems(IEnumerable items) {

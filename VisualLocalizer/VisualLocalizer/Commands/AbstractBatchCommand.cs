@@ -23,8 +23,10 @@ namespace VisualLocalizer.Commands {
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
         public abstract IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
 
-        public void SetCurrentProjectItem(ProjectItem projectItem) {
+        public void ReinitializeWith(ProjectItem projectItem) {
             currentlyProcessedItem = projectItem;
+            searchedProjectItems.Clear();
+            generatedProjectItems.Clear();
         }
 
         public virtual void Process(bool verbose) {
@@ -91,27 +93,27 @@ namespace VisualLocalizer.Commands {
             if (items == null) return;            
 
             foreach (ProjectItem item in items) {
-                if (VLDocumentViewsManager.IsFileLocked(item.Properties.Item("FullPath").Value.ToString())) {
+                if (VLDocumentViewsManager.IsFileLocked(item.GetFullPath())) {
                     if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", item.Name);
                     continue;
                 }                
                 
-                if (item.CanShowCodeContextMenu()) Process(item, verbose);                
+                Process(item, verbose);                
             }
         }
 
         protected virtual void Process(ProjectItem projectItem, bool verbose) {
-            Process(projectItem, (e) => { return true; }, verbose);
+            if (projectItem.CanShowCodeContextMenu()) Process(projectItem, (e) => { return true; }, verbose);
             if (projectItem.ProjectItems != null) {
                 foreach (ProjectItem item in projectItem.ProjectItems)
-                    if (item.CanShowCodeContextMenu()) Process(item, verbose);    
+                    Process(item, verbose);    
             }
         }
 
         protected virtual void Process(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
             if (searchedProjectItems.Contains(projectItem)) return;
 
-            string path = (string)projectItem.Properties.Item("FullPath").Value;
+            string path = projectItem.GetFullPath();
             if (string.IsNullOrEmpty(path)) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Skipping {0} - null file path", projectItem.Name);
                 return;

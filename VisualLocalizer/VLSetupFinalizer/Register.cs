@@ -23,8 +23,8 @@ namespace VLSetupFinalizer {
             foreach (DictionaryEntry param in this.Context.Parameters) {
                 string key = (param.Key == null ? "0" : param.Key.ToString());
                 string value = (param.Value == null ? "0" : param.Value.ToString());
-
-                if (key.StartsWith("checkbox") && value == "1")                     
+                
+                if (key.ToLower().StartsWith("checkbox") && value == "1")                     
                     register(key);                
             }
 
@@ -49,7 +49,7 @@ namespace VLSetupFinalizer {
                 
             }
         }
-
+        
         private string toString(List<string> list,char separator) {
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < list.Count; i++) {
@@ -61,12 +61,12 @@ namespace VLSetupFinalizer {
 
         private void register(string param) {
             string key;
-            string subpath;
+            string subpath;            
             getInstallKey(param, out key, out subpath);
             
             using (RegistryKey setupKey = Registry.LocalMachine.OpenSubKey(key)) {
                 if (setupKey != null) {
-                    object registryPath = setupKey.GetValue("ProductDir");
+                    object registryPath = setupKey.GetValue("ProductDir");                    
                     if (registryPath != null) {
                         string devenv = Path.Combine(registryPath.ToString(), subpath);
                         if (!string.IsNullOrEmpty(devenv)) {
@@ -88,7 +88,7 @@ namespace VLSetupFinalizer {
                     key = @"SOFTWARE\Microsoft\VisualStudio\10.0\Setup\VS";
                     subpath = @"Common7\IDE\devenv.exe";
                     break;
-                case "checkbox2011":
+                case "checkbox2012":
                     key = @"SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VS";
                     subpath = @"Common7\IDE\devenv.exe";
                     break;                

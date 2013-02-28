@@ -45,7 +45,7 @@ namespace VisualLocalizer.Editor {
             this.Dock = DockStyle.Fill;            
             this.BackColor = Color.White;
             this.BorderStyle = BorderStyle.None;
-
+            this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;            
             this.ScrollBars = ScrollBars.Both;
             this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             this.AutoSize = true;            
@@ -70,9 +70,7 @@ namespace VisualLocalizer.Editor {
 
             cutContextMenuItem = new MenuItem("Cut");
             cutContextMenuItem.Shortcut = Shortcut.CtrlX;
-            cutContextMenuItem.Click += new EventHandler((o, e) => { 
-                editorControl.ExecuteCut();
-            });
+            cutContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCut(); });
 
             copyContextMenuItem = new MenuItem("Copy");
             copyContextMenuItem.Shortcut = Shortcut.CtrlC;
@@ -369,6 +367,7 @@ namespace VisualLocalizer.Editor {
             if (e.Control is TextBox) {
                 CurrentlyEditedTextBox = e.Control as TextBox;
             }
+            UpdateContextItemsEnabled();
             NotifyItemsStateChanged();
         }
 
@@ -382,7 +381,7 @@ namespace VisualLocalizer.Editor {
 
                     ReferenceCounterThreadSuspended = true;
                     UpdateReferencesCount(row);
-                }
+                }                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
@@ -495,18 +494,18 @@ namespace VisualLocalizer.Editor {
             UpdateReferencesCount(new List<ResXStringGridRow>() { row });
         }
 
-        public void UpdateReferencesCount(IList rows) {            
-            ProjectItem thisItem = editorControl.Editor.ProjectItem;
-            if (thisItem.Object != null && thisItem.ContainingProject!=null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(thisItem)) {
-                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(thisItem, thisItem.ContainingProject);
-                resxItem.ResolveNamespaceClass(thisItem.ContainingProject.GetResXItemsAround(false));
+        public void UpdateReferencesCount(IList rows) {
+            ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
+            if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
+                Project containingProject = resxItem.InternalProjectItem.ContainingProject;
+                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(null, false));
 
                 List<Project> projects = new List<Project>();
 
-                projects.Add(thisItem.ContainingProject);
+                projects.Add(containingProject);
                 foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
                     foreach (Project proj in solutionProject.GetReferencedProjects()) {
-                        if (proj == thisItem.ContainingProject) {
+                        if (proj == containingProject) {
                             projects.Add(solutionProject);
                             break;
                         }
@@ -514,8 +513,8 @@ namespace VisualLocalizer.Editor {
                 }
 
                 bool impliedDesignerItem = false;
-                if (thisItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                    string relative = (string)thisItem.Properties.Item("RelativeURL").Value;
+                if (containingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    string relative = resxItem.InternalProjectItem.GetRelativeURL();
                     impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
                 }
 
@@ -574,9 +573,9 @@ namespace VisualLocalizer.Editor {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
 
-            if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem)) {
-                ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(editorControl.Editor.ProjectItem, editorControl.Editor.ProjectItem.ContainingProject);
-                resxItem.ResolveNamespaceClass(editorControl.Editor.ProjectItem.ContainingProject.GetResXItemsAround(false));
+            if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
+                ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
+                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false));
 
                 if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
@@ -809,7 +808,7 @@ namespace VisualLocalizer.Editor {
         private void UpdateContextItemsEnabled() {
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
-            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing; ;
+            deleteContextMenuItem.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing; 
             editContextMenuItem.Enabled = SelectedRows.Count == 1 && !CurrentCell.ReadOnly && !ReadOnly && !Columns[CurrentCellAddress.X].ReadOnly;
             inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && AreReferencesKnownOnSelected;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
@@ -861,68 +860,41 @@ namespace VisualLocalizer.Editor {
         }
 
         private void editorControl_TranslateRequested(TRANSLATE_PROVIDER provider, string from, string to) {
-            ITranslatorService service = null;
-            switch (provider) {
-                case TRANSLATE_PROVIDER.BING:
-                    service = BingTranslator.GetService(SettingsObject.Instance.BingAppId);
-                    break;
-                case TRANSLATE_PROVIDER.MYMEMORY:
-                    service = MyMemoryTranslator.GetService();
-                    break;
-                case TRANSLATE_PROVIDER.GOOGLE:
-                    service = GoogleTranslator.GetService();
-                    break;
-            }
-            if (service == null) {
-                VisualLocalizer.Library.MessageBox.ShowError("Cannot resolve translation provider!");
-            } else {
-                System.Threading.Thread translatingThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(this.translatingThread));
-                translatingThread.Start(new TranslatingThreadInfo() { FromLanguage = from, ToLanguage = to, Service = service });
-            }
-        }
-
-        private void translatingThread(object o) {          
-            uint statusBarCookie = 0;
-            string statusBarText = "Translating...";
-            uint completed = 0;
-
             try {
-                TranslatingThreadInfo nfo = (TranslatingThreadInfo)o;
-                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, 0, (uint)SelectedRows.Count);
-                editorControl.Invoke(new Action(() => { 
-                    editorControl.SetReadOnly(true);                    
-                }));                
-                
-                foreach (ResXStringGridRow row in SelectedRows) {
-                    if (!row.IsNewRow) {
-                        string oldValue = (string)row.Cells[ValueColumnName].Value;
-                        row.Cells[ValueColumnName].Value = nfo.Service.Translate(nfo.FromLanguage, nfo.ToLanguage, (string)row.Cells[ValueColumnName].Value);
+                List<AbstractTranslateInfoItem> data = new List<AbstractTranslateInfoItem>();
+                AddToTranslationList(SelectedRows, data);
 
-                        StringValueChanged(row, oldValue, (string)row.Cells[ValueColumnName].Value);
-                        VLOutputWindow.VisualLocalizerPane.WriteLine("Translated \"{0}\" as \"{1}\" ", oldValue, row.Cells[ValueColumnName].Value);
-                    }
-                    completed++;
-                    editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, completed, (uint)SelectedRows.Count);                    
+                TranslationHandler.Translate(data, provider, from, to);
+
+                foreach (AbstractTranslateInfoItem item in data) {
+                    item.ApplyTranslation();
                 }
             } catch (Exception ex) {
-                string text;
+                string text = null;
                 if (ex is CannotParseResponseException) {
                     CannotParseResponseException cpex = ex as CannotParseResponseException;
                     text = string.Format("Server response cannot be parsed: {0}.\nFull response:\n{1}", ex.Message, cpex.FullResponse);
                 } else {
                     text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
                 }
+
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                editorControl.Invoke(new Action(() => { VisualLocalizer.Library.MessageBox.ShowError(text); }));
-            } finally {
-                editorControl.Invoke(new Action(() => { 
-                    editorControl.SetReadOnly(false);                    
-                }));
-                if (completed > 0) NotifyDataChanged(); 
-                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 1, statusBarText, (uint)SelectedRows.Count, (uint)SelectedRows.Count);
-                System.Threading.Thread.Sleep(500);
-                editorControl.Editor.StatusBar.Progress(ref statusBarCookie, 0, "Ready", (uint)SelectedRows.Count, (uint)SelectedRows.Count);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
             }
+        }
+
+        public void AddToTranslationList(IEnumerable list, List<AbstractTranslateInfoItem> data) {
+            foreach (ResXStringGridRow row in list) {
+                if (!row.IsNewRow) {
+                    if (!string.IsNullOrEmpty(row.Key)) {
+                        StringGridTranslationInfoItem item = new StringGridTranslationInfoItem();
+                        item.Row = row;
+                        item.Value = row.Value;
+                        item.ValueColumnName = ValueColumnName;
+                        data.Add(item);
+                    }
+                }
+            }            
         }
 
         private void editorControl_InlineRequested(INLINEKIND kind) {
@@ -991,10 +963,25 @@ namespace VisualLocalizer.Editor {
 
         #endregion
 
-        private class TranslatingThreadInfo {
-            public ITranslatorService Service { get; set; }
-            public string FromLanguage { get; set; }
-            public string ToLanguage { get; set; }
+    }
+
+    internal class StringGridTranslationInfoItem : AbstractTranslateInfoItem {
+        public ResXStringGridRow Row { get; set; }
+        public string ValueColumnName { get; set; }
+
+        public override void ApplyTranslation() {
+            ResXStringGrid grid = (ResXStringGrid)Row.DataGridView;
+            string oldValue = (string)Row.Cells[ValueColumnName].Value;
+
+            Row.Cells[ValueColumnName].Tag = oldValue;
+            Row.Cells[ValueColumnName].Value = Value;
+
+            string comment = Row.DataSourceItem.Comment;
+            Row.DataSourceItem = new ResXDataNode(Row.Key, Value);
+            Row.DataSourceItem.Comment = comment;
+
+            grid.StringValueChanged(Row, oldValue, (string)Row.Cells[ValueColumnName].Value);
+            grid.NotifyDataChanged();
         }
     }
 }

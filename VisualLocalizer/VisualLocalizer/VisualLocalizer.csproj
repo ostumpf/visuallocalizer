@@ -77,6 +77,8 @@
     <Compile Include="Commands\Inline\InlineCommand.cs" />
     <Compile Include="Commands\Move\MoveToResourcesCommand.cs" />
     <Compile Include="Commands\Inline\ReferenceLister.cs" />
+    <Compile Include="Commands\Translate\GlobalTranslateCommand.cs" />
+    <Compile Include="Commands\Translate\TranslationHandler.cs" />
     <Compile Include="Components\Code\AbstractCodeLookuper.cs" />
     <Compile Include="Components\Code\AspNetCodeExplorer.cs" />
     <Compile Include="Components\Code\AspNetCodeStringLookuper.cs" />
@@ -87,6 +89,7 @@
     <Compile Include="Components\Code\CSharpCodeExplorer.cs" />
     <Compile Include="Components\Code\CSharpStringLookuper.cs" />
     <Compile Include="Components\DestinationKeyValueConflictResolver.cs" />
+    <Compile Include="Components\ProgressBarHandler.cs" />
     <Compile Include="Components\UndoUnits\MarkAsNotLocalizedStringUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesReferenceUndoUnit.cs" />
     <Compile Include="Components\VLDocumentViewsManager.cs" />
@@ -166,6 +169,12 @@
       <DependentUpon>CommentWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Editor\UndoUnits\ListViewItemsAddUndoUnit.cs" />
+    <Compile Include="Gui\GlobalTranslateForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\GlobalTranslateForm.Designer.cs">
+      <DependentUpon>GlobalTranslateForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\NewImageWindow.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -199,6 +208,7 @@
     <Compile Include="Settings\AbstractSettingsManager.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Settings\LocalizationCriterion.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="VisualLocalizerPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -216,6 +226,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Gui\CommentWindow.resx">
       <DependentUpon>CommentWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\GlobalTranslateForm.resx">
+      <DependentUpon>GlobalTranslateForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Gui\NewImageWindow.resx">

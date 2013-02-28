@@ -10,7 +10,8 @@ using VisualLocalizer.Library.AspxParser;
 namespace VisualLocalizer.Components {
     internal sealed class CodeReferenceLookuper<T> : AbstractCodeLookuper where T:CodeReferenceResultItem, new() {
 
-        private static CodeReferenceLookuper<T> instance;       
+        private static CodeReferenceLookuper<T> instance;
+        private object syncRoot = new object();
 
         private CodeReferenceLookuper() { }
 
@@ -31,18 +32,20 @@ namespace VisualLocalizer.Components {
 
         public List<T> Run(ProjectItem projectItem, string text, int currentIndex, int currentLine, int currentOffset,
             Trie<CodeReferenceTrieElement> Trie, NamespacesList usedNamespaces, bool isWithinLocFalse, Project project, ResXProjectItem prefferedResXItem) {
-            this.SourceItem = projectItem;
-            this.text = text;
-            this.CurrentIndex = currentIndex;
-            this.CurrentLine = currentLine;
-            this.CurrentAbsoluteOffset = currentOffset;
-            this.Trie = Trie;
-            this.UsedNamespaces = usedNamespaces;
-            this.IsWithinLocFalse = isWithinLocFalse;
-            this.Project = project;
-            this.prefferedResXItem = prefferedResXItem;
+            lock (syncRoot) {
+                this.SourceItem = projectItem;
+                this.text = text;
+                this.CurrentIndex = currentIndex;
+                this.CurrentLine = currentLine;
+                this.CurrentAbsoluteOffset = currentOffset;
+                this.Trie = Trie;
+                this.UsedNamespaces = usedNamespaces;
+                this.IsWithinLocFalse = isWithinLocFalse;
+                this.Project = project;
+                this.prefferedResXItem = prefferedResXItem;
 
-            return LookForReferences();
+                return LookForReferences();
+            }
         }
 
         private Project Project { get; set; }

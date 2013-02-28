@@ -50,7 +50,7 @@ namespace VisualLocalizer.Commands {
                 int newItemLength = -1;
                 try {
                     CodeStringResultItem resultItem = dataList[i];
-                    string path = resultItem.SourceItem.Properties.Item("FullPath").Value.ToString();
+                    string path = resultItem.SourceItem.GetFullPath();
                     ReferenceString referenceText = null;
                     bool addNamespace = false;
                     CONTAINS_KEY_RESULT keyConflict = CONTAINS_KEY_RESULT.DOESNT_EXIST;
@@ -71,7 +71,6 @@ namespace VisualLocalizer.Commands {
                         } else {
                             addNamespace = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key,
                                     resultItem.SourceItem.ContainingProject, out referenceText);
-                            referenceText.NamespacePart = null;
                         }
                         if (addNamespace) {
                             if (!(resultItem is CSharpStringResultItem) || ((CSharpStringResultItem)resultItem).NamespaceElement == null) {
@@ -100,7 +99,7 @@ namespace VisualLocalizer.Commands {
                             newItemLength = MoveToResource(buffersCache[path], resultItem, referenceText);
 
                             if (addNamespace) {
-                                resultItem.AddUsingBlock(buffersCache[(string)resultItem.SourceItem.Properties.Item("FullPath").Value]);                            
+                                resultItem.AddUsingBlock(buffersCache[resultItem.SourceItem.GetFullPath()]);                            
                                 for (int j = i; j >= 0; j--) {
                                     var item = dataList[j];
                                     TextSpan ts = new TextSpan();

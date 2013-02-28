@@ -16,28 +16,33 @@ namespace VisualLocalizer.Gui {
 
     internal enum SELECT_RESOURCE_FILE_RESULT { OK, OVERWRITE, INLINE }
 
+    /// <summary>
+    /// Represents dialog displayed on "move to resources" command, enabling user to modify resource key, value,
+    /// destination file and resolve potential name conflicts.
+    /// </summary>
     internal partial class SelectResourceFileForm : Form {
 
-        private Color errorColor = Color.FromArgb(255, 200, 200);
-        private Color existingKeyColor = Color.FromArgb(213, 255, 213);
-        private CONTAINS_KEY_RESULT keyConflict;
+        private static readonly Color ERROR_COLOR = Color.FromArgb(255, 200, 200);
+        private static readonly Color EXISTING_KEY_COLOR = Color.FromArgb(213, 255, 213);
         
+        private CONTAINS_KEY_RESULT keyConflict;        
         private CodeStringResultItem resultItem;
         private ReferenceString referenceText;
 
-        public SelectResourceFileForm(ProjectItem projectItem, CodeStringResultItem resultItem) {
+        public SelectResourceFileForm(ProjectItem sourceItem, CodeStringResultItem resultItem) {
             InitializeComponent();
             this.resultItem = resultItem;
             this.referenceText = new ReferenceString();
 
+            // add suggestions to suggestions list
             foreach (string s in resultItem.GetKeyNameSuggestions())
                 keyBox.Items.Add(s);
 
             keyBox.SelectedIndex = 0;
            
             valueBox.Text = resultItem.Value;
-
-            foreach (var item in projectItem.ContainingProject.GetResXItemsAround(true)) {
+            // add possible destination files
+            foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(resultItem.SourceItem, true)) {
                 comboBox.Items.Add(item);
             }
 
@@ -49,9 +54,8 @@ namespace VisualLocalizer.Gui {
             existingLabel.Visible = false;
             existingValueLabel.Visible = false;
             
-            errorLabel.Text = "";
+            errorLabel.Text = "";            
         }
-
 
         private void SelectResourceFileForm_FormClosing(object sender, FormClosingEventArgs e) {
             Key = keyBox.Text;
@@ -60,9 +64,11 @@ namespace VisualLocalizer.Gui {
             UsingFullName = fullBox.Checked;
             OverwrittenValue = existingValueLabel.Text;
 
+            // in case of conflict
             if (Result == SELECT_RESOURCE_FILE_RESULT.INLINE || Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE)
                 Key = SelectedItem.GetRealKey(Key);
 
+            // free loaded project items
             foreach (ResXProjectItem item in comboBox.Items)
                 item.Unload();
 
@@ -90,36 +96,39 @@ namespace VisualLocalizer.Gui {
             validate();
         }
 
+        /// <summary>
+        /// Executed on every change in window form.
+        /// </summary>
         private void validate() {
-            bool existsFile = comboBox.Items.Count > 0;
+            bool existsFile = comboBox.Items.Count > 0; // there's at least one possible destination file
             string errorText = null;
             bool ok = true;
 
-            if (!existsFile) {
+            if (!existsFile) { // no destination file
                 ok = false;
                 errorText = "Project does not contain any useable resource files";
             } else {
                 ResXProjectItem item = comboBox.SelectedItem as ResXProjectItem;
                 if (!item.IsLoaded) {
                     item.Load();
-                    VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);                    
+                    VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.GetFullPath(), true);                    
                 }
 
                 bool ident = keyBox.Text.IsValidIdentifier();
                 if (ident) errorText = "Key is not valid C# identifier";
-                keyBox.BackColor = (ident ? Color.White : errorColor);
+                keyBox.BackColor = (ident ? Color.White : ERROR_COLOR);
 
                 if (ident) {
                     keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
                     Color backColor = Color.White;
                     switch (keyConflict) {
                         case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:
-                            backColor = existingKeyColor;
+                            backColor = EXISTING_KEY_COLOR;
                             break;
                         case CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE:
                             errorText = "Key is already present and has different value";
                             existingValueLabel.Text = item.GetString(keyBox.Text);
-                            backColor = errorColor;
+                            backColor = ERROR_COLOR;
                             break;
                         case CONTAINS_KEY_RESULT.DOESNT_EXIST:
                             backColor = Color.White;
@@ -207,7 +216,6 @@ namespace VisualLocalizer.Gui {
             get;
             private set;
         }
-
 
         public string Key {
             get;

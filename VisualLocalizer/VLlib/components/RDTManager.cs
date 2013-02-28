@@ -26,6 +26,7 @@ namespace VisualLocalizer.Library {
         }
 
         public static void SilentlyModifyFile(string path, Action<string> modify) {
+            if (string.IsNullOrEmpty(path)) return;
             SetIgnoreFileChanges(path, true);
 
             modify(path);
@@ -94,7 +95,8 @@ namespace VisualLocalizer.Library {
             return !open || DTE.Documents.Item(path).Saved;
         }
 
-        public static bool IsFileOpen(string path) {            
+        public static bool IsFileOpen(string path) {
+            if (string.IsNullOrEmpty(path)) return false;
             return DTE.get_IsOpenFile(null, path);
         }
 

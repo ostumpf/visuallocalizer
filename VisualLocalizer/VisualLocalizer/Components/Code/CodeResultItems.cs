@@ -9,23 +9,18 @@ using VisualLocalizer.Library.AspxParser;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Settings;
+using System.Text.RegularExpressions;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Components {
     internal abstract class AbstractResultItem {
         public AbstractResultItem() {
             MoveThisItem = true;
         }
-
-        [LocalizationWeight(0.2)]
-        public bool ComesFromDesignerFile { get; set; }
-
-        [LocalizationWeight(0.6)]
-        public bool ComesFromClientComment { get; set; }        
-
-        [LocalizationWeight(0.4)]
-        public bool IsWithinLocalizableFalse { get; set; }
-
-        [LocalizationWeight(0.8)]
+                
+        public bool ComesFromDesignerFile { get; set; }        
+        public bool ComesFromClientComment { get; set; }
+        public bool IsWithinLocalizableFalse { get; set; }        
         public bool IsMarkedWithUnlocalizableComment { get; set; }
 
         public bool MoveThisItem { get; set; }
@@ -37,12 +32,41 @@ namespace VisualLocalizer.Components {
         public string Value { get; set; }
         public string Context { get; set; }
         public int ContextRelativeLine { get; set; }
-        public string Key { get; set; }
+        public string Key { get; set; }          
+     
+        public static Dictionary<string, LocalizationCriterion> GetCriteria() {
+            var localizationCriteriaList = new Dictionary<string, LocalizationCriterion>();
+
+            var designerFilePredicate = new LocalizationCriterion("ComesFromDesignerFile",
+                "String comes from designer file",
+                LocalizationCriterionAction.FORCE_DISABLE, 0,
+                (item) => { return item.ComesFromDesignerFile; });
+
+            var clientCommentPredicate = new LocalizationCriterion("ComesFromClientComment",
+                "String is located in commented code",
+                LocalizationCriterionAction.FORCE_DISABLE, 0,
+                (item) => { return item.ComesFromClientComment; });
+
+            var localizableFalsePredicate = new LocalizationCriterion("IsWithinLocalizableFalse",
+                "String is within Localizable[false] block",
+                LocalizationCriterionAction.FORCE_DISABLE, 0,
+                (item) => { return item.IsWithinLocalizableFalse; });
+
+            var unlocalizableCommentPredicate = new LocalizationCriterion("IsMarkedWithUnlocalizableComment",
+                "String is marked with VL_NO_LOC",
+                LocalizationCriterionAction.FORCE_DISABLE, 0,
+                (item) => { return item.IsMarkedWithUnlocalizableComment; });
+
+            localizationCriteriaList.Add(designerFilePredicate.Name, designerFilePredicate);
+            localizationCriteriaList.Add(clientCommentPredicate.Name, clientCommentPredicate);
+            localizationCriteriaList.Add(localizableFalsePredicate.Name, localizableFalsePredicate);
+            localizationCriteriaList.Add(unlocalizableCommentPredicate.Name, unlocalizableCommentPredicate);
+
+            return localizationCriteriaList;
+        }
     }
 
     internal abstract class CodeStringResultItem : AbstractResultItem {
-        private const int MAX_RATIO = 100;
-
         public bool WasVerbatim { get; set; }
         public string ErrorText { get; set; }
         public string ClassOrStructElementName { get; set; }       
@@ -52,68 +76,8 @@ namespace VisualLocalizer.Components {
         public abstract NamespacesList GetUsedNamespaces();
         public abstract string NoLocalizationComment { get; }
         public abstract bool MustUseFullName { get; }
-        public abstract void AddUsingBlock(IVsTextLines textLines); 
-
-        public int GetLocalizationRatio() {
-            Type t = this.GetType();
-        
-            int count = 0;
-            double sum = 0;
-
-            countLocProbability(t.GetProperties(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance), ref count, ref sum);
-            countLocProbability(t.GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.GetField | BindingFlags.Instance), ref count, ref sum);
-            CustomLocProbabilityEval(ref count, ref sum);
-
-            bool onlyWhitespace = true;
-            bool onlyDigits = true;
-            bool onlyCapitalsAndInterpunction = true;
-
-            foreach (char c in Value) {
-                if (!char.IsWhiteSpace(c)) {
-                    onlyWhitespace = false;
-                    if (!char.IsDigit(c) && c != ',' && c != '.') onlyDigits = false;
-                    if (!char.IsUpper(c) && !char.IsPunctuation(c) && !char.IsSymbol(c)) onlyCapitalsAndInterpunction = false;
-                }
-            }
-
-            if (onlyWhitespace || onlyDigits || onlyCapitalsAndInterpunction) {
-                count++;
-                sum += 1;
-            }            
-
-            if (count == 0) {
-                return MAX_RATIO;
-            } else {
-                int result = (int)(MAX_RATIO - MAX_RATIO * (sum / count));
-                return Math.Min(100, Math.Max(0, result));
-            }
-        }
-
-        private void countLocProbability(MemberInfo[] members, ref int count, ref double sum) {
-            foreach (MemberInfo info in members) {
-                if (info.MemberType != MemberTypes.Field && info.MemberType != MemberTypes.Property) continue;
-
-                PropertyInfo propInfo = info as PropertyInfo;
-                FieldInfo fieldInfo = info as FieldInfo;
-                bool value = false;
-
-                if (propInfo != null && propInfo.PropertyType.IsAssignableFrom(typeof(bool))) value = (bool)propInfo.GetValue(this, null);
-                if (fieldInfo != null && fieldInfo.FieldType.IsAssignableFrom(typeof(bool))) value = (bool)fieldInfo.GetValue(this);
-                if (!value) continue;
-
-                object[] attrs = info.GetCustomAttributes(typeof(LocalizationWeightAttribute), true);
-                if (attrs.Length == 1) {
-                    LocalizationWeightAttribute lw = (LocalizationWeightAttribute)attrs[0];
-                    count++;
-                    sum += lw.Weight;
-                }
-            }
-
-        }
-
-        protected virtual void CustomLocProbabilityEval(ref int count, ref double sum) {
-        }
-
+        public abstract void AddUsingBlock(IVsTextLines textLines);
+                
         protected List<string> InternalGetKeyNameSuggestions(string value, string namespaceElement, string classElement, string methodElement) {
             List<string> suggestions = new List<string>();
 
@@ -176,6 +140,68 @@ namespace VisualLocalizer.Components {
 
             return suggestions;
         }
+
+        public int GetLocalizationProbability(Dictionary<string, AbstractLocalizationCriterion> criteria) {
+            bool disableRequest = false;
+            float positiveSum = 0, negativeSum = 0;
+            int positiveCount = 0, negativeCount = 0;
+
+            foreach (var pair in criteria) {
+                AbstractLocalizationCriterion crit = pair.Value;
+
+                bool? result = crit.Eval(this);
+                if (result.HasValue && result.Value) {
+                    switch (crit.Action) {
+                        case LocalizationCriterionAction.FORCE_ENABLE:
+                            return AbstractLocalizationCriterion.MAX_LOC_PROBABILITY;
+                        case LocalizationCriterionAction.FORCE_DISABLE:
+                            disableRequest = true;
+                            break;
+                        case LocalizationCriterionAction.VALUE:
+                            if (crit.Weight > 0) {
+                                positiveSum += crit.Weight;
+                                positiveCount++;
+                            }
+                            if (crit.Weight < 0) {
+                                negativeSum += -crit.Weight;
+                                negativeCount++;
+                            }
+                            break;
+                        case LocalizationCriterionAction.IGNORE:                            
+                            break;
+                    }
+                }
+            }
+
+            if (disableRequest) return 0;
+
+            float s = 0;            
+            if (positiveSum > negativeSum) {
+                if (positiveCount != 0) s = positiveSum / positiveCount; 
+            } else {
+                if (negativeCount != 0) s = -negativeSum / negativeCount;
+            }
+            s /= 2;
+
+            int x = (int)(AbstractLocalizationCriterion.MAX_LOC_PROBABILITY / 2 + s);
+            if (x >= 0 && x <= AbstractLocalizationCriterion.MAX_LOC_PROBABILITY)
+                return x;
+            else
+                return x < 0 ? 0 : AbstractLocalizationCriterion.MAX_LOC_PROBABILITY;
+        }        
+
+        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+            var localizationCriteriaList = AbstractResultItem.GetCriteria();
+
+            var wasVerbatimPredicate = new LocalizationCriterion("WasVerbatim",
+                "Is verbatim string",
+                LocalizationCriterionAction.VALUE, 10, 
+                (item) => { return item.WasVerbatim; });
+
+            localizationCriteriaList.Add(wasVerbatimPredicate.Name, wasVerbatimPredicate);
+
+            return localizationCriteriaList;
+        }
     }
 
     internal sealed class CSharpStringResultItem : CodeStringResultItem {
@@ -205,28 +231,24 @@ namespace VisualLocalizer.Components {
         public override void AddUsingBlock(IVsTextLines textLines) {
             SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);            
         }
+
+        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+            return AbstractResultItem.GetCriteria();
+        }       
     }
 
     internal sealed class AspNetStringResultItem : CodeStringResultItem {
         public NamespacesList DeclaredNamespaces { get; set; }
-                
-        public bool ComesFromElement { get; set; }
-
-        [LocalizationWeight(0.8)]
-        public bool ComesFromInlineExpression { get; set; }
-        
-        public bool LocalizabilityProved { get; set; }
-
-        [LocalizationWeight(0.4)]
-        public bool ComesFromPlainText { get; set; }
-
-        [LocalizationWeight(0.8)]
-        public bool ComesFromDirective { get; set; }
-
-        [LocalizationWeight(0.1)]
+       
+        public bool ComesFromElement { get; set; }      
+        public bool ComesFromInlineExpression { get; set; }      
+        public bool LocalizabilityProved { get; set; }      
+        public bool ComesFromPlainText { get; set; }       
+        public bool ComesFromDirective { get; set; }       
         public bool ComesFromCodeBlock { get; set; }
 
-        public string ElementPrefix { get; set; }        
+        public string ElementPrefix { get; set; }
+        public string ElementName { get; set; }  
         
         public override string GetReferenceText(ReferenceString referenceText) {
             if (!ComesFromCodeBlock && !ComesFromInlineExpression) {
@@ -265,17 +287,6 @@ namespace VisualLocalizer.Components {
             }
         }
 
-        protected override void CustomLocProbabilityEval(ref int count, ref double sum) {
-            if (string.IsNullOrEmpty(ElementPrefix) && ComesFromElement) {
-                count++;
-                sum += 2;
-            }
-            if (ComesFromElement && !LocalizabilityProved && SettingsObject.Instance.UseReflectionInAsp) {
-                count++;
-                sum += 1;
-            }
-        }
-
         public override bool MustUseFullName {
             get {
                 bool forceAspExpression = SourceItem != null;
@@ -294,6 +305,48 @@ namespace VisualLocalizer.Components {
 
             TextPoint tp = (TextPoint)otp;
             tp.CreateEditPoint().Insert(text);
+        }
+
+        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+            var localizationCriteriaList = CodeStringResultItem.GetCriteria();
+
+            var comesFromElementPredicate = new LocalizationCriterion("ComesFromElement",
+                "String comes from ASP .NET element attribute",
+                LocalizationCriterionAction.VALUE, 20,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromElement; });
+
+            var comesFromInlineExpressionPredicate = new LocalizationCriterion("ComesFromInlineExpression",
+                "String comes from ASP .NET inline expression",
+                LocalizationCriterionAction.FORCE_ENABLE, 0,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromInlineExpression; });
+
+            var localizabilityProvedPredicate = new LocalizationCriterion("LocalizabilityProved",
+                "ASP.NET attribute's type is String",
+                LocalizationCriterionAction.VALUE, 70,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.LocalizabilityProved; });
+
+            var comesFromPlainTextPredicate = new LocalizationCriterion("ComesFromPlainText",
+                "String literal comes from ASP .NET plain text",
+                LocalizationCriterionAction.VALUE, 20,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromPlainText; });
+
+            var comesFromDirectivePredicate = new LocalizationCriterion("ComesFromDirective",
+                "String literal comes from ASP .NET directive",
+                LocalizationCriterionAction.VALUE, -10,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromDirective; });
+
+            var comesFromCodeBlockPredicate = new LocalizationCriterion("ComesFromCodeBlock",
+                "String literal comes from ASP .NET code block",
+                LocalizationCriterionAction.VALUE, 0,
+                (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromCodeBlock; });
+
+            localizationCriteriaList.Add(comesFromElementPredicate.Name, comesFromElementPredicate);
+            localizationCriteriaList.Add(comesFromInlineExpressionPredicate.Name, comesFromInlineExpressionPredicate);
+            localizationCriteriaList.Add(localizabilityProvedPredicate.Name, localizabilityProvedPredicate);
+            localizationCriteriaList.Add(comesFromPlainTextPredicate.Name, comesFromPlainTextPredicate);
+            localizationCriteriaList.Add(comesFromDirectivePredicate.Name, comesFromDirectivePredicate);
+            localizationCriteriaList.Add(comesFromCodeBlockPredicate.Name, comesFromCodeBlockPredicate);
+            return localizationCriteriaList;
         }
     }
 
@@ -368,17 +421,5 @@ namespace VisualLocalizer.Components {
         }
     }
 
-    [AttributeUsage(AttributeTargets.Property|AttributeTargets.Field)]
-    internal sealed class LocalizationWeightAttribute : System.Attribute {
-        public LocalizationWeightAttribute(double weight) {
-            if (weight < 0 || weight > 1) throw new ArgumentOutOfRangeException("weight");
-
-            this.Weight = weight;
-        }
-
-        public double Weight {
-            get;
-            private set;
-        }
-    }
+   
 }

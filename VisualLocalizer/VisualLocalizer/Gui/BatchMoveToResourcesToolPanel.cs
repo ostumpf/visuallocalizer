@@ -6,41 +6,39 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using VisualLocalizer.Components;
 using VisualLocalizer.Settings;
+using VisualLocalizer.Extensions;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Gui {
     internal sealed class BatchMoveToResourcesToolPanel : Panel,IHighlightRequestSource {
         
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
         private TableLayoutPanel filterPanel;
-        private Button addRegexpButton;
-        private TableLayoutPanel regexTable;
-        private CheckBox verbatimBox;
-        private CheckBox localizableBox;
-        private CheckBox noLettersBox;
-        private CheckBox capsBox;
-        private CheckBox commentBox;        
-        private Label regexLabel;
         private SplitContainer splitContainer;
         private bool SplitterMoving;
-        private CheckBox comesFromElementBox, comesFromDesignerFileBox, comesFromAspNetBox, 
-            comesFromInlineExprBox, comesFromAspClientCommentBox, comesFromAspPlainTextBox, isLocalizabilityProvedBox;
+        private Dictionary<string, AbstractLocalizationCriterion> filterCriteriaCopy;
+        private HashSet<string> filterCustomCriteriaNames;
 
         public BatchMoveToResourcesToolPanel() {
             this.SuspendLayout();
             this.Dock = DockStyle.Fill;
 
+            filterCriteriaCopy = new Dictionary<string, AbstractLocalizationCriterion>();
+            filterCustomCriteriaNames = new HashSet<string>();
+
             SettingsObject.Instance.SettingsLoaded += new Action(SettingsUpdated);
 
             ToolGrid = new BatchMoveToResourcesToolGrid(this);
             ToolGrid.HighlightRequired += new EventHandler<CodeResultItemEventArgs>(grid_HighlightRequired);
-
-            filterPanel = new TableLayoutPanel();
+            
             InitializeFilterPanel();
 
             splitContainer = new SplitContainer();
             splitContainer.Dock = DockStyle.Fill;
-            splitContainer.Orientation = Orientation.Horizontal;            
-
+            splitContainer.Orientation = Orientation.Horizontal;
+            splitContainer.Panel1.AutoScroll = true;
+            splitContainer.Panel1.VerticalScroll.Visible = true;
+            splitContainer.Panel1.VerticalScroll.Enabled = true;
             splitContainer.Panel1.Controls.Add(filterPanel);
             splitContainer.Panel2.Controls.Add(ToolGrid);
             this.Controls.Add(splitContainer);      
@@ -54,7 +52,7 @@ namespace VisualLocalizer.Gui {
         }
 
         private void splitContainer_SplitterMoving(object sender, SplitterCancelEventArgs e) {
-            SplitterMoving = true;
+            SplitterMoving = true;            
         }
 
         private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e) {
@@ -64,405 +62,132 @@ namespace VisualLocalizer.Gui {
         }
 
         public void SettingsUpdated() {
-            verbatimBox.Checked = SettingsObject.Instance.FilterOutVerbatim;
-            ToolGrid.CheckByPredicate(verbatimBox, ToolGrid.IsRowVerbatimTest);
-
-            capsBox.Checked = SettingsObject.Instance.FilterOutCaps;
-            ToolGrid.CheckByPredicate(capsBox, ToolGrid.IsRowCapitalsTest);
-
-            noLettersBox.Checked = SettingsObject.Instance.FilterOutNoLetters;
-            ToolGrid.CheckByPredicate(noLettersBox, ToolGrid.IsRowNoLettersTest);
-
-            localizableBox.Checked = SettingsObject.Instance.FilterOutUnlocalizable;
-            ToolGrid.CheckByPredicate(localizableBox, ToolGrid.IsRowUnlocalizableTest);
-
-            commentBox.Checked = SettingsObject.Instance.FilterOutSpecificComment;
-            ToolGrid.CheckByPredicate(commentBox, ToolGrid.IsRowMarkedWithUnlocCommentTest);
-
-            comesFromElementBox.Checked = SettingsObject.Instance.FilterOutAspElement;
-            ToolGrid.CheckByPredicate(comesFromElementBox, ToolGrid.IsRowAspElementTest);
-
-            comesFromDesignerFileBox.Checked = SettingsObject.Instance.FilterOutDesignerFile;
-            ToolGrid.CheckByPredicate(comesFromDesignerFileBox, ToolGrid.IsRowDesignerFileTest);
-
-            comesFromAspNetBox.Checked = SettingsObject.Instance.FilterOutAspNet;
-            ToolGrid.CheckByPredicate(comesFromAspNetBox, ToolGrid.IsRowFromAspNetTest);
-
-            comesFromInlineExprBox.Checked = SettingsObject.Instance.FilterOutAspInlineExpr;
-            ToolGrid.CheckByPredicate(comesFromInlineExprBox, ToolGrid.IsRowAspExpressionTest);
-
-            comesFromAspClientCommentBox.Checked = SettingsObject.Instance.FilterOutAspClientComment;
-            ToolGrid.CheckByPredicate(comesFromAspClientCommentBox, ToolGrid.IsRowAspClientCommentTest);
-
-            isLocalizabilityProvedBox.Checked = SettingsObject.Instance.FilterOutAspNotProved;
-            ToolGrid.CheckByPredicate(isLocalizabilityProvedBox, ToolGrid.IsRowAspTypeProvedTest);
-
-            comesFromAspPlainTextBox.Checked = SettingsObject.Instance.FilterOutAspPlainText;
-            ToolGrid.CheckByPredicate(comesFromAspPlainTextBox, ToolGrid.IsRowAspPlainTextTest);
-
             splitContainer.SuspendLayout();
-            regexTable.Controls.Clear();            
-            regexTable.RowStyles.Clear();
-            regexTable.RowCount = 1;
-            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            regexTable.Controls.Add(regexLabel, 0, 0);
-            regexTable.Controls.Add(addRegexpButton, 1, 0);
 
-            foreach (var item in SettingsObject.Instance.FilterRegexps)
-                AddRegexpRow(item);                       
+            List<AbstractLocalizationCriterion> toAdd = new List<AbstractLocalizationCriterion>();
+            HashSet<string> used = new HashSet<string>();
+            
+            foreach (var crit in SettingsObject.Instance.CustomLocalizabilityCriteria) {
+                if (filterCustomCriteriaNames.Contains(crit.Name + "box")) {
+                    filterPanel.Controls[crit.Name + "label"].Text = crit.Description;
+                    
+                    LocalizationCustomCriterion oldCrit= (LocalizationCustomCriterion)filterCriteriaCopy[crit.Name];
+                    oldCrit.Predicate = crit.Predicate;
+                    oldCrit.Regex = crit.Regex;
+                    oldCrit.Target = crit.Target;                    
 
-                                    
+                    used.Add(crit.Name + "box");
+                    used.Add(crit.Name + "label");
+                } else {
+                    toAdd.Add(crit);
+                }
+            }
+
+            foreach (string name in filterCustomCriteriaNames.Except(used)) {
+                filterPanel.Controls.RemoveByKey(name);
+                if (name.EndsWith("box")) filterCriteriaCopy.Remove(name.Substring(0, name.Length - 3));
+            }
+
+            filterCustomCriteriaNames = used;
+            foreach (var crit in toAdd) {
+                addCriterionOption(crit);
+            }
+
+            ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
+
             splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
             splitContainer.ResumeLayout();
-        }   
+        }
 
         private void InitializeFilterPanel() {
-            filterPanel.Dock = DockStyle.Fill;
+            filterPanel = new TableLayoutPanel();
+            filterPanel.Dock = DockStyle.Top;
             filterPanel.AutoSize = true;
-            filterPanel.AutoScroll = true;
             filterPanel.Padding = new Padding(0, 0, SystemInformation.VerticalScrollBarWidth, 0);
-
-            filterPanel.ColumnCount = 2;
-            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); 
+            filterPanel.ColumnCount = 4;
+            filterPanel.ColumnStyles.Clear();
             filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+         
+            int rowCount = (int)Math.Ceiling(filterCriteriaCopy.Count / 2.0);
 
-            filterPanel.RowCount = 7;
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.RowCount = rowCount + 1;
+            filterPanel.RowStyles.Clear();
+            for (int i = 0; i < rowCount; i++) filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            localizableBox = new CheckBox();
-            localizableBox.Text = "Check off literals within elements decorated with [Localizable(false)]";
-            localizableBox.AutoSize = true;
-            localizableBox.AutoEllipsis = true;
-            localizableBox.ThreeState = true;
-            localizableBox.AutoCheck = false;
-            localizableBox.Click += new EventHandler(localizableBox_Click);
-            filterPanel.Controls.Add(localizableBox, 0, 0);
-
-            verbatimBox = new CheckBox();
-            verbatimBox.Text = @"Check off verbatim literals (@"""")";
-            verbatimBox.AutoSize = true;
-            verbatimBox.AutoEllipsis = true;
-            verbatimBox.ThreeState = true;
-            verbatimBox.AutoCheck = false;
-            verbatimBox.Click += new EventHandler(verbatimBox_Click);
-            filterPanel.Controls.Add(verbatimBox, 1, 0);
-
-            noLettersBox = new CheckBox();
-            noLettersBox.Text = "Check off literals not containing any letters (e.g. 127.0.0.1)";
-            noLettersBox.AutoSize = true;
-            noLettersBox.AutoEllipsis = true;
-            noLettersBox.ThreeState = true;
-            noLettersBox.AutoCheck = false;
-            noLettersBox.Click += new EventHandler(noLettersBox_Click);
-            filterPanel.Controls.Add(noLettersBox, 0, 1);
-
-            capsBox = new CheckBox();
-            capsBox.Text = "Check off literals containing only capital letters, symbols and punctuation";
-            capsBox.AutoSize = true;
-            capsBox.AutoEllipsis = true;
-            capsBox.ThreeState = true;
-            capsBox.AutoCheck = false;
-            capsBox.Click += new EventHandler(capsBox_Click);
-            filterPanel.Controls.Add(capsBox, 1, 1);
-
-            commentBox = new CheckBox();
-            commentBox.Text = "Check off literals preceded by " + StringConstants.LocalizationComment; 
-            commentBox.AutoSize = true;
-            commentBox.AutoEllipsis = true;
-            commentBox.ThreeState = true;
-            commentBox.AutoCheck = false;
-            commentBox.Click += new EventHandler(commentBox_Click);
-            filterPanel.Controls.Add(commentBox, 0, 2);
-
-            comesFromAspNetBox = new CheckBox();
-            comesFromAspNetBox.Text = "Check off literals coming from ASP .NET files";
-            comesFromAspNetBox.AutoSize = true;
-            comesFromAspNetBox.AutoEllipsis = true;
-            comesFromAspNetBox.ThreeState = true;
-            comesFromAspNetBox.AutoCheck = false;
-            comesFromAspNetBox.Click += new EventHandler(comesFromAspNetBox_Click);
-            filterPanel.Controls.Add(comesFromAspNetBox, 1, 2);
-
-            comesFromDesignerFileBox = new CheckBox();
-            comesFromDesignerFileBox.Text = "Check off literals coming from Designer files";
-            comesFromDesignerFileBox.AutoSize = true;
-            comesFromDesignerFileBox.AutoEllipsis = true;
-            comesFromDesignerFileBox.ThreeState = true;
-            comesFromDesignerFileBox.AutoCheck = false;
-            comesFromDesignerFileBox.Click += new EventHandler(comesFromDesignerFileBox_Click);
-            filterPanel.Controls.Add(comesFromDesignerFileBox, 0, 3);
-
-            comesFromAspClientCommentBox = new CheckBox();
-            comesFromAspClientCommentBox.Text = "Check off literals occuring within client-side comments of ASP .NET files";
-            comesFromAspClientCommentBox.AutoSize = true;
-            comesFromAspClientCommentBox.AutoEllipsis = true;
-            comesFromAspClientCommentBox.ThreeState = true;
-            comesFromAspClientCommentBox.AutoCheck = false;
-            comesFromAspClientCommentBox.Click +=new EventHandler(comesFromAspClientCommentBox_Click);
-            filterPanel.Controls.Add(comesFromAspClientCommentBox, 1, 3);
-
-            comesFromElementBox = new CheckBox();
-            comesFromElementBox.Text = "Check off literals coming from web file elements";
-            comesFromElementBox.AutoSize = true;
-            comesFromElementBox.AutoEllipsis = true;
-            comesFromElementBox.ThreeState = true;
-            comesFromElementBox.AutoCheck = false;
-            comesFromElementBox.Click += new EventHandler(comesFromElementBox_Click);
-            filterPanel.Controls.Add(comesFromElementBox, 0, 4);
-
-            comesFromInlineExprBox = new CheckBox();
-            comesFromInlineExprBox.Text = "Check off literals coming from ASP .NET inline expressions (<%=, <%:, <%$)";
-            comesFromInlineExprBox.AutoSize = true;
-            comesFromInlineExprBox.AutoEllipsis = true;
-            comesFromInlineExprBox.ThreeState = true;
-            comesFromInlineExprBox.AutoCheck = false;
-            comesFromInlineExprBox.Click += new EventHandler(comesFromInlineExprBox_Click);
-            filterPanel.Controls.Add(comesFromInlineExprBox, 1, 4);
-
-            comesFromAspPlainTextBox = new CheckBox();
-            comesFromAspPlainTextBox.Text = "Check off literals coming from ASP .NET plain text (between elements)";
-            comesFromAspPlainTextBox.AutoSize = true;
-            comesFromAspPlainTextBox.AutoEllipsis = true;
-            comesFromAspPlainTextBox.ThreeState = true;
-            comesFromAspPlainTextBox.AutoCheck = false;
-            comesFromAspPlainTextBox.Click += new EventHandler(comesFromAspPlainText_Click);
-            filterPanel.Controls.Add(comesFromAspPlainTextBox, 0, 5);
-
-            isLocalizabilityProvedBox = new CheckBox();
-            isLocalizabilityProvedBox.Text = "Check off ASP .NET literals, whose attribute's type could not be determined or is not string";
-            isLocalizabilityProvedBox.AutoSize = true;
-            isLocalizabilityProvedBox.AutoEllipsis = true;
-            isLocalizabilityProvedBox.ThreeState = true;
-            isLocalizabilityProvedBox.AutoCheck = false;
-            isLocalizabilityProvedBox.Click += new EventHandler(isLocalizabilityProved_Click);
-            filterPanel.Controls.Add(isLocalizabilityProvedBox, 1, 5);
-
-            regexLabel = new Label();
-            regexLabel.Text = "Filter by regular expression:";
-            regexLabel.AutoSize = true;
-           
-            regexTable = new TableLayoutPanel();
-            regexTable.Dock = DockStyle.Fill;
-            regexTable.AutoSize = true;
-            regexTable.ColumnCount = 6;
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            regexTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            regexTable.RowCount = 1;
-            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            regexTable.Controls.Add(regexLabel, 0, 0);
-
-            addRegexpButton = new Button();
-            addRegexpButton.Text = "Add regular expression";
-            addRegexpButton.Click += new EventHandler(addRegexpButton_Click);
-            regexTable.Controls.Add(addRegexpButton, 1, 0);
-
-            filterPanel.Controls.Add(regexTable, 0, 6);
-            filterPanel.SetColumnSpan(regexTable, 2);
+            foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
+                addCriterionOption(crit);
+            }
+      
         }
 
-        private void isLocalizabilityProved_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspNotProved = !SettingsObject.Instance.FilterOutAspNotProved;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspNotProved;
-            ToolGrid.CheckByPredicate(isLocalizabilityProvedBox, ToolGrid.IsRowAspTypeProvedTest);
+        private void addCriterionOption(AbstractLocalizationCriterion crit) {
+            ComboBox box = null;
+            Label label = null;
+
+            box = new ComboBox();
+            box.DropDownStyle = ComboBoxStyle.DropDownList;
+            box.Tag = crit.Name;
+            box.Items.Add(LocalizationCriterionAction.FORCE_ENABLE.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction.FORCE_DISABLE.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction.VALUE.ToHumanForm() + " " + crit.Weight);
+            box.Items.Add(LocalizationCriterionAction.IGNORE.ToHumanForm());
+            box.Width = 130;
+            box.Name = crit.Name + "box";
+            box.SelectedIndex = (int)crit.Action;
+            box.SelectedIndexChanged += new EventHandler(box_SelectedIndexChanged);
+
+            label = new Label();
+            label.Name = crit.Name + "label";
+            label.Text = crit.Description;
+            label.Dock = DockStyle.Fill;
+            label.AutoEllipsis = true;
+            label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+
+            filterPanel.Controls.Add(label);
+            filterPanel.Controls.Add(box);
+
+            if (crit is LocalizationCustomCriterion) {
+                filterCustomCriteriaNames.Add(label.Name);
+                filterCustomCriteriaNames.Add(box.Name);
+            }
+
+            filterCriteriaCopy.Add(crit.Name, crit.DeepCopy());
         }
 
-        private void comesFromAspPlainText_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspPlainText = !SettingsObject.Instance.FilterOutAspPlainText;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspPlainText;
-            ToolGrid.CheckByPredicate(comesFromAspPlainTextBox, ToolGrid.IsRowAspPlainTextTest);
+        private bool ignoreLocRecalculation = false;
+        public void ResetFilterSettings() {
+            ignoreLocRecalculation=true;
+            foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
+                filterCriteriaCopy[crit.Name].Action = crit.Action;
+                (filterPanel.Controls[crit.Name + "box"] as ComboBox).SelectedIndex = (int)crit.Action;
+            }
+            ignoreLocRecalculation = false;
+            ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
         }
 
-        private void comesFromInlineExprBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspInlineExpr = !SettingsObject.Instance.FilterOutAspInlineExpr;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspInlineExpr;
-            ToolGrid.CheckByPredicate(comesFromInlineExprBox, ToolGrid.IsRowAspExpressionTest);
-        }
+        private void box_SelectedIndexChanged(object sender, EventArgs e) {
+            ComboBox cBox = (sender as ComboBox);
+            if (cBox.SelectedIndex == -1) return;
+            if (ignoreLocRecalculation) return;
 
-        private void comesFromElementBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspElement = !SettingsObject.Instance.FilterOutAspElement;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspElement;
-            ToolGrid.CheckByPredicate(comesFromElementBox, ToolGrid.IsRowAspElementTest);
-        }
+            try {
+                string critName = (string)cBox.Tag;
+                LocalizationCriterionAction newAction = (LocalizationCriterionAction)cBox.SelectedIndex;
 
-        private void comesFromAspClientCommentBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspClientComment = !SettingsObject.Instance.FilterOutAspClientComment;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspClientComment;
-            ToolGrid.CheckByPredicate(comesFromAspClientCommentBox, ToolGrid.IsRowAspClientCommentTest);
-        }
+                filterCriteriaCopy[critName].Action = newAction;
+                ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
-        private void comesFromDesignerFileBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutDesignerFile = !SettingsObject.Instance.FilterOutDesignerFile;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutDesignerFile;
-            ToolGrid.CheckByPredicate(comesFromDesignerFileBox, ToolGrid.IsRowDesignerFileTest);
-        }
-
-        private void comesFromAspNetBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutAspNet = !SettingsObject.Instance.FilterOutAspNet;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutAspNet;
-            ToolGrid.CheckByPredicate(comesFromAspNetBox, ToolGrid.IsRowFromAspNetTest);
-        }
-
-        private void commentBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutSpecificComment = !SettingsObject.Instance.FilterOutSpecificComment;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutSpecificComment;
-            ToolGrid.CheckByPredicate(commentBox, ToolGrid.IsRowMarkedWithUnlocCommentTest);
-        }
-
-        private void capsBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutCaps = !SettingsObject.Instance.FilterOutCaps;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutCaps;
-            ToolGrid.CheckByPredicate(capsBox, ToolGrid.IsRowCapitalsTest);
-        }
-
-        private void noLettersBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutNoLetters = !SettingsObject.Instance.FilterOutNoLetters;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutNoLetters;
-            ToolGrid.CheckByPredicate(noLettersBox, ToolGrid.IsRowNoLettersTest);
-        }
-
-        private void localizableBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutUnlocalizable = !SettingsObject.Instance.FilterOutUnlocalizable;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutUnlocalizable;
-            ToolGrid.CheckByPredicate(localizableBox, ToolGrid.IsRowUnlocalizableTest);
-        }
-
-        private void verbatimBox_Click(object sender, EventArgs e) {
-            SettingsObject.Instance.FilterOutVerbatim = !SettingsObject.Instance.FilterOutVerbatim;
-            (sender as CheckBox).Checked = SettingsObject.Instance.FilterOutVerbatim;
-            ToolGrid.CheckByPredicate(verbatimBox, ToolGrid.IsRowVerbatimTest);
-        }
-
-        private void addRegexpButton_Click(object sender, EventArgs e) {
-            filterPanel.SuspendLayout();
-
-            AddRegexpRow("(new regexp)", true);            
-
-            filterPanel.ResumeLayout();
-        }
-
-        private void AddRegexpRow(string regexp, bool mustMatch) {
-            var newInstance = new SettingsObject.RegexpInstance() {
-                MustMatch = mustMatch,
-                Regexp = regexp
-            };
-            
-            SettingsObject.Instance.FilterRegexps.Add(newInstance);
-            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
-
-            AddRegexpRow(newInstance);
-            ToolGrid.CheckByPredicate(ToolGrid.IsRowMatchingRegexpInstance, newInstance);
-        }
-
-        private void AddRegexpRow(SettingsObject.RegexpInstance instance) {
-            TextBox regexpBox = new TextBox();
-            regexpBox.Text = instance.Regexp;
-            regexpBox.Dock = DockStyle.Top;
-            regexpBox.Tag = instance;
-            regexpBox.LostFocus += new EventHandler(regexpBox_LostFocus);
-
-            RadioButton matchingButton = new RadioButton();
-            matchingButton.Text = "Matching";
-            matchingButton.Checked = instance.MustMatch;
-            matchingButton.Tag = instance;
-            matchingButton.Click += new EventHandler(matchingButton_Click);
-
-            RadioButton notMatchingButton = new RadioButton();
-            notMatchingButton.Text = "Not matching";
-            notMatchingButton.Checked = !instance.MustMatch;
-            notMatchingButton.Tag = instance;
-            notMatchingButton.Click += new EventHandler(notMatchingButton_Click);
-
-            Button removeButton = new Button();
-            removeButton.Click += new EventHandler(removeButton_Click);
-            removeButton.Text = "Remove";
-            removeButton.Tag = instance;
-
-            Button applyButton = new Button();
-            applyButton.Click += new EventHandler(applyButton_Click);
-            applyButton.Tag = instance;
-            applyButton.Text = "Apply"; 
-
-            int currentRow = regexTable.GetRow(addRegexpButton);
-            regexTable.RowCount = currentRow + 2;
-            regexTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            regexTable.SetRow(addRegexpButton, currentRow + 1);
-
-            regexTable.Controls.Add(regexpBox, 1, currentRow);
-            regexTable.Controls.Add(matchingButton, 2, currentRow);
-            regexTable.Controls.Add(notMatchingButton, 3, currentRow);
-            regexTable.Controls.Add(applyButton, 4, currentRow);
-            regexTable.Controls.Add(removeButton, 5, currentRow);
-        }
-
-        private void applyButton_Click(object sender, EventArgs e) {
-            Control senderBox = sender as Control;
-            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
-
-            ToolGrid.CheckByPredicate(ToolGrid.IsRowMatchingRegexpInstance, inst);
-        }
-
-        private void notMatchingButton_Click(object sender, EventArgs e) {
-            Control senderBox = sender as Control;
-            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
-
-            inst.MustMatch = false;
-            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
-        }
-
-        private void matchingButton_Click(object sender, EventArgs e) {
-            Control senderBox = sender as Control;
-            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
-
-            inst.MustMatch = true;
-            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
-        }
-
-        private void regexpBox_LostFocus(object sender, EventArgs e) {
-            Control senderBox = sender as Control;
-            SettingsObject.RegexpInstance inst = senderBox.Tag as SettingsObject.RegexpInstance;
-
-            inst.Regexp = senderBox.Text;
-            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
-        }
-
-        private void removeButton_Click(object sender, EventArgs e) {
-            filterPanel.SuspendLayout();
-            regexTable.SuspendLayout();
-
-            Button senderButton = sender as Button;
-            int row = regexTable.GetRow(senderButton);
-
-            for (int i = 1; i < regexTable.ColumnCount; i++)
-                regexTable.Controls.Remove(regexTable.GetControlFromPosition(i, row));
-
-            for (int i = row + 1; i < regexTable.RowCount; i++)
-                for (int j = 1; j < regexTable.ColumnCount; j++) {
-                    Control c=regexTable.GetControlFromPosition(j, i);
-                    if (c != null) regexTable.SetRow(c, i - 1);
-                }
-
-            regexTable.RowStyles.RemoveAt(regexTable.RowStyles.Count - 1);
-            regexTable.RowCount--;            
-
-            regexTable.ResumeLayout(true);
-            filterPanel.ResumeLayout();
-            filterPanel.PerformLayout();
-
-            SettingsObject.Instance.FilterRegexps.Remove(senderButton.Tag as SettingsObject.RegexpInstance);
-            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);            
-        }
-
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            }
+        }       
+       
         private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {
             if (HighlightRequired != null) HighlightRequired(sender, e);
         }
@@ -480,5 +205,7 @@ namespace VisualLocalizer.Gui {
                 if (value) splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
             }
         }
+
+       
     }
 }

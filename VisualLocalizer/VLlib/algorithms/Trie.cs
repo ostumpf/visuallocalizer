@@ -19,7 +19,8 @@ namespace VisualLocalizer.Library {
         }
 
         public ElementType Step(ElementType currentElement, char c) {
-            while (!currentElement.Successors.ContainsKey(c) && currentElement != Root) currentElement = (ElementType)currentElement.Predecessor;
+            while (!currentElement.Successors.ContainsKey(c) && currentElement != Root) 
+                currentElement = (ElementType)currentElement.Predecessor;
             if (currentElement.Successors.ContainsKey(c)) currentElement = (ElementType)currentElement.Successors[c];
             return currentElement;
         }

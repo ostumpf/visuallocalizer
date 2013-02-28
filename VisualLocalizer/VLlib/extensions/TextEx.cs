@@ -26,7 +26,9 @@ namespace VisualLocalizer.Library {
                                                     };      
 
         public static bool IsValidIdentifier(this string text) {
-            return !string.IsNullOrEmpty(text) && csharp.IsValidIdentifier(text);
+            return true;
+            // TODO!!!!!
+            //return !string.IsNullOrEmpty(text) && csharp.IsValidIdentifier(text);
         }
 
         public static string RemoveWhitespace(this string text) {

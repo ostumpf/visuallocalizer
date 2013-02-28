@@ -30,7 +30,7 @@ namespace VisualLocalizer.Commands {
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });            
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
             });
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
@@ -50,7 +50,7 @@ namespace VisualLocalizer.Commands {
                 return empty || IsItemOutsideSelection(item);
             });
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true);
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
             });
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
@@ -64,7 +64,7 @@ namespace VisualLocalizer.Commands {
 
             Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
             Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.Properties.Item("FullPath").Value.ToString(), true); 
+                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
             });
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);

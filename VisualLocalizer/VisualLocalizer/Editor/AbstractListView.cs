@@ -12,6 +12,7 @@ using System.Collections.Specialized;
 using System.Drawing;
 using VisualLocalizer.Editor.UndoUnits;
 using VisualLocalizer.Gui;
+using System.ComponentModel.Design;
 
 namespace VisualLocalizer.Editor {
     internal abstract class AbstractListView : ListView, IDataTabItem {
@@ -113,7 +114,9 @@ namespace VisualLocalizer.Editor {
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(Items.Count);
             foreach (ListViewKeyItem item in Items) {                
                 if (item.ErrorSet.Count > 0 && throwExceptions) throw new Exception(item.ErrorSet.First());
-                ResXDataNode node = new ResXDataNode(item.Key, item.DataNode.FileRef);
+
+                object value = item.DataNode.FileRef == null ? item.DataNode.GetValue((ITypeResolutionService)null) : item.DataNode.FileRef;
+                ResXDataNode node = new ResXDataNode(item.Key, value);
                 node.Comment = item.SubItems["Comment"].Text;
                 data.Add(item.Key, node);
             }
@@ -143,7 +146,11 @@ namespace VisualLocalizer.Editor {
 
             ListViewItem.ListViewSubItem subKey = new ListViewItem.ListViewSubItem();
             subKey.Name = "Path";
-            if (value.FileRef != null) subKey.Text = editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString();
+            if (value.FileRef != null) {
+                subKey.Text = editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString();
+            } else {
+                subKey.Text = "(embedded)";
+            }
             item.SubItems.Add(subKey);
 
             ListViewItem.ListViewSubItem subComment = new ListViewItem.ListViewSubItem();
@@ -176,7 +183,7 @@ namespace VisualLocalizer.Editor {
 
         public bool Copy() {
             if (CanCutOrCopy != COMMAND_STATUS.ENABLED) return false;
-
+            // TODO - fileref
             StringCollection list = new StringCollection();
             foreach (ListViewKeyItem item in this.SelectedItems) {
                 ResXFileRef fileRef = item.DataNode.FileRef;
@@ -313,8 +320,7 @@ namespace VisualLocalizer.Editor {
         void AbstractListView_MouseDoubleClick(object sender, MouseEventArgs e) {
             ListViewKeyItem item = this.GetItemAt(e.X, e.Y) as ListViewKeyItem;
             if (item != null) {
-                Window win = VisualLocalizerPackage.Instance.DTE.OpenFile(null, item.DataNode.FileRef.FileName);
-                if (win != null) win.Activate();
+                openForEdit(item);
             }
         }
 
@@ -335,8 +341,16 @@ namespace VisualLocalizer.Editor {
 
         protected void openContextMenuItem_Click(object sender, EventArgs e) {
             ListViewKeyItem item = SelectedItems[0] as ListViewKeyItem;
+            openForEdit(item);
+        }
+
+        private void openForEdit(ListViewKeyItem item) {
             if (!item.FileRefOk) {
                 VisualLocalizer.Library.MessageBox.ShowError("Cannot open item - referenced file does not exist.");
+                return;
+            }
+            if (item.DataNode.FileRef == null) {
+                VisualLocalizer.Library.MessageBox.ShowError("Cannot open item - editing of embedded resources is not supported.");
                 return;
             }
 
@@ -344,13 +358,20 @@ namespace VisualLocalizer.Editor {
             if (win != null) win.Activate();
 
             VLOutputWindow.VisualLocalizerPane.WriteLine("Opened resource file \"{0}\"", item.DataNode.FileRef.FileName);
-        }        
+        }
 
         protected void contextMenu_Popup(object sender, EventArgs e) {
             renameContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly && !IsEditing;
-            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly && !IsEditing; ;
+            editCommentContextMenuItem.Enabled = SelectedItems.Count == 1 && !DataReadOnly && !IsEditing;
             openContextMenuItem.Enabled = SelectedItems.Count == 1 && !IsEditing;
             deleteContextMenu.Enabled = SelectedItems.Count >= 1 && !DataReadOnly && !IsEditing;
+
+            bool allSelectedResourcesExternal = true;
+            foreach (ListViewKeyItem item in SelectedItems) {
+                allSelectedResourcesExternal = allSelectedResourcesExternal && item.DataNode.FileRef != null;
+            }
+            deleteExcludeContextMenuItem.Enabled = allSelectedResourcesExternal;
+            deleteRemoveContextMenuItem.Enabled = allSelectedResourcesExternal;
 
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;            

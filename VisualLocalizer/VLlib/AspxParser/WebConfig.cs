@@ -92,7 +92,7 @@ namespace VisualLocalizer.Library.AspxParser {
             while (true) {
                 foreach (ProjectItem item in currentProjectItem.Collection) {
                     if (item.Name.ToLower() == WebConfigFilename) {
-                        list.Add((string)item.Properties.Item("FullPath").Value);
+                        list.Add(item.GetFullPath());
                     }
                 }
                 if (!(currentProjectItem.Collection.Parent is ProjectItem)) break;

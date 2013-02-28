@@ -6,13 +6,8 @@ using System.Windows.Forms;
 
 namespace VisualLocalizer.Library {
 
-    public class DataGridViewCheckedRow<ItemType> : DataGridViewRow where ItemType : class {
-        public DataGridViewCheckedRow() {
-            InfluencingCheckboxes = new HashSet<CheckBox>();
-        }
-
-        public ItemType DataSourceItem { get; set; }
-        public HashSet<CheckBox> InfluencingCheckboxes { get; private set; }
+    public class DataGridViewCheckedRow<ItemType> : DataGridViewRow where ItemType : class {        
+        public ItemType DataSourceItem { get; set; }        
     }
 
     public class DataGridViewKeyValueRow<ItemType> : DataGridViewCheckedRow<ItemType>, IKeyValueSource where ItemType : class {

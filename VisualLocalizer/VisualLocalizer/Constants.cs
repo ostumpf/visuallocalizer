@@ -24,7 +24,7 @@ namespace VisualLocalizer {
         public const int SolExpMenu = 0x0005;
 
         public const int MoveCodeMenuItem = 0x0007;
-        public const int InlineCodeMenuItem = 0x0008;
+        public const int InlineCodeMenuItem = 0x0008;        
         public const int BatchMoveCodeMenuItem = 0x0014;
         public const int BatchInlineCodeMenuItem = 0x0015;
         public const int BatchMoveSelectionCodeMenuItem = 0x0018;
@@ -32,6 +32,7 @@ namespace VisualLocalizer {
 
         public const int BatchMoveSolExpMenuItem = 0x0003;
         public const int BatchInlineSolExpMenuItem = 0x0016;
+        public const int TranslateSolExpMenuItem = 0x0019;
 
         public const int BatchMoveToolbarID = 0x1001;        
         public const int BatchMoveToolbarRunID = 0x1003;

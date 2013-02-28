@@ -15,7 +15,6 @@ using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Extensions;
 using System.ComponentModel;
-
 namespace VisualLocalizer.Gui {
 
     internal sealed class BatchMoveToResourcesToolGrid : AbstractKeyValueGridView<CodeStringResultItem>, IHighlightRequestSource {
@@ -27,11 +26,12 @@ namespace VisualLocalizer.Gui {
         private bool valueAdded = false;
         private BatchMoveToResourcesToolPanel parentToolPanel;
         private MenuItem destinationContextMenu;
-
+        
         public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel) : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
             this.parentToolPanel = panel;
             this.MultiSelect = true;
-        
+            this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
+
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -54,9 +54,7 @@ namespace VisualLocalizer.Gui {
             contextMenu.Popup += new EventHandler(ContextMenu_Popup);
 
             this.ContextMenu = contextMenu;
-        }
-
-        
+        }        
 
         #region public members
 
@@ -73,7 +71,7 @@ namespace VisualLocalizer.Gui {
             destinationItemsCache.Clear();
             resxItemsCache.Clear();
             loadedItems.Clear();            
-            CheckedRowsCount = 0;
+            CheckedRowsCount = 0;            
             SuspendLayout();            
 
             if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
@@ -82,12 +80,11 @@ namespace VisualLocalizer.Gui {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
                 row.DataSourceItem = item;                
 
-                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();                
-                checkCell.Value = item.MoveThisItem;
+                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
+                checkCell.Value = false;
                 row.Cells.Add(checkCell);
 
                 DataGridViewTextBoxCell locProbCell = new DataGridViewTextBoxCell();
-                locProbCell.Value = string.Format("{0}%", item.GetLocalizationRatio());
                 row.Cells.Add(locProbCell);
 
                 DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
@@ -113,7 +110,7 @@ namespace VisualLocalizer.Gui {
                 row.Cells.Add(sourceCell);
 
                 DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
-                destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem.ContainingProject));
+                destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem));
                 if (destinationCell.Items.Count > 0)
                     destinationCell.Value = destinationCell.Items[0].ToString();
                 row.Cells.Add(destinationCell);
@@ -134,154 +131,33 @@ namespace VisualLocalizer.Gui {
                 sourceCell.ReadOnly = true;
                 lineCell.ReadOnly = true;
                 contextCell.ReadOnly = true;
-
-                bool checkRow = TestFilterRow(row);
-                row.Cells[CheckBoxColumnName].Value = checkRow;
-                if (checkRow) CheckedRowsCount++;
-
+                
                 Validate(row);
-            }
-
-            UpdateCheckHeader();
-            parentToolPanel.SettingsUpdated();
-
+            }            
+            
             this.ClearSelection();            
             this.ResumeLayout();            
             this.OnResize(null);
+            
+            parentToolPanel.ResetFilterSettings();
+            UpdateCheckHeader();
 
             if (SortedColumn != null) {
                 Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
             }
         }
 
-        private bool TestFilterRow(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            bool check = true;
+        private Dictionary<string, AbstractLocalizationCriterion> lastSetCriteria;
+        public void RecalculateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria) {
+            if (Rows.Count == 0) return;
+            lastSetCriteria = criteria;
 
-            if (check && IsRowCapitalsTest(row)) check = check && !SettingsObject.Instance.FilterOutCaps;
-            if (check && IsRowNoLettersTest(row)) check = check && !SettingsObject.Instance.FilterOutNoLetters;
-            if (check && IsRowUnlocalizableTest(row)) check = check && !SettingsObject.Instance.FilterOutUnlocalizable;
-            if (check && IsRowVerbatimTest(row)) check = check && !SettingsObject.Instance.FilterOutVerbatim;
-            if (check && IsRowMarkedWithUnlocCommentTest(row)) check = check && !SettingsObject.Instance.FilterOutSpecificComment;
-
-            if (check) {
-                foreach (var inst in SettingsObject.Instance.FilterRegexps) {
-                    if (IsRowMatchingRegexpInstance(row, inst)) {
-                        check = false;
-                        break;
-                    }
-                }
-            }
-
-            return check;
-        }
-
-        public void CheckByPredicate(CheckBox originatingBox, Predicate<DataGridViewKeyValueRow<CodeStringResultItem>> test) {
-            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {                
-                if (test(row)) {
-                    if (originatingBox.Checked) {
-                        row.InfluencingCheckboxes.Add(originatingBox); 
-                    } else {
-                        row.InfluencingCheckboxes.Remove(originatingBox); 
-                    }
-
-                    bool check = row.InfluencingCheckboxes.Count == 0;
-                    bool oldValue = (bool)row.Cells[CheckBoxColumnName].Value;
-                    
-                    row.Cells[CheckBoxColumnName].Value = check;
-                    if (oldValue && !check) CheckedRowsCount--;
-                    if (!oldValue && check) CheckedRowsCount++;                    
-                }
-            }
-            UpdateCheckHeader();
-        }
-
-        public void CheckByPredicate(Func<DataGridViewKeyValueRow<CodeStringResultItem>, SettingsObject.RegexpInstance, bool> test, SettingsObject.RegexpInstance regexInstance) {
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
-                bool oldValue = (bool)row.Cells[CheckBoxColumnName].Value;
-                if (test(row, regexInstance)) {
-                    row.Cells[CheckBoxColumnName].Value = false;
-                    if (oldValue) CheckedRowsCount--;
-                } 
+                updateLocProbability(criteria, row);
             }
+          
             UpdateCheckHeader();
-        }
-
-        public bool IsRowCapitalsTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            string value = (string)row.Cells[ValueColumnName].Value;
-            if (value == null) return false;
-
-            bool onlyCaps = true;
-            foreach (char c in value)
-                if (!char.IsUpper(c) && !char.IsSymbol(c) && !char.IsPunctuation(c)) {
-                    onlyCaps = false;
-                    break;
-                }
-
-            return onlyCaps;
-        }
-
-        public bool IsRowNoLettersTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            string value = (string)row.Cells[ValueColumnName].Value;
-            if (value == null) return true;
-
-            bool containsLetter = false;
-            foreach (char c in value)
-                if (char.IsLetter(c)) {
-                    containsLetter = true;
-                    break;
-                }
-            return !containsLetter;
-        }
-
-        public bool IsRowUnlocalizableTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            return row.DataSourceItem.IsWithinLocalizableFalse;
-        }
-
-        public bool IsRowVerbatimTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            return row.DataSourceItem.WasVerbatim;
-        }
-
-        public bool IsRowMarkedWithUnlocCommentTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            return row.DataSourceItem.IsMarkedWithUnlocalizableComment;
-        }
-
-        public bool IsRowMatchingRegexpInstance(DataGridViewKeyValueRow<CodeStringResultItem> row, SettingsObject.RegexpInstance regexpInstance) {
-            string value = (string)row.Cells[ValueColumnName].Value;
-            return Regex.IsMatch(value, regexpInstance.Regexp) == regexpInstance.MustMatch;
-        }
-
-        public bool IsRowFromAspNetTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            return row.DataSourceItem is AspNetStringResultItem;
-        }
-
-        public bool IsRowAspClientCommentTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            return row.DataSourceItem.ComesFromClientComment;
-        }
-
-        public bool IsRowAspElementTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
-            return aitem != null && aitem.ComesFromElement;
-        }
-
-        public bool IsRowAspExpressionTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
-            return aitem != null && aitem.ComesFromInlineExpression;
-        }
-
-        public bool IsRowDesignerFileTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {            
-            return row.DataSourceItem.ComesFromDesignerFile;
-        }
-
-        public bool IsRowAspPlainTextTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
-            return aitem != null && aitem.ComesFromPlainText;
-        }
-
-        // !!! EXCEPTION - returns negation!!!!
-        public bool IsRowAspTypeProvedTest(DataGridViewKeyValueRow<CodeStringResultItem> row) {
-            AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
-            return aitem != null && !aitem.LocalizabilityProved && (aitem.ComesFromElement || aitem.ComesFromDirective);
-        }
+        }        
 
         #endregion
 
@@ -360,13 +236,7 @@ namespace VisualLocalizer.Gui {
                     valueAdded = false;
                 }
             }
-            if (Columns[e.ColumnIndex].Name == CheckBoxColumnName && CheckBoxColumnName != null) {                
-                var row = Rows[e.RowIndex] as DataGridViewKeyValueRow<CodeStringResultItem>;
-                if (row != null) {
-                    foreach (CheckBox box in row.InfluencingCheckboxes)
-                        box.CheckState = CheckState.Indeterminate;
-                }
-            }
+            updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex]);
             base.OnCellEndEdit(e);
         }
 
@@ -382,7 +252,7 @@ namespace VisualLocalizer.Gui {
                 ResXProjectItem resxItem = resxItemsCache[dest.ToString()];
                 if (!resxItem.IsLoaded) {
                     resxItem.Load();
-                    VLDocumentViewsManager.SetFileReadonly(resxItem.InternalProjectItem.Properties.Item("FullPath").Value.ToString(), true);
+                    VLDocumentViewsManager.SetFileReadonly(resxItem.InternalProjectItem.GetFullPath(), true);
                     loadedItems.Add(resxItem);
                 }
 
@@ -416,7 +286,20 @@ namespace VisualLocalizer.Gui {
             }
         }
         
-        #endregion
+        #endregion      
+
+        private void updateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row) {
+            int newLocProb = GetResultItemFromRow(row).GetLocalizationProbability(criteria);
+            row.Cells[LocProbColumnName].Tag = newLocProb;
+            row.Cells[LocProbColumnName].Value = newLocProb + "%";
+
+            bool isChecked = (bool)row.Cells[CheckBoxColumnName].Value;
+            bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
+            row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
+
+            if (isChecked && !willBeChecked) CheckedRowsCount--;
+            if (!isChecked && willBeChecked) CheckedRowsCount++;
+        }    
 
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
             if (HighlightRequired != null && e.RowIndex >= 0) {
@@ -426,20 +309,20 @@ namespace VisualLocalizer.Gui {
             }
         }
         
-        private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, Project project) {
-            if (!destinationItemsCache.ContainsKey(project)) {                
+        private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, ProjectItem item) {
+            if (!destinationItemsCache.ContainsKey(item.ContainingProject)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
-                foreach (ResXProjectItem projectItem in project.GetResXItemsAround(true)) {
+                foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(item, true)) {
                     if (!string.IsNullOrEmpty(projectItem.Class) && !string.IsNullOrEmpty(projectItem.Namespace)) {
                         string key = projectItem.ToString();
                         resxItems.Add(key);
                         if (!resxItemsCache.ContainsKey(key)) resxItemsCache.Add(key, projectItem);
                     }
                 }
-                destinationItemsCache.Add(project, resxItems);
+                destinationItemsCache.Add(item.ContainingProject, resxItems);
             }
 
-            return destinationItemsCache[project];
+            return destinationItemsCache[item.ContainingProject];
         }
                 
         private void BatchMoveToResourcesToolPanel_CellValidating(object sender, DataGridViewCellValidatingEventArgs e) {
@@ -478,7 +361,7 @@ namespace VisualLocalizer.Gui {
             if (Columns[CurrentCell.ColumnIndex].Name == KeyColumnName && e.Control is ComboBox) {
                 ComboBox box = e.Control as ComboBox;
                 box.DropDownStyle = ComboBoxStyle.DropDown;                     
-            }            
+            }                        
         }        
 
         private void ContextMenu_Popup(object sender, EventArgs e) {

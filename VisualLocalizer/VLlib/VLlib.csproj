@@ -13,7 +13,7 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>libkey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>vlkey.snk</AssemblyOriginatorKeyFile>
     <SccProjectName>Svn</SccProjectName>
     <SccLocalPath>Svn</SccLocalPath>
     <SccAuxPath>Svn</SccAuxPath>
@@ -115,7 +115,7 @@
     <Compile Include="attributes\ProvideOutputWindowAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="libkey.pfx" />
+    <None Include="vlkey.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

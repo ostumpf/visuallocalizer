@@ -77,7 +77,7 @@ namespace VisualLocalizer.Gui {
 
         protected void panel_HighlightRequired(object sender, CodeResultItemEventArgs e) {
             try {
-                IVsTextView view = DocumentViewsManager.GetTextViewForFile(e.Item.SourceItem.Properties.Item("FullPath").Value.ToString(), true, true);
+                IVsTextView view = DocumentViewsManager.GetTextViewForFile(e.Item.SourceItem.GetFullPath(), true, true);
                 if (view == null) throw new Exception("Cannot open document.");
 
                 TextSpan span = e.Item.ReplaceSpan;
