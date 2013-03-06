@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Components;
+using VisualLocalizer.Commands;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -12,33 +13,56 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private ListViewKeyItem Item { get; set; }
         private AbstractListView ListView { get; set; }
+        private ResXEditorControl Control { get; set; }
 
-        public ListViewRenameKeyUndoUnit(AbstractListView listView, ListViewKeyItem item, string oldKey, string newKey)
+        public ListViewRenameKeyUndoUnit(ResXEditorControl control, AbstractListView listView, ListViewKeyItem item, string oldKey, string newKey)
             : base(oldKey, newKey) {
             this.Item = item;
             this.ListView = listView;
+            this.Control = control;
         }
 
         public override void Undo() {
-            Item.Text = OldKey;
-            Item.BeforeEditValue = NewKey;
-            Item.AfterEditValue = OldKey;
-            ListView.Validate(Item);
-            ListView.NotifyDataChanged();
-
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
-            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+            UpdateSourceReferences(NewKey, OldKey);
         }
 
         public override void Redo() {
-            Item.Text = NewKey;
-            Item.BeforeEditValue = OldKey;
-            Item.AfterEditValue = NewKey;
-            ListView.Validate(Item);
-            ListView.NotifyDataChanged();
+            UpdateSourceReferences(OldKey, NewKey);
+        }
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
-            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+        private void UpdateSourceReferences(string from, string to) {
+            try {
+                Control.ReferenceCounterThreadSuspended = true;
+                Control.UpdateReferencesCount(Item);
+
+                Item.Text = to;
+                Item.BeforeEditValue = from;
+                Item.AfterEditValue = to;
+                ListView.Validate(Item);
+                ListView.NotifyDataChanged();
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
+                if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+
+                if (Item.ErrorSet.Count == 0) {
+                    int errors = 0;
+                    int count = Item.CodeReferences.Count;
+                    Item.CodeReferences.ForEach((i) => { i.KeyAfterRename = to; });
+
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(Item.CodeReferences);
+                    replacer.Inline(Item.CodeReferences, true, ref errors);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                }
+
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                Control.ReferenceCounterThreadSuspended = false;
+            }
         }
     }
 }

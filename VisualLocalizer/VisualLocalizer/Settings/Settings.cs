@@ -12,6 +12,7 @@ namespace VisualLocalizer.Settings {
 
         public event Action<CHANGE_CATEGORY> PropertyChanged;
         public event Action SettingsLoaded;
+        public event Action RevalidationRequested;
 
         private static SettingsObject instance;
         private SettingsObject() {            
@@ -115,6 +116,17 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        private BAD_KEY_NAME_POLICY _BadKeyNamePolicy;
+        public BAD_KEY_NAME_POLICY BadKeyNamePolicy {
+            get {
+                return _BadKeyNamePolicy;
+            }
+            set {
+                _BadKeyNamePolicy = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+            }
+        }
+
         public static SettingsObject Instance {
             get {
                 if (instance == null) instance = new SettingsObject();
@@ -129,7 +141,11 @@ namespace VisualLocalizer.Settings {
         public void NotifySettingsLoaded() {
             if (SettingsLoaded != null) SettingsLoaded();
         }
-       
+
+        public void NotifyRevalidationRequested() {
+            if (RevalidationRequested != null) RevalidationRequested();
+        }
+
         internal sealed class LanguagePair {
             public string FromLanguage { get; set; }
             public string ToLanguage { get; set; }

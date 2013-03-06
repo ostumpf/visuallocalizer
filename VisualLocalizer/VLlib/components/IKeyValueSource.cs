@@ -10,6 +10,6 @@ namespace VisualLocalizer.Library {
         List<IKeyValueSource> ItemsWithSameKey { get; set; }
         HashSet<IKeyValueSource> ConflictRows { get; }
         HashSet<string> ErrorSet { get; }
-        void ErrorSetUpdate();
+        void ErrorSetUpdate();        
     }
 }

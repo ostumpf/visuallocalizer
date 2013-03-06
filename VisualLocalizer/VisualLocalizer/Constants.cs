@@ -84,7 +84,10 @@ namespace VisualLocalizer {
 
         public const string ContextSubstituteText = "**RESOURCE REFERENCE**";
         public const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
-        public const string GlobalWebSiteResourcesNamespace = "Resources";        
+        public const string GlobalWebSiteResourcesNamespace = "Resources";
+
+        public const string SOLUTION_EXPLORER_FILE_LIST = "CF_VSSTGPROJECTITEMS";
+        public const string FILE_LIST = "FileDrop";
     }
 
     public static class NumericConstants {

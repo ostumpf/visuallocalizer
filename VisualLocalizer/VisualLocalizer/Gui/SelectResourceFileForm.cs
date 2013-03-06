@@ -11,6 +11,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using EnvDTE;
 using VisualLocalizer.Extensions;
+using VisualLocalizer.Settings;
 
 namespace VisualLocalizer.Gui {
 
@@ -42,7 +43,7 @@ namespace VisualLocalizer.Gui {
            
             valueBox.Text = resultItem.Value;
             // add possible destination files
-            foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(resultItem.SourceItem, true)) {
+            foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(resultItem.SourceItem, true, false)) {
                 comboBox.Items.Add(item);
             }
 
@@ -71,8 +72,6 @@ namespace VisualLocalizer.Gui {
             // free loaded project items
             foreach (ResXProjectItem item in comboBox.Items)
                 item.Unload();
-
-            VLDocumentViewsManager.ReleaseLocks();
         }
 
         private void keyBox_TextChanged(object sender, EventArgs e) {
@@ -114,11 +113,27 @@ namespace VisualLocalizer.Gui {
                     VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.GetFullPath(), true);                    
                 }
 
-                bool ident = keyBox.Text.IsValidIdentifier();
-                if (ident) errorText = "Key is not valid C# identifier";
-                keyBox.BackColor = (ident ? Color.White : ERROR_COLOR);
+                bool empty = string.IsNullOrEmpty(keyBox.Text);
+                bool validIdentifier = keyBox.Text.IsValidIdentifier();
+                bool hasOwnDesigner = item.DesignerItem != null && !item.IsCultureSpecific();
+                bool identifierError = false;
 
-                if (ident) {
+                switch (SettingsObject.Instance.BadKeyNamePolicy) {
+                    case BAD_KEY_NAME_POLICY.IGNORE_COMPLETELY:
+                        identifierError = empty;
+                        break;
+                    case BAD_KEY_NAME_POLICY.IGNORE_ON_NO_DESIGNER:
+                        identifierError = empty || (!validIdentifier && hasOwnDesigner);
+                        break;
+                    case BAD_KEY_NAME_POLICY.WARN_ALWAYS:
+                        identifierError = empty || !validIdentifier;
+                        break;
+                }
+                                
+                if (identifierError) errorText = "Key is not valid C# identifier";
+                keyBox.BackColor = (identifierError ? ERROR_COLOR : Color.White);
+
+                if (!identifierError) {
                     keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
                     Color backColor = Color.White;
                     switch (keyConflict) {
@@ -144,7 +159,7 @@ namespace VisualLocalizer.Gui {
                     valueBox.BackColor = backColor;
                 }
 
-                ok = ident && !overwriteButton.Visible;
+                ok = !identifierError && !overwriteButton.Visible;
 
                 referenceText.ClassPart = item.Class;
                 referenceText.KeyPart = keyBox.Text;

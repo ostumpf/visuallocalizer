@@ -36,6 +36,7 @@ namespace VisualLocalizer.Gui {
 
         protected override void OnWindowHidden(object sender, EventArgs e) {
             VLDocumentViewsManager.ReleaseLocks();
+            MenuManager.OperationInProgress = false;
         }
 
         private void removeUnchecked(object sender, EventArgs e) {
@@ -53,6 +54,7 @@ namespace VisualLocalizer.Gui {
 
             try {
                 VLDocumentViewsManager.ReleaseLocks();
+                MenuManager.OperationInProgress = false;
                 BatchInliner inliner = new BatchInliner(panel.Rows);
 
                 inliner.Inline(panel.GetData(), false, ref rowErrors);

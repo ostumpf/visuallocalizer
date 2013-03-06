@@ -89,6 +89,7 @@ namespace VisualLocalizer.Gui {
         protected override void OnWindowHidden(object sender, EventArgs e) {
             panel.ToolGrid.Unload();
             VLDocumentViewsManager.ReleaseLocks();
+            MenuManager.OperationInProgress = false;
         }                
         
         public void SetData(List<CodeStringResultItem> value){
@@ -204,6 +205,7 @@ namespace VisualLocalizer.Gui {
 
             try {
                 VLDocumentViewsManager.ReleaseLocks();
+                MenuManager.OperationInProgress = false;
 
                 bool usingFullName = currentNamespacePolicy == NAMESPACE_POLICY_ITEMS[1];
                 bool markUncheckedStringsWithComment = currentRememberOption == REMEMBER_OPTIONS[1];

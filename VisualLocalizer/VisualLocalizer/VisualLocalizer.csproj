@@ -89,6 +89,7 @@
     <Compile Include="Components\Code\CSharpCodeExplorer.cs" />
     <Compile Include="Components\Code\CSharpStringLookuper.cs" />
     <Compile Include="Components\DestinationKeyValueConflictResolver.cs" />
+    <Compile Include="Components\KeyValueIdentifierConflictResolver.cs" />
     <Compile Include="Components\ProgressBarHandler.cs" />
     <Compile Include="Components\UndoUnits\MarkAsNotLocalizedStringUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesReferenceUndoUnit.cs" />
@@ -102,6 +103,7 @@
       <DependentUpon>Editor.resx</DependentUpon>
     </Compile>
     <Compile Include="Editor\IDataTabItem.cs" />
+    <Compile Include="Editor\IReferencableKeyValueSource.cs" />
     <Compile Include="Editor\ListViewKeyItem.cs" />
     <Compile Include="Editor\ResXFilesList.cs">
       <SubType>Component</SubType>
@@ -124,6 +126,8 @@
     </Compile>
     <Compile Include="Editor\UndoUnits\AccessModifierChangeUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewChangeCommentUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewMakeEmbeddedUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\ListViewMakeExternalUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewNewItemCreateUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewRemoveItemsUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewRenameKeyUndoUnit.cs" />

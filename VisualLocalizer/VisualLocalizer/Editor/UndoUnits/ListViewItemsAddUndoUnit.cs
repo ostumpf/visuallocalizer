@@ -13,11 +13,11 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private List<ListViewKeyItem> Items { get; set; }
         private ListViewRemoveItemsUndoUnit RemoveUnit { get; set; }
-        
-        public ListViewItemsAddUndoUnit(List<ListViewKeyItem> items, KeyValueConflictResolver conflictResolver) {
+
+        public ListViewItemsAddUndoUnit(ResXEditorControl control, List<ListViewKeyItem> items, KeyValueIdentifierConflictResolver conflictResolver) {
             this.Items = items;            
     
-            RemoveUnit = new ListViewRemoveItemsUndoUnit(items, conflictResolver);
+            RemoveUnit = new ListViewRemoveItemsUndoUnit(control, items, conflictResolver);
         }
 
         public override void Undo() {
@@ -35,13 +35,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 item.RemoveKind = REMOVEKIND.REMOVE;
 
             RemoveUnit.Undo();
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} existing files", Items.Count);
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} files", Items.Count);
 
             if (Items.Count > 0 && Items[0].AbstractListView != null) Items[0].AbstractListView.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {
-            return string.Format("Added {0} existing media elements", Items.Count);
+            return string.Format("Added {0} media elements", Items.Count);
         }
 
         public override string GetRedoDescription() {

@@ -14,13 +14,13 @@ namespace VisualLocalizer.Library {
         private const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
         private const string WebSiteProject = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
 
-        public static List<ProjectItem> GetFiles(this Project project,Predicate<ProjectItem> test,bool includeReferenced) {
+        public static List<ProjectItem> GetFiles(this Project project,Predicate<ProjectItem> test,bool includeReferenced, bool includeReadonly) {
             if (project == null)
                 throw new ArgumentNullException("project");
             
             List<ProjectItem> list = new List<ProjectItem>();            
 
-            List<ProjectItem> ownFiles = GetFilesOf(project.ProjectItems, test);
+            List<ProjectItem> ownFiles = GetFilesOf(project.ProjectItems, test, includeReadonly);
             ownFiles.Reverse();
             list.AddRange(ownFiles);
 
@@ -28,7 +28,7 @@ namespace VisualLocalizer.Library {
                 List<Project> referencedProjects = project.GetReferencedProjects();
                 foreach (Project referencedProj in referencedProjects) {
                     if (referencedProj.UniqueName != project.UniqueName) {
-                        List<ProjectItem> l = GetFilesOf(referencedProj.ProjectItems, test);
+                        List<ProjectItem> l = GetFilesOf(referencedProj.ProjectItems, test, includeReadonly);
                         l.Reverse();
                         list.AddRange(l);
                     }
@@ -38,16 +38,18 @@ namespace VisualLocalizer.Library {
             return list;
         }
 
-        private static List<ProjectItem> GetFilesOf(ProjectItems items,Predicate<ProjectItem> test) {
+        private static List<ProjectItem> GetFilesOf(ProjectItems items, Predicate<ProjectItem> test, bool includeReadonly) {
             List<ProjectItem> list = new List<ProjectItem>();
 
             if (items != null) {
                 foreach (ProjectItem item in items) {
                     if (test==null || test(item)) {
-                        list.Add(item);
+                        if (includeReadonly || !RDTManager.IsFileReadonly(item.GetFullPath())) {
+                            list.Add(item);
+                        }
                     } else {
                         if (item.ProjectItems != null && item.ProjectItems.Count > 0)
-                            list.AddRange(GetFilesOf(item.ProjectItems, test));
+                            list.AddRange(GetFilesOf(item.ProjectItems, test, includeReadonly));
                     }
                 }
             }

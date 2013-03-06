@@ -15,31 +15,44 @@ namespace VisualLocalizer.Editor {
         }
 
         public override bool CanContainItem(ResXDataNode node) {
-            return node.HasValue<MemoryStream>() && node.FileRef.FileName.ToLower().EndsWith(".wav");
+            return node.HasValue<MemoryStream>() && (node.FileRef == null || node.FileRef.FileName.ToLower().EndsWith(".wav"));
         }
 
-        public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
+        public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) { 
             ListViewKeyItem item = base.Add(key, value, showThumbnails) as ListViewKeyItem;
+            if (referenceExistingOnAdd) return item;
 
             LargeImageList.Images.Add(item.Name, Editor.play);
             SmallImageList.Images.Add(item.Name, Editor.play);
+
+            item.ImageKey = item.Name; // update icon
 
             FileInfo info = null;
             if (value.FileRef != null && File.Exists(value.FileRef.FileName)) {
                 info = new FileInfo(value.FileRef.FileName);
             }
-            
-            if (info == null && showThumbnails) item.FileRefOk = false;
+
+            if (value.FileRef != null && !File.Exists(value.FileRef.FileName) && showThumbnails)
+                item.FileRefOk = false;
 
             ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
-            subSize.Name = "Size";
-            if (info != null) subSize.Text = GetFileSize(info.Length);
+            subSize.Name = "Size";            
             item.SubItems.Insert(2, subSize);
 
             ListViewItem.ListViewSubItem subLength = new ListViewItem.ListViewSubItem();
-            subLength.Name = "Length";
-            if (info != null) subLength.Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName));
+            subLength.Name = "Length";            
             item.SubItems.Insert(3, subLength);
+
+            if (info != null) {
+                subSize.Text = GetFileSize(info.Length);
+                subLength.Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName));
+            } else {
+                var stream = value.GetValue<MemoryStream>();
+                if (stream != null) {
+                    subSize.Text = GetFileSize(stream.Length);
+                    subLength.Text = null;
+                }
+            }
 
             return item;
         }
@@ -57,8 +70,11 @@ namespace VisualLocalizer.Editor {
                 item.SubItems["Size"].Text = GetFileSize(info.Length);
                 item.SubItems["Length"].Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName));
             } else {
-                item.SubItems["Size"].Text = null;
-                item.SubItems["Length"].Text = null;
+                var stream = item.DataNode.GetValue<MemoryStream>();
+                if (stream != null) {
+                    item.SubItems["Size"].Text = GetFileSize(stream.Length);
+                    item.SubItems["Length"].Text = null;
+                }
             }
 
             return item;
@@ -93,6 +109,29 @@ namespace VisualLocalizer.Editor {
             lengthHeader.Width = 80;
             lengthHeader.Name = "Length";
             this.Columns.Insert(3, lengthHeader);            
+        }
+
+        protected override string saveIntoTmpFile(ResXDataNode node, string directory) {
+            MemoryStream ms = node.GetValue<MemoryStream>();
+            string filename = node.Name + ".wav";
+            string path = Path.Combine(directory, filename);
+            
+            FileStream fs = null;
+            try {
+                fs = new FileStream(path, FileMode.Create);
+
+                byte[] buffer = new byte[8192];
+                int read=0;
+                while ((read = ms.Read(buffer, 0, buffer.Length)) > 0) {
+                    fs.Write(buffer, 0, read);
+                }
+
+            } finally {
+                if (fs != null) fs.Close();
+                ms.Close();
+            }
+
+            return path;
         }
     }
 }

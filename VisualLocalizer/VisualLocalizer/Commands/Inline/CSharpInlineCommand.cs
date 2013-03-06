@@ -27,7 +27,7 @@ namespace VisualLocalizer.Commands {
             if (ok) {
                 CodeNamespace codeNamespace = codeClass.GetNamespace();
 
-                List<CSharpCodeReferenceResultItem> items = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentDocument.ProjectItem, text, startPoint, currentDocument.ProjectItem.ContainingProject.GetResXItemsAround(null, false).CreateTrie(),
+                List<CSharpCodeReferenceResultItem> items = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentDocument.ProjectItem, text, startPoint, currentDocument.ProjectItem.ContainingProject.GetResXItemsAround(null, false, true).CreateTrie(),
                     codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), false, currentDocument.ProjectItem.ContainingProject, null);
                 
 

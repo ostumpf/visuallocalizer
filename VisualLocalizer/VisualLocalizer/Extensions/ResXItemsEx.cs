@@ -9,8 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace VisualLocalizer.Extensions {
     public static class ProjectItemEx {
-        public static List<ResXProjectItem> GetResXItemsAround(this Project project, ProjectItem sourceItem, bool includeInternal) {
-            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true);
+        public static List<ResXProjectItem> GetResXItemsAround(this Project project, ProjectItem sourceItem, bool includeInternal, bool includeReadonly) {
+            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true, includeReadonly);
             
             List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
             items.ForEach((i) => {

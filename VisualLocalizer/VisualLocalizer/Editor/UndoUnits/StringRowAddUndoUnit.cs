@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -12,18 +13,20 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private List<ResXStringGridRow> Rows { get; set; }
         private ResXStringGrid Grid { get; set; }
-        private KeyValueConflictResolver ConflictResolver { get; set; }
+        private KeyValueIdentifierConflictResolver ConflictResolver { get; set; }
+        private ResXEditorControl Control { get; set; }
 
-        public StringRowAddUndoUnit(List<ResXStringGridRow> rows, ResXStringGrid grid, KeyValueConflictResolver conflictResolver) {
+        public StringRowAddUndoUnit(ResXEditorControl control, List<ResXStringGridRow> rows, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
             this.Rows = rows;
             this.Grid = grid;
             this.ConflictResolver = conflictResolver;
+            this.Control = control;
         }
 
         public override void Undo() {
             Grid.SuspendLayout();
             foreach (var Row in Rows) {
-                ConflictResolver.TryAdd(Row.Key, null, Row);
+                ConflictResolver.TryAdd(Row.Key, null, Row, Control.Editor.ProjectItem);
                 Row.Cells[Grid.KeyColumnName].Tag = null;
                 Grid.Rows.Remove(Row);
             }

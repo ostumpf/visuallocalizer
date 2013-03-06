@@ -1,4 +1,5 @@
-﻿namespace VisualLocalizer.Gui {
+﻿using VisualLocalizer.Library;
+namespace VisualLocalizer.Gui {
     partial class GlobalTranslateForm {
         /// <summary>
         /// Required designer variable.
@@ -24,7 +25,7 @@
         /// </summary>
         private void InitializeComponent() {
             this.mainTable = new System.Windows.Forms.TableLayoutPanel();
-            this.resxListBox = new System.Windows.Forms.CheckedListBox();
+            this.resxListBox = new DisableableCheckedListBox();
             this.languageInfoPanel = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.savedLanguagePairPanel = new System.Windows.Forms.TableLayoutPanel();
@@ -356,7 +357,7 @@
         #endregion
 
         private System.Windows.Forms.TableLayoutPanel mainTable;
-        private System.Windows.Forms.CheckedListBox resxListBox;
+        private DisableableCheckedListBox resxListBox;
         private System.Windows.Forms.TableLayoutPanel languageInfoPanel;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.Button translateButton;

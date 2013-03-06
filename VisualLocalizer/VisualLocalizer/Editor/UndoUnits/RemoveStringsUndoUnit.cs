@@ -15,12 +15,14 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private List<ResXStringGridRow> Elements { get; set; }
         private ResXStringGrid Grid { get; set; }
-        private KeyValueConflictResolver ConflictResolver { get; set; }
+        private KeyValueIdentifierConflictResolver ConflictResolver { get; set; }
+        private ResXEditorControl Control { get; set; }
 
-        public RemoveStringsUndoUnit(List<ResXStringGridRow> elements, ResXStringGrid grid, KeyValueConflictResolver conflictResolver) {
+        public RemoveStringsUndoUnit(ResXEditorControl control, List<ResXStringGridRow> elements, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
             this.Elements = elements;
             this.Grid = grid;
             this.ConflictResolver = conflictResolver;
+            this.Control = control;
         }
 
         public override void Undo() {
@@ -40,7 +42,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
             Grid.SuspendLayout();
             foreach (var element in Elements.Where((el) => { return el != null; }).OrderByDescending((el) => { return el.IndexAtDeleteTime; })) {
                 ResXStringGridRow row = Grid.Rows[element.IndexAtDeleteTime] as ResXStringGridRow;
-                ConflictResolver.TryAdd(row.Key, null, row);
+                ConflictResolver.TryAdd(row.Key, null, row, Control.Editor.ProjectItem);
                 row.Cells[Grid.KeyColumnName].Tag = null;
                 Grid.Rows.RemoveAt(element.IndexAtDeleteTime);
             }

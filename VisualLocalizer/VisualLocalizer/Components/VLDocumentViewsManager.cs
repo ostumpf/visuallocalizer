@@ -82,7 +82,7 @@ namespace VisualLocalizer.Components {
         public static bool IsFileLocked(string path) {
             if (string.IsNullOrEmpty(path)) return false;
             return lockedDocuments.Contains(path) || lockedDocumentsWaiting.Contains(path);
-        }
+        }       
 
         public static void ReleaseLocks() {
             while (lockedDocuments.Count > 0) {

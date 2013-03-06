@@ -10,6 +10,7 @@ using System.Drawing;
 using System.IO;
 using EnvDTE;
 using VSLangProj;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -17,11 +18,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
     internal sealed class ListViewRemoveItemsUndoUnit : AbstractUndoUnit {
 
         private List<ListViewKeyItem> Items { get; set; }
-        private KeyValueConflictResolver ConflictResolver { get; set; }
-       
-        public ListViewRemoveItemsUndoUnit(List<ListViewKeyItem> items, KeyValueConflictResolver conflictResolver) {
+        private KeyValueIdentifierConflictResolver ConflictResolver { get; set; }
+        private ResXEditorControl Control { get; set; }
+
+        public ListViewRemoveItemsUndoUnit(ResXEditorControl control, List<ListViewKeyItem> items, KeyValueIdentifierConflictResolver conflictResolver) {
             this.Items = items;
             this.ConflictResolver = conflictResolver;
+            this.Control = control;
         }
 
         public override void Undo() {
@@ -115,7 +118,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 AbstractListView ListView = item.AbstractListView;
                 usedLists.Add(ListView);
 
-                ConflictResolver.TryAdd(item.Key, null, item);
+                ConflictResolver.TryAdd(item.Key, null, item, Control.Editor.ProjectItem);
                 if (!string.IsNullOrEmpty(item.ImageKey) && ListView.LargeImageList.Images.ContainsKey(item.ImageKey)) {
                     ListView.LargeImageList.Images.RemoveByKey(item.ImageKey);
                     ListView.SmallImageList.Images.RemoveByKey(item.ImageKey);

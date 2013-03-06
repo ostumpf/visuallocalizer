@@ -13,6 +13,10 @@ using System.Drawing;
 using VisualLocalizer.Editor.UndoUnits;
 using VisualLocalizer.Gui;
 using System.ComponentModel.Design;
+using System.Drawing.Imaging;
+using VisualLocalizer.Commands;
+using VisualLocalizer.Extensions;
+using System.Collections;
 
 namespace VisualLocalizer.Editor {
     internal abstract class AbstractListView : ListView, IDataTabItem {
@@ -20,11 +24,14 @@ namespace VisualLocalizer.Editor {
         public event EventHandler ItemsStateChanged;
        
         protected ResXEditorControl editorControl;        
-        protected KeyValueConflictResolver conflictResolver;
+        protected KeyValueIdentifierConflictResolver conflictResolver;
         protected ListViewKeyItem CurrentlyEditedItem;
         protected MenuItem renameContextMenuItem, editCommentContextMenuItem, openContextMenuItem, cutContextMenuItem,
             copyContextMenuItem, pasteContextMenuItem, deleteContextMenu, deleteContextMenuItem, deleteExcludeContextMenuItem, 
-            deleteRemoveContextMenuItem;
+            deleteRemoveContextMenuItem, makeEmbeddedMenuItem, makeExternalMenuItem;
+        protected bool referenceExistingOnAdd = false;
+
+     
 
         public AbstractListView(ResXEditorControl editorControl) {
             this.conflictResolver = editorControl.conflictResolver;
@@ -43,7 +50,9 @@ namespace VisualLocalizer.Editor {
             this.BeforeLabelEdit += new LabelEditEventHandler(ResXImagesList_BeforeLabelEdit);
             this.SelectedIndexChanged += new EventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.MouseDoubleClick += new MouseEventHandler(AbstractListView_MouseDoubleClick);
-
+            this.AllowDrop = true;
+            this.DragEnter += new DragEventHandler(AbstractListView_DragEnter);
+            this.DragDrop += new DragEventHandler(AbstractListView_DragDrop);
             editorControl.ViewKindChanged += new Action<View>(ViewKindChanged);
             editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
 
@@ -85,6 +94,12 @@ namespace VisualLocalizer.Editor {
             deleteRemoveContextMenuItem.Click+=new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.DELETE_FILE | REMOVEKIND.EXCLUDE); });
             deleteRemoveContextMenuItem.Shortcut = Shortcut.ShiftDel;
 
+            makeEmbeddedMenuItem = new MenuItem("Make this resource(s) embedded");
+            makeEmbeddedMenuItem.Click += new EventHandler(makeEmbeddedMenuItem_Click);
+
+            makeExternalMenuItem = new MenuItem("Make this resource(s) external");
+            makeExternalMenuItem.Click += new EventHandler(makeExternalMenuItem_Click);
+
             deleteContextMenu.MenuItems.Add(deleteContextMenuItem);
             deleteContextMenu.MenuItems.Add(deleteExcludeContextMenuItem);
             deleteContextMenu.MenuItems.Add(deleteRemoveContextMenuItem);
@@ -99,12 +114,15 @@ namespace VisualLocalizer.Editor {
             contextMenu.MenuItems.Add(renameContextMenuItem);
             contextMenu.MenuItems.Add(editCommentContextMenuItem);
             contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(makeEmbeddedMenuItem);
+            contextMenu.MenuItems.Add(makeExternalMenuItem);
+            contextMenu.MenuItems.Add("-");
             contextMenu.MenuItems.Add(deleteContextMenu);
             contextMenu.Popup += new EventHandler(contextMenu_Popup);
             this.ContextMenu = contextMenu;
 
             InitializeColumns();
-        }                        
+        }                       
 
         #region IDataTabItem members
 
@@ -138,6 +156,15 @@ namespace VisualLocalizer.Editor {
         }        
        
         public virtual IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
+            if (referenceExistingOnAdd) {
+                ListViewKeyItem existingItem = ItemFromName(key);
+                value.Comment = existingItem.DataNode.Comment;
+                existingItem.DataNode = value;
+                existingItem.SubItems["Path"].Text = editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString();
+
+                return existingItem;
+            }
+
             ListViewKeyItem item = new ListViewKeyItem(this);
             item.Text = key;            
             item.DataNode = value;
@@ -158,6 +185,11 @@ namespace VisualLocalizer.Editor {
             subComment.Text = value.Comment;            
             item.SubItems.Add(subComment);
 
+            ListViewItem.ListViewSubItem subReferences = new ListViewItem.ListViewSubItem();
+            subReferences.Name = "References";
+            subReferences.Text = "?";
+            item.SubItems.Add(subReferences);
+
             Items.Add(item);
             item.AfterEditValue = item.Text;
             
@@ -177,24 +209,44 @@ namespace VisualLocalizer.Editor {
 
         public COMMAND_STATUS CanPaste {
             get {
-                return Clipboard.ContainsFileDropList() && !IsEditing && !DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                IDataObject iData = Clipboard.GetDataObject();
+                return acceptsClipboardData(iData) ?  COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
         public bool Copy() {
             if (CanCutOrCopy != COMMAND_STATUS.ENABLED) return false;
-            // TODO - fileref
-            StringCollection list = new StringCollection();
+
+            bool allEmbedded = true;
+            bool allExternal = true;
+
             foreach (ListViewKeyItem item in this.SelectedItems) {
                 ResXFileRef fileRef = item.DataNode.FileRef;
-                if (fileRef == null) continue;
-
-                string path = fileRef.FileName;
-                list.Add(path);
+                allEmbedded = allEmbedded && fileRef == null;
+                allExternal = allExternal && fileRef != null;
             }
+            if (!allEmbedded && !allExternal) {
+                throw new Exception("Cannot copy both embedded and external resources at the same time.");
+            } else {
+                if (allExternal) {
+                    StringCollection list = new StringCollection();
+                    foreach (ListViewKeyItem item in this.SelectedItems) {
+                        ResXFileRef fileRef = item.DataNode.FileRef;
+                        if (fileRef == null) continue;
 
-            Clipboard.SetFileDropList(list);
+                        string path = fileRef.FileName;
+                        list.Add(path);
+                    }
 
+                    Clipboard.SetFileDropList(list);
+                } else {
+                    List<object> list = new List<object>();
+                    foreach (ListViewKeyItem item in this.SelectedItems) {
+                        list.Add(item.DataNode);
+                    }
+                    Clipboard.SetDataObject(list, false);
+                }
+            }
             return true;
         }
 
@@ -261,6 +313,16 @@ namespace VisualLocalizer.Editor {
             tabControl.SelectedTab = page;
         }
 
+        public ListViewKeyItem ItemFromName(string name) {
+            ListViewKeyItem existingItem = null;
+            foreach (ListViewKeyItem i in Items)
+                if (i.Text == name) {
+                    existingItem = i;
+                    break;
+                }
+            return existingItem;
+        }
+
         #endregion
 
         #region protected members - virtual
@@ -274,15 +336,22 @@ namespace VisualLocalizer.Editor {
 
             ColumnHeader fileHeader = new ColumnHeader();
             fileHeader.Text = "Corresponding File";
-            fileHeader.Width = 250;
+            fileHeader.Width = 220;
             fileHeader.Name = "Path";
             this.Columns.Add(fileHeader);
 
             ColumnHeader commentHeader = new ColumnHeader();
             commentHeader.Text = "Comment";
-            commentHeader.Width = 250;
+            commentHeader.Width = 200;
             commentHeader.Name = "Comment";
             this.Columns.Add(commentHeader);
+
+            ColumnHeader referencesHeader = new ColumnHeader();
+            referencesHeader.Text = "References";
+            referencesHeader.Width = 80;
+            referencesHeader.Name = "References";
+            referencesHeader.TextAlign = HorizontalAlignment.Center;
+            this.Columns.Add(referencesHeader);
         }
 
         protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e) {
@@ -290,12 +359,14 @@ namespace VisualLocalizer.Editor {
             base.OnPreviewKeyDown(e);
         }
 
+        protected abstract string saveIntoTmpFile(ResXDataNode node, string directory);
+
         #endregion
 
         #region public members
 
-        public virtual void Validate(ListViewKeyItem item) {
-            conflictResolver.TryAdd(item.BeforeEditValue, item.AfterEditValue, item);
+        public void Validate(ListViewKeyItem item) {
+            conflictResolver.TryAdd(item.BeforeEditValue, item.AfterEditValue, item, editorControl.Editor.ProjectItem);
             item.ErrorSetUpdate();
         }
 
@@ -309,20 +380,145 @@ namespace VisualLocalizer.Editor {
         }       
 
         public void ListItemKeyRenamed(ListViewKeyItem item) {
-            ListViewRenameKeyUndoUnit unit = new ListViewRenameKeyUndoUnit(this, item, item.BeforeEditValue, item.AfterEditValue);
+            ListViewRenameKeyUndoUnit unit = new ListViewRenameKeyUndoUnit(editorControl, this, item, item.BeforeEditValue, item.AfterEditValue);
+            
+            if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
+                ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
+                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false, true));
+                
+                if (item.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+                    int errors = 0;
+                    int count = item.CodeReferences.Count;
+                    item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditValue; });
+
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(item.CodeReferences);
+                    replacer.Inline(item.CodeReferences, true, ref errors);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                }
+            }
+
             editorControl.Editor.AddUndoUnit(unit);
-        }      
+        }
+
+        public void MakeResourcesEmbedded(IEnumerable list, bool delete, bool addUndoUnit) {
+            ListViewMakeEmbeddedUndoUnit undoUnit = null;
+            try {
+                List<ListViewKeyItem> undoList = new List<ListViewKeyItem>();
+                undoUnit = new ListViewMakeEmbeddedUndoUnit(this, undoList, delete);
+
+                foreach (ListViewKeyItem item in list) {
+                    object value = item.DataNode.GetValue((ITypeResolutionService)null);
+                    string path = item.DataNode.FileRef.FileName;
+                    string name = item.DataNode.Name;
+                    string cmt = item.DataNode.Comment;
+                    item.DataNode = new ResXDataNode(name, value);
+                    item.DataNode.Comment = cmt;
+                    item.SubItems["Path"].Text = "(embedded)";
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Embedded resource \"{0}\" into ResX file", item.Key);
+
+                    if (delete) {
+                        ProjectItem projectItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(path);
+                        if (projectItem != null) {
+                            item.NeighborItems = projectItem.Collection;
+                            projectItem.Delete();
+                        }
+                        if (File.Exists(path)) File.Delete(path);
+
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("Deleted referenced file \"{0}\"", Path.GetFileName(path));
+                    }
+                    undoList.Add(item);
+                }
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                if (addUndoUnit && undoUnit != null) {
+                    editorControl.Editor.AddUndoUnit(undoUnit);
+                }
+                NotifyDataChanged();
+            }
+        }
+
+        public void MakeResourcesExternal(IEnumerable list, bool referenceExisting, bool addUndoUnit) {
+            ListViewMakeExternalUndoUnit undoUnit = null;
+            try {
+                List<ListViewKeyItem> undoList = new List<ListViewKeyItem>();
+                undoUnit = new ListViewMakeExternalUndoUnit(this, undoList, referenceExisting);
+
+                List<string> paths = new List<string>();
+                string dir = Path.Combine(Path.GetTempPath(), "VisualLocalizer");
+                Directory.CreateDirectory(dir);
+
+                foreach (ListViewKeyItem item in list) {
+                    string path = saveIntoTmpFile(item.DataNode, dir);
+                    paths.Add(path);
+
+                    undoList.Add(item);
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Moved resource \"{0}\" to external file", item.Key);
+                }
+
+                referenceExistingOnAdd = true;
+                editorControl.addExistingFiles(paths);
+                referenceExistingOnAdd = false;
+
+                editorControl.Editor.UndoManager.RemoveTopFromUndoStack(1);                
+                
+                Directory.Delete(dir, true);
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {                
+                referenceExistingOnAdd = false;
+                if (addUndoUnit && undoUnit != null) {
+                    editorControl.Editor.AddUndoUnit(undoUnit);
+                }
+                NotifyDataChanged();
+            }
+        }
 
         #endregion
 
         #region protected non-virtual members
 
-        void AbstractListView_MouseDoubleClick(object sender, MouseEventArgs e) {
+        private void AbstractListView_DragDrop(object sender, DragEventArgs e) {
+            editorControl.ExecutePaste(e.Data);
+        }
+
+        private void AbstractListView_DragEnter(object sender, DragEventArgs e) {
+            e.Effect = acceptsClipboardData(e.Data) ? DragDropEffects.All : DragDropEffects.None;
+        }         
+
+        private bool acceptsClipboardData(IDataObject iData) {
+            bool containsList = iData.GetDataPresent(typeof(List<object>));
+            bool containsFiles = iData.GetDataPresent(StringConstants.FILE_LIST);
+            bool containsSolExpList = iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST);
+
+            return (containsFiles || containsSolExpList || containsList) && !IsEditing && !DataReadOnly;
+        }
+
+        private void AbstractListView_MouseDoubleClick(object sender, MouseEventArgs e) {
             ListViewKeyItem item = this.GetItemAt(e.X, e.Y) as ListViewKeyItem;
             if (item != null) {
                 openForEdit(item);
             }
         }
+
+        private void makeExternalMenuItem_Click(object sender, EventArgs e) {
+            MakeResourcesExternal((IEnumerable)SelectedItems, false, true);
+        }
+        
+        private void makeEmbeddedMenuItem_Click(object sender, EventArgs e) {            
+            var result = System.Windows.Forms.MessageBox.Show("Do you also want to delete all referenced files?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            bool delete = result == DialogResult.Yes;
+
+            MakeResourcesEmbedded((IEnumerable)SelectedItems, delete, true);
+        }        
 
         protected void editCommentContextMenuItem_Click(object sender, EventArgs e) {
             ListViewKeyItem item = SelectedItems[0] as ListViewKeyItem;
@@ -354,10 +550,16 @@ namespace VisualLocalizer.Editor {
                 return;
             }
 
-            Window win = VisualLocalizerPackage.Instance.DTE.OpenFile(null, item.DataNode.FileRef.FileName);
-            if (win != null) win.Activate();
+            try {
+                Window win = VisualLocalizerPackage.Instance.DTE.OpenFile(null, item.DataNode.FileRef.FileName);
+                if (win != null) win.Activate();
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Opened resource file \"{0}\"", item.DataNode.FileRef.FileName);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Opened resource file \"{0}\"", item.DataNode.FileRef.FileName);
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);                
+            }
         }
 
         protected void contextMenu_Popup(object sender, EventArgs e) {
@@ -367,11 +569,16 @@ namespace VisualLocalizer.Editor {
             deleteContextMenu.Enabled = SelectedItems.Count >= 1 && !DataReadOnly && !IsEditing;
 
             bool allSelectedResourcesExternal = true;
+            bool allSelectedResourcesEmbedded = true;
             foreach (ListViewKeyItem item in SelectedItems) {
                 allSelectedResourcesExternal = allSelectedResourcesExternal && item.DataNode.FileRef != null;
+                allSelectedResourcesEmbedded = allSelectedResourcesEmbedded && item.DataNode.FileRef == null;
             }
             deleteExcludeContextMenuItem.Enabled = allSelectedResourcesExternal;
             deleteRemoveContextMenuItem.Enabled = allSelectedResourcesExternal;
+
+            makeEmbeddedMenuItem.Enabled = SelectedItems.Count >= 1 && !DataReadOnly && !IsEditing && allSelectedResourcesExternal;
+            makeExternalMenuItem.Enabled = SelectedItems.Count >= 1 && !DataReadOnly && !IsEditing && allSelectedResourcesEmbedded;
 
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;            
@@ -389,25 +596,44 @@ namespace VisualLocalizer.Editor {
         }
 
         protected void ResXImagesList_BeforeLabelEdit(object sender, LabelEditEventArgs e) {
-            ListViewKeyItem item = Items[e.Item] as ListViewKeyItem;
-            item.BeforeEditValue = item.Key;
-            CurrentlyEditedItem = item;
-            NotifyItemsStateChanged();
+            try {
+                ListViewKeyItem item = (ListViewKeyItem)Items[e.Item];
+                item.BeforeEditValue = item.Key;
+                CurrentlyEditedItem = item;
+                NotifyItemsStateChanged();
+
+                editorControl.ReferenceCounterThreadSuspended = true;
+                editorControl.UpdateReferencesCount(item);
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            }
         }
 
         protected void ResXImagesList_AfterLabelEdit(object sender, LabelEditEventArgs e) {
-            ListViewKeyItem item = Items[e.Item] as ListViewKeyItem;
+            try {
+                ListViewKeyItem item = (ListViewKeyItem)Items[e.Item];
 
-            if (e.Label != null && string.Compare(e.Label, item.BeforeEditValue) != 0) {
-                item.AfterEditValue = e.Label;
-                ListItemKeyRenamed(item);
+                if (e.Label != null && string.Compare(e.Label, item.BeforeEditValue) != 0) {
+                    item.AfterEditValue = e.Label;
+                    ListItemKeyRenamed(item);
 
-                Validate(item);
-                NotifyDataChanged();
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", item.BeforeEditValue, item.AfterEditValue);
+                    Validate(item);
+                    NotifyDataChanged();
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", item.BeforeEditValue, item.AfterEditValue);
+                }
+                CurrentlyEditedItem = null;                
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+            } finally {
+                editorControl.ReferenceCounterThreadSuspended = false;
+                NotifyItemsStateChanged();
             }
-            CurrentlyEditedItem = null;
-            NotifyItemsStateChanged();
         }
 
         protected void editorControl_RemoveRequested(REMOVEKIND remove) {
@@ -441,7 +667,7 @@ namespace VisualLocalizer.Editor {
                 if ((remove & REMOVEKIND.REMOVE) == REMOVEKIND.REMOVE) {
                     List<ListViewKeyItem> removedItems = new List<ListViewKeyItem>();
                     foreach (ListViewKeyItem item in SelectedItems) {
-                        conflictResolver.TryAdd(item.Key, null, item);
+                        conflictResolver.TryAdd(item.Key, null, item, editorControl.Editor.ProjectItem);
                         if (!string.IsNullOrEmpty(item.ImageKey) && LargeImageList.Images.ContainsKey(item.ImageKey)) {
                             LargeImageList.Images.RemoveByKey(item.ImageKey);
                             SmallImageList.Images.RemoveByKey(item.ImageKey);
@@ -470,7 +696,7 @@ namespace VisualLocalizer.Editor {
         }
 
         protected void ItemsRemoved(List<ListViewKeyItem> list) {
-            ListViewRemoveItemsUndoUnit unit = new ListViewRemoveItemsUndoUnit(list, editorControl.conflictResolver);
+            ListViewRemoveItemsUndoUnit unit = new ListViewRemoveItemsUndoUnit(editorControl, list, editorControl.conflictResolver);
             editorControl.Editor.AddUndoUnit(unit);
         }        
 

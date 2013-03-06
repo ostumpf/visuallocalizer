@@ -7,11 +7,11 @@ using System.Resources;
 using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor {
-    internal sealed class ResXStringGridRow : DataGridViewKeyValueRow<ResXDataNode> {
+    internal sealed class ResXStringGridRow : DataGridViewKeyValueRow<ResXDataNode>, IReferencableKeyValueSource {
         public enum STATUS { OK, KEY_NULL }
-        public int IndexAtDeleteTime { get; set; }
-        public List<CodeReferenceResultItem> CodeReferences { get; private set; }
+        public int IndexAtDeleteTime { get; set; }        
         public string LastValidKey { get; set; }
+
 
         public ResXStringGridRow() {
             Status = STATUS.OK;
@@ -19,7 +19,7 @@ namespace VisualLocalizer.Editor {
         }
 
         public void UpdateReferenceCount(bool determinated) {
-            if (DataGridView==null) return;
+            if (DataGridView == null) return;
             ResXStringGrid stringGrid=(ResXStringGrid)DataGridView;
             if (ErrorSet.Count == 0 && determinated) {
                 Cells[stringGrid.ReferencesColumnName].Value = CodeReferences.Count;
@@ -29,5 +29,10 @@ namespace VisualLocalizer.Editor {
         }
 
         public STATUS Status { get; set; }
+
+        public List<CodeReferenceResultItem> CodeReferences {
+            get;
+            set;
+        }
     }
 }

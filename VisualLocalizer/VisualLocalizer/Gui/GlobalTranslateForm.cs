@@ -43,9 +43,12 @@ namespace VisualLocalizer.Gui {
             }
 
             foreach (var item in resxTargetList) {
-                resxListBox.Items.Add(item);
-                resxListBox.SetItemChecked(resxListBox.Items.Count-1, true);
-                item.Checked = true;
+                resxListBox.Items.Add(item);                
+                resxListBox.SetItemEnabled(resxListBox.Items.Count - 1, !item.Readonly);
+                if (!item.Readonly) {
+                    resxListBox.SetItemChecked(resxListBox.Items.Count - 1, true);
+                    item.Checked = true;
+                }
             }
 
             useSavedPairBox.Checked = false;

@@ -10,6 +10,7 @@ using System.IO;
 using EnvDTE;
 using VSLangProj;
 using VisualLocalizer.Components;
+using System.Drawing.Imaging;
 
 namespace VisualLocalizer.Editor {
     internal sealed class ResXImagesList : AbstractListView {
@@ -23,12 +24,14 @@ namespace VisualLocalizer.Editor {
 
         public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
             ListViewKeyItem item = base.Add(key, value, showThumbnails) as ListViewKeyItem;
+            if (referenceExistingOnAdd) return item;
 
             Bitmap bmp = null;
             if (showThumbnails) bmp = value.GetValue<Bitmap>();
             if (bmp != null) {
                 LargeImageList.Images.Add(item.Name, bmp);
                 SmallImageList.Images.Add(item.Name, bmp);
+                item.ImageKey = item.Name; // update icon
             } 
             
             if (bmp == null && showThumbnails) item.FileRefOk = false;
@@ -75,6 +78,16 @@ namespace VisualLocalizer.Editor {
             sizeHeader.Width = 80;
             sizeHeader.Name = "Size";
             this.Columns.Insert(2, sizeHeader);            
+        }
+
+        protected override string saveIntoTmpFile(ResXDataNode node, string directory) {            
+            Bitmap value = node.GetValue<Bitmap>();
+            string filename = node.Name + ".png";
+            string path = Path.Combine(directory, filename);
+
+            value.Save(path, ImageFormat.Png);
+
+            return path;
         }
     }
 }

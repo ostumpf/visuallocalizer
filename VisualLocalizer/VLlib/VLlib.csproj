@@ -110,6 +110,9 @@
     <Compile Include="gui\DataGridViewCheckBoxHeaderCell.cs" />
     <Compile Include="gui\DataGridViewDynamicWrapCell.cs" />
     <Compile Include="gui\DataGridViewKeyValueRow.cs" />
+    <Compile Include="gui\DisableableCheckedListBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="attributes\ProvideMarkerAttribute.cs" />
     <Compile Include="attributes\ProvideOutputWindowAttribute.cs" />

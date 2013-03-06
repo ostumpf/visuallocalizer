@@ -119,7 +119,8 @@ namespace VisualLocalizer.Commands {
             if (ResXProjectItem.IsItemResX(item)) {
                 GlobalTranslateResultItem r = new GlobalTranslateResultItem(item);                
                 r.Checked = false;
-                r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath());
+                r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath())
+                    || RDTManager.IsFileReadonly(item.GetFullPath());
 
                 resxFiles.Add(r);
             }
@@ -153,7 +154,7 @@ namespace VisualLocalizer.Commands {
         private string path;
 
         public override string ToString() {
-            return path;
+            return path + (Readonly ? " (readonly)":"");
         }
     }
 

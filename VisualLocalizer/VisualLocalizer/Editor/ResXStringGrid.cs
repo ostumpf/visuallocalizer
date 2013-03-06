@@ -33,10 +33,7 @@ namespace VisualLocalizer.Editor {
         private ResXEditorControl editorControl;
         private MenuItem editContextMenuItem, cutContextMenuItem, copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem,
             inlineContextMenu, translateMenu, inlineContextMenuItem, inlineRemoveContextMenuItem;
-        private ReferenceLister referenceLister;
-        public bool ReferenceCounterThreadSuspended = false;
-        private System.Threading.Thread referenceUpdaterThread;
-
+        
         public ResXStringGrid(ResXEditorControl editorControl) : base(false, editorControl.conflictResolver) {
             this.editorControl = editorControl;
             this.AllowUserToAddRows = true;            
@@ -121,13 +118,7 @@ namespace VisualLocalizer.Editor {
             contextMenu.Popup += new EventHandler(contextMenu_Popup);
             this.ContextMenu = contextMenu;
 
-            this.ColumnHeadersHeight = 24;
-
-            referenceLister = new ReferenceLister();
-            
-            referenceUpdaterThread = new System.Threading.Thread(ReferenceLookuperThread);
-            referenceUpdaterThread.IsBackground = true;
-            referenceUpdaterThread.Priority = System.Threading.ThreadPriority.BelowNormal;
+            this.ColumnHeadersHeight = 24;            
 
             UpdateContextItemsEnabled();
         }      
@@ -165,8 +156,7 @@ namespace VisualLocalizer.Editor {
         public void BeginAdd() {
             base.SetData(null);
             this.SuspendLayout();
-            Rows.Clear();
-            ReferenceCounterThreadSuspended = true;
+            Rows.Clear();            
         }
 
         public IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
@@ -183,9 +173,7 @@ namespace VisualLocalizer.Editor {
             if (SortedColumn != null) {
                 SortedColumn.HeaderCell.SortGlyphDirection = SortOrder.None;
             }
-            this.ResumeLayout();
-            ReferenceCounterThreadSuspended = false;
-            if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start();                    
+            this.ResumeLayout();                               
         }
 
         public COMMAND_STATUS CanCutOrCopy {
@@ -277,8 +265,19 @@ namespace VisualLocalizer.Editor {
 
         public override void SetData(List<ResXDataNode> list) {
             throw new NotImplementedException();
-        }        
-        
+        }
+
+        protected override void Validate(DataGridViewKeyValueRow<ResXDataNode> row) {
+            string key = row.Key;
+            string value = row.Value;
+
+            string originalValue = (string)row.Cells[KeyColumnName].Tag;
+            editorControl.conflictResolver.TryAdd(originalValue, key, row, editorControl.Editor.ProjectItem);
+            if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
+
+            row.ErrorSetUpdate();
+        }
+
         public override string CheckBoxColumnName {
             get { return null; }
         }
@@ -379,8 +378,8 @@ namespace VisualLocalizer.Editor {
                     ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
                     if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
 
-                    ReferenceCounterThreadSuspended = true;
-                    UpdateReferencesCount(row);
+                    editorControl.ReferenceCounterThreadSuspended = true;
+                    editorControl.UpdateReferencesCount(row);
                 }                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
@@ -420,9 +419,7 @@ namespace VisualLocalizer.Editor {
                                 setNewKey(row, newKey);
                                 NotifyDataChanged();
                             }
-                        }
-
-                        UpdateReferencesCount(row);
+                        }                        
                     } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
                         string newValue = (string)row.Cells[ValueColumnName].Value;
                         if (isNewRow) {
@@ -472,7 +469,7 @@ namespace VisualLocalizer.Editor {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
             } finally {
-                ReferenceCounterThreadSuspended = false;
+                editorControl.ReferenceCounterThreadSuspended = false;
                 NotifyItemsStateChanged();
             }
         }
@@ -489,70 +486,7 @@ namespace VisualLocalizer.Editor {
         #endregion
 
         #region public members
-
-        public void UpdateReferencesCount(ResXStringGridRow row) {
-            UpdateReferencesCount(new List<ResXStringGridRow>() { row });
-        }
-
-        public void UpdateReferencesCount(IList rows) {
-            ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
-            if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
-                Project containingProject = resxItem.InternalProjectItem.ContainingProject;
-                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(null, false));
-
-                List<Project> projects = new List<Project>();
-
-                projects.Add(containingProject);
-                foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
-                    foreach (Project proj in solutionProject.GetReferencedProjects()) {
-                        if (proj == containingProject) {
-                            projects.Add(solutionProject);
-                            break;
-                        }
-                    }
-                }
-
-                bool impliedDesignerItem = false;
-                if (containingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                    string relative = resxItem.InternalProjectItem.GetRelativeURL();
-                    impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
-                }
-
-                if (resxItem.DesignerItem == null && !impliedDesignerItem) {
-                    foreach (ResXStringGridRow row in rows) {
-                        if (row.IsNewRow) continue;
-                        row.CodeReferences.Clear();
-                        row.UpdateReferenceCount(false);
-                    }
-                } else {
-                    Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
-                    foreach (ResXStringGridRow row in rows) {
-                        if (row.IsNewRow) continue;
-                        string referenceKey;
-                        if (row.ErrorSet.Count == 0) {
-                            referenceKey = row.Key;
-                        } else {
-                            referenceKey = row.LastValidKey;
-                        }
-                        var element = trie.Add(resxItem.Class + "." + referenceKey);
-                        element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = row.Value, Key = referenceKey });
-                    }
-                    trie.CreatePredecessorsAndShortcuts();
-
-                    referenceLister.Process(projects, trie, resxItem);
-
-                    foreach (ResXStringGridRow row in rows) {
-                        if (row.IsNewRow) continue;
-                        row.CodeReferences.Clear();
-                        row.CodeReferences.AddRange(referenceLister.Results.Where((item) => {
-                            return item.Key == row.Key || (row.ErrorSet.Count > 0 && item.Key == row.LastValidKey);
-                        }));
-                        row.UpdateReferenceCount(true);
-                    }
-                }
-            }
-        }
-
+        
         public void StringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
             string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringChangeCommentUndoUnit unit = new StringChangeCommentUndoUnit(row, this, key, oldComment, newComment);
@@ -571,11 +505,11 @@ namespace VisualLocalizer.Editor {
 
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
-            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, this, oldKey, newKey);
+            StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, editorControl, oldKey, newKey);
 
             if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
-                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false));
+                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false, true));
 
                 if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
@@ -596,7 +530,7 @@ namespace VisualLocalizer.Editor {
         }
 
         public void StringRowsAdded(List<ResXStringGridRow> rows) {
-            StringRowAddUndoUnit unit = new StringRowAddUndoUnit(rows, this, editorControl.conflictResolver);
+            StringRowAddUndoUnit unit = new StringRowAddUndoUnit(editorControl, rows, this, editorControl.conflictResolver);
             editorControl.Editor.AddUndoUnit(unit);
         }
 
@@ -660,24 +594,6 @@ namespace VisualLocalizer.Editor {
         #endregion
 
         #region private members        
-
-        private void ReferenceLookuperThread() {
-            bool init = true;
-            while (!IsDisposed) {
-                try {
-                    if (init) {
-                        UpdateReferencesCount(Rows);
-                        init = false;
-                    }
-                    System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
-                    if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
-                        UpdateReferencesCount(Rows);
-                } catch (Exception ex) {
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);                    
-                }
-            }
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(editorControl.Editor.FileName));
-        }
 
         private string[] GetMangledCommentData(string comment) {
             string p = comment.Substring(3);
@@ -752,7 +668,7 @@ namespace VisualLocalizer.Editor {
 
                     foreach (ResXStringGridRow row in SelectedRows) {
                         if (!row.IsNewRow) {
-                            ConflictResolver.TryAdd(row.Key, null, row);
+                            editorControl.conflictResolver.TryAdd(row.Key, null, row, editorControl.Editor.ProjectItem);
 
                             row.Cells[KeyColumnName].Tag = null;
                             row.IndexAtDeleteTime = row.Index;
@@ -763,7 +679,7 @@ namespace VisualLocalizer.Editor {
                     }
 
                     if (dataChanged) {
-                        undoUnit = new RemoveStringsUndoUnit(copyRows, this, editorControl.conflictResolver);
+                        undoUnit = new RemoveStringsUndoUnit(editorControl, copyRows, this, editorControl.conflictResolver);
                         if (addUndoUnit) {                            
                             editorControl.Editor.AddUndoUnit(undoUnit);
                         }
@@ -903,10 +819,10 @@ namespace VisualLocalizer.Editor {
             
             if (result == DialogResult.Yes) {
                 try {
-                    ReferenceCounterThreadSuspended = true;
+                    editorControl.ReferenceCounterThreadSuspended = true;
 
                     if ((kind & INLINEKIND.INLINE) == INLINEKIND.INLINE) {
-                        UpdateReferencesCount(SelectedRows);
+                        editorControl.UpdateReferencesCount((IEnumerable<IReferencableKeyValueSource>)SelectedRows);
 
                         List<CodeReferenceResultItem> totalList = new List<CodeReferenceResultItem>();
 
@@ -934,7 +850,7 @@ namespace VisualLocalizer.Editor {
                     VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                     VisualLocalizer.Library.MessageBox.ShowError(text);
                 } finally {
-                    ReferenceCounterThreadSuspended = false;
+                    editorControl.ReferenceCounterThreadSuspended = false;
                 }
             }
         }

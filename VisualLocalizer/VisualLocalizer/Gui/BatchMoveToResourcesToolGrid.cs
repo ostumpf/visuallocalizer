@@ -26,8 +26,9 @@ namespace VisualLocalizer.Gui {
         private bool valueAdded = false;
         private BatchMoveToResourcesToolPanel parentToolPanel;
         private MenuItem destinationContextMenu;
-        
-        public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel) : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
+
+        public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel)
+            : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
             this.parentToolPanel = panel;
             this.MultiSelect = true;
             this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
@@ -272,10 +273,14 @@ namespace VisualLocalizer.Gui {
                     case CONTAINS_KEY_RESULT.DOESNT_EXIST:                        
                         row.ErrorSet.Remove(errorText);
                         break;
-                }                               
-            }
+                }
 
-            base.Validate(row);
+                string originalValue = (string)row.Cells[KeyColumnName].Tag;
+                ((DestinationKeyValueConflictResolver)ConflictResolver).TryAdd(originalValue, key, row, resxItem);
+                if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
+            }            
+
+            row.ErrorSetUpdate();
 
             if (row.ErrorSet.Count == 0) {
                 if (existsSameValue) {
@@ -312,7 +317,7 @@ namespace VisualLocalizer.Gui {
         private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, ProjectItem item) {
             if (!destinationItemsCache.ContainsKey(item.ContainingProject)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
-                foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(item, true)) {
+                foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(item, true, false)) {
                     if (!string.IsNullOrEmpty(projectItem.Class) && !string.IsNullOrEmpty(projectItem.Namespace)) {
                         string key = projectItem.ToString();
                         resxItems.Add(key);

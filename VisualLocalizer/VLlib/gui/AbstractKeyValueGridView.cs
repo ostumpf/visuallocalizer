@@ -11,9 +11,7 @@ namespace VisualLocalizer.Library {
     public abstract class AbstractKeyValueGridView<ItemType>:AbstractCheckedGridView<ItemType> where ItemType:class {
 
         protected KeyValueConflictResolver ConflictResolver;
-
-        public AbstractKeyValueGridView(bool showContextColumn) : this(showContextColumn, new KeyValueConflictResolver()) { }
-
+        
         public AbstractKeyValueGridView(bool showContextColumn, KeyValueConflictResolver resolver) : base(showContextColumn) {            
             this.ConflictResolver = resolver;            
         }

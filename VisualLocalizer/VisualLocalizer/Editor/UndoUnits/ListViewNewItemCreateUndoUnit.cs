@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -12,10 +13,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
         private ListViewKeyItem Item { get; set; }
         private ListViewRemoveItemsUndoUnit RemoveUnit { get; set; }
 
-        public ListViewNewItemCreateUndoUnit(ListViewKeyItem item, KeyValueConflictResolver conflictResolver) {
+        public ListViewNewItemCreateUndoUnit(ResXEditorControl control, ListViewKeyItem item, KeyValueIdentifierConflictResolver conflictResolver) {
             this.Item = item;
 
-            RemoveUnit = new ListViewRemoveItemsUndoUnit(new List<ListViewKeyItem>() { item }, conflictResolver);
+            RemoveUnit = new ListViewRemoveItemsUndoUnit(control, new List<ListViewKeyItem>() { item }, conflictResolver);
         }
 
         public override void Undo() {

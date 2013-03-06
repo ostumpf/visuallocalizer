@@ -100,6 +100,12 @@ namespace VisualLocalizer.Library {
             return DTE.get_IsOpenFile(null, path);
         }
 
+        public static bool IsFileReadonly(string path) {
+            if (string.IsNullOrEmpty(path)) return false;
+            FileAttributes attrs = new FileInfo(path).Attributes;
+            return (attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly;
+        }
+
         public static void SetFileSaved(string path,bool saved) {
             bool open = DTE.get_IsOpenFile(null, path);            
             if (open)

@@ -681,19 +681,22 @@ namespace VisualLocalizer.Library {
         }
 
         public virtual void AddUndoUnit(IOleUndoUnit undoUnit) {
-            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
-            undoManager.Add(undoUnit);
+            UndoManager.Add(undoUnit);
         }
 
         public virtual void ClearUndoRedoStack() {
-            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
-            undoManager.Enable(0);
-            undoManager.Enable(1);
+            UndoManager.Enable(0);
+            UndoManager.Enable(1);
         }
 
         public void SetUndoManagerEnabled(bool enabled) {
-            IOleUndoManager undoManager = (IOleUndoManager)GetService(typeof(IOleUndoManager));
-            undoManager.Enable(enabled ? 1 : 0);
+            UndoManager.Enable(enabled ? 1 : 0);
+        }
+
+        public IOleUndoManager UndoManager {
+            get {
+                return (IOleUndoManager)GetService(typeof(IOleUndoManager));
+            }
         }
 
         public virtual COMMAND_STATUS IsPasteSupported {

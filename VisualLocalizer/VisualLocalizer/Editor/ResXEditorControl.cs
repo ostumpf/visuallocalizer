@@ -68,14 +68,24 @@ namespace VisualLocalizer.Editor {
         public event Action<TRANSLATE_PROVIDER, string, string> TranslateRequested;
         public event Action<INLINEKIND> InlineRequested;
 
-        public KeyValueConflictResolver conflictResolver;
+        public KeyValueIdentifierConflictResolver conflictResolver;
+
+        private ReferenceLister referenceLister;
+        public bool ReferenceCounterThreadSuspended = false;
+        private System.Threading.Thread referenceUpdaterThread;
 
         public void Init<T>(AbstractSingleViewEditor<T> editor) where T : Control, IEditorControl, new() {
             this.Editor = editor as ResXEditor;
 
+            this.referenceLister = new ReferenceLister();
+
+            this.referenceUpdaterThread = new System.Threading.Thread(ReferenceLookuperThread);
+            this.referenceUpdaterThread.IsBackground = true;
+            this.referenceUpdaterThread.Priority = System.Threading.ThreadPriority.BelowNormal;
+
             this.Dock = DockStyle.Fill;
             this.DoubleBuffered = true;
-            this.conflictResolver = new KeyValueConflictResolver(true, false);
+            this.conflictResolver = new KeyValueIdentifierConflictResolver(true, false);
 
             initToolStrip();
             initTabControl();            
@@ -89,8 +99,10 @@ namespace VisualLocalizer.Editor {
 
             this.Controls.Add(toolStrip, 0, 0);
             this.Controls.Add(tabs, 0, 1);
-        }
-        
+
+            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+        }       
+
         public ResXEditor Editor {
             get;
             set;
@@ -255,6 +267,7 @@ namespace VisualLocalizer.Editor {
             codeGenerationBox.SelectedItem = GetResXCodeGenerationMode();
 
             List<IDataTabItem> dataTabItems = new List<IDataTabItem>();
+            ReferenceCounterThreadSuspended = true;
 
             foreach (TabPage page in this.tabs.TabPages) {
                 IDataTabItem content = GetContentFromTabPage(page);
@@ -277,6 +290,9 @@ namespace VisualLocalizer.Editor {
 
             foreach (IDataTabItem tabItem in dataTabItems)
                 tabItem.EndAdd();
+
+            ReferenceCounterThreadSuspended = false;
+            if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start(); 
         }
 
         public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
@@ -292,6 +308,108 @@ namespace VisualLocalizer.Editor {
             return data;
         }
 
+        private void ReferenceLookuperThread() {
+            bool init = true;
+            while (!IsDisposed) {
+                try {
+                    if (init) {
+                        UpdateReferencesCount();
+                        init = false;
+                    }
+                    System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
+                    if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
+                        UpdateReferencesCount();
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);
+                }
+            }
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(Editor.FileName));
+        }
+
+        public void UpdateReferencesCount() {
+            ArrayList list = new ArrayList();            
+            
+            foreach (ResXStringGridRow row in stringGrid.Rows)
+                if (!row.IsNewRow) list.Add(row);
+
+            filesListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, filesListView.Items);
+            imagesListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, imagesListView.Items);
+            iconsListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, iconsListView.Items);
+            soundsListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, soundsListView.Items);            
+
+            UpdateReferencesCount(list);
+        }
+
+        private void addRange(IList list, IEnumerable source) {
+            foreach (IReferencableKeyValueSource item in source)
+                list.Add(item);
+        }
+
+        public void UpdateReferencesCount(IReferencableKeyValueSource src) {
+            UpdateReferencesCount(new List<IReferencableKeyValueSource>() { src });
+        }
+
+        public void UpdateReferencesCount(IEnumerable items) {
+            ResXProjectItem resxItem = Editor.ProjectItem;
+            if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
+                Project containingProject = resxItem.InternalProjectItem.ContainingProject;
+                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(null, false, true));
+
+                List<Project> projects = new List<Project>();
+                
+                projects.Add(containingProject);
+                foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
+                    foreach (Project proj in solutionProject.GetReferencedProjects()) {
+                        if (proj == containingProject) {
+                            projects.Add(solutionProject);
+                            break;
+                        }
+                    }
+                }
+
+                bool impliedDesignerItem = false;
+                if (containingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    string relative = resxItem.InternalProjectItem.GetRelativeURL();
+                    impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
+                }
+
+                if (resxItem.DesignerItem == null && !impliedDesignerItem) {
+                    foreach (IReferencableKeyValueSource item in items) {
+                        item.CodeReferences.Clear();
+                        item.UpdateReferenceCount(false);
+                    }
+                } else {
+                    Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
+                    foreach (IReferencableKeyValueSource item in items) {                        
+                        string referenceKey;
+                        if (item.ErrorSet.Count == 0) {
+                            referenceKey = item.Key;
+                        } else {
+                            referenceKey = "";
+                            //referenceKey = item.LastValidKey;
+                        }
+                        var element = trie.Add(resxItem.Class + "." + referenceKey);
+                        element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = referenceKey });
+                    }
+                    trie.CreatePredecessorsAndShortcuts();
+
+                    referenceLister.Process(projects, trie, resxItem);
+
+                    foreach (IReferencableKeyValueSource item in items) {
+                        item.CodeReferences.Clear();
+                        /*item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
+                            return i.Key == item.Key || (item.ErrorSet.Count > 0 && i.Key == item.LastValidKey);
+                        }));*/
+                        item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
+                            return i.Key == item.Key;
+                        }));
+                        item.UpdateReferenceCount(true); 
+                    }
+                }
+            }
+        }
+
+
         public void SetReadOnly(bool readOnly) {
             foreach (TabPage page in tabs.TabPages) {
                 IDataTabItem item = GetContentFromTabPage(page);
@@ -302,43 +420,77 @@ namespace VisualLocalizer.Editor {
         }
 
         public bool ExecutePaste() {
-            try {
-                if (Clipboard.ContainsFileDropList()) {
-                    StringCollection files = Clipboard.GetFileDropList();
-                    string[] f = new string[files.Count];
-                    for (int i = 0; i < files.Count; i++)
-                        f[i] = files[i];
-                    addExistingFiles(f);
+            return ExecutePaste(Clipboard.GetDataObject());
+        }
 
+        public bool ExecutePaste(System.Windows.Forms.IDataObject iData) {
+            try {
+                if (iData.GetDataPresent(StringConstants.FILE_LIST)) {
+                    string[] files = (string[])iData.GetData(StringConstants.FILE_LIST);                    
+                    addExistingFiles(files);
                     return true;
-                } else if (Clipboard.ContainsText()) {
-                    stringGrid.AddClipboardText(Clipboard.GetText());
+                } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
+                    stringGrid.AddClipboardText((string)iData.GetData("Text"));
                     tabs.SelectedTab = stringTab;
                     return true;
-                } else return false;
+                } else {                    
+                    List<AbstractListView> dataTabItems = new List<AbstractListView>();
+                    foreach (TabPage page in this.tabs.TabPages) {
+                        IDataTabItem content = GetContentFromTabPage(page);
+                        if (content != null && content is AbstractListView) {
+                            dataTabItems.Add(content as AbstractListView);
+                        }
+                    }
+
+                    if (iData.GetDataPresent(typeof(List<object>))) {
+                        internalEmbeddedPaste((List<object>)iData.GetData(typeof(List<object>)), dataTabItems);                        
+                        return true;
+                    } else if (iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
+                        internalSolExpPaste((MemoryStream)iData.GetData(StringConstants.SOLUTION_EXPLORER_FILE_LIST), dataTabItems);                        
+                        return true;
+                    } else return false;
+                }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
-            }
+            } 
             return false;
-        }
+        }            
 
         public bool ExecuteCopy() {
-            IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-            if (content != null)
-                return content.Copy();
-            else
+            try {
+                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                if (content != null)
+                    return content.Copy();
+                else
+                    return false;
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+
                 return false;
+            }            
         }
 
         public bool ExecuteCut() {
-            IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-            if (content != null)
-                return content.Cut();
-            else
+            try {
+                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                if (content != null)
+                    return content.Cut();
+                else
+                    return false;
+            } catch (Exception ex) {
+                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VisualLocalizer.Library.MessageBox.ShowError(text);
+
                 return false;
+            }
         }
 
         public bool ExecuteSelectAll() {
@@ -421,7 +573,7 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private void addExistingFiles(IEnumerable<string> files) {
+        internal void addExistingFiles(IEnumerable<string> files) {
             Project project = null;
             bool userDefinedSolution=VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem);
             if (userDefinedSolution) {
@@ -459,7 +611,7 @@ namespace VisualLocalizer.Editor {
             }
 
             if (newItems.Count > 0) {
-                ListViewItemsAddUndoUnit unit = new ListViewItemsAddUndoUnit(newItems, conflictResolver);
+                ListViewItemsAddUndoUnit unit = new ListViewItemsAddUndoUnit(this, newItems, conflictResolver);
                 Editor.AddUndoUnit(unit);
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Added {0} existing files", newItems.Count);
@@ -469,38 +621,41 @@ namespace VisualLocalizer.Editor {
         private ListViewKeyItem addExistingItem(AbstractListView list, ProjectItem folder, string file, Type type, bool showThumbnails) {
             string fileName = Path.GetFileName(file);
             string localFile = null;
-            bool fileExists,sameTargetDir;
-            Action conflictResolveAction=null;
+            bool localFileExists,fileSameAsLocalFile;            
             ListViewKeyItem addedListItem;
 
             if (folder == null) {
-                fileExists = false;
-                sameTargetDir = true;
-            } else {
-                string fileDir = folder.GetFullPath();
-                localFile = Path.Combine(fileDir, fileName);
-                fileExists = File.Exists(localFile);
-                sameTargetDir = Path.GetFullPath(localFile) == Path.GetFullPath(file);
-                if (fileExists) {
-                    if (folder.ProjectItems.ContainsItem(localFile)) {
-                        ProjectItem conflictItem = folder.ProjectItems.Item(localFile);
-                        conflictResolveAction = new Action(() => { conflictItem.Delete(); });
-                    } else {
-                        conflictResolveAction = new Action(() => { File.Delete(localFile); });
-                    }
-                }
+                localFileExists = false;
+                fileSameAsLocalFile = true;
+            } else {                
+                localFile = Path.Combine(folder.GetFullPath(), fileName);
+                localFileExists = File.Exists(localFile);
+                fileSameAsLocalFile = string.Compare(Path.GetFullPath(localFile), Path.GetFullPath(file), true) == 0;             
             }
 
-            if (fileExists) {
-                if (sameTargetDir) {
-                    string copyFileName = GenerateCopyFileName(file);
-                    File.Copy(file, copyFileName);
+            if (localFileExists) {
+                if (fileSameAsLocalFile) {
+                    ListViewKeyItem existingListItem = list.ItemFromName(Path.GetFileNameWithoutExtension(file));
+                    if (existingListItem == null) {
+                        addedListItem = addExistingItem(list, file, type, showThumbnails);
+                    } else {
+                        string copyFileName = GenerateCopyFileName(file);
+                        File.Copy(file, copyFileName);
 
-                    ProjectItem newItem = folder.ProjectItems.AddFromFile(copyFileName);
-                    setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
+                        ProjectItem newItem = folder.ProjectItems.AddFromFile(copyFileName);
+                        setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
 
-                    addedListItem = addExistingItem(list, copyFileName, type, showThumbnails);
+                        addedListItem = addExistingItem(list, copyFileName, type, showThumbnails);    
+                    }
                 } else {
+                    Action conflictResolveAction = null;
+                    if (folder.ProjectItems.ContainsItem(localFile)) {
+                        ProjectItem existingItem = folder.ProjectItems.Item(localFile);
+                        conflictResolveAction = new Action(() => { existingItem.Delete(); });
+                    } else {
+                        conflictResolveAction = new Action(() => { File.Delete(localFile); });
+                    }     
+
                     DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("Item \"{0}\" already exists. Do you want to overwrite the file?", fileName), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_QUERY);
                     string fullPath = localFile;
                     if (result == DialogResult.Yes) {
@@ -529,8 +684,7 @@ namespace VisualLocalizer.Editor {
                     }
 
                     list.Refresh();
-                    list.NotifyDataChanged();
-                    
+                    list.NotifyDataChanged();                    
                 }
             } else {
                 if (folder == null) {
@@ -546,10 +700,66 @@ namespace VisualLocalizer.Editor {
             return addedListItem;
         }
 
+        private void internalEmbeddedPaste(List<object> list, List<AbstractListView> dataTabItems) {
+            ListViewItemsAddUndoUnit unit = null;
+            List<ListViewKeyItem> newItems = null;
+            try {
+                newItems = new List<ListViewKeyItem>();
+                unit = new ListViewItemsAddUndoUnit(this, newItems, conflictResolver);               
+
+                foreach (ResXDataNode o in list) {
+                    foreach (var item in dataTabItems) {
+                        if (item.CanContainItem(o)) {
+                            string name = GetNextCopyName(o.Name);
+                            bool contains = true;
+                            while (contains) {
+                                contains = item.ItemFromName(name) != null;
+                                if (contains) name = GetNextCopyName(name);
+                            }
+
+                            ListViewKeyItem newItem = (ListViewKeyItem)item.Add(name, o, true);
+                            newItems.Add(newItem);
+
+                            break;
+                        }
+                    }
+                }
+            } finally {
+                if (unit != null) Editor.AddUndoUnit(unit);
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Pasted {0} embedded elements", newItems.Count);
+                stringGrid.NotifyDataChanged();
+            }
+        }
+
+        private void internalSolExpPaste(MemoryStream memoryStream, List<AbstractListView> dataTabItems) {
+            byte[] buffer = new byte[memoryStream.Length];
+            memoryStream.Read(buffer, 0, buffer.Length);
+
+            string text = Encoding.UTF8.GetString(buffer);
+            List<string> paths = new List<string>();
+            StringBuilder dataBuilder = new StringBuilder();
+
+            char prevChar = '?';
+            foreach (char c in text) {
+                if (c != '\0' || prevChar == '\0') dataBuilder.Append(c);
+                prevChar=c;
+            }
+
+            string[] data = dataBuilder.ToString().Split(Path.GetInvalidPathChars(), StringSplitOptions.RemoveEmptyEntries);
+            foreach (string path in data) {
+                if (File.Exists(path)) {
+                    paths.Add(path);
+                }
+            }
+
+            addExistingFiles(paths);
+        }   
+
         private void setBuildAction(ProjectItem item, prjBuildAction prjBuildAction) {
             if (item == null) return;
             if (item.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
-
+            
             try {
                 item.Properties.Item("BuildAction").Value = prjBuildAction;
             } catch (Exception) {
@@ -564,18 +774,23 @@ namespace VisualLocalizer.Editor {
             string newName = file;
 
             while (File.Exists(newName)) {
-                Match match = Regex.Match(name, "(.*)(\\d{1,})");
-                if (match.Success) {
-                    int i = int.Parse(match.Groups[2].Value);
-                    i++;
-                    name = string.Format("{0}{1}", match.Groups[1].Value, i);
-                } else {
-                    name += "1";
-                }
+                name = GetNextCopyName(name);
                 newName = Path.Combine(dir, name + ext);
             }
 
             return Path.GetFullPath(newName);
+        }
+
+        private string GetNextCopyName(string name) {
+            Match match = Regex.Match(name, "(.*)(\\d{1,})$");
+            if (match.Success) {
+                int i = int.Parse(match.Groups[2].Value);
+                i++;
+                name = string.Format("{0}{1}", match.Groups[1].Value, i);
+            } else {
+                name += "1";
+            }
+            return name;
         }
 
         private ListViewKeyItem addExistingItem(AbstractListView list, string fullPath, Type type, bool showThumbnails) {                        
@@ -632,7 +847,7 @@ namespace VisualLocalizer.Editor {
                         newItem = addNewImageWithSolution(imageName, solution, resourceType, listView, resourceSubfolder, win);
                     }
 
-                    ListViewNewItemCreateUndoUnit unit = new ListViewNewItemCreateUndoUnit(newItem, conflictResolver);
+                    ListViewNewItemCreateUndoUnit unit = new ListViewNewItemCreateUndoUnit(this, newItem, conflictResolver);
                     Editor.AddUndoUnit(unit);
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Created and added new object \"{0}\"", newItem.DataNode.FileRef.FileName);
@@ -693,6 +908,25 @@ namespace VisualLocalizer.Editor {
         #endregion
 
         #region private - listeners
+
+        private void Instance_RevalidationRequested() {
+            foreach (ResXStringGridRow row in stringGrid.Rows) {
+                if (row.IsNewRow) continue;
+                row.Cells[stringGrid.KeyColumnName].Tag = row.Cells[stringGrid.KeyColumnName].Value;
+                stringGrid.ValidateRow(row);
+            }
+            validateListView(imagesListView);
+            validateListView(soundsListView);
+            validateListView(iconsListView);
+            validateListView(filesListView);
+        }
+
+        private void validateListView(AbstractListView view) {
+            foreach (ListViewKeyItem item in view.Items) {
+                item.BeforeEditValue = item.AfterEditValue = item.Key;
+                view.Validate(item);
+            }
+        }
 
         private void updateKeysButton_Click(object sender, EventArgs e) {
             string myNeutralName = Editor.ProjectItem.GetCultureNeutralName();
@@ -992,11 +1226,11 @@ namespace VisualLocalizer.Editor {
                         if (item.CanContainItem(node)) {
                             IKeyValueSource newItem = item.Add(key, node, true);
                             if (newItem is ResXStringGridRow) {
-                                StringRowAddUndoUnit undoUnit = new StringRowAddUndoUnit(
+                                StringRowAddUndoUnit undoUnit = new StringRowAddUndoUnit(this,
                                     new List<ResXStringGridRow>() { newItem as ResXStringGridRow }, stringGrid, conflictResolver);
                                 units.Push(undoUnit);
                             } else {
-                                ListViewItemsAddUndoUnit undoUnit = new ListViewItemsAddUndoUnit(
+                                ListViewItemsAddUndoUnit undoUnit = new ListViewItemsAddUndoUnit(this,
                                     new List<ListViewKeyItem>() { newItem as ListViewKeyItem }, conflictResolver);
                                 units.Push(undoUnit);
                             }

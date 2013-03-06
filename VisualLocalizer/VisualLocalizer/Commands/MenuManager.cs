@@ -31,6 +31,7 @@ namespace VisualLocalizer.Commands {
         private BatchInlineCommand batchInlineCommand;
         private GlobalTranslateCommand globalTranslateCommand;
         private bool globalTranslateEnabled, batchOperationsEnabled;
+        public static bool OperationInProgress;
 
         public MenuManager() {
             this.csharpInlineCommand = new CSharpInlineCommand();
@@ -222,7 +223,11 @@ namespace VisualLocalizer.Commands {
         /// Handles "Move to resources" command from code context menu.
         /// </summary>        
         private void moveToResourcesClick(object sender, EventArgs args) {
+            bool enteredOk = false;
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Move to resources', because another operation is in progress.");
+                enteredOk = true;
+
                 Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
                 if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
                     aspNetMoveToResourcesCommand.Process();
@@ -235,7 +240,7 @@ namespace VisualLocalizer.Commands {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
             } finally {
-                VLDocumentViewsManager.ReleaseLocks();
+                if (enteredOk) VLDocumentViewsManager.ReleaseLocks();
             }
         }
 
@@ -243,7 +248,11 @@ namespace VisualLocalizer.Commands {
         /// Handles "Inline" command from code context menu.
         /// </summary>        
         private void inlineClick(object sender, EventArgs args) {
+            bool enteredOk = false;
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Inline', because another operation is in progress.");
+                enteredOk = true;
+
                 Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
                 if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
                     aspNetInlineCommand.Process();
@@ -256,7 +265,7 @@ namespace VisualLocalizer.Commands {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
             } finally {
-                VLDocumentViewsManager.ReleaseLocks();
+                if (enteredOk) VLDocumentViewsManager.ReleaseLocks();
             }
         }
 
@@ -265,6 +274,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchMoveCodeClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchMoveCommand.Process(true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
@@ -284,6 +296,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchMoveSolExpClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchMoveCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
@@ -303,6 +318,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchInlineCodeClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchInlineCommand.Process(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
@@ -315,7 +333,7 @@ namespace VisualLocalizer.Commands {
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            } 
+            }
         }
 
         /// <summary>
@@ -323,6 +341,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchInlineSolExpClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
@@ -342,6 +363,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void translateSolExpClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Global translate', because another operation is in progress.");
+                OperationInProgress = true;
+
                 globalTranslateCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
             } catch (Exception ex) {
                 string text = null;
@@ -354,7 +378,7 @@ namespace VisualLocalizer.Commands {
                 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            }
+            } 
         }
 
         /// <summary>
@@ -362,6 +386,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchInlineSelectionCodeClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchInlineCommand.ProcessSelection(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
@@ -373,7 +400,7 @@ namespace VisualLocalizer.Commands {
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 MessageBox.ShowError(text);
-            }
+            } 
         }
 
         /// <summary>
@@ -381,6 +408,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void batchMoveSelectionCodeClick(object sender, EventArgs args) {
             try {
+                if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
+                OperationInProgress = true;
+
                 batchMoveCommand.ProcessSelection(true);
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {

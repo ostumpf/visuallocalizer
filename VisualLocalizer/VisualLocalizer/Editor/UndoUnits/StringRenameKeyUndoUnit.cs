@@ -13,14 +13,14 @@ namespace VisualLocalizer.Editor.UndoUnits {
     [Guid("A524A5E7-EF67-4b42-BBB1-25706700A1AD")]
     internal sealed class StringRenameKeyUndoUnit : RenameKeyUndoUnit {
 
-        public StringRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string oldKey, string newKey) 
+        public StringRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXEditorControl control, string oldKey, string newKey) 
             : base(oldKey, newKey) {
             this.SourceRow = sourceRow;
-            this.Grid = grid;
+            this.Control = control;
         }
 
         public ResXStringGridRow SourceRow { get; private set; }
-        public ResXStringGrid Grid { get; private set; }
+        public ResXEditorControl Control { get; private set; }
        
         public override void Undo() {                       
             UpdateSourceReferences(NewKey, OldKey);
@@ -32,8 +32,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private void UpdateSourceReferences(string from, string to) {
             try {                
-                Grid.ReferenceCounterThreadSuspended = true;
-                Grid.UpdateReferencesCount(SourceRow);
+                Control.ReferenceCounterThreadSuspended = true;
+                Control.UpdateReferencesCount(SourceRow);
 
                 ChangeColumnValue(from, to);
 
@@ -54,7 +54,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 VLOutputWindow.VisualLocalizerPane.WriteLine(text);
                 VisualLocalizer.Library.MessageBox.ShowError(text);
             } finally {
-                Grid.ReferenceCounterThreadSuspended = false;
+                Control.ReferenceCounterThreadSuspended = false;
             }
         }
 
@@ -65,11 +65,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
             } else {
                 SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
             }
-            SourceRow.Cells[Grid.KeyColumnName].Tag = from;
-            SourceRow.Cells[Grid.KeyColumnName].Value = to;
-            Grid.ValidateRow(SourceRow);
-            Grid.NotifyDataChanged();
-            Grid.SetContainingTabPageSelected();
+            
+            ResXStringGrid grid = (ResXStringGrid)SourceRow.DataGridView;
+            SourceRow.Cells[grid.KeyColumnName].Tag = from;
+            SourceRow.Cells[grid.KeyColumnName].Value = to;
+            grid.ValidateRow(SourceRow);
+            grid.NotifyDataChanged();
+            grid.SetContainingTabPageSelected();
 
             if (SourceRow.ErrorSet.Count == 0) SourceRow.LastValidKey = to;
         }

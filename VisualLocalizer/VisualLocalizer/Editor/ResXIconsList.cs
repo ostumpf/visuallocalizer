@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.Resources;
 using VisualLocalizer.Library;
 using System.Drawing;
+using System.IO;
 
 namespace VisualLocalizer.Editor {
     internal sealed class ResXIconsList : AbstractListView {
@@ -19,6 +20,7 @@ namespace VisualLocalizer.Editor {
 
         public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
             ListViewKeyItem item = base.Add(key, value, showThumbnails) as ListViewKeyItem;
+            if (referenceExistingOnAdd) return item;
 
             Icon ico = null;
             if (showThumbnails) ico = value.GetValue<Icon>();
@@ -26,13 +28,16 @@ namespace VisualLocalizer.Editor {
             if (ico != null) {
                 LargeImageList.Images.Add(item.Name, ico);
                 SmallImageList.Images.Add(item.Name, ico);
+                item.ImageKey = item.Name; // update icon
             }
             
             if (ico == null && showThumbnails) item.FileRefOk = false;
 
             ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
             subSize.Name = "Size";
-            if (ico != null) subSize.Text = string.Format("{0} x {1}", ico.Width, ico.Height);
+            if (ico != null) {
+                subSize.Text = string.Format("{0} x {1}", ico.Width, ico.Height);
+            }
             item.SubItems.Insert(2, subSize);
 
             return item;
@@ -72,6 +77,22 @@ namespace VisualLocalizer.Editor {
             sizeHeader.Width = 80;
             sizeHeader.Name = "Size";
             this.Columns.Insert(2, sizeHeader);            
+        }
+
+        protected override string saveIntoTmpFile(ResXDataNode node, string directory) {
+            Icon value = node.GetValue<Icon>();
+            string filename = node.Name + ".ico";
+            string path = Path.Combine(directory, filename);
+
+            FileStream fs = null;
+            try {
+                fs = new FileStream(path, FileMode.Create);
+                value.Save(fs);
+            } finally {
+                if (fs != null) fs.Close();         
+            }
+
+            return path;
         }
     }
 }

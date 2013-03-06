@@ -14,6 +14,8 @@ using System.Diagnostics;
 
 namespace VisualLocalizer.Settings {
 
+    internal enum BAD_KEY_NAME_POLICY { IGNORE_COMPLETELY, IGNORE_ON_NO_DESIGNER, WARN_ALWAYS }
+
     [Guid("82B0FBD1-ACF3-4974-B83F-2B06B4F839F0")]
     internal sealed class EditorSettingsManager : AbstractSettingsManager {
 
@@ -26,6 +28,7 @@ namespace VisualLocalizer.Settings {
         private Button addButton, removeButton, moveUpButton, moveDownButton;
         private bool closed = true;
         private NumericUpDown intervalBox;
+        private ComboBox keyBehaviorBox;
 
         #region IProfileManager
 
@@ -42,6 +45,7 @@ namespace VisualLocalizer.Settings {
                         SettingsObject.Instance.IgnorePropertyChanges = true;
 
                         SettingsObject.Instance.ReferenceUpdateInterval = ReadIntFromRegKey(editorKey, "ReferenceUpdateInterval", 15 * 1000);
+                        SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)ReadIntFromRegKey(editorKey, "BadKeyNamePolicy", 1);
                         SettingsObject.Instance.LanguagePairs.Clear();
                         int count = ReadIntFromRegKey(editorKey, "LanguagesCount");
 
@@ -71,6 +75,7 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.IgnorePropertyChanges = true;
 
             SettingsObject.Instance.ReferenceUpdateInterval = ReadIntFromXml(reader, "ReferenceUpdateInterval");
+            SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)ReadIntFromXml(reader, "BadKeyNamePolicy");
             int count = ReadIntFromXml(reader, "LanguagesCount");
             for (int i = 0; i < count; i++) {
                 string pair;
@@ -102,6 +107,7 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.ReferenceUpdateInterval = 10 * 1000;
             SettingsObject.Instance.LanguagePairs.Clear();
             SettingsObject.Instance.BingAppId = null;
+            SettingsObject.Instance.BadKeyNamePolicy = BAD_KEY_NAME_POLICY.IGNORE_ON_NO_DESIGNER;
 
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
@@ -117,6 +123,7 @@ namespace VisualLocalizer.Settings {
                 RegistryKey editorKey = settingsKey.CreateSubKey(EDITOR_KEY);
 
                 WriteIntToRegKey(editorKey, "ReferenceUpdateInterval", SettingsObject.Instance.ReferenceUpdateInterval);
+                WriteIntToRegKey(editorKey, "BadKeyNamePolicy",(int)SettingsObject.Instance.BadKeyNamePolicy);
                 WriteIntToRegKey(editorKey, "LanguagesCount", SettingsObject.Instance.LanguagePairs.Count);
                 for (int i = 0; i < SettingsObject.Instance.LanguagePairs.Count; i++) {
                     editorKey.SetValue("Language" + i, SettingsObject.Instance.LanguagePairs[i].FromLanguage + ":" + SettingsObject.Instance.LanguagePairs[i].ToLanguage);
@@ -130,6 +137,7 @@ namespace VisualLocalizer.Settings {
 
         public override void SaveSettingsToXml(IVsSettingsWriter writer) {
             WriteIntToXml(writer, "ReferenceUpdateInterval", SettingsObject.Instance.ReferenceUpdateInterval);
+            WriteIntToXml(writer, "BadKeyNamePolicy", (int)SettingsObject.Instance.BadKeyNamePolicy);
             WriteIntToXml(writer, "LanguagesCount", SettingsObject.Instance.LanguagePairs.Count);
 
             for (int i = 0; i < SettingsObject.Instance.LanguagePairs.Count; i++) {
@@ -179,19 +187,40 @@ namespace VisualLocalizer.Settings {
             intervalBox.Increment = 1000;
             intervalBox.InterceptArrowKeys = true;
 
+            Label keyBehaviorLabel = new Label();
+            keyBehaviorLabel.AutoSize = true;
+            keyBehaviorLabel.Margin = new Padding(0, 6, 0, 0);
+            keyBehaviorLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            keyBehaviorLabel.Text = "Invalid key name policy:";
+
+            keyBehaviorBox = new ComboBox();
+            keyBehaviorBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            keyBehaviorBox.Width = 250;
+            keyBehaviorBox.Items.Add("Ignore always");
+            keyBehaviorBox.Items.Add("Ignore when no designer class is generated");
+            keyBehaviorBox.Items.Add("Always issue error");
+
             GroupBox intervalGroup = new GroupBox();
             intervalGroup.AutoSize = true;
             intervalGroup.Dock = DockStyle.Fill;
-            intervalGroup.Text = "Strings Tab";
-            
-            FlowLayoutPanel intervalInnerPanel = new FlowLayoutPanel();
+            intervalGroup.Text = "Reference Counter";
+
+            TableLayoutPanel intervalInnerPanel = new TableLayoutPanel();
             intervalInnerPanel.AutoSize = true;
             intervalInnerPanel.Dock = DockStyle.Fill;
-            intervalInnerPanel.Controls.Add(intervalLabel);
-            intervalInnerPanel.Controls.Add(intervalBox);
+            intervalInnerPanel.ColumnCount = 2;
+            intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            intervalInnerPanel.RowCount = 2;
+            intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            intervalInnerPanel.Controls.Add(intervalLabel, 0, 0);
+            intervalInnerPanel.Controls.Add(intervalBox, 1, 0);
+            intervalInnerPanel.Controls.Add(keyBehaviorLabel, 0, 1);
+            intervalInnerPanel.Controls.Add(keyBehaviorBox, 1, 1);
             
             intervalGroup.Controls.Add(intervalInnerPanel);
-
 
             bingLabel = new Label();
             bingLabel.AutoSize = true;
@@ -298,6 +327,7 @@ namespace VisualLocalizer.Settings {
             }
 
             languagePairsBox_SelectedIndexChanged(null, null);
+            keyBehaviorBox.SelectedIndex = (int)SettingsObject.Instance.BadKeyNamePolicy;
         }
 
         protected override void OnActivate(CancelEventArgs e) {
@@ -318,7 +348,7 @@ namespace VisualLocalizer.Settings {
         protected override void OnApply(PageApplyEventArgs e) {
             if (e.ApplyBehavior == ApplyKind.Apply) {
                 SettingsObject.Instance.IgnorePropertyChanges = true;
-
+                
                 SettingsObject.Instance.ReferenceUpdateInterval = (int)intervalBox.Value;
                 SettingsObject.Instance.BingAppId = string.IsNullOrEmpty(bingBox.Text) ? null : bingBox.Text;
                 SettingsObject.Instance.LanguagePairs.Clear();
@@ -326,8 +356,13 @@ namespace VisualLocalizer.Settings {
                     SettingsObject.Instance.LanguagePairs.Add(newPair);
                 }
 
+                bool forceRevalidation = SettingsObject.Instance.BadKeyNamePolicy != (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
+                SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
+
                 SettingsObject.Instance.IgnorePropertyChanges = false;
                 SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+
+                if (forceRevalidation) SettingsObject.Instance.NotifyRevalidationRequested();
             }
         }
 

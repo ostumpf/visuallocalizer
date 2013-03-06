@@ -30,13 +30,6 @@ namespace VisualLocalizer.Library {
                 newKey = newKey == null ? null : newKey.ToLower();
             }
 
-            string identError = "Key is not valid C# identifier";
-            if (!newKey.IsValidIdentifier()) {
-                item.ErrorSet.Add(identError);
-            } else {
-                item.ErrorSet.Remove(identError);
-            }
-
             if (string.Compare(oldKey,newKey)==0) {
                 if (!string.IsNullOrEmpty(newKey)) {
                     foreach (IKeyValueSource c in this[newKey].ItemsWithSameKey) {

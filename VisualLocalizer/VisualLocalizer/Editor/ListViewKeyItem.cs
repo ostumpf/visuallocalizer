@@ -7,9 +7,10 @@ using System.Resources;
 using System.Drawing;
 using VisualLocalizer.Library;
 using EnvDTE;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor {
-    internal class ListViewKeyItem : ListViewItem, IKeyValueSource {
+    internal class ListViewKeyItem : ListViewItem, IReferencableKeyValueSource {
 
         protected Color ErrorColor = Color.FromArgb(255, 213, 213);
 
@@ -18,6 +19,7 @@ namespace VisualLocalizer.Editor {
             _ConflictRows = new HashSet<IKeyValueSource>();
             _ErrorSet = new HashSet<string>();
             FileRefOk = true;
+            CodeReferences = new List<CodeReferenceResultItem>();
             this.AbstractListView = parent;
         }
 
@@ -88,6 +90,16 @@ namespace VisualLocalizer.Editor {
                     this.BackColor = Color.White;
                 }
             }          
+        }
+
+        public List<CodeReferenceResultItem> CodeReferences {
+            get;
+            set;
+        }
+
+        public void UpdateReferenceCount(bool determinated) {
+            ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s), 
+                ErrorSet.Count == 0 && determinated ? CodeReferences.Count.ToString():"?");            
         }
     }
 }
