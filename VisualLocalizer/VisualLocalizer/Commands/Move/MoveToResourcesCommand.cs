@@ -56,7 +56,7 @@ namespace VisualLocalizer.Commands {
                     bool unitsFromStackRemoved = false;
                     bool unitMovedToResource = false;
                     ReferenceString referenceText;
-                    bool addNamespace = false;
+                    bool addUsing = false;
 
                     // Now we must resolve the namespaces issue. If user selected the "use full name" in previous dialog,
                     // there's no trouble. Otherwise we must find out, if necessary namespace has already been included (using)
@@ -65,10 +65,10 @@ namespace VisualLocalizer.Commands {
                     try {
                         if (f.UsingFullName || resultItem.MustUseFullName) {
                             referenceText = new ReferenceString(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key);
-                            addNamespace = false;
+                            addUsing = false;
                         } else {
                             NamespacesList usedNamespaces = resultItem.GetUsedNamespaces();
-                            addNamespace = usedNamespaces.ResolveNewElement(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key,
+                            addUsing = usedNamespaces.ResolveNewElement(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key,
                                 currentDocument.ProjectItem.ContainingProject, out referenceText);                            
                         }
                         
@@ -84,23 +84,23 @@ namespace VisualLocalizer.Commands {
                             replaceSpan.iStartLine, replaceSpan.iStartIndex + newText.Length);
                         Marshal.ThrowExceptionForHR(hr);
                                                 
-                        if (addNamespace) {
+                        if (addUsing) {
                             resultItem.AddUsingBlock(textLines);
                         }                        
 
                         if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {
                             // conflict -> user chooses to reference existing key
-                            unitsFromStackRemoved = CreateMoveToResourcesReferenceUndoUnit(f.Key, addNamespace);
+                            unitsFromStackRemoved = CreateMoveToResourcesReferenceUndoUnit(f.Key, addUsing);
                         } else if (f.Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE) {
                             // conflict -> user chooses to overwrite existing key and reference the new one
                             f.SelectedItem.AddString(f.Key, f.Value);
                             unitMovedToResource = true;                            
-                            unitsFromStackRemoved = CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addNamespace);                            
+                            unitsFromStackRemoved = CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addUsing);                            
                         } else {
                             // no conflict occured
                             f.SelectedItem.AddString(f.Key, f.Value);
                             unitMovedToResource = true;                            
-                            unitsFromStackRemoved = CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addNamespace);                            
+                            unitsFromStackRemoved = CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addUsing);                            
                         }
                 
                     } catch (Exception) {
@@ -108,7 +108,7 @@ namespace VisualLocalizer.Commands {
 
                         VLOutputWindow.VisualLocalizerPane.WriteLine("Exception caught, rolling back...");
                         if (!unitsFromStackRemoved) {
-                            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);                            
+                            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addUsing ? 2 : 1);                            
                             foreach (var unit in units) {
                                 unit.Do(undoManager);                                
                             }

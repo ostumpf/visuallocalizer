@@ -69,7 +69,7 @@ namespace VisualLocalizer.Components {
     internal abstract class CodeStringResultItem : AbstractResultItem {
         public bool WasVerbatim { get; set; }
         public string ErrorText { get; set; }
-        public string ClassOrStructElementName { get; set; }       
+        public string ClassOrStructElementName { get; set; }    // name of file in asp .net   
 
         public abstract string GetReferenceText(ReferenceString referenceText);
         public abstract List<string> GetKeyNameSuggestions();
@@ -204,9 +204,9 @@ namespace VisualLocalizer.Components {
         }
     }
 
-    internal sealed class CSharpStringResultItem : CodeStringResultItem {
+    internal abstract class NetStringResultItem : CodeStringResultItem {
         public string MethodElementName { get; set; }
-        public string VariableElementName { get; set; }                
+        public string VariableElementName { get; set; }
         public CodeNamespace NamespaceElement { get; set; }
 
         public override string GetReferenceText(ReferenceString referenceText) {
@@ -220,21 +220,27 @@ namespace VisualLocalizer.Components {
 
         public override NamespacesList GetUsedNamespaces() {
             return NamespaceElement.GetUsedNamespaces(SourceItem);
-        }
+        }        
 
-        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }        
-
-        public override bool MustUseFullName { 
+        public override bool MustUseFullName {
             get { return false; }
         }
 
         public override void AddUsingBlock(IVsTextLines textLines) {
-            SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);            
+            SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);
         }
 
         public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
-            return AbstractResultItem.GetCriteria();
-        }       
+            return CodeStringResultItem.GetCriteria();
+        }
+    }
+
+    internal class CSharpStringResultItem : NetStringResultItem {
+        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }       
+    }
+
+    internal sealed class VBStringResultItem : NetStringResultItem {
+        public override string NoLocalizationComment { get { return string.Empty; } }       
     }
 
     internal sealed class AspNetStringResultItem : CodeStringResultItem {
@@ -360,20 +366,28 @@ namespace VisualLocalizer.Components {
         public abstract string GetReferenceAfterRename(string newKey);
     }
 
-    internal sealed class CSharpCodeReferenceResultItem : CodeReferenceResultItem {
-        public override string GetInlineValue() {
-            return "\"" + Value.ConvertCSharpUnescapeSequences() + "\"";
-        }
-
+    internal abstract class NetCodeReferenceResultItem : CodeReferenceResultItem {
         public override TextSpan GetInlineReplaceSpan(bool strictText, out int absoluteStartIndex, out int absoluteLength) {
             absoluteStartIndex = AbsoluteCharOffset;
             absoluteLength = AbsoluteCharLength;
-            return ReplaceSpan;            
+            return ReplaceSpan;
         }
 
         public override string GetReferenceAfterRename(string newKey) {
             string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf('.'));
             return prefix + "." + newKey;
+        }
+    }
+
+    internal class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
+        public override string GetInlineValue() {
+            return "\"" + Value.ConvertCSharpUnescapeSequences() + "\"";
+        }   
+    }
+
+    internal class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
+        public override string GetInlineValue() {
+            return "\"" + Value.ConvertVBEscapeSequences() + "\"";
         }
     }
 

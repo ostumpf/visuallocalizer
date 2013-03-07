@@ -149,12 +149,12 @@ namespace VisualLocalizer.Gui {
         }
 
         private Dictionary<string, AbstractLocalizationCriterion> lastSetCriteria;
-        public void RecalculateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria) {
+        public void RecalculateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, bool changeChecks) {
             if (Rows.Count == 0) return;
             lastSetCriteria = criteria;
 
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
-                updateLocProbability(criteria, row);
+                updateLocProbability(criteria, row, changeChecks);
             }
           
             UpdateCheckHeader();
@@ -237,7 +237,7 @@ namespace VisualLocalizer.Gui {
                     valueAdded = false;
                 }
             }
-            updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex]);
+            updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex], false);
             base.OnCellEndEdit(e);
         }
 
@@ -293,17 +293,19 @@ namespace VisualLocalizer.Gui {
         
         #endregion      
 
-        private void updateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row) {
+        private void updateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row, bool changeChecks) {
             int newLocProb = GetResultItemFromRow(row).GetLocalizationProbability(criteria);
             row.Cells[LocProbColumnName].Tag = newLocProb;
             row.Cells[LocProbColumnName].Value = newLocProb + "%";
 
-            bool isChecked = (bool)row.Cells[CheckBoxColumnName].Value;
-            bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
-            row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
+            if (changeChecks) {
+                bool isChecked = (bool)row.Cells[CheckBoxColumnName].Value;
+                bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
+                row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
 
-            if (isChecked && !willBeChecked) CheckedRowsCount--;
-            if (!isChecked && willBeChecked) CheckedRowsCount++;
+                if (isChecked && !willBeChecked) CheckedRowsCount--;
+                if (!isChecked && willBeChecked) CheckedRowsCount++;
+            }
         }    
 
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {

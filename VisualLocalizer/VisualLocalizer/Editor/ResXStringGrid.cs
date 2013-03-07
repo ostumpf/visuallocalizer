@@ -822,7 +822,7 @@ namespace VisualLocalizer.Editor {
                     editorControl.ReferenceCounterThreadSuspended = true;
 
                     if ((kind & INLINEKIND.INLINE) == INLINEKIND.INLINE) {
-                        editorControl.UpdateReferencesCount((IEnumerable<IReferencableKeyValueSource>)SelectedRows);
+                        editorControl.UpdateReferencesCount((IEnumerable)SelectedRows);
 
                         List<CodeReferenceResultItem> totalList = new List<CodeReferenceResultItem>();
 

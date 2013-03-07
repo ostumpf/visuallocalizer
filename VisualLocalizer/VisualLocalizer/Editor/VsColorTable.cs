@@ -22,7 +22,7 @@ namespace VisualLocalizer.Editor {
                     middleColor = ColorTranslator.FromHtml("#BCC7D8");
                     endColor = ColorTranslator.FromHtml("#BCC7D8");
                     break;
-                case VS_VERSION.VS2011:
+                case VS_VERSION.VS2012:
                     beginColor = ColorTranslator.FromHtml("#D0D2D3");
                     middleColor = ColorTranslator.FromHtml("#D0D2D3");
                     endColor = ColorTranslator.FromHtml("#D0D2D3");

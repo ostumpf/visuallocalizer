@@ -21,7 +21,10 @@ namespace VisualLocalizer.Commands {
 
         public abstract IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
             CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
-        public abstract IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
+        public abstract IList LookupInCSharpAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
+        public abstract IList LookupInVBAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className);
+        public abstract IList LookupInVB(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
+            CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse);
 
         public void ReinitializeWith(ProjectItem projectItem) {
             currentlyProcessedItem = projectItem;
@@ -123,7 +126,7 @@ namespace VisualLocalizer.Commands {
             switch (projectItem.GetFileType()) {
                 case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
                 case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
-                case FILETYPE.RAZOR: break; // TODO
+                case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
             }
         }
 
@@ -141,6 +144,22 @@ namespace VisualLocalizer.Commands {
             
             currentlyProcessedItem = null;
         }
+
+        protected void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            FileCodeModel2 codeModel = projectItem.FileCodeModel as FileCodeModel2;
+            if (codeModel == null) {
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
+                return;
+            }
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+
+            currentlyProcessedItem = projectItem;
+
+            VBCodeExplorer.Instance.Explore(this, exploreable, codeModel);
+
+            currentlyProcessedItem = null;
+        }
+
 
         protected void ProcessAspNet(ProjectItem projectItem, bool verbose) {
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);

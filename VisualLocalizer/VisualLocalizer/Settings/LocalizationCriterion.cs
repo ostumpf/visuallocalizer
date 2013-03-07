@@ -142,7 +142,7 @@ namespace VisualLocalizer.Settings {
 
         private string getTarget(CodeStringResultItem resultItem, out bool relevant) {
             string testString = null;
-            CSharpStringResultItem cResItem = resultItem as CSharpStringResultItem;
+            NetStringResultItem cResItem = resultItem as NetStringResultItem;
             AspNetStringResultItem aResItem = resultItem as AspNetStringResultItem;
             relevant = false;
 

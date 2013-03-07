@@ -77,7 +77,7 @@ namespace VisualLocalizer.Commands {
                 generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
             }
 
-            var list = CSharpStringLookuper.Instance.Run(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem], functionText, startPoint, 
+            var list = CSharpStringLookuper.Instance.LookForStrings(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem], functionText, startPoint, 
                 parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
      
             foreach (CSharpStringResultItem item in list) {
@@ -87,13 +87,30 @@ namespace VisualLocalizer.Commands {
             return list;
         }
 
-        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+        public override IList LookupInVB(string functionText, TextPoint startPoint, CodeNamespace parentNamespace,
+            CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
+
             if (!generatedProjectItems.ContainsKey(currentlyProcessedItem)) {
                 generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
             }
 
-            var list = AspNetCodeStringLookuper.Instance.Run(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem],
-                functionText, blockSpan, declaredNamespaces, className);
+            var list = VBStringLookuper.Instance.LookForStrings(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem], functionText, startPoint,
+                parentNamespace, codeClassOrStruct.Name, codeFunctionName, codeVariableName, isWithinLocFalse);
+
+            foreach (VBStringResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }
+
+        public override IList LookupInCSharpAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            if (!generatedProjectItems.ContainsKey(currentlyProcessedItem)) {
+                generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
+            }
+
+            var list = AspNetCSharpStringLookuper.Instance.LookForStrings(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem],
+                functionText, blockSpan, className, declaredNamespaces);
 
             foreach (AspNetStringResultItem item in list) {
                 Results.Add(item);
@@ -101,7 +118,22 @@ namespace VisualLocalizer.Commands {
 
             return list;
         }
-       
+
+        public override IList LookupInVBAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            if (!generatedProjectItems.ContainsKey(currentlyProcessedItem)) {
+                generatedProjectItems.Add(currentlyProcessedItem, currentlyProcessedItem.IsGenerated());
+            }
+
+            var list = AspNetVBStringLookuper.Instance.LookForStrings(currentlyProcessedItem, generatedProjectItems[currentlyProcessedItem],
+                functionText, blockSpan, className, declaredNamespaces);
+
+            foreach (AspNetStringResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }
+
         public void AddToResults<T>(T resultItem) where T : CodeStringResultItem, new() {
             resultItem.SourceItem = currentlyProcessedItem;
             Results.Add(resultItem);

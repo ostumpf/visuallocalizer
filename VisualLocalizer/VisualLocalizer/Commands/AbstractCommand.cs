@@ -125,8 +125,10 @@ namespace VisualLocalizer.Commands {
                             
                             startPoint = codeVariable.StartPoint;
                             text = codeVariable.GetText();
-                            if (codeClass.Kind == vsCMElement.vsCMElementClass && !string.IsNullOrEmpty(text)) {
-                                ok = true;                            
+                            if ((codeClass.Kind == vsCMElement.vsCMElementStruct && codeVariable.IsShared)
+                                || (codeClass.Kind == vsCMElement.vsCMElementClass || codeClass.Kind == vsCMElement.vsCMElementModule) 
+                                && !string.IsNullOrEmpty(text)) {
+                                ok = true;
                             }
                         }                        
                     } catch (Exception) {                        

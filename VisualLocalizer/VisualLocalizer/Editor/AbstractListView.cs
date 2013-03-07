@@ -160,7 +160,7 @@ namespace VisualLocalizer.Editor {
                 ListViewKeyItem existingItem = ItemFromName(key);
                 value.Comment = existingItem.DataNode.Comment;
                 existingItem.DataNode = value;
-                existingItem.SubItems["Path"].Text = editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString();
+                existingItem.SubItems["Path"].Text = Uri.UnescapeDataString(editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString());
 
                 return existingItem;
             }
@@ -174,7 +174,7 @@ namespace VisualLocalizer.Editor {
             ListViewItem.ListViewSubItem subKey = new ListViewItem.ListViewSubItem();
             subKey.Name = "Path";
             if (value.FileRef != null) {
-                subKey.Text = editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString();
+                subKey.Text = Uri.UnescapeDataString(editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString());
             } else {
                 subKey.Text = "(embedded)";
             }

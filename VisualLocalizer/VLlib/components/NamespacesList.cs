@@ -31,16 +31,16 @@ namespace VisualLocalizer.Library {
             return null;
         }
 
-        public bool ResolveNewElement(string newNamespace, string newClass, string newKey, Project project, out ReferenceString referenceText) {
-            referenceText = new ReferenceString(newClass, newKey);
-            bool addNamespace = true;
+        public bool ResolveNewElement(string designerNamespace, string designerClass, string newKey, Project project, out ReferenceString referenceText) {
+            referenceText = new ReferenceString(designerClass, newKey);
+            bool addUsing = true;
 
-            if (newNamespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+           /* if (designerNamespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
                 referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
                 return false;
-            } else {
+            } else {*/
                 foreach (UsedNamespaceItem item in this) {
-                    string fullName = item.Namespace + "." + newClass;
+                    string fullName = item.Namespace + "." + designerClass;
                     CodeType codeType = null;
                     try {
                         codeType = project.CodeModel.CodeTypeFromFullName(fullName);
@@ -48,31 +48,31 @@ namespace VisualLocalizer.Library {
                         codeType = null;
                     }
                     if (codeType != null) {
-                        addNamespace = false;
-                        if (item.Namespace == newNamespace) {
+                        addUsing = false;
+                        if (item.Namespace == designerNamespace) {
                             if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
                         } else {
-                            string newAlias = GetAlias(newNamespace);
+                            string newAlias = GetAlias(designerNamespace);
                             if (!string.IsNullOrEmpty(newAlias)) {
                                 referenceText.NamespacePart = newAlias;
                             } else {
-                                referenceText.NamespacePart = newNamespace;
+                                referenceText.NamespacePart = designerNamespace;
                             }
                         }
                         break;
                     }
 
-                }
+               // }
             }
-            return addNamespace;
+            return addUsing;
         }
 
-        public UsedNamespaceItem ResolveNewReference(string referenceClassAndNmspc, Project project) {
+        public UsedNamespaceItem ResolveNewReference(string referenceClass, Project project) {
             foreach (UsedNamespaceItem item in this) {
                 if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
                     return item;
                 } else {
-                    string fullName = item.Namespace + "." + referenceClassAndNmspc;
+                    string fullName = item.Namespace + "." + referenceClass;
                     CodeType codeType = null;
                     try {
                         codeType = project.CodeModel.CodeTypeFromFullName(fullName);

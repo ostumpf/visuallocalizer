@@ -73,10 +73,11 @@ namespace VisualLocalizer.Commands {
                                     resultItem.SourceItem.ContainingProject, out referenceText);
                         }
                         if (addNamespace) {
-                            if (!(resultItem is CSharpStringResultItem) || ((CSharpStringResultItem)resultItem).NamespaceElement == null) {
+                            NetStringResultItem nitem = resultItem as NetStringResultItem;
+                            if (nitem==null || nitem.NamespaceElement == null) {
                                 usedNamespacesCache[resultItem.SourceItem].Add(resultItem.DestinationItem.Namespace, null);
                             } else {
-                                usedNamespacesCache[((CSharpStringResultItem)resultItem).NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
+                                usedNamespacesCache[nitem.NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
                             }
                         }
                     }
@@ -194,26 +195,26 @@ namespace VisualLocalizer.Commands {
         }        
 
         private NamespacesList GetUsedNamespacesFor(CodeStringResultItem resultItem) {
-            if (resultItem is CSharpStringResultItem) {
-                CSharpStringResultItem citem = (CSharpStringResultItem)resultItem;
+            if (resultItem is NetStringResultItem) {
+                CodeNamespace namespaceElement = (resultItem as NetStringResultItem).NamespaceElement;
 
-                if (citem.NamespaceElement == null) {
+                if (namespaceElement == null) {
                     if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
-                        usedNamespacesCache.Add(resultItem.SourceItem, citem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                        usedNamespacesCache.Add(resultItem.SourceItem, namespaceElement.GetUsedNamespaces(resultItem.SourceItem));
                     }
                     return usedNamespacesCache[resultItem.SourceItem];
                 } else {
-                    if (!usedNamespacesCache.ContainsKey(citem.NamespaceElement)) {
-                        usedNamespacesCache.Add(citem.NamespaceElement, citem.NamespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                    if (!usedNamespacesCache.ContainsKey(namespaceElement)) {
+                        usedNamespacesCache.Add(namespaceElement, namespaceElement.GetUsedNamespaces(resultItem.SourceItem));
                     }
-                    return usedNamespacesCache[citem.NamespaceElement];
+                    return usedNamespacesCache[namespaceElement];
                 }
-            } else {
+            } else if (resultItem is AspNetStringResultItem) {
                 if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
                     usedNamespacesCache.Add(resultItem.SourceItem, (resultItem as AspNetStringResultItem).DeclaredNamespaces);
                 }
                 return usedNamespacesCache[resultItem.SourceItem];
-            }
+            } else throw new Exception("Unkown result item type.");
         }
 
         private void Validate(CodeStringResultItem resultItem) {
@@ -242,7 +243,8 @@ namespace VisualLocalizer.Commands {
                 case FILETYPE.ASPX:
                     filesCache[filename].Insert(0, string.Format(StringConstants.AspImportDirectiveFormat, nmspc));
                     break;
-                case FILETYPE.RAZOR:
+                case FILETYPE.VB:
+                    filesCache[filename].Insert(0, string.Format(StringConstants.VBUsingBlockFormat, nmspc));
                     break;             
             }
         }                        

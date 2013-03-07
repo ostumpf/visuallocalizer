@@ -93,7 +93,7 @@ namespace VisualLocalizer.Gui {
                 addCriterionOption(crit);
             }
 
-            ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
+            ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
 
             splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
             splitContainer.ResumeLayout();
@@ -166,7 +166,7 @@ namespace VisualLocalizer.Gui {
                 (filterPanel.Controls[crit.Name + "box"] as ComboBox).SelectedIndex = (int)crit.Action;
             }
             ignoreLocRecalculation = false;
-            ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
+            ToolGrid.RecalculateLocProbability(filterCriteriaCopy, true);
         }
 
         private void box_SelectedIndexChanged(object sender, EventArgs e) {
@@ -179,7 +179,7 @@ namespace VisualLocalizer.Gui {
                 LocalizationCriterionAction newAction = (LocalizationCriterionAction)cBox.SelectedIndex;
 
                 filterCriteriaCopy[critName].Action = newAction;
-                ToolGrid.RecalculateLocProbability(filterCriteriaCopy);
+                ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

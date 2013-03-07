@@ -289,7 +289,10 @@
       <Parent guid="guidAspEditorMenu" id="IDM_ASP_SOURCE"/>
     </CommandPlacement>
     <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
-      <Parent guid="guidAspEditorMenu" id="IDM_ASP_CODEBLOCK"/>
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_CSHARP_CODEBLOCK"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_VB_CODEBLOCK"/>
     </CommandPlacement>
     <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x200">
       <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
@@ -375,7 +378,8 @@
 
     <GuidSymbol name="guidAspEditorMenu" value="{D7E8C5E1-BDB8-11D0-9C88-0000F8040A53}">
       <IDSymbol name="IDM_ASP_SOURCE" value ="0x0035"/>
-      <IDSymbol name="IDM_ASP_CODEBLOCK" value ="0x036"/>
+      <IDSymbol name="IDM_ASP_CSHARP_CODEBLOCK" value ="0x036"/>
+      <IDSymbol name="IDM_ASP_VB_CODEBLOCK" value ="0x037"/>
     </GuidSymbol>
   </Symbols>
 

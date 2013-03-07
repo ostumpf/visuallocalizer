@@ -337,10 +337,10 @@ namespace VisualLocalizer.Components {
             Uri itemUri = new Uri(item.GetFullPath());
           
             string path;
-            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {                
-                path = projectUri.MakeRelativeUri(itemUri).ToString();
+            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                path = Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());
             } else {
-                path = item.ContainingProject.Name + "/" + projectUri.MakeRelativeUri(itemUri).ToString();          
+                path = item.ContainingProject.Name + "/" + Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());          
             }
            
             bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;          
@@ -364,13 +364,15 @@ namespace VisualLocalizer.Components {
 
                 CodeElement nmspcElemet = null;
                 foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
-                    Namespace = element.FullName;
-                    nmspcElemet = element;
-                    break;
+                    if (element.Kind == vsCMElement.vsCMElementNamespace) {
+                        Namespace = element.FullName;
+                        nmspcElemet = element;
+                        break;
+                    }                    
                 }
                 if (nmspcElemet != null) {
                     foreach (CodeElement child in nmspcElemet.Children) {
-                        if (child.Kind == vsCMElement.vsCMElementClass) {
+                        if (child.Kind == vsCMElement.vsCMElementClass || child.Kind == vsCMElement.vsCMElementModule) {
                             Class = child.Name;
                             break;
                         }

@@ -87,8 +87,8 @@ namespace VisualLocalizer.Gui {
         }
 
         protected override void OnWindowHidden(object sender, EventArgs e) {
-            panel.ToolGrid.Unload();
             VLDocumentViewsManager.ReleaseLocks();
+            panel.ToolGrid.Unload();            
             MenuManager.OperationInProgress = false;
         }                
         

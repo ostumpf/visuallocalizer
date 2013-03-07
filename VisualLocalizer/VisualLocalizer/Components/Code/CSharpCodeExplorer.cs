@@ -9,9 +9,9 @@ using VisualLocalizer.Library;
 using VisualLocalizer.Commands;
 
 namespace VisualLocalizer.Components {
-    internal sealed class CSharpCodeExplorer {
+    internal class CSharpCodeExplorer {
 
-        private CSharpCodeExplorer() { }
+        protected CSharpCodeExplorer() { }
 
         private static CSharpCodeExplorer instance;
         public static CSharpCodeExplorer Instance {
@@ -24,7 +24,7 @@ namespace VisualLocalizer.Components {
         public void Explore(AbstractBatchCommand parentCommand, Predicate<CodeElement> exploreable, FileCodeModel2 codeModel) {
             foreach (CodeElement2 codeElement in codeModel.CodeElements) {
                 if (codeElement.Kind == vsCMElement.vsCMElementNamespace || codeElement.Kind == vsCMElement.vsCMElementClass ||
-                    codeElement.Kind == vsCMElement.vsCMElementStruct) {
+                    codeElement.Kind == vsCMElement.vsCMElementStruct || codeElement.Kind == vsCMElement.vsCMElementModule) {
                     Explore(parentCommand, codeElement, null, exploreable, false);
                 }
             }
@@ -34,7 +34,7 @@ namespace VisualLocalizer.Components {
             bool isLocalizableFalseSetOnParent = HasLocalizableFalseAttribute(parentElement);
 
             foreach (CodeElement2 codeElement in parentElement.Children) {
-                if (codeElement.Kind == vsCMElement.vsCMElementClass) {
+                if (codeElement.Kind == vsCMElement.vsCMElementClass || codeElement.Kind == vsCMElement.vsCMElementModule || codeElement.Kind == vsCMElement.vsCMElementStruct) {
                     Explore(parentCommand, codeElement, parentElement.Kind == vsCMElement.vsCMElementNamespace ? parentElement : parentNamespace,
                         exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
@@ -53,14 +53,10 @@ namespace VisualLocalizer.Components {
                     Explore(parentCommand, codeElement as CodeProperty, (CodeNamespace)parentNamespace, parentElement,
                         exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
                 }
-                if (codeElement.Kind == vsCMElement.vsCMElementStruct) {
-                    Explore(parentCommand, codeElement, parentElement.Kind == vsCMElement.vsCMElementNamespace ? parentElement : parentNamespace,
-                        exploreable, isLocalizableFalse || isLocalizableFalseSetOnParent);
-                }
             }
         }
 
-        private bool HasLocalizableFalseAttribute(CodeElement parentElement) {
+        protected bool HasLocalizableFalseAttribute(CodeElement parentElement) {
             bool set = false;
             switch (parentElement.Kind) {
                 case vsCMElement.vsCMElementClass:
@@ -68,6 +64,9 @@ namespace VisualLocalizer.Components {
                     break;
                 case vsCMElement.vsCMElementStruct:
                     set = AttributesContainLocalizableFalse((parentElement as CodeStruct).Attributes);
+                    break;
+                case vsCMElement.vsCMElementModule:
+                    set = AttributesContainLocalizableFalse((parentElement as CodeClass).Attributes);
                     break;
                 case vsCMElement.vsCMElementProperty:
                     set = AttributesContainLocalizableFalse((parentElement as CodeProperty).Attributes);
@@ -109,11 +108,11 @@ namespace VisualLocalizer.Components {
             if (codeProperty.Setter != null) Explore(parentCommand, codeProperty.Setter as CodeFunction2, parentNamespace, codeClassOrStruct, exploreable, isLocalizableFalse || propertyLocalizableFalse);
         }
 
-        private void Explore(AbstractBatchCommand parentCommand, CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
+        protected virtual void Explore(AbstractBatchCommand parentCommand, CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             if (codeVariable.ConstKind == vsCMConstKind.vsCMConstKindConst) return;
             if (codeVariable.Type.TypeKind != vsCMTypeRef.vsCMTypeRefString) return;
             if (codeVariable.InitExpression == null) return;
-            if (codeClassOrStruct.Kind == vsCMElement.vsCMElementStruct) return;
+            if (codeClassOrStruct.Kind == vsCMElement.vsCMElementStruct && !codeVariable.IsShared) return;
             if (!exploreable(codeVariable as CodeElement)) return;
 
             string initExpression = codeVariable.GetText();
@@ -129,7 +128,7 @@ namespace VisualLocalizer.Components {
                 AddContextToItem(item, editPoint);
         }
 
-        private void Explore(AbstractBatchCommand parentCommand, CodeFunction2 codeFunction, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
+        protected virtual void Explore(AbstractBatchCommand parentCommand, CodeFunction2 codeFunction, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
             if (codeFunction.MustImplement) return;
             if (!exploreable(codeFunction as CodeElement)) return;
 

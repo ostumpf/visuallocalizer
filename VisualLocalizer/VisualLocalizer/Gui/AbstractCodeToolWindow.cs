@@ -21,56 +21,91 @@ namespace VisualLocalizer.Gui {
         public AbstractResultItem Item { get; set; }
     }
 
-    internal sealed class AbstractCodeToolWindowEvents : IVsWindowFrameNotify {
+    internal sealed class AbstractCodeToolWindowEvents : IVsWindowFrameNotify3 {
 
         public event EventHandler WindowHidden;
-        private int prevfShow=-1;
+        private int prevfShow = -1;
 
-        public int OnDockableChange(int fDockable) {
+        public int OnClose(ref uint pgrfSaveOptions) {
             return VSConstants.S_OK;
         }
 
-        public int OnMove() {
+        public int OnDockableChange(int fDockable, int x, int y, int w, int h) {
             return VSConstants.S_OK;
         }
 
+        public int OnMove(int x, int y, int w, int h) {
+            return VSConstants.S_OK;
+        }
+
+        public int OnSize(int x, int y, int w, int h) {
+            return VSConstants.S_OK;
+        }
+       
         public int OnShow(int fShow) {
-            //VisualLocalizer.Library.MessageBox.Show(VisualLocalizerPackage.VisualStudioVersion.ToString() + " " + fShow + " " + prevfShow);
-            if (VisualLocalizerPackage.VisualStudioVersion == VS_VERSION.VS2008) {
-                if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow != (int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
-                    if (WindowHidden != null) WindowHidden(this, null);
-                }
-            } else {
-                if (fShow == (int)__FRAMESHOW.FRAMESHOW_Hidden && prevfShow == (int)__FRAMESHOW.FRAMESHOW_TabDeactivated) {
-                    if (WindowHidden != null) WindowHidden(this, null);
-                }
-            }
+            /*string current="?";
+            if (Enum.IsDefined(typeof(__FRAMESHOW), fShow)) current = ((__FRAMESHOW)fShow).ToString();
+            if (Enum.IsDefined(typeof(__FRAMESHOW2), fShow)) current = ((__FRAMESHOW2)fShow).ToString();
+            if (Enum.IsDefined(typeof(__FRAMESHOW3), fShow)) current = ((__FRAMESHOW3)fShow).ToString();
+
+            string prev = "?";
+            if (Enum.IsDefined(typeof(__FRAMESHOW), prevfShow)) prev = ((__FRAMESHOW)prevfShow).ToString();
+            if (Enum.IsDefined(typeof(__FRAMESHOW2), prevfShow)) prev = ((__FRAMESHOW2)prevfShow).ToString();
+            if (Enum.IsDefined(typeof(__FRAMESHOW3), prevfShow)) prev = ((__FRAMESHOW3)prevfShow).ToString(); 
+
+            VisualLocalizer.Library.MessageBox.Show(VisualLocalizerPackage.VisualStudioVersion.ToString() +
+               " " + prev +
+               " -> " + current);
+            */
+         
+            if (fShow == (int)__FRAMESHOW2.FRAMESHOW_BeforeWinHidden) {
+                if (WindowHidden != null) WindowHidden(this, null);
+            }            
+
             prevfShow = fShow;
             return VSConstants.S_OK;
         }
 
-        public int OnSize() {
-            return VSConstants.S_OK;
-        }
     }
 
     internal abstract class AbstractCodeToolWindow<T> : ToolWindowPane where T : Control,IHighlightRequestSource, new() {
 
         protected T panel;
-        
+        protected AbstractCodeToolWindowEvents windowEvents;
+
         public AbstractCodeToolWindow():base(null) {
             this.panel = new T();
-            this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(panel_HighlightRequired);            
+            this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(panel_HighlightRequired);
+
+            windowEvents = new AbstractCodeToolWindowEvents();
+            windowEvents.WindowHidden += new EventHandler(OnWindowHidden);
+
+            AddEventsListener();
+        }
+        
+        protected override void Initialize() {
+            base.Initialize();
+
+            AddEventsListener();
         }
 
         public override void OnToolWindowCreated() {
             base.OnToolWindowCreated();
 
+            AddEventsListener();
+        }
+        
+        protected override void OnCreate() {
+            base.OnCreate();
+
+            AddEventsListener();
+        }
+
+        public void AddEventsListener() {            
             IVsWindowFrame frame = (IVsWindowFrame)Frame;
-            var events = new AbstractCodeToolWindowEvents();
-            events.WindowHidden += new EventHandler(OnWindowHidden);
-            frame.SetProperty((int)__VSFPROPID.VSFPROPID_ViewHelper, events); 
-        }        
+            if (frame != null) 
+                frame.SetProperty((int)__VSFPROPID.VSFPROPID_ViewHelper, windowEvents);
+        }
 
         protected virtual void OnWindowHidden(object sender, EventArgs e) {            
         }

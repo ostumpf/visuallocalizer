@@ -25,8 +25,10 @@ namespace VisualLocalizer.Commands {
 
         private CSharpMoveToResourcesCommand csharpMoveToResourcesCommand;
         private AspNetMoveToResourcesCommand aspNetMoveToResourcesCommand;
+        private VBMoveToResourcesCommand vbMoveToResourcesCommand;
         private CSharpInlineCommand csharpInlineCommand;
         private AspNetInlineCommand aspNetInlineCommand;
+        private VBInlineCommand vbInlineCommand;
         private BatchMoveCommand batchMoveCommand;
         private BatchInlineCommand batchInlineCommand;
         private GlobalTranslateCommand globalTranslateCommand;
@@ -41,6 +43,8 @@ namespace VisualLocalizer.Commands {
             this.csharpMoveToResourcesCommand = new CSharpMoveToResourcesCommand();
             this.aspNetMoveToResourcesCommand = new AspNetMoveToResourcesCommand();
             this.globalTranslateCommand = new GlobalTranslateCommand();
+            this.vbMoveToResourcesCommand = new VBMoveToResourcesCommand();
+            this.vbInlineCommand = new VBInlineCommand();
 
             // registers context menu in code windows
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
@@ -115,7 +119,7 @@ namespace VisualLocalizer.Commands {
             T pane = (T)VisualLocalizerPackage.Instance.FindToolWindow(typeof(T), 0, true);
             
             if (pane != null && pane.Frame != null) {
-                IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                    
+                IVsWindowFrame frame = (IVsWindowFrame)pane.Frame;                      
                 frame.Show();                                
             }
 
@@ -229,10 +233,14 @@ namespace VisualLocalizer.Commands {
                 enteredOk = true;
 
                 Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
-                if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
+                if (doc == null) throw new Exception("No active document.");
+
+                if (doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
                     aspNetMoveToResourcesCommand.Process();
-                } else {
+                } else if (doc.ProjectItem.GetFileType() == FILETYPE.CSHARP) {
                     csharpMoveToResourcesCommand.Process();
+                } else if (doc.ProjectItem.GetFileType() == FILETYPE.VB) {
+                    vbMoveToResourcesCommand.Process();
                 }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
@@ -254,10 +262,14 @@ namespace VisualLocalizer.Commands {
                 enteredOk = true;
 
                 Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
-                if (doc != null && doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
+                if (doc == null) throw new Exception("No active document.");
+
+                if (doc.ProjectItem.GetFileType() == FILETYPE.ASPX) {
                     aspNetInlineCommand.Process();
-                } else {
+                } else if (doc.ProjectItem.GetFileType() == FILETYPE.CSHARP) {
                     csharpInlineCommand.Process();
+                } else if (doc.ProjectItem.GetFileType() == FILETYPE.VB) {
+                    vbInlineCommand.Process();
                 }                
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);

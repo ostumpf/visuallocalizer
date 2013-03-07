@@ -102,6 +102,8 @@ namespace VisualLocalizer.Extensions {
                 return FILETYPE.ASPX;
             } else if (s.EndsWithAny(StringConstants.RazorExtensions)) {
                 return FILETYPE.RAZOR;
+            } else if (s.EndsWithAny(StringConstants.VBExtensions)) {
+                return FILETYPE.VB;
             } else {
                 return FILETYPE.UNKNOWN;
             }
@@ -112,7 +114,8 @@ namespace VisualLocalizer.Extensions {
             string pkind = project.Kind.ToUpper();
             return pkind == StringConstants.WindowsCSharpProject
                 || pkind == StringConstants.WebSiteProject
-                || pkind == StringConstants.WebApplicationProject;
+                || pkind == StringConstants.WebApplicationProject
+                || pkind == StringConstants.WindowsVBProject;
         }
 
         public static bool IsCultureSpecificResX(this ProjectItem projectItem) {

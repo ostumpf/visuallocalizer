@@ -141,7 +141,7 @@ namespace VisualLocalizer.Commands {
 
             if (item.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(item)) {
                 string projPath = item.ContainingProject.FullName;
-                this.path = new Uri(projPath).MakeRelativeUri(new Uri(filePath)).ToString();
+                this.path = Uri.UnescapeDataString(new Uri(projPath).MakeRelativeUri(new Uri(filePath)).ToString());
             } else {
                 this.path = filePath;
             }            

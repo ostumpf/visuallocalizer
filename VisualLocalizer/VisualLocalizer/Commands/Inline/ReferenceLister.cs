@@ -67,7 +67,7 @@ namespace VisualLocalizer.Commands {
         public override IList LookupInCSharp(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
             Trie<CodeReferenceTrieElement> trie = GetActualTrie();
             NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
-            var list = CodeReferenceLookuper<CSharpCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+            var list = CSharpReferenceLookuper.Instance.LookForReferences(currentlyProcessedItem, functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject, prefferedResXItem);
 
             foreach (CSharpCodeReferenceResultItem item in list) {
                 Results.Add(item);
@@ -76,15 +76,38 @@ namespace VisualLocalizer.Commands {
             return list;
         }
 
-        public override IList LookupInAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+        public override IList LookupInVB(string functionText, TextPoint startPoint, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, string codeFunctionName, string codeVariableName, bool isWithinLocFalse) {
             Trie<CodeReferenceTrieElement> trie = GetActualTrie();
-            var list = CodeReferenceLookuper<AspNetCodeReferenceResultItem>.Instance.Run(currentlyProcessedItem, functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+            NamespacesList usedNamespaces = PutCodeUsingsInCache(parentNamespace as CodeElement, codeClassOrStruct);
+            var list = VBCodeReferenceLookuper.Instance.LookForReferences(currentlyProcessedItem, functionText, startPoint, trie, usedNamespaces, isWithinLocFalse, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+
+            foreach (VBCodeReferenceResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }
+
+        public override IList LookupInCSharpAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
+            var list = AspNetCSharpReferenceLookuper.Instance.LookForReferences(currentlyProcessedItem, functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject, prefferedResXItem);
 
             foreach (AspNetCodeReferenceResultItem item in list) {
                 Results.Add(item);
             }
 
             return list;
-        }      
+        }
+
+        public override IList LookupInVBAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
+            Trie<CodeReferenceTrieElement> trie = GetActualTrie();
+            var list = AspNetVBReferenceLookuper.Instance.LookForReferences(currentlyProcessedItem, functionText, blockSpan, trie, declaredNamespaces, currentlyProcessedItem.ContainingProject, prefferedResXItem);
+
+            foreach (AspNetCodeReferenceResultItem item in list) {
+                Results.Add(item);
+            }
+
+            return list;
+        }    
     }
 }

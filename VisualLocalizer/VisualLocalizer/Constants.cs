@@ -51,7 +51,7 @@ namespace VisualLocalizer {
         public const int BatchInlineToolbarPutBackUncheckedID = 0x2005;
     }
 
-    public enum FILETYPE { UNKNOWN, CSHARP, ASPX, RAZOR }
+    public enum FILETYPE { UNKNOWN, CSHARP, ASPX, RAZOR, VB }
 
     public static class StringConstants {
         public const string ResXExtension = ".resx";
@@ -62,10 +62,12 @@ namespace VisualLocalizer {
         public const string LocalizationComment = "VL_NO_LOC";
 
         public static readonly string[] CsExtensions = { ".cs" };
+        public static readonly string[] VBExtensions = { ".vb" };
         public static readonly string[] AspxExtensions = { ".aspx", ".master", ".ascx" };
         public static readonly string[] RazorExtensions = { ".cshtml" };
 
         public const string WindowsCSharpProject = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}";
+        public const string WindowsVBProject = "{F184B08F-C81C-45F6-A57F-5ABD9991F28F}";
         public const string WebApplicationProject = "{349C5851-65DF-11DA-9384-00065B846F21}";
         public const string WebSiteProject = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
         public const string PhysicalFile = "{6BB5F8EE-4483-11D3-8BCF-00C04F8EC28C}";
@@ -74,11 +76,12 @@ namespace VisualLocalizer {
         public const string Subproject = "{EA6618E8-6E24-4528-94BE-6889FE16485C}";
 
         public const string AspElementReferenceFormat = "<%= {0} %>";
-        public const string AspElementExpressionFormat = "<%$ {0}:{1},{2} %>";
-        public const string AspImportDirectiveFormat = "<%@ Import Namespace=\"{0}\" %>\r\n";
+        public const string AspElementExpressionFormat = "<%$ {0}:{1},{2} %>";        
         public const string AspLiteralFormat = "<asp:Literal runat=\"server\" Text=\"{0}\"/>";
 
+        public const string AspImportDirectiveFormat = "<%@ Import Namespace=\"{0}\" %>\r\n";
         public const string CSharpUsingBlockFormat = "using {0};\r\n";
+        public const string VBUsingBlockFormat = "Imports {0};\r\n";
 
         public static readonly string[] AspNetIgnoredAttributes = { "*:ID", "*:Name" };
 

@@ -138,7 +138,7 @@ namespace VisualLocalizer
                     } else if (registry.EndsWith("10.0\\SQM")) {
                         version = VS_VERSION.VS2010;
                     } else if (registry.EndsWith("11.0\\SQM")) {
-                        version = VS_VERSION.VS2011;
+                        version = VS_VERSION.VS2012;
                     } else {
                         version = VS_VERSION.UNKNOWN;
                     }
@@ -177,5 +177,5 @@ namespace VisualLocalizer
         #endregion
     }
 
-    public enum VS_VERSION { VS2008, VS2010, VS2011, UNKNOWN }
+    public enum VS_VERSION { VS2008, VS2010, VS2012, UNKNOWN }
 }

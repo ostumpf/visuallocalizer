@@ -13,6 +13,7 @@ using VisualLocalizer.Library.AspxParser;
 using System.Reflection;
 using System.ComponentModel;
 using System.Collections;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Components {
     internal sealed class AspNetCodeExplorer : IAspxHandler {
@@ -24,6 +25,7 @@ namespace VisualLocalizer.Components {
         private string fileText, fullPath;
         private WebConfig webConfig;
         private ProjectItem projectItem;
+        private FILETYPE fileLanguage;
 
         private AspNetCodeExplorer() { }
 
@@ -43,7 +45,7 @@ namespace VisualLocalizer.Components {
             this.declaredNamespaces.Clear();
             this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
             this.projectItem = projectItem;
-
+            
             webConfig = new WebConfig(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
             fileText = null;
 
@@ -75,24 +77,51 @@ namespace VisualLocalizer.Components {
 
         public void OnCodeBlock(CodeBlockContext context) {
             context.InnerBlockSpan.Move(1, 1);
-            
-            IList list = parentCommand.LookupInAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
 
-            foreach (AbstractResultItem item in list) {
-                AspNetStringResultItem aitem = item as AspNetStringResultItem;
-                if (aitem != null) {
-                    aitem.ComesFromClientComment = context.WithinClientSideComment;
-                    aitem.ComesFromCodeBlock = true;
-                }
+            IList list = null;
+            if (fileLanguage == FILETYPE.CSHARP) {
+                list = parentCommand.LookupInCSharpAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+            } else if (fileLanguage == FILETYPE.VB) {
+                list = parentCommand.LookupInVBAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
             }
 
-            AddContextToItems((IEnumerable)list);
+            if (list != null) {
+                foreach (AbstractResultItem item in list) {
+                    AspNetStringResultItem aitem = item as AspNetStringResultItem;
+                    if (aitem != null) {
+                        aitem.ComesFromClientComment = context.WithinClientSideComment;
+                        aitem.ComesFromCodeBlock = true;
+                    }
+                }
+
+                AddContextToItems((IEnumerable)list);
+            }
         }
 
         public void OnPageDirective(DirectiveContext context) {
             if (context.DirectiveName == "Import" && context.Attributes.Exists((info) => { return info.Name == "Namespace"; })) {
                 declaredNamespaces.Add(new UsedNamespaceItem(context.Attributes.Find((info) => { return info.Name == "Namespace"; }).Value, null));
-            }            
+            }
+            if (context.DirectiveName == "Page") {
+                string lang = null;
+                string ext = null;
+                foreach (var info in context.Attributes) {
+                    if (info.Name == "Language") lang = info.Value;
+                    if (info.Name == "CodeFile") {
+                        int index = info.Value.LastIndexOf('.');
+                        if (index != -1 && index + 1 < info.Value.Length) {
+                            ext = info.Value.Substring(index + 1);
+                        }
+                    }                    
+                }
+                if (string.IsNullOrEmpty(lang)) {
+                    if (!string.IsNullOrEmpty(ext)) {
+                        fileLanguage = StringConstants.CsExtensions.Contains(ext.ToLower()) ? FILETYPE.CSHARP : FILETYPE.VB;
+                    }
+                } else {
+                    fileLanguage = lang == "C#" ? FILETYPE.CSHARP : FILETYPE.VB;
+                }
+            }
             if (context.DirectiveName == "Register") {
                 string assembly = null, nmspc = null, src = null, tagName = null, tagPrefix = null;
                 foreach (AttributeInfo info in context.Attributes) {
@@ -161,20 +190,17 @@ namespace VisualLocalizer.Components {
         public void OnOutputElement(OutputElementContext context) {
             IList list = null;
 
-            switch (context.Kind) {
-                case OutputElementKind.PLAIN:
-                    context.InnerBlockSpan.Move(1, 1);
-                    list = parentCommand.LookupInAspNet(context.InnerText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
-                    break;
-                case OutputElementKind.HTML_ESCAPED:
-                    context.InnerBlockSpan.Move(1, 1);
-                    list = parentCommand.LookupInAspNet(context.InnerText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
-                    break;
-                case OutputElementKind.EXPRESSION:
-                    if (parentCommand is BatchInlineCommand) {
-                        list = ((BatchInlineCommand)parentCommand).ParseResourceExpression(context.InnerText, context.InnerBlockSpan);
-                    }
-                    break;
+            if (context.Kind == OutputElementKind.HTML_ESCAPED || context.Kind == OutputElementKind.PLAIN) {
+                context.InnerBlockSpan.Move(1, 1);
+                if (fileLanguage == FILETYPE.CSHARP) {
+                    list = parentCommand.LookupInCSharpAspNet(context.InnerText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+                } else if (fileLanguage == FILETYPE.VB) {
+                    list = parentCommand.LookupInVBAspNet(context.InnerText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+                }
+            } else {
+                if (parentCommand is BatchInlineCommand) {
+                    list = ((BatchInlineCommand)parentCommand).ParseResourceExpression(context.InnerText, context.InnerBlockSpan);
+                }
             }
 
             if (list != null) {

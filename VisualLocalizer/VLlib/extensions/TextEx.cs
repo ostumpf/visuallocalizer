@@ -153,6 +153,14 @@ namespace VisualLocalizer.Library {
             return resultText;
         }
 
+        public static string ConvertVBUnescapeSequences(this string text) {
+            return text.Replace("\"", "\"\""); 
+        }
+
+        public static string ConvertVBEscapeSequences(this string text) {
+            return text.Replace("\"\"", "\""); 
+        }
+
         private static int ToDecimal(this char hexDec) {
             int x = hexDec - '0';
             if (x < 10) {

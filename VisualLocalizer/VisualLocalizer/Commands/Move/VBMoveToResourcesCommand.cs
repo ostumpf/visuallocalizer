@@ -6,19 +6,12 @@ using VisualLocalizer.Components;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.TextManager.Interop;
+using VisualLocalizer.Extensions;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
-
-    /// <summary>
-    /// Represents "move to resources" command on a C# source code.
-    /// </summary>
-    internal sealed class CSharpMoveToResourcesCommand : MoveToResourcesCommand<CSharpStringResultItem> {
-
-        /// <summary>
-        /// Evaluates current selection and returns instance of CSharpStringResultItem, representing the string literal.        
-        /// </summary>        
-        protected override CSharpStringResultItem GetReplaceStringItem() {
+    internal sealed class VBMoveToResourcesCommand : MoveToResourcesCommand<VBStringResultItem> {
+        protected override VBStringResultItem GetReplaceStringItem() {
             if (currentCodeModel == null)
                 throw new Exception("Current document has no CodeModel.");
 
@@ -31,14 +24,14 @@ namespace VisualLocalizer.Commands {
 
             // get current code block
             bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan);
-            CSharpStringResultItem result = null;            
+            VBStringResultItem result = null;
             if (ok) {
                 // parses the code block text and returns list of all found result items                
-                List<CSharpStringResultItem> items = CSharpStringLookuper.Instance.LookForStrings(currentDocument.ProjectItem, currentDocument.ProjectItem.IsGenerated(), text, startPoint,
-                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName, false);                
+                List<VBStringResultItem> items = VBStringLookuper.Instance.LookForStrings(currentDocument.ProjectItem, currentDocument.ProjectItem.IsGenerated(), text, startPoint,
+                    codeClass.GetNamespace(), codeClass.Name, codeFunctionName, codeVariableName, false);
 
                 // look for the result item that is contained in the current selection
-                foreach (CSharpStringResultItem item in items) {
+                foreach (VBStringResultItem item in items) {
                     if (item.ReplaceSpan.Contains(selectionSpan)) {
                         result = item;
                         result.SourceItem = currentDocument.ProjectItem;
@@ -48,7 +41,6 @@ namespace VisualLocalizer.Commands {
             }
 
             return result;
-
         }
     }
 }
