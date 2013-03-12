@@ -213,21 +213,25 @@ namespace VisualLocalizer.Library {
                 DataGridViewRow row = Rows[e.RowIndex];
                 if (cell.Value == null || cell.Tag == null) return;
 
-                bool value=(bool)cell.Value;
+                bool newValue = (bool)cell.Value;
+                bool oldValue = (bool)cell.Tag;
 
-                if (value != (bool)cell.Tag) {
-                    CheckedRowsCount += value ? 1 : -1;
-                    if (!value && !string.IsNullOrEmpty(row.ErrorText)) {
-                        errorRows.Remove(row);
-                    }
-                    if (value && !string.IsNullOrEmpty(row.ErrorText)) {
-                        errorRows.Add(row);
-                    }
-                    NotifyErrorRowsChanged();
-                }
-
-                UpdateCheckHeader();
+                changeRowCheckState(row, oldValue, newValue);
             }           
+        }
+
+        protected void changeRowCheckState(DataGridViewRow row, bool oldValue, bool newValue) {
+            if (oldValue != newValue) {
+                CheckedRowsCount += newValue ? 1 : -1;
+                if (!newValue && !string.IsNullOrEmpty(row.ErrorText)) {
+                    errorRows.Remove(row);
+                }
+                if (newValue && !string.IsNullOrEmpty(row.ErrorText)) {
+                    errorRows.Add(row);
+                }
+                NotifyErrorRowsChanged();
+                UpdateCheckHeader();
+            }
         }
 
         protected override void OnRowErrorTextChanged(DataGridViewRowEventArgs e) {
@@ -260,7 +264,7 @@ namespace VisualLocalizer.Library {
                 CheckHeader.Checked = false;
             } else {
                 CheckHeader.Checked = null;
-            }
+            }            
         }
 
         protected void setCheckStateOfSelected(bool p) {

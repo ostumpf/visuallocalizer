@@ -158,7 +158,38 @@ namespace VisualLocalizer.Gui {
             }
           
             UpdateCheckHeader();
-        }        
+        }
+
+        public void ApplyFilterAction(AbstractLocalizationCriterion crit, LocalizationCriterionAction2 act) {
+            List<DataGridViewRow> toBeDeletedRows = new List<DataGridViewRow>();
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
+                bool oldCheckValue = (bool)row.Cells[CheckBoxColumnName].Value;
+                bool newCheckValue = oldCheckValue;    
+                var evalResult = crit.Eval(row.DataSourceItem);
+
+                if (evalResult == true) {                                                        
+                    if (act == LocalizationCriterionAction2.CHECK || act == LocalizationCriterionAction2.CHECK_REMOVE) {
+                        row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = true;
+                        newCheckValue = true;
+                    } else if (act == LocalizationCriterionAction2.UNCHECK) {
+                        row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = false;
+                        newCheckValue = false;
+                    } else if (act == LocalizationCriterionAction2.REMOVE) {
+                        toBeDeletedRows.Add(row);
+                        newCheckValue = false;
+                    }                    
+                } else if (evalResult == false && act == LocalizationCriterionAction2.CHECK_REMOVE) {
+                    toBeDeletedRows.Add(row);
+                    newCheckValue = false;
+                }
+
+                changeRowCheckState(row, oldCheckValue, newCheckValue);
+            }
+
+            foreach (var row in toBeDeletedRows) {
+                Rows.Remove(row);
+            }                       
+        }
 
         #endregion
 
@@ -303,8 +334,7 @@ namespace VisualLocalizer.Gui {
                 bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
 
-                if (isChecked && !willBeChecked) CheckedRowsCount--;
-                if (!isChecked && willBeChecked) CheckedRowsCount++;
+                changeRowCheckState(row, isChecked, willBeChecked);
             }
         }    
 

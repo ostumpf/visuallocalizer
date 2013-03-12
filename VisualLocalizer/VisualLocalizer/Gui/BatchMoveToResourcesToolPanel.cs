@@ -135,6 +135,10 @@ namespace VisualLocalizer.Gui {
             box.Items.Add(LocalizationCriterionAction.FORCE_DISABLE.ToHumanForm());
             box.Items.Add(LocalizationCriterionAction.VALUE.ToHumanForm() + " " + crit.Weight);
             box.Items.Add(LocalizationCriterionAction.IGNORE.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction2.CHECK.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction2.CHECK_REMOVE.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction2.UNCHECK.ToHumanForm());
+            box.Items.Add(LocalizationCriterionAction2.REMOVE.ToHumanForm());
             box.Width = 130;
             box.Name = crit.Name + "box";
             box.SelectedIndex = (int)crit.Action;
@@ -176,10 +180,16 @@ namespace VisualLocalizer.Gui {
 
             try {
                 string critName = (string)cBox.Tag;
-                LocalizationCriterionAction newAction = (LocalizationCriterionAction)cBox.SelectedIndex;
+                if (Enum.IsDefined(typeof(LocalizationCriterionAction), cBox.SelectedIndex)) {
+                    LocalizationCriterionAction newAction = (LocalizationCriterionAction)cBox.SelectedIndex;
 
-                filterCriteriaCopy[critName].Action = newAction;
-                ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
+                    filterCriteriaCopy[critName].Action = newAction;
+                    ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
+                } else {
+                    LocalizationCriterionAction2 newAction = (LocalizationCriterionAction2)(cBox.SelectedIndex - Enum.GetValues(typeof(LocalizationCriterionAction)).Length);
+
+                    ToolGrid.ApplyFilterAction(filterCriteriaCopy[critName], newAction);
+                }
             } catch (Exception ex) {
                 string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
 

@@ -34,15 +34,18 @@ namespace VisualLocalizer.Components {
         }
 
         protected override VBStringResultItem AddStringResult(List<VBStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            VBStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
-            
-            resultItem.MethodElementName = methodElement;
-            resultItem.NamespaceElement = namespaceElement;
-            resultItem.VariableElementName = variableElement;
-            resultItem.ClassOrStructElementName = ClassOrStructElement;
-            resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
+            char next = globalIndex + 1 < text.Length ? text[globalIndex + 1] : '?';
 
-            return resultItem;
+            if (next != 'c') {
+                VBStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
+
+                resultItem.MethodElementName = methodElement;
+                resultItem.NamespaceElement = namespaceElement;
+                resultItem.VariableElementName = variableElement;
+                resultItem.ClassOrStructElementName = ClassOrStructElement;
+                resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
+                return resultItem;
+            } else return null;            
         }
 
     }

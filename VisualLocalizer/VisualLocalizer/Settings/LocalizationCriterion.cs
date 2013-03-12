@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace VisualLocalizer.Settings {
     internal enum LocalizationCriterionAction { FORCE_ENABLE, FORCE_DISABLE, VALUE, IGNORE }
+    internal enum LocalizationCriterionAction2 { CHECK, CHECK_REMOVE, UNCHECK, REMOVE }
     internal enum LocalizationCriterionTarget { VALUE, NAMESPACE_NAME, METHOD_NAME, CLASS_NAME, ELEMENT_PREFIX, ELEMENT_NAME, VARIABLE_NAME }
     internal enum LocalizationCriterionPredicate { MATCHES, DOESNT_MATCH, IS_NULL, NO_LETTERS, ONLY_CAPS, NO_WHITESPACE }
     
@@ -282,6 +283,20 @@ namespace VisualLocalizer.Settings {
                 default:
                     throw new Exception("Unknown LocalizationCriterionTarget: " + target);
             }            
-        }       
+        }
+
+        public static string ToHumanForm(this LocalizationCriterionAction2 act) {
+            switch (act) {
+                case LocalizationCriterionAction2.CHECK:
+                    return "check rows";
+                case LocalizationCriterionAction2.CHECK_REMOVE:
+                    return "check rows & remove rest";
+                case LocalizationCriterionAction2.UNCHECK:
+                    return "uncheck rows";
+                case LocalizationCriterionAction2.REMOVE:
+                    return "remove rows";
+            }
+            return null;
+        }
     }
 }
