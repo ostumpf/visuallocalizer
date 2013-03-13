@@ -197,7 +197,7 @@ namespace VisualLocalizer.Components {
                 } else if (fileLanguage == FILETYPE.VB) {
                     list = parentCommand.LookupInVBAspNet(context.InnerText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
                 }
-            } else {
+            } else if (context.Kind == OutputElementKind.EXPRESSION) {
                 if (parentCommand is BatchInlineCommand) {
                     list = ((BatchInlineCommand)parentCommand).ParseResourceExpression(context.InnerText, context.InnerBlockSpan);
                 }
@@ -256,7 +256,7 @@ namespace VisualLocalizer.Components {
             span.iEndIndex = info.BlockSpan.EndIndex - (stripApos ? 1 : 0);
 
             AspNetStringResultItem resultItem = new AspNetStringResultItem();
-            resultItem.Value = info.Value;
+            resultItem.Value = info.Value.ConvertAspNetEscapeSequences();
             resultItem.ReplaceSpan = span;
             resultItem.AbsoluteCharOffset = info.BlockSpan.AbsoluteCharOffset + (stripApos ? 2 : 0);
             resultItem.AbsoluteCharLength = info.Value.Length;

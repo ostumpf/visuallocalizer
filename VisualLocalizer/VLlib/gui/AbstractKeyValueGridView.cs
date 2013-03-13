@@ -59,7 +59,7 @@ namespace VisualLocalizer.Library {
             ConflictResolver.TryAdd(originalValue, key, row);
             if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
 
-            row.ErrorSetUpdate();
+            row.UpdateErrorSetDisplay();
         }              
 
         protected void Validate(int rowIndex) {

@@ -106,8 +106,12 @@ namespace VisualLocalizer.Commands {
                     CodeProperty codeProperty = (CodeProperty)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementProperty);
                     codeFunctionName = codeProperty.Name;
                     codeClass = codeProperty.GetClass();
+
+                    CodeFunction2 getter = (CodeFunction2)codeProperty.Getter;
+                    CodeFunction2 setter = (CodeFunction2)codeProperty.Setter;
+
+                    text = (getter == null ? "" : getter.GetText()) + (setter == null ? "" : setter.GetText());
                     
-                    text = codeProperty.GetText();
                     if (!string.IsNullOrEmpty(text)) {
                         startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
                         ok = true;

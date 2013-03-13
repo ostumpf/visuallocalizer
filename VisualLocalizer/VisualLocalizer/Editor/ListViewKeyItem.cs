@@ -35,7 +35,7 @@ namespace VisualLocalizer.Editor {
             }
             set {
                 _FileRefOk = value;
-                ErrorSetUpdate();
+                UpdateErrorSetDisplay();
             }
         }       
 
@@ -64,26 +64,26 @@ namespace VisualLocalizer.Editor {
         }
 
         private HashSet<IKeyValueSource> _ConflictRows;
-        public HashSet<IKeyValueSource> ConflictRows {
+        public HashSet<IKeyValueSource> ConflictItems {
             get {
                 return _ConflictRows;
             }
         }
 
         private HashSet<string> _ErrorSet;
-        public HashSet<string> ErrorSet {
+        public HashSet<string> ErrorMessages {
             get {
                 return _ErrorSet;
             }
         }
 
-        public void ErrorSetUpdate() {
+        public void UpdateErrorSetDisplay() {
             if (!FileRefOk) {
                 this.BackColor = ErrorColor;
                 this.ToolTipText = string.Format("Referenced file \"{0}\" does not exist", DataNode.FileRef != null ? DataNode.FileRef.FileName : "(null)");
             } else {
-                if (ErrorSet.Count > 0) {
-                    this.ToolTipText = ErrorSet.First();
+                if (ErrorMessages.Count > 0) {
+                    this.ToolTipText = ErrorMessages.First();
                     this.BackColor = ErrorColor;
                 } else {
                     this.ToolTipText = null;
@@ -99,7 +99,7 @@ namespace VisualLocalizer.Editor {
 
         public void UpdateReferenceCount(bool determinated) {
             ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s), 
-                ErrorSet.Count == 0 && determinated ? CodeReferences.Count.ToString():"?");            
+                ErrorMessages.Count == 0 && determinated ? CodeReferences.Count.ToString():"?");            
         }
     }
 }

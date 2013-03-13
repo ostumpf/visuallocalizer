@@ -98,7 +98,7 @@ namespace VisualLocalizer
 
                 // register as an editor for ResX files
                 RegisterEditorFactory(new ResXEditorFactory());
-                
+
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {

@@ -25,7 +25,7 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         private void InitializeComponent() {
             this.mainTable = new System.Windows.Forms.TableLayoutPanel();
-            this.resxListBox = new DisableableCheckedListBox();
+            this.resxListBox = new VisualLocalizer.Library.DisableableCheckedListBox();
             this.languageInfoPanel = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.savedLanguagePairPanel = new System.Windows.Forms.TableLayoutPanel();
@@ -215,7 +215,7 @@ namespace VisualLocalizer.Gui {
             // label2
             // 
             this.label2.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label2.Location = new System.Drawing.Point(23, 6);
+            this.label2.Location = new System.Drawing.Point(23, 7);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(115, 13);
             this.label2.TabIndex = 1;
@@ -227,7 +227,7 @@ namespace VisualLocalizer.Gui {
             this.targetLanguageBox.Dock = System.Windows.Forms.DockStyle.Top;
             this.targetLanguageBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.targetLanguageBox.FormattingEnabled = true;
-            this.targetLanguageBox.Location = new System.Drawing.Point(144, 29);
+            this.targetLanguageBox.Location = new System.Drawing.Point(144, 30);
             this.targetLanguageBox.Name = "targetLanguageBox";
             this.targetLanguageBox.Size = new System.Drawing.Size(122, 21);
             this.targetLanguageBox.TabIndex = 5;
@@ -235,7 +235,7 @@ namespace VisualLocalizer.Gui {
             // label3
             // 
             this.label3.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label3.Location = new System.Drawing.Point(23, 32);
+            this.label3.Location = new System.Drawing.Point(23, 34);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(115, 13);
             this.label3.TabIndex = 2;
@@ -262,7 +262,7 @@ namespace VisualLocalizer.Gui {
             this.addLanguagePairBox.Checked = true;
             this.addLanguagePairBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.newLanguagePairPanel.SetColumnSpan(this.addLanguagePairBox, 2);
-            this.addLanguagePairBox.Location = new System.Drawing.Point(56, 55);
+            this.addLanguagePairBox.Location = new System.Drawing.Point(56, 57);
             this.addLanguagePairBox.Name = "addLanguagePairBox";
             this.addLanguagePairBox.Size = new System.Drawing.Size(176, 17);
             this.addLanguagePairBox.TabIndex = 7;

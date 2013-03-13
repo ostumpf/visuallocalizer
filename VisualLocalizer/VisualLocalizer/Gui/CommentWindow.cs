@@ -11,6 +11,7 @@ namespace VisualLocalizer.Gui {
     public partial class CommentWindow : Form {
         public CommentWindow(string oldComment) {
             InitializeComponent();
+            this.Icon = VSPackage._400;
 
             commentBox.Text = oldComment;
         }

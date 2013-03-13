@@ -17,11 +17,11 @@ namespace VisualLocalizer.Library {
             _ErrorSet = new HashSet<string>();
         }        
 
-        public void ErrorSetUpdate() {
-            if (ErrorSet.Count == 0) {
+        public void UpdateErrorSetDisplay() {
+            if (ErrorMessages.Count == 0) {
                 ErrorText = null;
             } else {
-                ErrorText = ErrorSet.First();
+                ErrorText = ErrorMessages.First();
             }
         }
 
@@ -58,14 +58,14 @@ namespace VisualLocalizer.Library {
         }
 
         private HashSet<IKeyValueSource> _ConflictRows;
-        public HashSet<IKeyValueSource> ConflictRows {
+        public HashSet<IKeyValueSource> ConflictItems {
             get {
                 return _ConflictRows;
             }
         }
 
         private HashSet<string> _ErrorSet;
-        public HashSet<string> ErrorSet {
+        public HashSet<string> ErrorMessages {
             get {
                 return _ErrorSet;
             }

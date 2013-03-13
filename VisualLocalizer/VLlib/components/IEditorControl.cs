@@ -5,8 +5,11 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace VisualLocalizer.Library {
-    public interface IEditorControl  {
 
+    /// <summary>
+    /// Interface implemented by those controls that represent GUI of an editor
+    /// </summary>
+    public interface IEditorControl  {
         void Init<T>(AbstractSingleViewEditor<T> editor) where T : Control, IEditorControl, new();
     }
 }

@@ -16,5 +16,10 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        protected override AspNetCodeReferenceResultItem AddStringResult(List<AspNetCodeReferenceResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
+            var result = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
+            result.Language = VisualLocalizer.Library.LANGUAGE.CSHARP;
+            return result;
+        }
     }
 }

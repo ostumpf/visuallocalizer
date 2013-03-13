@@ -14,10 +14,14 @@ namespace VisualLocalizer.Components {
         public KeyValueIdentifierConflictResolver(bool ignoreCase, bool enableSameValues) : base(ignoreCase, enableSameValues) {            
         }
 
-        public void TryAdd(string oldKey, string newKey, IKeyValueSource item, ResXProjectItem resxItem) {            
-            if (resxItem != null) {            
+        public void TryAdd(string oldKey, string newKey, IKeyValueSource item, ResXProjectItem resxItem, LANGUAGE? language) {            
+            if (resxItem != null) {
+                if (language == null && resxItem != null) {
+                    language = resxItem.DesignerLanguage;
+                }
+
                 bool empty = string.IsNullOrEmpty(newKey);
-                bool validIdentifier = newKey.IsValidIdentifier();
+                bool validIdentifier = newKey.IsValidIdentifier(language.Value);
                 bool hasOwnDesigner = resxItem.DesignerItem != null && !resxItem.IsCultureSpecific();
                 bool identifierError = false;
 
@@ -33,11 +37,11 @@ namespace VisualLocalizer.Components {
                         break;
                 }
 
-                string identError = "Key is not valid C# identifier";
+                string identError = "Key is not a valid identifier";
                 if (identifierError) {
-                    item.ErrorSet.Add(identError);
+                    item.ErrorMessages.Add(identError);
                 } else {
-                    item.ErrorSet.Remove(identError);
+                    item.ErrorMessages.Remove(identError);
                 }                
             }
             TryAdd(oldKey, newKey, item);

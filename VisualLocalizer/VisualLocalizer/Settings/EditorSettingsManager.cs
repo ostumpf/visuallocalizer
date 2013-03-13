@@ -11,6 +11,7 @@ using Microsoft.VisualStudio;
 using System.Drawing;
 using VisualLocalizer.Gui;
 using System.Diagnostics;
+using VisualLocalizer.Translate;
 
 namespace VisualLocalizer.Settings {
 
@@ -19,8 +20,6 @@ namespace VisualLocalizer.Settings {
     [Guid("82B0FBD1-ACF3-4974-B83F-2B06B4F839F0")]
     internal sealed class EditorSettingsManager : AbstractSettingsManager {
 
-        private const string GET_BING_APPID_URL = "https://datamarket.azure.com/dataset/bing/microsofttranslator";
-        
         private TableLayoutPanel tablePanel, langTable;
         private Label bingLabel, languagePairsLabel;
         private TextBox bingBox;
@@ -430,7 +429,7 @@ namespace VisualLocalizer.Settings {
         private void bingLink_Click(object sender, EventArgs e) {
             try {
                 Process browser = new Process();
-                browser.StartInfo = new ProcessStartInfo(GET_BING_APPID_URL);
+                browser.StartInfo = new ProcessStartInfo(BingTranslator.GET_BING_APPID_URL);
                 browser.StartInfo.UseShellExecute = true;
                 browser.Start();
             } catch (Exception ex) {

@@ -21,7 +21,7 @@ namespace VisualLocalizer.Components {
         public bool ComesFromDesignerFile { get; set; }        
         public bool ComesFromClientComment { get; set; }
         public bool IsWithinLocalizableFalse { get; set; }        
-        public bool IsMarkedWithUnlocalizableComment { get; set; }
+        public bool IsMarkedWithUnlocalizableComment { get; set; }        
 
         public bool MoveThisItem { get; set; }
         public ProjectItem SourceItem { get; set; }
@@ -32,8 +32,9 @@ namespace VisualLocalizer.Components {
         public string Value { get; set; }
         public string Context { get; set; }
         public int ContextRelativeLine { get; set; }
-        public string Key { get; set; }          
-     
+        public string Key { get; set; }
+
+        public abstract LANGUAGE Language { get; set; }
         public static Dictionary<string, LocalizationCriterion> GetCriteria() {
             var localizationCriteriaList = new Dictionary<string, LocalizationCriterion>();
 
@@ -135,7 +136,7 @@ namespace VisualLocalizer.Components {
             }
 
             for (int i = 0; i < suggestions.Count; i++)
-                if (!suggestions[i].IsValidIdentifier())
+                if (!suggestions[i].IsValidIdentifier(Language))
                     suggestions[i] = "_" + suggestions[i];
 
             return suggestions;
@@ -236,11 +237,21 @@ namespace VisualLocalizer.Components {
     }
 
     internal class CSharpStringResultItem : NetStringResultItem {
-        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }       
+        public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }
+
+        public override LANGUAGE Language {
+            get { return LANGUAGE.CSHARP; }
+            set { }
+        }
     }
 
     internal sealed class VBStringResultItem : NetStringResultItem {
-        public override string NoLocalizationComment { get { return string.Empty; } }       
+        public override string NoLocalizationComment { get { return string.Empty; } }
+
+        public override LANGUAGE Language {
+            get { return LANGUAGE.VB; }
+            set { }
+        }
     }
 
     internal sealed class AspNetStringResultItem : CodeStringResultItem {
@@ -252,6 +263,12 @@ namespace VisualLocalizer.Components {
         public bool ComesFromPlainText { get; set; }       
         public bool ComesFromDirective { get; set; }       
         public bool ComesFromCodeBlock { get; set; }
+
+        private LANGUAGE _Language;
+        public override LANGUAGE Language {
+            get { return _Language; }
+            set { _Language = value; }
+        }
 
         public string ElementPrefix { get; set; }
         public string ElementName { get; set; }  
@@ -382,19 +399,35 @@ namespace VisualLocalizer.Components {
     internal class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
         public override string GetInlineValue() {
             return "\"" + Value.ConvertCSharpUnescapeSequences() + "\"";
-        }   
+        }
+
+        public override LANGUAGE Language {
+            get { return LANGUAGE.CSHARP; }
+            set { }
+        }
     }
 
     internal class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
         public override string GetInlineValue() {
             return "\"" + Value.ConvertVBEscapeSequences() + "\"";
         }
+
+        public override LANGUAGE Language {
+            get { return LANGUAGE.VB; }
+            set { }
+        }
     }
 
     internal sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
         public bool ComesFromInlineExpression { get; set; }
         public bool ComesFromWebSiteResourceReference { get; set; }
-        public BlockSpan InlineReplaceSpan { get; set; }        
+        public BlockSpan InlineReplaceSpan { get; set; }
+
+        private LANGUAGE _Language;
+        public override LANGUAGE Language {
+            get { return _Language; }
+            set { _Language = value; }
+        }
 
         public override string GetInlineValue() {
             if (ComesFromInlineExpression) {

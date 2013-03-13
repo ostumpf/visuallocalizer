@@ -382,7 +382,7 @@ namespace VisualLocalizer.Editor {
                     Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
                     foreach (IReferencableKeyValueSource item in items) {                        
                         string referenceKey;
-                        if (item.ErrorSet.Count == 0) {
+                        if (item.ErrorMessages.Count == 0) {
                             referenceKey = item.Key;
                         } else {
                             referenceKey = "";
@@ -794,7 +794,7 @@ namespace VisualLocalizer.Editor {
         }
 
         private ListViewKeyItem addExistingItem(AbstractListView list, string fullPath, Type type, bool showThumbnails) {                        
-            string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier();
+            string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier(Editor.ProjectItem.DesignerLanguage);
 
             ResXDataNode node = new ResXDataNode(name, new ResXFileRef(fullPath, type.AssemblyQualifiedName));
             ListViewKeyItem newItem = list.Add(name, node, showThumbnails) as ListViewKeyItem;

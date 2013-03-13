@@ -26,7 +26,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public override void Undo() {
             Grid.SuspendLayout();
             foreach (var Row in Rows) {
-                ConflictResolver.TryAdd(Row.Key, null, Row, Control.Editor.ProjectItem);
+                ConflictResolver.TryAdd(Row.Key, null, Row, Control.Editor.ProjectItem, null);
                 Row.Cells[Grid.KeyColumnName].Tag = null;
                 Grid.Rows.Remove(Row);
             }

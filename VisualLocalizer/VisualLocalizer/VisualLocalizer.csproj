@@ -12,6 +12,7 @@
     <AssemblyOriginatorKeyFile>vlkey.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ProjectGuid>{2E057DF9-29EA-4F3D-B162-5121C4EC0547}</ProjectGuid>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -225,6 +226,11 @@
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="VisualLocalizerPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VSPackage.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>VSPackage.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="MenuCommands.vsct">
@@ -260,12 +266,14 @@
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>VSPackage.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\doc.png" />
-    <Content Include="Resources\Package.ico" />
     <None Include="Resources\play.png" />
+    <Content Include="Resources\icon.ico" />
     <Content Include="Resources\run.png" />
   </ItemGroup>
   <ItemGroup>

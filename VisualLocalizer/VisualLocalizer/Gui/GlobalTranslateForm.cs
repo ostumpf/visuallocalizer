@@ -23,7 +23,7 @@ namespace VisualLocalizer.Gui {
 
         public GlobalTranslateForm(List<GlobalTranslateResultItem> resxTargetList) {
             InitializeComponent();
-
+            this.Icon = VSPackage._400;
             this.ResxTargetList = resxTargetList;
 
             foreach (TRANSLATE_PROVIDER prov in Enum.GetValues(typeof(TRANSLATE_PROVIDER))) {

@@ -39,6 +39,9 @@ namespace VisualLocalizer.Library.AspxParser {
         }
     }
 
+    /// <summary>
+    /// Represents definition of element type, as found in web.config files or Register directive
+    /// </summary>
     public abstract class TagPrefixDefinition {
         public string TagPrefix { get; private set; }
 
@@ -46,9 +49,15 @@ namespace VisualLocalizer.Library.AspxParser {
             this.TagPrefix = TagPrefix;
         }
 
+        /// <summary>
+        /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
+        /// </summary>        
         public abstract bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo);
     }
 
+    /// <summary>
+    /// Represents element definition using prefix, namespace and assembly strong name
+    /// </summary>
     public sealed class TagPrefixAssemblyDefinition : TagPrefixDefinition {
         public string Namespace { get; private set; }
         public string AssemblyName { get; private set; }
@@ -61,28 +70,40 @@ namespace VisualLocalizer.Library.AspxParser {
 
         public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
             propInfo = null;
-            string fullname = Namespace + "." + elementName;
-            Type elementType = null;
+            string fullname = Namespace + "." + elementName; // expected type name
+            Type elementType = null; 
 
             if (ReflectionCache.Instance.Types.ContainsKey(fullname)) {
                 elementType = ReflectionCache.Instance.Types[fullname];
             } else {
                 if (!ReflectionCache.Instance.Assemblies.ContainsKey(AssemblyName)) {
+                    // load given assembly and add it to cache
                     ReflectionCache.Instance.Assemblies.Add(AssemblyName, Assembly.Load(AssemblyName));
                 }
                 Assembly a = ReflectionCache.Instance.Assemblies[AssemblyName];
+                
+                // attempt to get type from assembly
                 elementType = a.GetType(fullname);
             }
                         
             if (elementType != null) {
+                // attempt to get property with the name of the attribute
                 propInfo = elementType.GetProperty(attributeName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);
-                return propInfo != null && propInfo.PropertyType == type;
+                
+                // if it exists, we have conclusive result
+                if (propInfo != null) {
+                    return propInfo.PropertyType == type;
+                }                
             }
 
+            // either element or property definition was not found
             return null;
         }
     }
 
+    /// <summary>
+    /// Represents element definition using tag name and source file
+    /// </summary>
     public sealed class TagPrefixSourceDefinition : TagPrefixDefinition {
         public string TagName { get; private set; }
         public string Source { get; private set; }
@@ -91,29 +112,38 @@ namespace VisualLocalizer.Library.AspxParser {
 
         public TagPrefixSourceDefinition(Project Project, Solution solution, string TagName, string Source, string TagPrefix)
             : base(TagPrefix) {
+            if (TagName == null) throw new ArgumentNullException("TagName");
+            if (Source == null) throw new ArgumentNullException("Source");
+
             this.TagName = TagName;
             this.Source = Source;
 
+            // get full path of the definition file
             string projPath = Project.FullName;
             if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1); 
             string sourcePath = Source.Replace("~", projPath);
-            ProjectItem sourceItem = solution.FindProjectItem(sourcePath);
-
+            
+            // read the source file and stop after first Control directive (code behind class name)
             ControlDirectiveHandler handler = new ControlDirectiveHandler();
             Parser parser = new Parser(File.ReadAllText(sourcePath), handler);
             parser.Process();
 
+            // no code behind class or no Control directive at all
             if (handler.ControlInfo == null || handler.ControlInfo.Inherits == null) return;
 
+            // get definition class type
             codeType = Project.CodeModel.CodeTypeFromFullName(handler.ControlInfo.Inherits);
         }
 
         public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
+            if (attributeName == null) throw new ArgumentNullException("attributeName");
+
             propInfo = null;
-            if (codeType == null) return null;
+            if (codeType == null) return null; // no code type was found - inconclusive
            
             if (!ReflectionCache.Instance.Types.ContainsKey(attributeName)) {
                 CodeProperty property = null;
+                // look for property with attribute's name
                 foreach (CodeElement codeElement in codeType.Members) {
                     if (codeElement.Kind == vsCMElement.vsCMElementProperty && codeElement.Name==attributeName) {
                         property = (CodeProperty)codeElement;
@@ -121,9 +151,9 @@ namespace VisualLocalizer.Library.AspxParser {
                     }
                 }
 
-                if (property != null) {
+                if (property != null) { // property found
                     try {
-                        Type t = Type.GetType(property.Type.AsFullName, false, false);
+                        Type t = Type.GetType(property.Type.AsFullName, false, false); // get its name and save it in cache
                         ReflectionCache.Instance.Types.Add(attributeName, t);
                     } catch (Exception) {
                         ReflectionCache.Instance.Types.Add(attributeName, null);
@@ -139,6 +169,9 @@ namespace VisualLocalizer.Library.AspxParser {
         }
     }
 
+    /// <summary>
+    /// Used to parse ASPX definition file and read Control directive, where information about code behind class is stored
+    /// </summary>
     public sealed class ControlDirectiveHandler : IAspxHandler {
         public ControlDirectiveInfo ControlInfo { get; private set; }
         

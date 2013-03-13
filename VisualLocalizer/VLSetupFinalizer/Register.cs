@@ -10,31 +10,37 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Text;
 
-
 namespace VLSetupFinalizer {
+
+    /// <summary>
+    /// Implements actions performed after installation and uninstallation. In both cases, command "devenv /setup /nosetupvstemplates"
+    /// gets executed, with "devenv" being located in Common7/IDE folder of respective VS installation.
+    /// </summary>
     [RunInstaller(true)]
     public partial class Register : Installer {
 
-        private List<string> devenvPaths = new List<string>();
-
         public override void Install(IDictionary stateSaver) {
             base.Install(stateSaver);
-  
+            List<string> devenvPaths = new List<string>();
+
+            // parameters contain data sent from GUI - key can be either "checkbox2008", "checkbox2010" and "checkbox2012"
             foreach (DictionaryEntry param in this.Context.Parameters) {
                 string key = (param.Key == null ? "0" : param.Key.ToString());
                 string value = (param.Value == null ? "0" : param.Value.ToString());
                 
-                if (key.ToLower().StartsWith("checkbox") && value == "1")                     
-                    register(key);                
+                // if user checked the option in installer GUI
+                if (key.ToLower().StartsWith("checkbox") && value == "1")
+                    register(key, devenvPaths);                
             }
 
-            string paths = toString(devenvPaths, '|');            
-            stateSaver.Add("uninstPaths", paths);
+            string paths = string.Join("|", devenvPaths.ToArray());            
+            stateSaver.Add("uninstPaths", paths); // devenvPaths contains all paths to "devenv" files, where VL was registered
         }
 
         public override void Uninstall(IDictionary savedState) {
             string[] tokens = null;
             if (savedState.Contains("uninstPaths")) {
+                // get paths of "devenv" files, where VL is registered
                 string paths = (string)savedState["uninstPaths"];                
 
                 if (paths != null)
@@ -44,22 +50,17 @@ namespace VLSetupFinalizer {
             base.Uninstall(savedState);
 
             if (tokens != null) {
+                // execute command on each devenv
                 foreach (string path in tokens)                     
-                    Process.Start(path, "/setup /nosetupvstemplates").WaitForExit();
-                
+                    Process.Start(path, "/setup /nosetupvstemplates").WaitForExit();                
             }
-        }
-        
-        private string toString(List<string> list,char separator) {
-            StringBuilder b = new StringBuilder();
-            for (int i = 0; i < list.Count; i++) {
-                b.Append(list[i]);
-                if (i != list.Count - 1) b.Append(separator);
-            }
-            return b.ToString();
-        }
+        }      
 
-        private void register(string param) {
+        /// <summary>
+        /// Registers VL in VS specified by param - executes "devenv /setup /nosetupvstemplates"
+        /// </summary>
+        /// <param name="param">checkbox2008, checkbox2010 or checkbox2012</param>
+        private void register(string param, List<string> devenvPaths) {
             string key;
             string subpath;            
             getInstallKey(param, out key, out subpath);
@@ -78,6 +79,12 @@ namespace VLSetupFinalizer {
             }            
         }
 
+        /// <summary>
+        /// Gets well-known information about VS installations.
+        /// </summary>
+        /// <param name="param">Passed from installer GUI - either checkbox2008, checkbox2010 or checkbox2012</param>
+        /// <param name="key">Output param - registry key path</param>
+        /// <param name="subpath">Output param - subfolder, where devenv is located</param>
         private void getInstallKey(string param, out string key, out string subpath) {
             switch (param) {
                 case "checkbox2008":

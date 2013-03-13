@@ -5,7 +5,13 @@ using System.Text;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Library.AspxParser {
-    public sealed class Parser {
+    
+    /// <summary>
+    /// Parser of ASPX-like documents. Inspired by SAX technology, it requires IAspxHandler implementing object to be passed
+    /// as handler of document objects. The parser reads the document from top and uses IAspxHandler methods to inform handler
+    /// about content.
+    /// </summary>
+    public class Parser {
 
         private string text;
         private IAspxHandler handler;
@@ -21,59 +27,77 @@ namespace VisualLocalizer.Library.AspxParser {
         private string elementName, elementPrefix;
         private BlockSpan currentAttributeBlockSpan, externalSpan, internalSpan, backupSpan, plainTextSpan;
 
+        /// <summary>
+        /// Constructs new parser object
+        /// </summary>
+        /// <param name="text">Text to be parsed</param>
+        /// <param name="handler">Handler object that gets informed about parsed content</param>
+        /// <param name="maxLine">Maximal line number, after which the parser should stop</param>
+        /// <param name="maxIndex">Maximal column number, after which the parser should stop</param>
         public Parser(string text, IAspxHandler handler, int maxLine, int maxIndex) {
+            if (text == null) throw new ArgumentNullException("text");
+            if (handler == null) throw new ArgumentNullException("handler");
+
             this.text = text;
             this.handler = handler;
             this.maxIndex = maxIndex;
             this.maxLine = maxLine;
         }
 
+        /// <summary>
+        /// Constructs new parser object with no limitations
+        /// </summary>
+        /// <param name="text">Text to be parsed</param>
+        /// <param name="handler">Handler object that gets informed about parsed content</param>
         public Parser(string text, IAspxHandler handler) : this(text,handler, int.MaxValue, int.MaxValue) { }
 
+        /// <summary>
+        /// Parse given content using given handler
+        /// </summary>
         public void Process() {
             currentLine = 0;
             currentIndex = 0;
             currentOffset = 0;
             currentChar = '?';
-            codeBuilder = new StringBuilder();
+            codeBuilder = new StringBuilder(); // builder for C# or VB code
             backupBuilder = new StringBuilder();
-            plainTextBuilder = new StringBuilder();
-            attributeNameBuilder = new StringBuilder();
-            attributeValueBuilder = new StringBuilder();
+            plainTextBuilder = new StringBuilder(); // builder for plain text
+            attributeNameBuilder = new StringBuilder(); // builder for elements' attributes names
+            attributeValueBuilder = new StringBuilder();// builder for elements' attributes values
             
             bool justEnteredAspTags = false;
-            softStop = false;
-            hardStop = false;
+            softStop = false; // stop is requested, but wait for current block to finish first
+            hardStop = false; // stop will be performed right away
 
             for (int i = 0; i < text.Length; i++) {
                 if (hardStop) break;
 
                 currentChar = text[i];
-                if (currentLine > maxLine || (currentLine == maxLine && currentIndex > maxIndex)) 
-                    softStop = true;
-                if (handler.StopRequested) softStop = true;
+                if (currentLine > maxLine || (currentLine == maxLine && currentIndex > maxIndex)) softStop = true; // outside scope
+                if (handler.StopRequested) softStop = true; // stop requested by handler
 
-                if (!withinServerComment)
+                if (!withinServerComment) {
                     if (withinOutputElement || withinCodeBlock) {
                         codeBuilder.Append(currentChar);
                     } else if (!withinAspElement && !withinAspDirective) {
                         if (withinPlainText) {
                             plainTextBuilder.Append(currentChar);
                         }
-                    }                
+                    }
+                }
 
                 if (!withinServerComment && (withinAspDirective || withinAspElement)) {
-                    ReactToWithinElementChar();
+                    ReactToWithinElementChar(); // read attribute name, value or element prefix
                 }
 
                 if (!withinServerComment && justEnteredAspTags && !char.IsWhiteSpace(currentChar)) {
-                    ReactToBeginningOfAspTags();
+                    ReactToBeginningOfAspTags(); // determine what kind of content it is - output element, code block...
                     justEnteredAspTags = false;
                 }
                 
                 if (!withinAspTags) {                    
                     if (currentChar == '%' && GetCodeBack(1) == '<') {
-                        EndPlainText(-1,2);
+                        EndPlainText(-1,2); // report plain text
                         if (GetCodeForth(1) == '-' && GetCodeForth(2) == '-') {
                             withinServerComment = true;
                             withinAspTags = true;
@@ -100,7 +124,7 @@ namespace VisualLocalizer.Library.AspxParser {
                             HitEnd(ref externalSpan, 1);
                             if (internalSpan != null) HitEnd(ref internalSpan, -2);
 
-                            ReactToEndOfAspTags();
+                            ReactToEndOfAspTags(); // report content to the handler
                         } else if (GetCodeBack(2) == '-' && GetCodeBack(3) == '-') {
                             currentChar = '?';
                             withinServerComment = false;
@@ -117,19 +141,24 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Handles beginnings and ends of elements
+        /// </summary>
         private void HandleAspElements() {
-            if (withinAspElement && currentChar == '\"') aposCount++;
+            if (withinAspElement && currentChar == '"') aposCount++; // counts apostrophes within element
 
-            if (withinAspElement && currentChar == '>' && aposCount % 2 == 0) {
+            if (withinAspElement && currentChar == '>' && aposCount % 2 == 0) { // end of tag
                 HitEnd(ref externalSpan, 0);
                 StartPlainText(1, 0);                
 
+                // get element name
                 if (string.IsNullOrEmpty(elementName) && attributeNameBuilder.Length > 0) {
                     elementName = attributeNameBuilder.ToString();
                     attributeNameBuilder.Length = 0;
                 }               
 
-                if (withinEndAspElement) {                        
+                if (withinEndAspElement) {        
+                    // content of <script> tags report as code
                     if (elementName.ToLower() == "script") {
                         withinCodeBlock = false;
                         HitEnd(ref externalSpan, -8);
@@ -143,7 +172,7 @@ namespace VisualLocalizer.Library.AspxParser {
                         externalSpan = null;
                         internalSpan = null;
                         codeBuilder.Length = 0;
-                    } else {
+                    } else { // other elements
                         handler.OnElementEnd(new EndElementContext() {
                             BlockSpan = externalSpan,
                             ElementName = elementName,
@@ -156,12 +185,13 @@ namespace VisualLocalizer.Library.AspxParser {
                     if (softStop) hardStop = true;
                     externalSpan = null;
                 } else {
+                    // begin code block       
                     if (elementName.ToLower() == "script") {
                         withinCodeBlock = true;
                         externalSpan = null;
                         HitStart(ref externalSpan, 0);
                         HitStart(ref internalSpan, 0);
-                    } else {
+                    } else { // begin standard element
                         handler.OnElementBegin(new ElementContext() {
                             Attributes = attributes,
                             BlockSpan = externalSpan,
@@ -235,6 +265,9 @@ namespace VisualLocalizer.Library.AspxParser {
             plainTextBuilder.Length = 0;
         }
 
+        /// <summary>
+        /// Called after "<%" has been read to determine what kind of content it is 
+        /// </summary>
         private void ReactToBeginningOfAspTags() {
             if (currentChar == '=') {
                 outputElementKind = OutputElementKind.PLAIN;
@@ -247,6 +280,10 @@ namespace VisualLocalizer.Library.AspxParser {
             if (currentChar == '$') {
                 outputElementKind = OutputElementKind.EXPRESSION;
                 withinOutputElement = true;                
+            }
+            if (currentChar == '#') {
+                outputElementKind = OutputElementKind.BIND;
+                withinOutputElement = true;
             }
             if (currentChar == '@') {
                 withinAspDirective = true;
@@ -268,8 +305,11 @@ namespace VisualLocalizer.Library.AspxParser {
             }                              
         }
 
+        /// <summary>
+        /// Called after %>, reports the content to the handler
+        /// </summary>
         private void ReactToEndOfAspTags() {
-            if (withinAspElement) {
+            if (withinAspElement) { // only expression within attribute value was read
                 backupBuilder.Append(codeBuilder);                
             }
             if (withinOutputElement) {
@@ -325,6 +365,9 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Modifies state of client comment <!-- --> indicator
+        /// </summary>
         private void CheckClientCommentState() {
             if (!withinClientComment) {
                 if (currentChar == '-' && GetCodeBack(1) == '-' && GetCodeBack(2) == '!' && GetCodeBack(3) == '<') {
@@ -339,21 +382,24 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Modifies state based on a character within an element
+        /// </summary>
         private void ReactToWithinElementChar() {
             if (!withinAttributeValue) {
-                if (currentChar == '\"') {
+                if (currentChar == '"') { // begining of an attribute
                     withinAttributeValue = true;
                     currentAttributeBlockSpan = new BlockSpan();
                     currentAttributeBlockSpan.AbsoluteCharOffset = currentOffset;
                     currentAttributeBlockSpan.StartIndex = currentIndex - 1;
                     currentAttributeBlockSpan.StartLine = currentLine;
-                } else if (currentChar == ':') {
+                } else if (currentChar == ':') { // tag prefix
                     if (string.IsNullOrEmpty(elementName)) {
                         elementPrefix = attributeNameBuilder.ToString().Trim();
                         attributeNameBuilder.Length = 0;
                     }
                 } else {
-                    if (!withinAttributeName) {
+                    if (!withinAttributeName) { // beginning of attribute name, possibly end of tag name
                         if (currentChar.CanBePartOfIdentifier() && !GetCodeBack(1).CanBePartOfIdentifier()) {
                             if (attributeNameBuilder.Length > 0) {
                                 if (string.IsNullOrEmpty(elementName)) {
@@ -364,18 +410,19 @@ namespace VisualLocalizer.Library.AspxParser {
                             }
                             withinAttributeName = true;
                         }
-                    } else {
+                    } else { // end of attribute name
                         if (!currentChar.CanBePartOfIdentifier() && GetCodeBack(1).CanBePartOfIdentifier()) {
                             withinAttributeName = false;
                         }
                     }
                 }
             } else {
-                if (currentChar == '\"' && !withinOutputElement) {
+                if (currentChar == '"' && !withinOutputElement) { // end of attribute value
                     currentAttributeBlockSpan.EndLine = currentLine;
                     currentAttributeBlockSpan.EndIndex = currentIndex; // "
                     currentAttributeBlockSpan.AbsoluteCharLength = currentOffset - currentAttributeBlockSpan.AbsoluteCharOffset;
 
+                    // add attribute to the element's list
                     AttributeInfo nfo = new AttributeInfo() {
                         Name = attributeNameBuilder.ToString(),
                         Value = attributeValueBuilder.ToString().Substring(1), // "
@@ -396,18 +443,11 @@ namespace VisualLocalizer.Library.AspxParser {
             }
             if (withinAttributeName) attributeNameBuilder.Append(currentChar);
             if (withinAttributeValue) attributeValueBuilder.Append(currentChar);            
-        }
+        }        
 
-        private int CountBack(string text, char c, int i) {
-            i--;
-            int count=0;
-            while (i >= 0 && text[i] == c) {
-                count++;
-                i--;
-            }
-            return count;
-        }
-
+        /// <summary>
+        /// Marks current position as a beginning of a block (creates new if null passed)
+        /// </summary>        
         private void HitStart(ref BlockSpan span, int correction) {
             if (span == null) span = new BlockSpan();
 
@@ -416,22 +456,34 @@ namespace VisualLocalizer.Library.AspxParser {
             span.AbsoluteCharOffset = currentOffset + correction;
         }
 
+        /// <summary>
+        /// Marks current position as an end of a block
+        /// </summary>        
         private void HitEnd(ref BlockSpan span, int correction) {
             span.EndLine = currentLine;
             span.EndIndex = currentIndex + correction;
             span.AbsoluteCharLength = currentOffset - span.AbsoluteCharOffset + correction;
         }  
 
+        /// <summary>
+        /// Returns char 'relative' characters back from current position
+        /// </summary>        
         private char GetCodeBack(int relative) {
             if (currentOffset - relative < 0) return '?';
             return text[currentOffset - relative];
         }
 
+        /// <summary>
+        /// Returns char 'relative' characters forth from current position
+        /// </summary>     
         private char GetCodeForth(int relative) {
             if (currentOffset + relative >= text.Length) return '?';
             return text[currentOffset + relative];
         }
 
+        /// <summary>
+        /// Moves current position by one forward
+        /// </summary>
         private void Move() {            
             currentIndex++;
             currentOffset++;

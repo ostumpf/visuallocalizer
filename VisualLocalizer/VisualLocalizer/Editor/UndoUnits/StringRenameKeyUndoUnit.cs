@@ -37,7 +37,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
                 ChangeColumnValue(from, to);
 
-                if (SourceRow.ErrorSet.Count == 0) {
+                if (SourceRow.ErrorMessages.Count == 0) {
                     int errors = 0;
                     int count = SourceRow.CodeReferences.Count;
                     SourceRow.CodeReferences.ForEach((item) => { item.KeyAfterRename = to; });
@@ -73,7 +73,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
             grid.NotifyDataChanged();
             grid.SetContainingTabPageSelected();
 
-            if (SourceRow.ErrorSet.Count == 0) SourceRow.LastValidKey = to;
+            if (SourceRow.ErrorMessages.Count == 0) SourceRow.LastValidKey = to;
         }
     }
 }

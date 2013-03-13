@@ -80,28 +80,28 @@ namespace VisualLocalizer.Library {
 
         protected virtual void SetConflictedItems(IKeyValueSource row1, IKeyValueSource row2, bool p) {
             if (p) {
-                if (!row1.ConflictRows.Contains(row2)) row1.ConflictRows.Add(row2);
-                if (!row2.ConflictRows.Contains(row1)) row2.ConflictRows.Add(row1);
+                if (!row1.ConflictItems.Contains(row2)) row1.ConflictItems.Add(row2);
+                if (!row2.ConflictItems.Contains(row1)) row2.ConflictItems.Add(row1);
             } else {
-                row1.ConflictRows.Remove(row2);
-                row2.ConflictRows.Remove(row1);
+                row1.ConflictItems.Remove(row2);
+                row2.ConflictItems.Remove(row1);
             }
 
             string errorText = "Duplicate key entry";
 
-            if (row1.ConflictRows.Count == 0) {
-                row1.ErrorSet.Remove(errorText);
+            if (row1.ConflictItems.Count == 0) {
+                row1.ErrorMessages.Remove(errorText);
             } else {
-                if (!row1.ErrorSet.Contains(errorText)) row1.ErrorSet.Add(errorText);
+                if (!row1.ErrorMessages.Contains(errorText)) row1.ErrorMessages.Add(errorText);
             }
-            row1.ErrorSetUpdate();
+            row1.UpdateErrorSetDisplay();
 
-            if (row2.ConflictRows.Count == 0) {
-                row2.ErrorSet.Remove(errorText);
+            if (row2.ConflictItems.Count == 0) {
+                row2.ErrorMessages.Remove(errorText);
             } else {
-                if (!row2.ErrorSet.Contains(errorText)) row2.ErrorSet.Add(errorText);
+                if (!row2.ErrorMessages.Contains(errorText)) row2.ErrorMessages.Add(errorText);
             }
-            row2.ErrorSetUpdate();
+            row2.UpdateErrorSetDisplay();
         }
 
     }

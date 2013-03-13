@@ -1,9 +1,22 @@
 ﻿using Microsoft.VisualStudio.TextManager.Interop;
 using System.Collections.Generic;
+using System;
 
 namespace VisualLocalizer.Library.AspxParser {
-    public enum OutputElementKind { PLAIN, HTML_ESCAPED, EXPRESSION }
 
+    /// <summary>
+    /// Specifies type of ASP .NET output elements
+    /// </summary>
+    public enum OutputElementKind { 
+        PLAIN, // <%= 
+        HTML_ESCAPED, // <%:
+        EXPRESSION, // <%$
+        BIND // <$#
+    }
+
+    /// <summary>
+    /// Represents position of a block in a document
+    /// </summary>
     public class BlockSpan {
         public int StartLine { get; set; }
         public int StartIndex { get; set; }
@@ -15,7 +28,12 @@ namespace VisualLocalizer.Library.AspxParser {
         public BlockSpan() {
         }
 
+        /// <summary>
+        /// Copy constructor
+        /// </summary>        
         public BlockSpan(BlockSpan copy) {
+            if (copy == null) throw new ArgumentNullException("copy");
+
             AbsoluteCharLength = copy.AbsoluteCharLength;
             AbsoluteCharOffset = copy.AbsoluteCharOffset;
             StartLine = copy.StartLine;
@@ -24,6 +42,9 @@ namespace VisualLocalizer.Library.AspxParser {
             StartIndex = copy.StartIndex;
         }
 
+        /// <summary>
+        /// Moves block by specified offset
+        /// </summary>        
         public void Move(int dx, int dy) {
             StartLine += dy;
             StartIndex += dx;
@@ -31,11 +52,19 @@ namespace VisualLocalizer.Library.AspxParser {
             EndIndex += dx;
         }
 
-        public bool Contains(BlockSpan b) {
-            return (b.AbsoluteCharOffset >= AbsoluteCharOffset) && 
-                (b.AbsoluteCharOffset + b.AbsoluteCharLength <= AbsoluteCharOffset + AbsoluteCharLength);
+        /// <summary>
+        /// Returns true when specified block is contained within this one
+        /// </summary>        
+        public bool Contains(BlockSpan childBlock) {
+            if (childBlock == null) throw new ArgumentNullException("childBlock");
+
+            return (childBlock.AbsoluteCharOffset >= AbsoluteCharOffset) && 
+                (childBlock.AbsoluteCharOffset + childBlock.AbsoluteCharLength <= AbsoluteCharOffset + AbsoluteCharLength);
         }
 
+        /// <summary>
+        /// Returns this block in a TextSpan format
+        /// </summary>        
         public TextSpan GetTextSpan() {
             TextSpan ts = new TextSpan();
             ts.iStartIndex = StartIndex;
@@ -46,6 +75,9 @@ namespace VisualLocalizer.Library.AspxParser {
         }
     }
 
+    /// <summary>
+    /// Information about element attribute
+    /// </summary>
     public class AttributeInfo {
         public BlockSpan BlockSpan { get; set; }
         public string Name { get; set; }
@@ -54,6 +86,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool ContainsAspTags { get; set; }
     }
 
+    /// <summary>
+    /// Information about block of code
+    /// </summary>
     public class CodeBlockContext {
         public string BlockText { get; set; }
         public BlockSpan InnerBlockSpan { get; set; }
@@ -61,6 +96,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool WithinClientSideComment { get; set; }
     }
 
+    /// <summary>
+    /// Information about directive
+    /// </summary>
     public class DirectiveContext {
         public string DirectiveName { get; set; }
         public List<AttributeInfo> Attributes { get; set; } 
@@ -68,6 +106,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool WithinClientSideComment { get; set; }
     }
 
+    /// <summary>
+    /// Information about inline output element
+    /// </summary>
     public class OutputElementContext {
         public OutputElementKind Kind { get; set; }
         public string InnerText { get; set; }
@@ -77,6 +118,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool WithinElementsAttribute { get; set; }
     }
 
+    /// <summary>
+    /// Information about beginnig element tag
+    /// </summary>
     public class ElementContext {
         public string Prefix { get; set; }
         public string ElementName { get; set; }
@@ -85,6 +129,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool WithinClientSideComment { get; set; }
     }
 
+    /// <summary>
+    /// Information about end element tag
+    /// </summary>
     public class EndElementContext {
         public string Prefix { get; set; }
         public string ElementName { get; set; }
@@ -92,6 +139,9 @@ namespace VisualLocalizer.Library.AspxParser {
         public bool WithinClientSideComment { get; set; }
     }
 
+    /// <summary>
+    /// Information about plain text between elements
+    /// </summary>
     public class PlainTextContext {
         public string Text { get; set; } 
         public BlockSpan BlockSpan { get; set; }

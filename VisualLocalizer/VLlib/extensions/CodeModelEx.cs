@@ -6,85 +6,96 @@ using EnvDTE80;
 using EnvDTE;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Container for extension methods working with CodeModel-like objects. 
+    /// </summary>
     public static class CodeModelEx {
 
+        /// <summary>
+        /// Returns inner text of the function (no header, no braces)
+        /// </summary>        
         public static string GetText(this CodeFunction2 codeFunction) {
-            try {
-                TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
-                TextPoint endPoint = codeFunction.GetEndPoint(vsCMPart.vsCMPartBody);
+            if (codeFunction == null) throw new ArgumentNullException("codeFunction");
+        
+            TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+            TextPoint endPoint = codeFunction.GetEndPoint(vsCMPart.vsCMPartBody);
 
-                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
-                return functionText;
-            } catch (Exception) {
+            EditPoint ep = startPoint.CreateEditPoint();
+            if (ep == null) {
                 return null;
-            }            
+            } else {
+                return ep.GetText(endPoint);
+            }                       
         }
 
-        public static string GetText(this CodeProperty codeProperty) {
-            try {
-                TextPoint startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
-                TextPoint endPoint = codeProperty.GetEndPoint(vsCMPart.vsCMPartBody);
+        /// <summary>
+        /// Returns inner text of the variable (modifiers, name and initializer)
+        /// </summary> 
+        public static string GetText(this CodeVariable2 codeVariable) {
+            if (codeVariable == null) throw new ArgumentNullException("codeVariable");
 
-                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
-                return functionText;
-            } catch (Exception) {
+            TextPoint startPoint = codeVariable.StartPoint;
+            TextPoint endPoint = codeVariable.EndPoint;
+
+            EditPoint ep = startPoint.CreateEditPoint();
+
+            if (ep == null) {
+                return null;
+            } else {
+                return ep.GetText(endPoint);
+            }  
+        }
+
+        /// <summary>
+        /// Returns class, struct or module, where given method in defined
+        /// </summary>        
+        public static CodeElement2 GetClass(this CodeFunction2 codeFunction) {
+            if (codeFunction == null) throw new ArgumentNullException("codeFunction");
+
+            CodeElement2 parent = codeFunction.Parent as CodeElement2;
+            return GetClassInternal(parent);
+        }
+
+        /// <summary>
+        /// Returns class, struct or module, where given variable in defined
+        /// </summary>        
+        public static CodeElement2 GetClass(this CodeVariable2 codeVariable) {
+            if (codeVariable == null) throw new ArgumentNullException("codeVariable");
+
+            CodeElement2 parent = codeVariable.Parent as CodeElement2;
+            return GetClassInternal(parent);
+        }
+
+        /// <summary>
+        /// Returns class, struct or module, where given property in defined
+        /// </summary>    
+        public static CodeElement2 GetClass(this CodeProperty codeProperty) {
+            if (codeProperty == null) throw new ArgumentNullException("codeProperty");
+
+            CodeElement2 parent = codeProperty.Parent as CodeElement2;
+            return GetClassInternal(parent);
+        }
+
+        /// <summary>
+        /// Returns given element if it's class, struct or module, null otherwise
+        /// </summary>
+        private static CodeElement2 GetClassInternal(CodeElement2 parent) {
+            if (parent == null) return null;
+
+            if (parent.Kind == vsCMElement.vsCMElementClass || parent.Kind == vsCMElement.vsCMElementModule ||
+                parent.Kind == vsCMElement.vsCMElementStruct) {
+                return parent;
+            } else {
                 return null;
             }     
         }
 
-        public static string GetText(this CodeVariable2 codeVariable) {
-            try {
-                TextPoint startPoint = codeVariable.StartPoint;
-                TextPoint endPoint = codeVariable.EndPoint;
-
-                string functionText = startPoint.CreateEditPoint().GetText(endPoint);
-
-                return functionText;
-            } catch (Exception) {
-                return null;
-            }
-        }
-
-        public static CodeElement2 GetClass(this CodeFunction2 codeFunction) {
-            object parent = codeFunction.Parent;
-            CodeElement2 classElement = null;
-
-            if (parent is CodeClass2) {
-                classElement = (CodeElement2)parent;
-            } else if (parent is CodeStruct2) {
-                classElement = (CodeElement2)parent;
-            }
-
-            return classElement;
-        }
-
-        public static CodeElement2 GetClass(this CodeVariable2 codeVariable) {
-            object parent = codeVariable.Parent;
-            CodeElement2 classElement = null;
-
-            if (parent is CodeClass2) {
-                classElement = (CodeElement2)parent;
-            } else if (parent is CodeStruct2) {
-                classElement = (CodeElement2)parent;
-            }
-
-            return classElement;
-        }
-
-        public static CodeElement2 GetClass(this CodeProperty codeProperty) {
-            object parent = codeProperty.Parent;
-            CodeElement2 classElement = null;
-
-            if (parent is CodeClass2) {
-                classElement = (CodeElement2)parent;
-            } else if (parent is CodeStruct2) {
-                classElement = (CodeElement2)parent;
-            }
-
-            return classElement;
-        }
-
+        /// <summary>
+        /// Returns namespace, where code element belongs or null, if no such namespace exists
+        /// </summary>        
         public static CodeNamespace GetNamespace(this CodeElement codeElement) {
+            if (codeElement == null) throw new ArgumentNullException("codeElement");
             object parent = null;
 
             if (codeElement is CodeClass) {
@@ -112,26 +123,37 @@ namespace VisualLocalizer.Library {
             }            
         }
 
+        /// <summary>
+        /// Returns list of namespaces that are 'used' from the given namespace. That is, all namespaces imported
+        /// in that namespace, the namespace itself and all namespaces, in which the given one is included.
+        /// </summary>        
         public static NamespacesList GetUsedNamespaces(this CodeNamespace codeNamespace, ProjectItem item) {
+            if (item==null) throw new ArgumentNullException("item");
+
             NamespacesList list = new NamespacesList();
             GetUsedNamespacesInternal(codeNamespace, item, list);
             return list;
         }
 
         private static void GetUsedNamespacesInternal(CodeNamespace codeNamespace, ProjectItem item, NamespacesList list) {
-            if (codeNamespace != null) {
+            if (codeNamespace != null) { // add itself, its children and its parents
                 list.Add(codeNamespace.FullName, null);
 
                 AddUsedNamespacesToList(codeNamespace.Children, list);
 
                 CodeNamespace parent = GetNamespace(codeNamespace as CodeElement);
                 GetUsedNamespacesInternal(parent, item, list);
-            } else {
-                AddUsedNamespacesToList(item.FileCodeModel.CodeElements, list);
+            } else { // top level namespace - only add top level import statements
+                if (item.FileCodeModel != null) AddUsedNamespacesToList(item.FileCodeModel.CodeElements, list);
             }
         }
 
+        /// <summary>
+        /// Adds all import statements from list
+        /// </summary>        
         private static void AddUsedNamespacesToList(CodeElements elements, NamespacesList list) {
+            if (elements == null) return;
+
             foreach (CodeElement2 element in elements) {
                 if (element.Kind == vsCMElement.vsCMElementImportStmt) {
                     CodeImport codeImport = (CodeImport)element;

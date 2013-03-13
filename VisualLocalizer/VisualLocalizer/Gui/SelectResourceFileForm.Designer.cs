@@ -317,7 +317,6 @@
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(647, 167);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.KeyPreview = true;
             this.Name = "SelectResourceFileForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

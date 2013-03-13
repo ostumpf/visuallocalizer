@@ -171,7 +171,7 @@
       </Group>
       
       <Group guid="VLCommandSetGuid" id="solutionExpSubmenuGroup" priority="0x001">
-        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenu"/>
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenu"/>        
       </Group>
     
       <Group guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x500">
@@ -182,6 +182,10 @@
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
       </Group>
     </Groups>
+    
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources/icon.ico" resID="VLIcon"/>             
+    </Bitmaps>
     
     <Buttons>
 
@@ -262,14 +266,14 @@
     </Buttons>
 
     <Menus>
-      <Menu guid="VLCommandSetGuid" id="visualLocalizerTopMenu" type="Menu">
+      <Menu guid="VLCommandSetGuid" id="visualLocalizerTopMenu" type="Menu">        
         <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup"></Parent>
         <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>        
         <Strings>
           <CommandName>Visual Localizer</CommandName>
           <ButtonText>Visual Localizer</ButtonText>
-        </Strings>
+        </Strings>        
       </Menu>
 
       <Menu guid="VLCommandSetGuid" id="visualLocalizerCodeMenu" type="Menu">
@@ -374,6 +378,7 @@
 
     <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >
       <IDSymbol name="runPng" value="1" />
+      <IDSymbol name="VLIcon" value="400" />
     </GuidSymbol>
 
     <GuidSymbol name="guidAspEditorMenu" value="{D7E8C5E1-BDB8-11D0-9C88-0000F8040A53}">

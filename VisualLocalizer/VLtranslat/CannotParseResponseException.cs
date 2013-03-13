@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 
 namespace VisualLocalizer.Translate {
+
+    /// <summary>
+    /// Throw by ITranslatorService implementing classes when server response does not match expected format.
+    /// </summary>
     public class CannotParseResponseException : Exception {
 
         public string FullResponse { get; set; }

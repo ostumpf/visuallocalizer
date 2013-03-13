@@ -7,6 +7,10 @@ using Microsoft.VisualStudio;
 using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Wrapper for standard VS IVsOutputWindowPane interface
+    /// </summary>
     public class OutputWindowPane {
 
         protected IVsOutputWindowPane pane;
@@ -41,11 +45,10 @@ namespace VisualLocalizer.Library {
 
         public string Name {
             get {
-                if (pane == null) 
-                    return "BLACKHOLE";
+                if (pane == null) return "BLACKHOLE";
 
                 string name = string.Empty;
-                int hr=pane.GetName(ref name);                
+                int hr = pane.GetName(ref name); 
                 Marshal.ThrowExceptionForHR(hr);
 
                 return name;
@@ -58,6 +61,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Writes formatted string to the output pane
+        /// </summary>        
         public void Write(string formatString,params object[] args) {
             if (pane == null) return;
             int hr;
@@ -73,6 +79,9 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Writes formatted string to the output pane and terminates the line
+        /// </summary>  
         public void WriteLine(string formatString, params object[] args) {
             if (pane == null) return;
 

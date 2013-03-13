@@ -272,10 +272,10 @@ namespace VisualLocalizer.Editor {
             string value = row.Value;
 
             string originalValue = (string)row.Cells[KeyColumnName].Tag;
-            editorControl.conflictResolver.TryAdd(originalValue, key, row, editorControl.Editor.ProjectItem);
+            editorControl.conflictResolver.TryAdd(originalValue, key, row, editorControl.Editor.ProjectItem, null);
             if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
 
-            row.ErrorSetUpdate();
+            row.UpdateErrorSetDisplay();
         }
 
         public override string CheckBoxColumnName {
@@ -376,7 +376,7 @@ namespace VisualLocalizer.Editor {
             try {
                 if (e.ColumnIndex == 0) {
                     ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
-                    if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
+                    if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
 
                     editorControl.ReferenceCounterThreadSuspended = true;
                     editorControl.UpdateReferencesCount(row);
@@ -406,7 +406,7 @@ namespace VisualLocalizer.Editor {
 
                     if (Columns[e.ColumnIndex].Name == KeyColumnName) {
                         string newKey = (string)row.Cells[KeyColumnName].Value;
-                        if (row.ErrorSet.Count == 0) row.LastValidKey = row.Key;
+                        if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
 
                         if (isNewRow) {
                             setNewKey(row, newKey);
@@ -511,7 +511,7 @@ namespace VisualLocalizer.Editor {
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
                 resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false, true));
 
-                if (row.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+                if (row.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
                     int count = row.CodeReferences.Count;
                     row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
@@ -541,7 +541,7 @@ namespace VisualLocalizer.Editor {
                 string[] columns = row.Split(',');
                 if (columns.Length != 3) continue;
 
-                string key = columns[0].CreateIdentifier();
+                string key = columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage);
                 string value = columns[1];
                 string comment = columns[2];
 
@@ -668,7 +668,7 @@ namespace VisualLocalizer.Editor {
 
                     foreach (ResXStringGridRow row in SelectedRows) {
                         if (!row.IsNewRow) {
-                            editorControl.conflictResolver.TryAdd(row.Key, null, row, editorControl.Editor.ProjectItem);
+                            editorControl.conflictResolver.TryAdd(row.Key, null, row, editorControl.Editor.ProjectItem, null);
 
                             row.Cells[KeyColumnName].Tag = null;
                             row.IndexAtDeleteTime = row.Index;

@@ -27,7 +27,9 @@ namespace VisualLocalizer.Library {
         public static uint OFN_NONETWORKBUTTON = 0x00020000;
     }
 
-
+    /// <summary>
+    /// Provides methods for displaying GUI dialogs in VS environment.
+    /// </summary>
     public static class MessageBox {
 
         static MessageBox() {
@@ -52,8 +54,7 @@ namespace VisualLocalizer.Library {
         }
 
         public static DialogResult Show(string message,string title,OLEMSGBUTTON buttons,OLEMSGDEFBUTTON defaultButton,OLEMSGICON icon) {
-            if (UIShell == null)
-                throw new InvalidOperationException("MessageBox is not sufficiently initialized.");
+            if (UIShell == null) throw new InvalidOperationException("MessageBox is not sufficiently initialized.");
 
             int result;
             Guid g = Guid.Empty;
@@ -82,6 +83,15 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Displays Visul Studio dialog for selecting files
+        /// </summary>
+        /// <param name="title">Dialog title</param>
+        /// <param name="initialDirectory">Initial directory</param>
+        /// <param name="filter">Filter - same as FileDialog filter, but separated with \0</param>
+        /// <param name="filterIndex">Selected filter</param>
+        /// <param name="flags">Mask of OFN flags</param>
+        /// <returns>Selected file paths separated with \0</returns>    
         public static string[] SelectFilesViaDlg(string title,string initialDirectory, string filter,uint filterIndex,uint flags) {
             uint buffersize = 255;
             

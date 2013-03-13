@@ -42,7 +42,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
             Grid.SuspendLayout();
             foreach (var element in Elements.Where((el) => { return el != null; }).OrderByDescending((el) => { return el.IndexAtDeleteTime; })) {
                 ResXStringGridRow row = Grid.Rows[element.IndexAtDeleteTime] as ResXStringGridRow;
-                ConflictResolver.TryAdd(row.Key, null, row, Control.Editor.ProjectItem);
+                ConflictResolver.TryAdd(row.Key, null, row, Control.Editor.ProjectItem, null);
                 row.Cells[Grid.KeyColumnName].Tag = null;
                 Grid.Rows.RemoveAt(element.IndexAtDeleteTime);
             }

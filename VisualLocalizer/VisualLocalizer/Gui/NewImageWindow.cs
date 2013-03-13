@@ -17,6 +17,7 @@ namespace VisualLocalizer.Gui {
 
         public NewImageWindow(bool iconsOnly) {
             InitializeComponent();
+            this.Icon = VSPackage._400;
 
             widthOk = true;
             heightOk = true;

@@ -277,9 +277,9 @@ namespace VisualLocalizer.Gui {
             bool existsSameValue = false; 
             string destError = "Destination file not set";
             if (dest == null) {
-                row.ErrorSet.Add(destError);
+                row.ErrorMessages.Add(destError);
             } else {
-                row.ErrorSet.Remove(destError);
+                row.ErrorMessages.Remove(destError);
 
                 ResXProjectItem resxItem = resxItemsCache[dest.ToString()];
                 if (!resxItem.IsLoaded) {
@@ -295,25 +295,25 @@ namespace VisualLocalizer.Gui {
                 CONTAINS_KEY_RESULT keyConflict = resxItem.StringKeyInConflict(key, value);
                 switch (keyConflict) {
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:                        
-                        row.ErrorSet.Remove(errorText);
+                        row.ErrorMessages.Remove(errorText);
                         existsSameValue=true;
                         break;
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE:                        
-                        row.ErrorSet.Add(errorText);
+                        row.ErrorMessages.Add(errorText);
                         break;
                     case CONTAINS_KEY_RESULT.DOESNT_EXIST:                        
-                        row.ErrorSet.Remove(errorText);
+                        row.ErrorMessages.Remove(errorText);
                         break;
                 }
 
                 string originalValue = (string)row.Cells[KeyColumnName].Tag;
-                ((DestinationKeyValueConflictResolver)ConflictResolver).TryAdd(originalValue, key, row, resxItem);
+                ((DestinationKeyValueConflictResolver)ConflictResolver).TryAdd(originalValue, key, row, resxItem, row.DataSourceItem.Language);
                 if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
             }            
 
-            row.ErrorSetUpdate();
+            row.UpdateErrorSetDisplay();
 
-            if (row.ErrorSet.Count == 0) {
+            if (row.ErrorMessages.Count == 0) {
                 if (existsSameValue) {
                     row.DefaultCellStyle.BackColor = ExistingKeySameValueColor;
                 } else {

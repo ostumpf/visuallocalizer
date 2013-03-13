@@ -114,7 +114,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="attributes\ProvideMarkerAttribute.cs" />
     <Compile Include="attributes\ProvideOutputWindowAttribute.cs" />
   </ItemGroup>
   <ItemGroup>

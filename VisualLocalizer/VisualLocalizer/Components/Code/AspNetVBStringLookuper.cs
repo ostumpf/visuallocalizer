@@ -28,7 +28,8 @@ namespace VisualLocalizer.Components {
         protected override AspNetStringResultItem AddStringResult(List<AspNetStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
             AspNetStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
 
-            resultItem.DeclaredNamespaces = declaredNamespaces;
+            resultItem.DeclaredNamespaces = declaredNamespaces;            
+            resultItem.Language = LANGUAGE.VB;
             resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
 
             return resultItem;

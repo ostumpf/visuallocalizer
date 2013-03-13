@@ -55,6 +55,15 @@ namespace VisualLocalizer.Components {
             return InternalProjectItem.GetResXCultureNeutralName();
         }
 
+        public LANGUAGE DesignerLanguage {
+            get {
+                if (DesignerItem != null && DesignerItem.FileCodeModel != null) {
+                    string lang = DesignerItem.FileCodeModel.Language;
+                    return lang == CodeModelLanguageConstants.vsCMLanguageCSharp ? LANGUAGE.CSHARP : LANGUAGE.VB;
+                } else return LANGUAGE.CSHARP;
+            }
+        }
+
         public bool IsProjectDefault(Project project) {
             object parent = InternalProjectItem.Collection.Parent;
             if (!(parent is ProjectItem)) return false;

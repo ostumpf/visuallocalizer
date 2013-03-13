@@ -29,11 +29,13 @@ namespace VisualLocalizer.Gui {
         private CONTAINS_KEY_RESULT keyConflict;        
         private CodeStringResultItem resultItem;
         private ReferenceString referenceText;
-
+        
         public SelectResourceFileForm(ProjectItem sourceItem, CodeStringResultItem resultItem) {
             InitializeComponent();
+            this.Icon = VSPackage._400;
             this.resultItem = resultItem;
             this.referenceText = new ReferenceString();
+           // this.projectItemLang=sourceItem.GetFileType()==FILETYPE.
 
             // add suggestions to suggestions list
             foreach (string s in resultItem.GetKeyNameSuggestions())
@@ -114,7 +116,7 @@ namespace VisualLocalizer.Gui {
                 }
 
                 bool empty = string.IsNullOrEmpty(keyBox.Text);
-                bool validIdentifier = keyBox.Text.IsValidIdentifier();
+                bool validIdentifier = keyBox.Text.IsValidIdentifier(resultItem.Language);
                 bool hasOwnDesigner = item.DesignerItem != null && !item.IsCultureSpecific();
                 bool identifierError = false;
 
@@ -130,7 +132,7 @@ namespace VisualLocalizer.Gui {
                         break;
                 }
                                 
-                if (identifierError) errorText = "Key is not valid C# identifier";
+                if (identifierError) errorText = "Key is not a valid identifier";
                 keyBox.BackColor = (identifierError ? ERROR_COLOR : Color.White);
 
                 if (!identifierError) {

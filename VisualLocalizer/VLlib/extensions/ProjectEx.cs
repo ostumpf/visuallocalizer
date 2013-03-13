@@ -9,22 +9,34 @@ using System.IO;
 using System.Diagnostics;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Container for extension methods working with Project-like objects. 
+    /// </summary>
     public static class ProjectEx {
 
         private const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
         private const string WebSiteProject = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
 
+        /// <summary>
+        /// Returns list of all files in given project, satisfying given condition
+        /// </summary>
+        /// <param name="project">Project to search</param>
+        /// <param name="test">Add only items passing this test (can be null)</param>
+        /// <param name="includeReferenced">Include referenced projects in the search</param>
+        /// <param name="includeReadonly">Include readonly files in the search</param>
+        /// <returns></returns>
         public static List<ProjectItem> GetFiles(this Project project,Predicate<ProjectItem> test,bool includeReferenced, bool includeReadonly) {
-            if (project == null)
-                throw new ArgumentNullException("project");
+            if (project == null) throw new ArgumentNullException("project");
             
             List<ProjectItem> list = new List<ProjectItem>();            
 
+            // get files from the project itself
             List<ProjectItem> ownFiles = GetFilesOf(project.ProjectItems, test, includeReadonly);
             ownFiles.Reverse();
             list.AddRange(ownFiles);
 
-            if (includeReferenced) {
+            if (includeReferenced) { // get files from referenced projects
                 List<Project> referencedProjects = project.GetReferencedProjects();
                 foreach (Project referencedProj in referencedProjects) {
                     if (referencedProj.UniqueName != project.UniqueName) {
@@ -38,6 +50,9 @@ namespace VisualLocalizer.Library {
             return list;
         }
 
+        /// <summary>
+        /// Recursively searches given ProjectItems and returns list of project items satisfying given condition
+        /// </summary>
         private static List<ProjectItem> GetFilesOf(ProjectItems items, Predicate<ProjectItem> test, bool includeReadonly) {
             List<ProjectItem> list = new List<ProjectItem>();
 
@@ -57,9 +72,11 @@ namespace VisualLocalizer.Library {
             return list;
         }        
 
+        /// <summary>
+        /// Returns list of referenced projects
+        /// </summary>        
         public static List<Project> GetReferencedProjects(this Project project) {
-            if (project == null)
-                throw new ArgumentNullException("project");
+            if (project == null) throw new ArgumentNullException("project");
 
             List<Project> list = new List<Project>();
                         
@@ -78,15 +95,24 @@ namespace VisualLocalizer.Library {
             return list;
         }
 
+        /// <summary>
+        /// Adds resource subdirectory into the project - if the project is ASP .NET website, the directory is
+        /// added under the GlobalResources folder. Otherwise, project subdirectory "Resources" is created (if it doesn't exist)
+        /// and its new "subdir" is created and returned as ProjectItem.
+        /// </summary>        
         public static ProjectItem AddResourceDir(this Project project, string subdir) {
-            string resourcesFolder;
-            if (project.Kind.ToUpperInvariant() == WebSiteProject) {
+            if (project == null) throw new ArgumentNullException("project");
+            if (string.IsNullOrEmpty(subdir)) throw new ArgumentNullException("subdir");
+
+            string resourcesFolder;            
+            if (project.Kind.ToUpperInvariant() == WebSiteProject) { // it's a website -> resources folder is GlobalResources
                 resourcesFolder = GlobalWebSiteResourcesFolder;
             } else {
                 resourcesFolder = "Resources";
             }
 
             ProjectItem resItem = null;
+            // add resources folder to the project if it didn't exist
             if (project.ProjectItems.ContainsItem(resourcesFolder)) {
                 resItem = project.ProjectItems.Item(resourcesFolder);
             } else {
@@ -94,6 +120,7 @@ namespace VisualLocalizer.Library {
             }
 
             ProjectItem subItem = null;
+            // add resources subfolder if it didn't exist
             if (resItem.ProjectItems.ContainsItem(subdir)) {
                 subItem = resItem.ProjectItems.Item(subdir);
             } else {
@@ -103,23 +130,41 @@ namespace VisualLocalizer.Library {
             return subItem;
         }
 
-        public static bool ContainsItem(this ProjectItems items, string item) {
+        /// <summary>
+        /// Returns true if list of project items contains item with given name
+        /// </summary>        
+        public static bool ContainsItem(this ProjectItems items, string name) {
+            if (name == null) throw new ArgumentNullException("item");
+            if (items == null) throw new ArgumentNullException("items");
+
             foreach (ProjectItem i in items)
-                if (i.Name == item) return true;
+                if (i.Name == name) return true;
             return false;
         }
 
+        /// <summary>
+        /// Returns true if given solution contains given project item
+        /// </summary>        
         public static bool ContainsProjectItem(this Solution solution, ProjectItem item) {
             if (solution == null) return false;
             if (!solution.IsOpen) return false;
             if (item == null) return false;
             if (item.Object == null) return false;
-            ProjectItem found = solution.FindProjectItem(item.GetFullPath());
-            return found != null;
+
+            try {
+                ProjectItem found = solution.FindProjectItem(item.GetFullPath());
+                return found != null;
+            } catch (Exception) {
+                return false;
+            }
         }
 
+        /// <summary>
+        /// Returns true if given project item is output of some custom tool
+        /// </summary>        
         public static bool IsGenerated(this ProjectItem item) {
-            if (item == null) return false;
+            if (item == null) throw new ArgumentNullException("item");
+
             try {
                 bool isCustomToolOutput = false;
                 bool isDependant = false;
@@ -142,7 +187,12 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Returns value of "FullPath" property, if present, null otherwise
+        /// </summary>
         public static string GetFullPath(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
             try {
                 return (string)item.Properties.Item("FullPath").Value;
             } catch (Exception) {
@@ -150,23 +200,12 @@ namespace VisualLocalizer.Library {
             }
         }
 
-        public static string GetCustomTool(this ProjectItem item) {
-            try {
-                return (string)item.Properties.Item("CustomTool").Value;
-            } catch (Exception) {
-                return null;
-            }
-        }
-
-        public static string GetCustomToolOutput(this ProjectItem item) {
-            try {
-                return (string)item.Properties.Item("CustomToolOutput").Value;
-            } catch (Exception) {
-                return null;
-            }
-        }
-
+        /// <summary>
+        /// Returns value of "RelativeURL" property, if present, null otherwise
+        /// </summary>
         public static string GetRelativeURL(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
             try {
                 return (string)item.Properties.Item("RelativeURL").Value;
             } catch (Exception) {
@@ -174,7 +213,38 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Returns value of "CustomTool" property, if present, null otherwise
+        /// </summary>
+        public static string GetCustomTool(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            try {
+                return (string)item.Properties.Item("CustomTool").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Returns value of "CustomToolOutput" property, if present, null otherwise
+        /// </summary>
+        public static string GetCustomToolOutput(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            try {
+                return (string)item.Properties.Item("CustomToolOutput").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }   
+
+        /// <summary>
+        /// Returns value of "IsDependentFile" property, if present, false otherwise
+        /// </summary> 
         public static bool GetIsDependent(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
             try {
                 return (bool)item.Properties.Item("IsDependentFile").Value;
             } catch (Exception) {

@@ -131,7 +131,7 @@ namespace VisualLocalizer.Editor {
 
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(Items.Count);
             foreach (ListViewKeyItem item in Items) {                
-                if (item.ErrorSet.Count > 0 && throwExceptions) throw new Exception(item.ErrorSet.First());
+                if (item.ErrorMessages.Count > 0 && throwExceptions) throw new Exception(item.ErrorMessages.First());
 
                 object value = item.DataNode.FileRef == null ? item.DataNode.GetValue((ITypeResolutionService)null) : item.DataNode.FileRef;
                 ResXDataNode node = new ResXDataNode(item.Key, value);
@@ -366,8 +366,8 @@ namespace VisualLocalizer.Editor {
         #region public members
 
         public void Validate(ListViewKeyItem item) {
-            conflictResolver.TryAdd(item.BeforeEditValue, item.AfterEditValue, item, editorControl.Editor.ProjectItem);
-            item.ErrorSetUpdate();
+            conflictResolver.TryAdd(item.BeforeEditValue, item.AfterEditValue, item, editorControl.Editor.ProjectItem, null);
+            item.UpdateErrorSetDisplay();
         }
 
         public virtual ListViewKeyItem UpdateDataOf(string name) {
@@ -386,7 +386,7 @@ namespace VisualLocalizer.Editor {
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
                 resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false, true));
                 
-                if (item.ErrorSet.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+                if (item.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
                     int count = item.CodeReferences.Count;
                     item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditValue; });
@@ -667,7 +667,7 @@ namespace VisualLocalizer.Editor {
                 if ((remove & REMOVEKIND.REMOVE) == REMOVEKIND.REMOVE) {
                     List<ListViewKeyItem> removedItems = new List<ListViewKeyItem>();
                     foreach (ListViewKeyItem item in SelectedItems) {
-                        conflictResolver.TryAdd(item.Key, null, item, editorControl.Editor.ProjectItem);
+                        conflictResolver.TryAdd(item.Key, null, item, editorControl.Editor.ProjectItem, null);
                         if (!string.IsNullOrEmpty(item.ImageKey) && LargeImageList.Images.ContainsKey(item.ImageKey)) {
                             LargeImageList.Images.RemoveByKey(item.ImageKey);
                             SmallImageList.Images.RemoveByKey(item.ImageKey);

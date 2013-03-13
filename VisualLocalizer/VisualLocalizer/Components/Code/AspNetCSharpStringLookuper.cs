@@ -30,7 +30,8 @@ namespace VisualLocalizer.Components {
             if (originalValue.StartsWith("@")) originalValue = originalValue.Substring(1);
             AspNetStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
 
-            resultItem.DeclaredNamespaces = declaredNamespaces;
+            resultItem.DeclaredNamespaces = declaredNamespaces;            
+            resultItem.Language = LANGUAGE.CSHARP;
             resultItem.Value = resultItem.Value.ConvertCSharpEscapeSequences(isVerbatimString);
 
             return resultItem;

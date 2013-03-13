@@ -7,71 +7,81 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Container for extension methods working with UndoManager.
+    /// </summary>
     public static class IOleUndoManagerEx {
 
+        /// <summary>
+        /// Removes top 'count' items from given undo manager stack, returning removed undo units in a list.
+        /// </summary>        
         public static List<IOleUndoUnit> RemoveTopFromUndoStack(this IOleUndoManager undoManager, int count) {
-            if (undoManager == null)
-                throw new ArgumentNullException("undoManager");
-            if (count < 0)
-                throw new ArgumentException("Count must be greater than or equal to zero.");
+            if (undoManager == null) throw new ArgumentNullException("undoManager");
+            if (count < 0) throw new ArgumentException("Count must be greater than or equal to zero.");
 
             IEnumOleUndoUnits enumerator;
             undoManager.EnumUndoable(out enumerator);
-            if (enumerator == null)
-                throw new InvalidOperationException("Undo manager seems to be incorrectly implemented.");
+            if (enumerator == null) throw new InvalidOperationException("Undo manager seems to be incorrectly implemented.");
 
             return RemoveTop(undoManager, enumerator, count);
         }
 
+        /// <summary>
+        /// Removes top 'count' items from given redo manager stack, returning removed undo units in a list.
+        /// </summary>     
         public static List<IOleUndoUnit> RemoveTopFromRedoStack(this IOleUndoManager redoManager, int count) {
-            if (redoManager == null)
-                throw new ArgumentNullException("redoManager");
-            if (count < 0)
-                throw new ArgumentException("Count must be greater than or equal to zero.");
+            if (redoManager == null) throw new ArgumentNullException("redoManager");
+            if (count < 0) throw new ArgumentException("Count must be greater than or equal to zero.");
 
             IEnumOleUndoUnits enumerator;
             redoManager.EnumRedoable(out enumerator);
-            if (enumerator == null)
-                throw new InvalidOperationException("Redo manager seems to be incorrectly implemented.");
+            if (enumerator == null) throw new InvalidOperationException("Redo manager seems to be incorrectly implemented.");
 
             return RemoveTop(redoManager, enumerator, count);
         }
-
+        
         private static List<IOleUndoUnit> RemoveTop(IOleUndoManager undoManager,IEnumOleUndoUnits enumerator, int count) {            
-            List<IOleUndoUnit> list = new List<IOleUndoUnit>();
+            List<IOleUndoUnit> backupList = new List<IOleUndoUnit>();
             List<IOleUndoUnit> returnList = new List<IOleUndoUnit>();
             int hr;
 
             if (count > 0) {
                 uint returned = 1;
+
+                // backup all existing undo units
                 while (returned > 0) {
                     IOleUndoUnit[] units = new IOleUndoUnit[10];
-                    enumerator.Next((uint)units.Length, units, out returned);                    
+
+                    hr = enumerator.Next((uint)units.Length, units, out returned);
+                    Marshal.ThrowExceptionForHR(hr);
 
                     if (returned == 10) {
-                        list.AddRange(units);
+                        backupList.AddRange(units);
                     } else if (returned > 0) {
                         for (int i = 0; i < returned; i++)
-                            list.Add(units[i]);
+                            backupList.Add(units[i]);
                     } 
-
                 }
          
-                if (list.Count > 0) {
-                    // clear undo/redo stack
+                // put units back except those which should be removed
+                if (backupList.Count > 0) {                    
                     PoisonPillUndoUnit pill = new PoisonPillUndoUnit();
                     undoManager.Add(pill);
-                    undoManager.DiscardFrom(pill);
 
-                //    undoManager.DiscardFrom(list[list.Count-1]);
-                    for (int i = 0; i < list.Count - count; i++) {
-                        undoManager.Add(list[i]);
+                    // clear stack
+                    undoManager.DiscardFrom(pill);
+                
+                    // add units back
+                    for (int i = 0; i < backupList.Count - count; i++) {
+                        undoManager.Add(backupList[i]);
                     }
 
-                    if (count <= list.Count)
-                        returnList = list.GetRange(list.Count - count, count);
+                    // return top "count" units or less, if there's not enough
+                    if (count <= backupList.Count)
+                        returnList = backupList.GetRange(backupList.Count - count, count);
                     else
-                        returnList = list;
+                        returnList = backupList;
                 }
 
             }
@@ -81,7 +91,9 @@ namespace VisualLocalizer.Library {
         }
 
 
-
+        /// <summary>
+        /// Fake undo unit used to clear undo stack
+        /// </summary>
         private class PoisonPillUndoUnit : IOleUndoUnit {
             public void Do(IOleUndoManager pUndoManager) {
             }

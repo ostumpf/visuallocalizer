@@ -13,20 +13,29 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Running Documents Table manager - provides methods for getting status of documents opened in VS.
+    /// </summary>
     public static class RDTManager {
 
         private static IVsRunningDocumentTable IVsRunningDocumentTable;
         private static EnvDTE80.DTE2 DTE;
-        private static IVsTextManager textManager;
         
+        // initialize services
         static RDTManager() {
             IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
             DTE = (EnvDTE80.DTE2)Package.GetGlobalService(typeof(EnvDTE.DTE));
-            textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));           
+
+            if (IVsRunningDocumentTable == null || DTE == null) throw new InvalidOperationException("Cannot obtain RDTManager services.");
         }
 
+        /// <summary>
+        /// Performs given operation with a file so that VS doesn't find out the document has been changed.
+        /// </summary>        
         public static void SilentlyModifyFile(string path, Action<string> modify) {
             if (string.IsNullOrEmpty(path)) return;
+
             SetIgnoreFileChanges(path, true);
 
             modify(path);
@@ -35,81 +44,103 @@ namespace VisualLocalizer.Library {
             SetIgnoreFileChanges(path, false);            
         }
 
+        /// <summary>
+        /// Turns on/off file ignore option. When file changes are ignored, VS doesn't display a dialog asking user about reloading the changes.
+        /// </summary>        
         public static void SetIgnoreFileChanges(string path, bool ignore) {
+            if (string.IsNullOrEmpty(path)) return;
+
             IVsHierarchy ppHier;
             uint pitemid;
             IntPtr pPunkDocData;
             uint pdwCookie;
-            IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
+            int hr = IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
                 out ppHier, out pitemid, out pPunkDocData, out pdwCookie);
+            Marshal.ThrowExceptionForHR(hr);
+
             if (pPunkDocData != IntPtr.Zero) {
                 IVsFileChangeEx fileChange = (IVsFileChangeEx)Package.GetGlobalService(typeof(SVsFileChangeEx));
+                if (fileChange == null) throw new InvalidOperationException("Cannot consume IVsFileChangeEx.");
+
                 IVsDocDataFileChangeControl changeControl = (IVsDocDataFileChangeControl)Marshal.GetObjectForIUnknown(pPunkDocData);
 
                 if (ignore) {
-                    fileChange.IgnoreFile(0, path, 1);                    
-                    changeControl.IgnoreFileChanges(1);
+                    hr = fileChange.IgnoreFile(0, path, 1);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    hr = changeControl.IgnoreFileChanges(1);
+                    Marshal.ThrowExceptionForHR(hr);
                 } else {
-                    fileChange.IgnoreFile(0, path, 0);
-                    changeControl.IgnoreFileChanges(0);                    
+                    hr = fileChange.IgnoreFile(0, path, 0);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    hr = changeControl.IgnoreFileChanges(0);
+                    Marshal.ThrowExceptionForHR(hr);
                 }
             }             
-        }   
+        }          
 
-        public static void SilentlySaveFile(string path) {
-            IVsHierarchy ppHier;
-            uint pitemid;
-            IntPtr pPunkDocData;
-            uint pdwCookie;
-            IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
-                out ppHier, out pitemid, out pPunkDocData, out pdwCookie);
-            
-            if (pPunkDocData != IntPtr.Zero) {
-                IVsPersistDocData d = (IVsPersistDocData)Marshal.GetObjectForIUnknown(pPunkDocData);
-                string s;
-                int cancelled;
-                int hResult = d.SaveDocData(VSSAVEFLAGS.VSSAVE_SilentSave, out s, out cancelled);
-                Marshal.ThrowExceptionForHR(hResult);
-            }
-        }
-
+        /// <summary>
+        /// Reloads file buffer without displaying a GUI dialog.
+        /// </summary>        
         public static void SilentlyReloadFile(string path) {
+            if (string.IsNullOrEmpty(path)) return;
+
             IVsHierarchy ppHier;
             uint pitemid;
             IntPtr pPunkDocData;
             uint pdwCookie;
-            IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
+            int hr = IVsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path,
                 out ppHier, out pitemid, out pPunkDocData, out pdwCookie);
-            
+            Marshal.ThrowExceptionForHR(hr);
+
             if (pPunkDocData != IntPtr.Zero) {
                 IVsPersistDocData d = (IVsPersistDocData)Marshal.GetObjectForIUnknown(pPunkDocData);
-                int hResult = d.ReloadDocData(0);
-                Marshal.ThrowExceptionForHR(hResult);            
+                hr = d.ReloadDocData(0);
+                Marshal.ThrowExceptionForHR(hr);            
             }
 
-            IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie);            
+            hr = IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie); 
+            Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Returns false if VS registers the file as not saved (asterisk by the name of the file)
+        /// </summary>        
         public static bool IsFileSaved(string path) {
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException("path");
+
             bool open = DTE.get_IsOpenFile(null, path);
             return !open || DTE.Documents.Item(path).Saved;
         }
 
+        /// <summary>
+        /// Returns true if file is opened in VS
+        /// </summary>
         public static bool IsFileOpen(string path) {
-            if (string.IsNullOrEmpty(path)) return false;
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException("path");
+            
             return DTE.get_IsOpenFile(null, path);
         }
 
+        /// <summary>
+        /// Returns true if file has Readonly attribute set
+        /// </summary>        
         public static bool IsFileReadonly(string path) {
-            if (string.IsNullOrEmpty(path)) return false;
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException("path");
+
             FileAttributes attrs = new FileInfo(path).Attributes;
             return (attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly;
         }
 
+        /// <summary>
+        /// Sets file saved state
+        /// </summary>        
         public static void SetFileSaved(string path,bool saved) {
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException("path");
+
             bool open = DTE.get_IsOpenFile(null, path);            
-            if (open)
-                DTE.Documents.Item(path).Saved = saved;
+            if (open) DTE.Documents.Item(path).Saved = saved;
         }
         
     }    

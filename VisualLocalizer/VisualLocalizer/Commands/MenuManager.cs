@@ -15,6 +15,7 @@ using VisualLocalizer.Gui;
 using Microsoft.VisualStudio;
 using VisualLocalizer.Extensions;
 using VisualLocalizer.Translate;
+using System.Collections;
 
 namespace VisualLocalizer.Commands {
 
@@ -139,7 +140,7 @@ namespace VisualLocalizer.Commands {
                     cmd.Enabled = false;
                     return;
                 }
-
+               
                 bool supported = doc.ProjectItem.CanShowCodeContextMenu();
 
                 cmd.Supported = supported;

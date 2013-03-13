@@ -118,7 +118,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 AbstractListView ListView = item.AbstractListView;
                 usedLists.Add(ListView);
 
-                ConflictResolver.TryAdd(item.Key, null, item, Control.Editor.ProjectItem);
+                ConflictResolver.TryAdd(item.Key, null, item, Control.Editor.ProjectItem, null);
                 if (!string.IsNullOrEmpty(item.ImageKey) && ListView.LargeImageList.Images.ContainsKey(item.ImageKey)) {
                     ListView.LargeImageList.Images.RemoveByKey(item.ImageKey);
                     ListView.SmallImageList.Images.RemoveByKey(item.ImageKey);

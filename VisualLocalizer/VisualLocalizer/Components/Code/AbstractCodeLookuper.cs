@@ -296,34 +296,30 @@ namespace VisualLocalizer.Components {
                     PreProcessChar(ref insideComment, ref insideString, ref isVerbatimString, out skipLine);
 
                     if (!insideString && !insideComment) {
-                        if (currentElement.CanBeFollowedByWhitespace && char.IsWhiteSpace(currentChar)) {
-                            // do nothing
-                        } else {
-                            if (prefixBuilder.Length > 0) {
-                                if (currentChar == '.') {
-                                    prefixContinue = true;
-                                } else if (!currentChar.CanBePartOfIdentifier() && !char.IsWhiteSpace(currentChar)) {
-                                    prefixBuilder.Length = 0;
-                                }
+                        if (prefixBuilder.Length > 0) {
+                            if (currentChar == '.') {
+                                prefixContinue = true;
+                            } else if (!currentChar.CanBePartOfIdentifier() && !char.IsWhiteSpace(currentChar)) {
+                                prefixBuilder.Length = 0;
                             }
-                            if (currentChar.CanBePartOfIdentifier() && !previousChar.CanBePartOfIdentifier()) {
-                                if (!prefixContinue) {
-                                    ReferenceStartIndex = CurrentIndex;
-                                    ReferenceStartLine = CurrentLine;
-                                    ReferenceStartOffset = CurrentAbsoluteOffset;
-                                    prefixBuilder.Length = 0;
-                                }
-                                prefixContinue = false;
+                        }
+                        if (currentChar.CanBePartOfIdentifier() && !previousChar.CanBePartOfIdentifier()) {
+                            if (!prefixContinue) {
+                                ReferenceStartIndex = CurrentIndex;
+                                ReferenceStartLine = CurrentLine;
+                                ReferenceStartOffset = CurrentAbsoluteOffset;
+                                prefixBuilder.Length = 0;
                             }
-                            if (currentChar.CanBePartOfIdentifier() || currentChar == '.') {
-                                prefixBuilder.Append(currentChar);
-                            }
-                            bool wasAtRoot = currentElement == Trie.Root;
-                            currentElement = Trie.Step(currentElement, currentChar);
+                            prefixContinue = false;
+                        }
+                        if (currentChar.CanBePartOfIdentifier() || currentChar == '.') {
+                            prefixBuilder.Append(currentChar);
+                        }
+                        bool wasAtRoot = currentElement == Trie.Root;
+                        currentElement = Trie.Step(currentElement, currentChar);
 
-                            if (currentElement.IsTerminal && !nextChar.CanBePartOfIdentifier()) {
-                                AddReferenceResult(list, prefixBuilder.ToString(), currentElement.Infos);
-                            }
+                        if (currentElement.IsTerminal && !nextChar.CanBePartOfIdentifier()) {
+                            AddReferenceResult(list, prefixBuilder.ToString(), currentElement.Infos);
                         }
                     } else {
                         currentElement = Trie.Root;

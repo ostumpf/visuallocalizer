@@ -44,7 +44,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
                 if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
 
-                if (Item.ErrorSet.Count == 0) {
+                if (Item.ErrorMessages.Count == 0) {
                     int errors = 0;
                     int count = Item.CodeReferences.Count;
                     Item.CodeReferences.ForEach((i) => { i.KeyAfterRename = to; });

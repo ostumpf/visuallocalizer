@@ -32,8 +32,8 @@ namespace VisualLocalizer.Editor {
         public ResXProjectItem ProjectItem {
             get;
             private set;
-        }
-       
+        }        
+
         public override void LoadFile(string path) {
             base.LoadFile(path);
             

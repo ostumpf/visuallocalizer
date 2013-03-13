@@ -21,7 +21,7 @@ namespace VisualLocalizer.Editor {
         public void UpdateReferenceCount(bool determinated) {
             if (DataGridView == null) return;
             ResXStringGrid stringGrid=(ResXStringGrid)DataGridView;
-            if (ErrorSet.Count == 0 && determinated) {
+            if (ErrorMessages.Count == 0 && determinated) {
                 Cells[stringGrid.ReferencesColumnName].Value = CodeReferences.Count;
             } else {
                 Cells[stringGrid.ReferencesColumnName].Value = "?";
