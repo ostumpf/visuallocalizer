@@ -244,10 +244,8 @@ namespace VisualLocalizer.Commands {
                     vbMoveToResourcesCommand.Process();
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } finally {
                 if (enteredOk) VLDocumentViewsManager.ReleaseLocks();
             }
@@ -273,10 +271,8 @@ namespace VisualLocalizer.Commands {
                     vbInlineCommand.Process();
                 }                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } finally {
                 if (enteredOk) VLDocumentViewsManager.ReleaseLocks();
             }
@@ -297,10 +293,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             }
         }
 
@@ -319,10 +313,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } 
         }
 
@@ -341,11 +333,9 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 
                 batchInlineCommand.Results.Clear();
-            } catch (Exception ex) {                
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             }
         }
 
@@ -364,10 +354,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } 
         }
 
@@ -381,16 +369,14 @@ namespace VisualLocalizer.Commands {
 
                 globalTranslateCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
             } catch (Exception ex) {
-                string text = null;
+                string text = string.Empty;
                 if (ex is CannotParseResponseException) {
                     CannotParseResponseException cpex = ex as CannotParseResponseException;
-                    text = string.Format("Server response cannot be parsed: {0}.\nFull response:\n{1}", ex.Message, cpex.FullResponse);
-                } else {
-                    text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                    text = string.Format("Full response:\n{0}", cpex.FullResponse);
                 }
-                
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex, text);
+                MessageBox.ShowException(ex, text);
             } 
         }
 
@@ -409,10 +395,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } 
         }
 
@@ -431,10 +415,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             }
         }
     }

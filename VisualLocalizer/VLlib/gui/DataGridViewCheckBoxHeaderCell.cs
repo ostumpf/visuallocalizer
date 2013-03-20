@@ -7,9 +7,20 @@ using System.Drawing;
 using System.Windows.Forms.VisualStyles;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Header cell with checkbox
+    /// </summary>
     public class DataGridViewCheckBoxHeaderCell : DataGridViewColumnHeaderCell {
 
+        /// <summary>
+        /// Checkbox clicked
+        /// </summary>
         public event EventHandler CheckBoxClicked;
+
+        /// <summary>
+        /// Sort requested (click outside the checkbox)
+        /// </summary>
         public event Action<SortOrder> Sort;
 
         private CheckBoxState CheckBoxState { get; set; }
@@ -18,16 +29,25 @@ namespace VisualLocalizer.Library {
             ToolTipText = null;            
         }
 
+        /// <summary>
+        /// Location of checkbox
+        /// </summary>
         public Point CheckBoxPosition {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Size of checkbox
+        /// </summary>
         public Size CheckBoxSize {
             get;
             private set;
         }
 
+        /// <summary>
+        /// State of checkbox
+        /// </summary>
         private bool? _Checked;
         public bool? Checked {
             get {
@@ -39,6 +59,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Whether three-state checkbox is enabled (true, false, indeterminate)
+        /// </summary>
         public bool ThreeStates { get; set; }
 
         protected override void Paint(Graphics graphics, Rectangle clipBounds, Rectangle cellBounds, int rowIndex,
@@ -52,6 +75,9 @@ namespace VisualLocalizer.Library {
             CheckBoxRenderer.DrawCheckBox(graphics, position, CheckBoxState);
         }        
 
+        /// <summary>
+        /// Determine whether checkbox or outside area was clicked
+        /// </summary>
         protected override void OnMouseUp(DataGridViewCellMouseEventArgs e) {
             base.OnMouseUp(e);
 
@@ -79,12 +105,19 @@ namespace VisualLocalizer.Library {
             }
         }        
 
+        /// <summary>
+        /// Fire CheckBoxClicked event
+        /// </summary>
         protected void NotifyCheckBoxClicked() {
             if (CheckBoxClicked != null) {
                 CheckBoxClicked(this, new EventArgs());
             }
         }
 
+        /// <summary>
+        /// Fire NotifySortClicked event
+        /// </summary>
+        /// <param name="order"></param>
         protected void NotifySortClicked(SortOrder order) {
             if (Sort != null) {
                 Sort(order);

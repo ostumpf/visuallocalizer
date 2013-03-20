@@ -13,16 +13,25 @@ using System.Collections;
 using System.IO;
 
 namespace VisualLocalizer.Commands {
+
+    /// <summary>
+    /// Represents "Global translate" command invokeable from Solution Explorer's context menu. It searches for ResX files and
+    /// translates all resource values.
+    /// </summary>
     internal sealed class GlobalTranslateCommand {
 
         private HashSet<ProjectItem> searchedProjectItems = new HashSet<ProjectItem>();
         private List<ResXProjectItem> loadedResxItems = new List<ResXProjectItem>();
 
+        /// <summary>
+        /// Starts the command, taking array of selected project items as a parameter
+        /// </summary>        
         public void Process(Array array) {
             searchedProjectItems.Clear();
             loadedResxItems.Clear();
 
-            List<GlobalTranslateResultItem> resxFiles = new List<GlobalTranslateResultItem>();
+            // find all ResX files contained within selected project items
+            List<GlobalTranslateProjectItem> resxFiles = new List<GlobalTranslateProjectItem>();
             foreach (UIHierarchyItem o in array) {
                 if (o.Object is ProjectItem) {
                     ProjectItem item = (ProjectItem)o.Object;
@@ -33,24 +42,29 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
             }
 
+            // display form, allowing user to choose source and target language and select ResX files, where translation should be performed
             GlobalTranslateForm form = new GlobalTranslateForm(resxFiles);
             if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
                 List<AbstractTranslateInfoItem> data = new List<AbstractTranslateInfoItem>();
                 try {
+                    // collect string data from checked ResX files
                     ProgressBarHandler.StartIndeterminate();
-                    foreach (GlobalTranslateResultItem item in resxFiles)
+                    foreach (GlobalTranslateProjectItem item in resxFiles)
                         if (item.Checked) {
                             addDataForTranslation(item, data);
                         }
                     ProgressBarHandler.StopIndeterminate();
 
+                    // translate collected data using given language pair
                     TranslationHandler.Translate(data, form.Provider, form.LanguagePair.FromLanguage, form.LanguagePair.ToLanguage);
 
+                    // replace original texts with the translated ones
                     ProgressBarHandler.StartIndeterminate();
                     foreach (AbstractTranslateInfoItem i in data) {
                         i.ApplyTranslation();
                     }   
                 } finally {
+                    // unloads all ResX files that were originally closed
                     foreach (ResXProjectItem item in loadedResxItems) {
                         item.Flush();
                         item.Unload();
@@ -60,16 +74,19 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void addDataForTranslation(GlobalTranslateResultItem item, List<AbstractTranslateInfoItem> data) {
+        /// <summary>
+        /// Add string data from given ResX file to the list of data for translation
+        /// </summary>        
+        private void addDataForTranslation(GlobalTranslateProjectItem item, List<AbstractTranslateInfoItem> data) {
             string path = item.ProjectItem.GetFullPath();
-            if (RDTManager.IsFileOpen(path)) {
-                object docData = VLDocumentViewsManager.GetDocData(path);
-                if (docData is ResXEditor) {
+            if (RDTManager.IsFileOpen(path)) { // file is open
+                object docData = VLDocumentViewsManager.GetDocData(path); // get document buffer
+                if (docData is ResXEditor) { // document is opened in ResX editor -> use custom method to get string data
                     ResXEditor editor = (ResXEditor)docData;
                     editor.UIControl.AddForTranslation(data);
-                } else {
+                } else { // document is opened in original VS editor
                     IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(path, false);
-                    string text = VLDocumentViewsManager.GetTextFrom(lines);
+                    string text = VLDocumentViewsManager.GetTextFrom(lines); // get plain text of ResX file
                     
                     ResXResourceReader reader = null;
                     
@@ -79,6 +96,9 @@ namespace VisualLocalizer.Commands {
                     try {
                         reader = ResXResourceReader.FromFileContents(text);
                         reader.UseResXDataNodes = true;
+
+                        // add all string resources to the list
+                        // items are linked like a linked-list, allowing ApplyTranslation to work
                         foreach (DictionaryEntry entry in reader) {
                             ResXDataNode node = (entry.Value as ResXDataNode);
                             if (node.HasValue<string>()) {
@@ -103,21 +123,22 @@ namespace VisualLocalizer.Commands {
                         if (reader != null) reader.Close();
                     }
                 }
-            } else {
+            } else { // file is closed
                 ResXProjectItem resxItem = ResXProjectItem.ConvertToResXItem(item.ProjectItem, item.ProjectItem.ContainingProject);
                 resxItem.Load();
                 loadedResxItems.Add(resxItem);
 
+                // add string data from ResX file
                 resxItem.AddAllStringReferencesUnique(data);
             }
         }
 
-        private void searchForResxFiles(ProjectItem item, List<GlobalTranslateResultItem> resxFiles) {
+        private void searchForResxFiles(ProjectItem item, List<GlobalTranslateProjectItem> resxFiles) {
             if (searchedProjectItems.Contains(item)) return;
             searchForResxFiles(item.ProjectItems, resxFiles);
 
             if (ResXProjectItem.IsItemResX(item)) {
-                GlobalTranslateResultItem r = new GlobalTranslateResultItem(item);                
+                GlobalTranslateProjectItem r = new GlobalTranslateProjectItem(item);                
                 r.Checked = false;
                 r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath())
                     || RDTManager.IsFileReadonly(item.GetFullPath());
@@ -126,15 +147,20 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void searchForResxFiles(ProjectItems items, List<GlobalTranslateResultItem> resxFiles) {
+        private void searchForResxFiles(ProjectItems items, List<GlobalTranslateProjectItem> resxFiles) {
             if (items == null) return;
             foreach (ProjectItem item in items)
                 searchForResxFiles(item, resxFiles);
         }
     }
 
-    internal sealed class GlobalTranslateResultItem {
-        public GlobalTranslateResultItem(ProjectItem item) {
+    /// <summary>
+    /// Represents ResX file in the global translate process
+    /// </summary>
+    internal sealed class GlobalTranslateProjectItem {
+        public GlobalTranslateProjectItem(ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
             this.ProjectItem = item;
             NonStringData = new List<ResXDataNode>();
             string filePath = item.GetFullPath();
@@ -158,14 +184,72 @@ namespace VisualLocalizer.Commands {
         }
     }
 
+    /// <summary>
+    /// Represents one string to be translated
+    /// </summary>
     internal abstract class AbstractTranslateInfoItem {
+        /// <summary>
+        /// Text to be translated
+        /// </summary>
         public string Value { get; set; }
+
+        /// <summary>
+        /// Change the text in the source file
+        /// </summary>
         public abstract void ApplyTranslation();     
     }
 
+    /// <summary>
+    /// String item loaded from ResX file opened in ResXEditor
+    /// </summary>
+    internal sealed class StringGridTranslationInfoItem : AbstractTranslateInfoItem {
+        /// <summary>
+        /// Corresponding row in the strings grid
+        /// </summary>
+        public ResXStringGridRow Row { get; set; }
+
+        /// <summary>
+        /// Name of the column, where Value comes from
+        /// </summary>
+        public string ValueColumnName { get; set; }
+
+        public override void ApplyTranslation() {
+            ResXStringGrid grid = (ResXStringGrid)Row.DataGridView; // get the grid
+            string oldValue = (string)Row.Cells[ValueColumnName].Value; // get current value from the Value column
+
+            Row.Cells[ValueColumnName].Tag = oldValue;
+            Row.Cells[ValueColumnName].Value = Value; // set the new value
+
+            // create new ResX node with modified value
+            string comment = Row.DataSourceItem.Comment;
+            Row.DataSourceItem = new ResXDataNode(Row.Key, Value);
+            Row.DataSourceItem.Comment = comment;
+
+            // adds undo unit
+            grid.StringValueChanged(Row, oldValue, (string)Row.Cells[ValueColumnName].Value);
+            
+            // marks the document dirty
+            grid.NotifyDataChanged();
+        }
+    }
+
+    /// <summary>
+    /// Represents string item coming from closed ResX file
+    /// </summary>
     internal sealed class ResXTranslateInfoItem : AbstractTranslateInfoItem {
+        /// <summary>
+        /// Lower-case resource key
+        /// </summary>
         public string ResourceKey { get; set; }
+
+        /// <summary>
+        /// Original resouce key
+        /// </summary>
         public string DataKey { get; set; }
+
+        /// <summary>
+        /// ResX project item this string comes from
+        /// </summary>
         public ResXProjectItem ResXItem { get; set; }
 
         public override void ApplyTranslation() {
@@ -173,13 +257,41 @@ namespace VisualLocalizer.Commands {
         }       
     }
 
+    /// <summary>
+    /// Represents string item coming from ResX file opened in default VS editor. For performance reasons, all these items are
+    /// linked and running ApplyTranslation on any of them will cause ApplyTranslation on all others, thus preventing the buffer 
+    /// to be reloaded many times.
+    /// </summary>
     internal sealed class BufferTranslateInfoItem : AbstractTranslateInfoItem {
+        /// <summary>
+        /// Name of the resouce
+        /// </summary>
         public string ResourceKey { get; set; }
+
+        /// <summary>
+        /// Name of the file
+        /// </summary>
         public string Filename { get; set; }
+
+        /// <summary>
+        /// File buffer
+        /// </summary>
         public IVsTextLines IVsTextLines { get; set; }
+
+        /// <summary>
+        /// Link to the previous BufferTranslateInfoItem
+        /// </summary>
         public BufferTranslateInfoItem Prev { get; set; }
+
+        /// <summary>
+        /// Whether translated string has already been applied
+        /// </summary>
         public bool Applied { get; set; }
-        public GlobalTranslateResultItem GlobalTranslateItem { get; set; }
+
+        /// <summary>
+        /// Original ResX file
+        /// </summary>
+        public GlobalTranslateProjectItem GlobalTranslateItem { get; set; }
 
         public override void ApplyTranslation() {
             if (!Applied) {                
@@ -190,6 +302,7 @@ namespace VisualLocalizer.Commands {
                     writer = new ResXResourceWriter(stream);
                     writer.BasePath = Path.GetDirectoryName(Filename);
 
+                    // change resource values in all BufferTranslateInfoItems
                     BufferTranslateInfoItem i = this;
                     while (true) {
                         if (i == null || i.Applied) break;

@@ -99,9 +99,6 @@ namespace VisualLocalizer.Library {
                 hr = d.ReloadDocData(0);
                 Marshal.ThrowExceptionForHR(hr);            
             }
-
-            hr = IVsRunningDocumentTable.UnlockDocument((uint)_VSRDTFLAGS.RDT_NoLock, pdwCookie); 
-            Marshal.ThrowExceptionForHR(hr);
         }
 
         /// <summary>

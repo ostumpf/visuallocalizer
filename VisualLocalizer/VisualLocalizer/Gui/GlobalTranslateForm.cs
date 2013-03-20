@@ -15,13 +15,13 @@ using VisualLocalizer.Components;
 namespace VisualLocalizer.Gui {
     internal partial class GlobalTranslateForm : Form {
 
-        public List<GlobalTranslateResultItem> ResxTargetList { get; private set; }
+        public List<GlobalTranslateProjectItem> ResxTargetList { get; private set; }
         public TRANSLATE_PROVIDER Provider { get; private set; }
         public SettingsObject.LanguagePair LanguagePair { get; private set; }
 
         private CultureInfo[] displayedCultures;
 
-        public GlobalTranslateForm(List<GlobalTranslateResultItem> resxTargetList) {
+        public GlobalTranslateForm(List<GlobalTranslateProjectItem> resxTargetList) {
             InitializeComponent();
             this.Icon = VSPackage._400;
             this.ResxTargetList = resxTargetList;
@@ -59,7 +59,7 @@ namespace VisualLocalizer.Gui {
 
        
         private void resxListBox_SelectedValueChanged(object sender, EventArgs e) {
-            GlobalTranslateResultItem item = (GlobalTranslateResultItem)resxListBox.SelectedItem;
+            GlobalTranslateProjectItem item = (GlobalTranslateProjectItem)resxListBox.SelectedItem;
             item.Checked = resxListBox.CheckedIndices.Contains(resxListBox.SelectedIndex);
 
             translateButton.Enabled = resxListBox.CheckedIndices.Count > 0;
@@ -124,10 +124,8 @@ namespace VisualLocalizer.Gui {
                     }
                 } catch (Exception ex) {
                     e.Cancel = true;
-                    string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                    VisualLocalizer.Library.MessageBox.ShowError(text);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
                 }
             }
         }

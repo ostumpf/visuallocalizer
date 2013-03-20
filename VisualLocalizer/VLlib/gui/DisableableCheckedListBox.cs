@@ -5,6 +5,10 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace VisualLocalizer.Library {
+
+    /// <summary>
+    /// Enhances standard CheckedListBox with option to disable/enable list items
+    /// </summary>
     public sealed class DisableableCheckedListBox : CheckedListBox {
 
         private HashSet<object> disabledItems;
@@ -28,6 +32,9 @@ namespace VisualLocalizer.Library {
             base.OnItemCheck(ice);
         }
 
+        /// <summary>
+        /// Sets state of item with given index
+        /// </summary>        
         public void SetItemEnabled(int index, bool enabled) {
             if (index < 0 || index >= Items.Count) throw new ArgumentOutOfRangeException("index");
             

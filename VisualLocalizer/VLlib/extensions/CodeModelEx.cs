@@ -128,8 +128,6 @@ namespace VisualLocalizer.Library {
         /// in that namespace, the namespace itself and all namespaces, in which the given one is included.
         /// </summary>        
         public static NamespacesList GetUsedNamespaces(this CodeNamespace codeNamespace, ProjectItem item) {
-            if (item==null) throw new ArgumentNullException("item");
-
             NamespacesList list = new NamespacesList();
             GetUsedNamespacesInternal(codeNamespace, item, list);
             return list;

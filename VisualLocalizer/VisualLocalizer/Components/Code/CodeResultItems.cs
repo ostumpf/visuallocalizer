@@ -433,7 +433,7 @@ namespace VisualLocalizer.Components {
             if (ComesFromInlineExpression) {
                 return Value.ConvertAspNetUnescapeSequences();
             } else {
-                return "\"" + Value.ConvertCSharpUnescapeSequences() + "\"";
+                return "\"" + (Language == LANGUAGE.CSHARP ? Value.ConvertCSharpUnescapeSequences() : Value.ConvertVBUnescapeSequences()) + "\"";
             }
         }
 

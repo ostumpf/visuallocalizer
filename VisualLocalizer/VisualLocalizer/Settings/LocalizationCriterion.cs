@@ -56,7 +56,7 @@ namespace VisualLocalizer.Settings {
     internal sealed class LocalizationCriterion : AbstractLocalizationCriterion {        
         public Func<CodeStringResultItem, bool?> Predicate { get; private set; }
 
-        protected LocalizationCriterion() { }
+        private LocalizationCriterion() { }
 
         public LocalizationCriterion(string name, string description, LocalizationCriterionAction option, int weight, Func<CodeStringResultItem, bool?> predicate)
             : base(name, option, weight) {     

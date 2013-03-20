@@ -199,7 +199,7 @@ namespace VisualLocalizer.Components {
                 }
             } else if (context.Kind == OutputElementKind.EXPRESSION) {
                 if (parentCommand is BatchInlineCommand) {
-                    list = ((BatchInlineCommand)parentCommand).ParseResourceExpression(context.InnerText, context.InnerBlockSpan);
+                    list = ((BatchInlineCommand)parentCommand).ParseResourceExpression(context.InnerText, context.InnerBlockSpan, fileLanguage == FILETYPE.CSHARP ? LANGUAGE.CSHARP : LANGUAGE.VB);
                 }
             }
 

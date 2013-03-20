@@ -16,8 +16,8 @@ namespace VisualLocalizer.Library.AspxParser {
         private string text;
         private IAspxHandler handler;
 
-        private int currentLine, currentIndex, currentOffset, aposCount, maxLine, maxIndex, plaintTextStartCorrection;
-        private char currentChar;
+        private int currentLine, currentIndex, currentOffset, maxLine, maxIndex, plaintTextStartCorrection;
+        private char currentChar, quotesChar;
         private bool withinAspElement, withinAspDirective, withinCodeBlock, withinOutputElement, withinAspTags, attributeValueContainsOutput,
             withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText,
             hardStop, softStop;
@@ -99,8 +99,10 @@ namespace VisualLocalizer.Library.AspxParser {
                     if (currentChar == '%' && GetCodeBack(1) == '<') {
                         EndPlainText(-1,2); // report plain text
                         if (GetCodeForth(1) == '-' && GetCodeForth(2) == '-') {
-                            withinServerComment = true;
-                            withinAspTags = true;
+                            if (!withinAttributeValue) {
+                                withinServerComment = true;
+                                withinAspTags = true;
+                            }
                         } else {
                             withinAspTags = true;
                             justEnteredAspTags = true;
@@ -145,9 +147,7 @@ namespace VisualLocalizer.Library.AspxParser {
         /// Handles beginnings and ends of elements
         /// </summary>
         private void HandleAspElements() {
-            if (withinAspElement && currentChar == '"') aposCount++; // counts apostrophes within element
-
-            if (withinAspElement && currentChar == '>' && aposCount % 2 == 0) { // end of tag
+            if (withinAspElement && currentChar == '>' && !withinAttributeValue) { // end of tag
                 HitEnd(ref externalSpan, 0);
                 StartPlainText(1, 0);                
 
@@ -217,7 +217,6 @@ namespace VisualLocalizer.Library.AspxParser {
                 elementName = null;
                 elementPrefix = null;
                 withinAttributeName = true;
-                aposCount = 0;               
                 HitStart(ref externalSpan, -1);
                
                 if (currentChar == '/') {
@@ -319,7 +318,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     InnerBlockSpan = internalSpan,
                     OuterBlockSpan = externalSpan,
                     WithinClientSideComment = withinClientComment,
-                    WithinElementsAttribute = withinAspElement && aposCount % 2 == 1
+                    WithinElementsAttribute = withinAspElement && withinAttributeValue
                 });
 
                 if (softStop) hardStop = true;
@@ -371,13 +370,13 @@ namespace VisualLocalizer.Library.AspxParser {
         private void CheckClientCommentState() {
             if (!withinClientComment) {
                 if (currentChar == '-' && GetCodeBack(1) == '-' && GetCodeBack(2) == '!' && GetCodeBack(3) == '<') {
-                    withinClientComment = true;
-                    EndPlainText(-3, 4);
+                    EndPlainText(-3, 4); 
+                    withinClientComment = true;                    
                 }
             } else {
-                if (currentChar == '>' && GetCodeBack(1) == '-' && GetCodeBack(2) == '-') {
-                    withinClientComment = false;
+                if (currentChar == '>' && GetCodeBack(1) == '-' && GetCodeBack(2) == '-') {                    
                     StartPlainText(1, 0);
+                    withinClientComment = false;
                 }
             }
         }
@@ -387,8 +386,9 @@ namespace VisualLocalizer.Library.AspxParser {
         /// </summary>
         private void ReactToWithinElementChar() {
             if (!withinAttributeValue) {
-                if (currentChar == '"') { // begining of an attribute
+                if (currentChar == '"' || currentChar == '\'') { // begining of an attribute
                     withinAttributeValue = true;
+                    quotesChar = currentChar;
                     currentAttributeBlockSpan = new BlockSpan();
                     currentAttributeBlockSpan.AbsoluteCharOffset = currentOffset;
                     currentAttributeBlockSpan.StartIndex = currentIndex - 1;
@@ -397,6 +397,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     if (string.IsNullOrEmpty(elementName)) {
                         elementPrefix = attributeNameBuilder.ToString().Trim();
                         attributeNameBuilder.Length = 0;
+                        return;
                     }
                 } else {
                     if (!withinAttributeName) { // beginning of attribute name, possibly end of tag name
@@ -417,15 +418,15 @@ namespace VisualLocalizer.Library.AspxParser {
                     }
                 }
             } else {
-                if (currentChar == '"' && !withinOutputElement) { // end of attribute value
+                if (currentChar == quotesChar && !withinOutputElement) { // end of attribute value
                     currentAttributeBlockSpan.EndLine = currentLine;
-                    currentAttributeBlockSpan.EndIndex = currentIndex; // "
+                    currentAttributeBlockSpan.EndIndex = currentIndex; // " or '
                     currentAttributeBlockSpan.AbsoluteCharLength = currentOffset - currentAttributeBlockSpan.AbsoluteCharOffset;
 
                     // add attribute to the element's list
                     AttributeInfo nfo = new AttributeInfo() {
                         Name = attributeNameBuilder.ToString(),
-                        Value = attributeValueBuilder.ToString().Substring(1), // "
+                        Value = attributeValueBuilder.ToString().Substring(1), // " or '
                         IsMarkedWithUnlocalizableComment = false,
                         BlockSpan = currentAttributeBlockSpan,
                         ContainsAspTags = attributeValueContainsOutput

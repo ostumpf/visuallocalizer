@@ -89,6 +89,14 @@ namespace VisualLocalizer.Library {
             Write(Environment.NewLine);            
         }
 
+        public void WriteException(Exception ex) {
+            WriteLine("{0} occurred while processing command.\nMessage: {1}\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+        }
+
+        public void WriteException(Exception ex, string addText) {
+            WriteLine("{0} occurred while processing command.\nMessage: {1}\n" + addText + "\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+        }
+
         public void WriteTaskItem(string text,VSTASKPRIORITY priority,VSTASKCATEGORY category,string subcategory,
             int bitmap,string filename,uint linenum,string taskItemText) {
             if (pane == null) return;

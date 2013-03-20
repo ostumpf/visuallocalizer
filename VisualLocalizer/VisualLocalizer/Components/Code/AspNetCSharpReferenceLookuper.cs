@@ -16,10 +16,10 @@ namespace VisualLocalizer.Components {
             }
         }
 
-        protected override AspNetCodeReferenceResultItem AddStringResult(List<AspNetCodeReferenceResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            var result = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
-            result.Language = VisualLocalizer.Library.LANGUAGE.CSHARP;
-            return result;
+        protected override AspNetCodeReferenceResultItem AddReferenceResult(List<AspNetCodeReferenceResultItem> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
+            var item = base.AddReferenceResult(list, referenceText, trieElementInfos);
+            item.Language = VisualLocalizer.Library.LANGUAGE.CSHARP;
+            return item;
         }
     }
 }

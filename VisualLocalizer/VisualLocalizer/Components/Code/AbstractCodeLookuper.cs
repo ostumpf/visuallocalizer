@@ -122,7 +122,7 @@ namespace VisualLocalizer.Components {
             return resultItem;
         }
        
-        protected T AddReferenceResult(List<T> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
+        protected virtual T AddReferenceResult(List<T> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
             CodeReferenceInfo info = null;
             string[] t = referenceText.Split('.');
             if (t.Length < 2) throw new Exception("Code parse error - invalid token " + referenceText);

@@ -6,10 +6,22 @@ using System.Windows.Forms;
 
 namespace VisualLocalizer.Library {
 
+    /// <summary>
+    /// Represents a row in a AbstractCheckedGridView
+    /// </summary>
+    /// <typeparam name="ItemType">Type of source item</typeparam>
     public class DataGridViewCheckedRow<ItemType> : DataGridViewRow where ItemType : class {        
+        
+        /// <summary>
+        /// Model representation of data displayed by row
+        /// </summary>
         public ItemType DataSourceItem { get; set; }        
     }
 
+    /// <summary>
+    /// Represents a row in AbstractKeyValueGridView (provides key/value pair)
+    /// </summary>
+    /// <typeparam name="ItemType">Type of source item</typeparam>
     public class DataGridViewKeyValueRow<ItemType> : DataGridViewCheckedRow<ItemType>, IKeyValueSource where ItemType : class {
         public DataGridViewKeyValueRow() {
             _ItemsWithSameKey = new List<IKeyValueSource>();
@@ -17,6 +29,9 @@ namespace VisualLocalizer.Library {
             _ErrorSet = new HashSet<string>();
         }        
 
+        /// <summary>
+        /// Reloads error message
+        /// </summary>
         public void UpdateErrorSetDisplay() {
             if (ErrorMessages.Count == 0) {
                 ErrorText = null;
@@ -24,7 +39,7 @@ namespace VisualLocalizer.Library {
                 ErrorText = ErrorMessages.First();
             }
         }
-
+        
         public string Key {
             get {
                 var grid = this.DataGridView as AbstractKeyValueGridView<ItemType>;

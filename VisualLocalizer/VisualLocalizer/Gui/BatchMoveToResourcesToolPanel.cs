@@ -191,10 +191,8 @@ namespace VisualLocalizer.Gui {
                     ToolGrid.ApplyFilterAction(filterCriteriaCopy[critName], newAction);
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }       
        

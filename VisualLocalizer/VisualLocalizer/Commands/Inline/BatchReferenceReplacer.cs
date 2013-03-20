@@ -9,13 +9,17 @@ using VisualLocalizer.Editor.UndoUnits;
 using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Commands {
+
+    /// <summary>
+    /// Used to perform rename operation with a resource reference.
+    /// </summary>
     internal sealed class BatchReferenceReplacer : AbstractBatchReferenceProcessor {
 
-        public List<CodeReferenceResultItem> ReferenceList { get; private set; }
-
+        /// <summary>
+        /// Initialize with list of result items for specified resource key
+        /// </summary>        
         public BatchReferenceReplacer(List<CodeReferenceResultItem> list)
-            : base(list) {
-            this.ReferenceList = list;
+            : base(list) {            
         }
 
         public override CodeReferenceResultItem GetItemFromList(IList list, int index) {

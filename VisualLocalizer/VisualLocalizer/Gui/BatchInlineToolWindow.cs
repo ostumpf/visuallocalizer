@@ -60,10 +60,8 @@ namespace VisualLocalizer.Gui {
                 inliner.Inline(panel.GetData(), false, ref rowErrors);
                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             } finally {
                 ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave);
 

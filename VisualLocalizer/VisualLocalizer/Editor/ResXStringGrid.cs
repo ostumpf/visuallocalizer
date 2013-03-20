@@ -382,10 +382,8 @@ namespace VisualLocalizer.Editor {
                     editorControl.UpdateReferencesCount(row);
                 }                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
@@ -464,10 +462,8 @@ namespace VisualLocalizer.Editor {
                     }
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {
                 editorControl.ReferenceCounterThreadSuspended = false;
                 NotifyItemsStateChanged();
@@ -691,10 +687,8 @@ namespace VisualLocalizer.Editor {
                     }
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
@@ -786,16 +780,14 @@ namespace VisualLocalizer.Editor {
                     item.ApplyTranslation();
                 }
             } catch (Exception ex) {
-                string text = null;
+                string text = string.Empty;
                 if (ex is CannotParseResponseException) {
                     CannotParseResponseException cpex = ex as CannotParseResponseException;
-                    text = string.Format("Server response cannot be parsed: {0}.\nFull response:\n{1}", ex.Message, cpex.FullResponse);
-                } else {
-                    text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
+                    text = string.Format("Full response:\n{0}", cpex.FullResponse);
                 }
 
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex, text);
+                VisualLocalizer.Library.MessageBox.ShowException(ex, text);
             }
         }
 
@@ -845,10 +837,8 @@ namespace VisualLocalizer.Editor {
                     StringInlinedUndoItem undoItem = new StringInlinedUndoItem(SelectedRows.Count);
                     editorControl.Editor.AddUndoUnit(undoItem);
                 } catch (Exception ex) {
-                    string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                    VisualLocalizer.Library.MessageBox.ShowError(text);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
                 } finally {
                     editorControl.ReferenceCounterThreadSuspended = false;
                 }
@@ -881,23 +871,5 @@ namespace VisualLocalizer.Editor {
 
     }
 
-    internal class StringGridTranslationInfoItem : AbstractTranslateInfoItem {
-        public ResXStringGridRow Row { get; set; }
-        public string ValueColumnName { get; set; }
-
-        public override void ApplyTranslation() {
-            ResXStringGrid grid = (ResXStringGrid)Row.DataGridView;
-            string oldValue = (string)Row.Cells[ValueColumnName].Value;
-
-            Row.Cells[ValueColumnName].Tag = oldValue;
-            Row.Cells[ValueColumnName].Value = Value;
-
-            string comment = Row.DataSourceItem.Comment;
-            Row.DataSourceItem = new ResXDataNode(Row.Key, Value);
-            Row.DataSourceItem.Comment = comment;
-
-            grid.StringValueChanged(Row, oldValue, (string)Row.Cells[ValueColumnName].Value);
-            grid.NotifyDataChanged();
-        }
-    }
+   
 }

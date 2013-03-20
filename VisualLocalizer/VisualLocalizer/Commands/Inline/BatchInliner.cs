@@ -10,12 +10,22 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Commands {
+
+    /// <summary>
+    /// Used to perform actual Batch inline command.
+    /// </summary>
     internal sealed class BatchInliner : AbstractBatchReferenceProcessor {
 
+        /// <summary>
+        /// Initialize with rows from toolwindow's grid
+        /// </summary>        
         public BatchInliner(DataGridViewRowCollection rows)
             : base(rows) {
         }
 
+        /// <summary>
+        /// Initialize directly with list of result items
+        /// </summary>        
         public BatchInliner(List<CodeReferenceResultItem> list)
             : base(list) {
         }
@@ -29,7 +39,7 @@ namespace VisualLocalizer.Commands {
         }
 
         public override string GetReplaceString(CodeReferenceResultItem item) {
-            return item.GetInlineValue();
+            return item.GetInlineValue(); // this includes escaping sequences ( " -> \" )
         }
 
         public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {

@@ -49,8 +49,18 @@ namespace VisualLocalizer.Library {
             return Show(message, title, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO);
         }
 
-        public static DialogResult ShowError(string message) {
+        public static DialogResult ShowError(string message) {            
             return Show(message, null, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_CRITICAL);
+        }
+
+        public static DialogResult ShowException(Exception ex) {
+            string text = string.Format("{0} occurred while processing command.\nMessage: {1}\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+            return Show(text, null, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_CRITICAL);
+        }
+
+        public static DialogResult ShowException(Exception ex, string addText) {
+            string text = string.Format("{0} occurred while processing command.\nMessage: {1}\n" + addText + "\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+            return Show(text, null, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_CRITICAL);
         }
 
         public static DialogResult Show(string message,string title,OLEMSGBUTTON buttons,OLEMSGDEFBUTTON defaultButton,OLEMSGICON icon) {

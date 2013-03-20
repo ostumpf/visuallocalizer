@@ -102,7 +102,8 @@ namespace VisualLocalizer
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
-                MessageBox.ShowError(string.Format("{1} during initialization: {0}\n{2}", ex.Message, ex.GetType(), ex.StackTrace));
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                MessageBox.ShowException(ex);
             }
         }
 

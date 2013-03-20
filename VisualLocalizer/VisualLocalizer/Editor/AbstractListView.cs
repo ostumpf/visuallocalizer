@@ -431,10 +431,8 @@ namespace VisualLocalizer.Editor {
                     undoList.Add(item);
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {
                 if (addUndoUnit && undoUnit != null) {
                     editorControl.Editor.AddUndoUnit(undoUnit);
@@ -469,10 +467,8 @@ namespace VisualLocalizer.Editor {
                 
                 Directory.Delete(dir, true);
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {                
                 referenceExistingOnAdd = false;
                 if (addUndoUnit && undoUnit != null) {
@@ -605,10 +601,8 @@ namespace VisualLocalizer.Editor {
                 editorControl.ReferenceCounterThreadSuspended = true;
                 editorControl.UpdateReferencesCount(item);
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
@@ -626,10 +620,8 @@ namespace VisualLocalizer.Editor {
                 }
                 CurrentlyEditedItem = null;                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {
                 editorControl.ReferenceCounterThreadSuspended = false;
                 NotifyItemsStateChanged();
@@ -688,10 +680,8 @@ namespace VisualLocalizer.Editor {
                     }
                 }                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 

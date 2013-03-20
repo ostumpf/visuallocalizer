@@ -592,8 +592,8 @@ namespace VisualLocalizer.Settings {
                     }
                                         
                 } catch (Exception ex) {
-                    VisualLocalizer.Library.MessageBox.ShowError(ex.Message);
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(ex.Message);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
                     e.ApplyBehavior = ApplyKind.CancelNoNavigate;
                 } finally {
                     SettingsObject.Instance.IgnorePropertyChanges = false;

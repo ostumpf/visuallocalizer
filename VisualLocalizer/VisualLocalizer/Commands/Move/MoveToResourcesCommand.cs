@@ -24,7 +24,7 @@ using System.Drawing;
 namespace VisualLocalizer.Commands {
 
     /// <summary>
-    /// Ancestor of C# and ASP .NET "move to resources" commands. It provides functionality from the moment where
+    /// Ancestor of C#, VB and ASP .NET "move to resources" commands. It provides functionality from the moment where
     /// the string literal has already been located.
     /// </summary>
     /// <typeparam name="T">Type of result items this class handles.</typeparam>

@@ -16,8 +16,8 @@ namespace VisualLocalizer.Components {
             }
         }
 
-        protected override AspNetCodeReferenceResultItem AddStringResult(List<AspNetCodeReferenceResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            var result = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
+        protected override AspNetCodeReferenceResultItem AddReferenceResult(List<AspNetCodeReferenceResultItem> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
+            var result = base.AddReferenceResult(list, referenceText, trieElementInfos);
             result.Language = VisualLocalizer.Library.LANGUAGE.VB;
             return result;
         }

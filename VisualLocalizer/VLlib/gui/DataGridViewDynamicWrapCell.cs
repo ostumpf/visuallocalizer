@@ -5,12 +5,17 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace VisualLocalizer.Library {
-    public class DataGridViewDynamicWrapCell : DataGridViewTextBoxCell {
-        public int RelativeLine { get; set; }
 
+    /// <summary>
+    /// Enhances DataGridViewTextBoxCell with functionality enabling to shrink/expand content by lines
+    /// </summary>
+    public class DataGridViewDynamicWrapCell : DataGridViewTextBoxCell {        
         private string _FullText;
         private string[] FullTextLines;
 
+        /// <summary>
+        /// Content of the cell (lines, separated by Environment.NewLine)
+        /// </summary>
         public string FullText {
             get {
                 return _FullText;
@@ -21,8 +26,20 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Index of the line displayed in the cell when content is shrunk
+        /// </summary>
+        public int RelativeLine { get; set; }
+
+        /// <summary>
+        /// Switches display style from shrunk/expanded
+        /// </summary>
+        /// <param name="wrap">True to display full text, false to display one line</param>
         public void SetWrapContents(bool wrap) {
-            if (!wrap && FullTextLines != null && RelativeLine < FullTextLines.Length) {                                
+            if (RelativeLine >= FullTextLines.Length || RelativeLine < 0 || FullTextLines == null)
+                throw new InvalidOperationException("Insufficiently initialized DataGridViewDynamicWrapCell.");
+
+            if (!wrap) {                                
                 Value = FullTextLines[RelativeLine];
                 Style.WrapMode = DataGridViewTriState.False;
             } else {

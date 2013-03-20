@@ -451,10 +451,8 @@ namespace VisualLocalizer.Editor {
                     } else return false;
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } 
             return false;
         }            
@@ -467,10 +465,8 @@ namespace VisualLocalizer.Editor {
                 else
                     return false;
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
 
                 return false;
             }            
@@ -484,10 +480,8 @@ namespace VisualLocalizer.Editor {
                 else
                     return false;
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
 
                 return false;
             }
@@ -566,10 +560,8 @@ namespace VisualLocalizer.Editor {
 
                 addExistingFiles(files);                
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
@@ -852,10 +844,8 @@ namespace VisualLocalizer.Editor {
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Created and added new object \"{0}\"", newItem.DataNode.FileRef.FileName);
                 } catch (Exception ex) {
-                    string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                    VisualLocalizer.Library.MessageBox.ShowError(text);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
                 }
             }
         }
@@ -1128,10 +1118,8 @@ namespace VisualLocalizer.Editor {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Error occured while setting the CustomTool property. Please use Properties Window instead.");
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
@@ -1154,10 +1142,8 @@ namespace VisualLocalizer.Editor {
                     return "No designer class";
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
             return null;
         }        
@@ -1253,10 +1239,8 @@ namespace VisualLocalizer.Editor {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Deleted file after merge: \"{1}\"", file);
                 }
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
-                VisualLocalizer.Library.MessageBox.ShowError(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {
                 if (reader != null) reader.Close();
             }
