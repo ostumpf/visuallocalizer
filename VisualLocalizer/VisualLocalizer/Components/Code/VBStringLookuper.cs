@@ -6,10 +6,29 @@ using EnvDTE;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Components {
-    internal class VBStringLookuper : VBLookuper<VBStringResultItem> {
-        private CodeNamespace namespaceElement;
-        private string methodElement;
-        private string variableElement;
+
+    /// <summary>
+    /// Represents lookuper of string literals in Visual Basic code
+    /// </summary>
+    internal sealed class VBStringLookuper : VBLookuper<VBStringResultItem> {
+        /// <summary>
+        /// Namespace where current code block belongs
+        /// </summary>
+        private CodeNamespace namespaceElement { get; set; }
+
+        /// <summary>
+        /// Name of the method where current code block belongs
+        /// </summary>
+        private string methodElement { get; set; }
+
+        /// <summary>
+        /// Name of the variable current code block initializes
+        /// </summary>
+        private string variableElement { get; set; }
+
+        /// <summary>
+        /// Name of the class/struct/module where current code block belongs
+        /// </summary>
         private string ClassOrStructElement { get; set; }
 
         private static VBStringLookuper instance;
@@ -23,6 +42,19 @@ namespace VisualLocalizer.Components {
             }
         }
 
+
+        /// <summary>
+        /// Returns list of string literals result items in given block of code
+        /// </summary>
+        /// <param name="projectItem">Project item where code belongs</param>
+        /// <param name="isGenerated">Whether project item is designer file</param>
+        /// <param name="text">Text to search</param>
+        /// <param name="startPoint">Position of the text in its source file</param>
+        /// <param name="namespaceElement">Namespace where current code block belongs</param>
+        /// <param name="classOrStructElement">Name of the class/struct/module where current code block belongs</param>
+        /// <param name="methodElement">Name of the method where current code block belongs</param>
+        /// <param name="variableElement">Name of the variable current code block initializes</param>
+        /// <param name="isWithinLocFalse">True if code block is decorated with [Localizable(false)]</param>          
         public List<VBStringResultItem> LookForStrings(ProjectItem projectItem, bool isGenerated, string text, TextPoint startPoint, CodeNamespace namespaceElement,
             string classOrStructElement, string methodElement, string variableElement, bool isWithinLocFalse) {
             this.namespaceElement = namespaceElement;
@@ -34,9 +66,7 @@ namespace VisualLocalizer.Components {
         }
 
         protected override VBStringResultItem AddStringResult(List<VBStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            char next = globalIndex + 1 < text.Length ? text[globalIndex + 1] : '?';
-
-            if (next != 'c') {
+            if (GetCharBack(-1) != 'c') { // it's not char
                 VBStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
 
                 resultItem.MethodElementName = methodElement;

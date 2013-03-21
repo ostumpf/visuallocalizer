@@ -196,7 +196,7 @@ namespace VisualLocalizer.Commands {
                         ProjectItem item = (ProjectItem)o.Object;
 
                         bool isFolder = item.IsContainer();
-                        bool isresx = ResXProjectItem.IsItemResX(item);
+                        bool isresx = item.IsItemResX();
                         bool canShow = item.CanShowCodeContextMenu();
 
                         menuOk = menuOk && (canShow || isresx || isFolder);

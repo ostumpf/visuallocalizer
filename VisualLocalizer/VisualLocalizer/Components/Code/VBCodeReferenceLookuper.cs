@@ -4,7 +4,11 @@ using System.Linq;
 using System.Text;
 
 namespace VisualLocalizer.Components {
-    internal class VBCodeReferenceLookuper : VBLookuper<VBCodeReferenceResultItem> {
+
+    /// <summary>
+    /// Represents lookuper of references in Visual Basic code
+    /// </summary>
+    internal sealed class VBCodeReferenceLookuper : VBLookuper<VBCodeReferenceResultItem> {
 
         private static VBCodeReferenceLookuper instance;
 

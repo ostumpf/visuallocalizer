@@ -5,6 +5,7 @@ using System.Text;
 using VisualLocalizer.Translate;
 using VisualLocalizer.Settings;
 using VisualLocalizer.Components;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
 
@@ -34,7 +35,7 @@ namespace VisualLocalizer.Commands {
                 throw new Exception("Cannot resolve translation provider!");
             } else {
                 try {
-                    ProgressBarHandler.StartDeterminate(dict.Count);
+                    ProgressBarHandler.StartDeterminate(dict.Count, "Translating...");
 
                     int completed = 0;
                     // use the service to translate texts
@@ -44,10 +45,10 @@ namespace VisualLocalizer.Commands {
                         completed++;
 
                         VLOutputWindow.VisualLocalizerPane.WriteLine("Translated \"{0}\" as \"{1}\" ", oldValue, item.Value);
-                        ProgressBarHandler.SetDeterminateProgress(completed);
+                        ProgressBarHandler.SetDeterminateProgress(completed, "Translating...");
                     }                    
                 } finally {
-                    ProgressBarHandler.StopDeterminate();
+                    ProgressBarHandler.StopDeterminate("Translation finished", "Ready");
                 }
             }            
         }

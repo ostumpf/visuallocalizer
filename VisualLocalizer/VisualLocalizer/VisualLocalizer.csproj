@@ -100,7 +100,6 @@
     <Compile Include="Components\Code\VBStringLookuper.cs" />
     <Compile Include="Components\DestinationKeyValueConflictResolver.cs" />
     <Compile Include="Components\KeyValueIdentifierConflictResolver.cs" />
-    <Compile Include="Components\ProgressBarHandler.cs" />
     <Compile Include="Components\UndoUnits\MarkAsNotLocalizedStringUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesReferenceUndoUnit.cs" />
     <Compile Include="Components\VLDocumentViewsManager.cs" />
@@ -169,8 +168,6 @@
     <Compile Include="Components\UndoUnits\InlineUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesOverwriteUndoUnit.cs" />
     <Compile Include="Components\UndoUnits\MoveToResourcesUndoUnit.cs" />
-    <Compile Include="Components\NotInlineableException.cs" />
-    <Compile Include="Components\NotReferencableException.cs" />
     <Compile Include="Components\ResXProjectItem.cs" />
     <Compile Include="Editor\ResXEditor.cs" />
     <Compile Include="Editor\ResXEditorControl.cs">

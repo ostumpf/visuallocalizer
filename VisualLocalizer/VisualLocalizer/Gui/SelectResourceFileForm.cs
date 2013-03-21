@@ -136,7 +136,7 @@ namespace VisualLocalizer.Gui {
                 keyBox.BackColor = (identifierError ? ERROR_COLOR : Color.White);
 
                 if (!identifierError) {
-                    keyConflict = item.StringKeyInConflict(keyBox.Text, valueBox.Text);
+                    keyConflict = item.GetKeyConflictType(keyBox.Text, valueBox.Text);
                     Color backColor = Color.White;
                     switch (keyConflict) {
                         case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:

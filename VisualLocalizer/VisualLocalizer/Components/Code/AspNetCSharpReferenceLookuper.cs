@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 
 namespace VisualLocalizer.Components {
+
+    /// <summary>
+    /// Represents lookuper of references to resources in ASP .NET C# code blocks
+    /// </summary>
     internal sealed class AspNetCSharpReferenceLookuper : CSharpLookuper<AspNetCodeReferenceResultItem> {
         private static AspNetCSharpReferenceLookuper instance;
 

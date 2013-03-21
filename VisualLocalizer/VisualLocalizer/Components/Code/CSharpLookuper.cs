@@ -9,32 +9,38 @@ using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Components {
 
+    /// <summary>
+    /// Implements PreProcessChar() method according to C# specifications.
+    /// </summary>
+    /// <typeparam name="T">Type of result item</typeparam>
     internal class CSharpLookuper<T> : AbstractCodeLookuper<T> where T:AbstractResultItem,new() {
         
-        protected override void PreProcessChar(ref bool insideComment, ref bool insideString, ref bool isVerbatimString, out bool skipLine) {
-            if (previousPreviousChar == previousChar) {
-                sameCharInLine++;
-            } else {
-                sameCharInLine = 1;
-            }
+        protected override void PreProcessChar(ref bool insideComment, ref bool insideString, ref bool isVerbatimString, out bool skipLine) {           
             skipLine = false;
 
             if (currentChar == '/' && !insideString) {
-                if (previousChar == '/' && !insideComment) {
+                if (GetCharBack(1) == '/' && !insideComment) {
                     skipLine = true;
                 }
-                if (previousChar == '*' && previousPreviousChar != '/') {
+                if (GetCharBack(1) == '*' && GetCharBack(2) != '/') {
                     insideComment = false;
                 }
             } else if (currentChar == '*' && !insideString) {
-                if (previousChar == '/' && !insideComment) {
+                if (GetCharBack(1) == '/' && !insideComment) {
                     insideComment = true;
                 }
             } else if ((currentChar == '\"' || currentChar == '\'') && !insideComment) {
                 if (insideString) {
-                    if (stringStartChar == currentChar && !isVerbatimString) {
-                        if (CountBack('\\', globalIndex) % 2 == 0)
-                            insideString = false;
+                    if (stringStartChar == currentChar) {
+                        if (!isVerbatimString) {
+                            if (CountBack('\\', globalIndex) % 2 == 0)
+                                insideString = false;
+                        } else {
+                            int q = CountBack('"', globalIndex);
+                            if (GetCharBack(-1) != '"' && ((q % 2 == 0 && text[globalIndex - q - 1] != '@') || (q % 2 != 0 && text[globalIndex - q - 1] == '@'))) {
+                                insideString = false;
+                            }
+                        }
                     }
                 } else {
                     insideString = true;
@@ -42,20 +48,12 @@ namespace VisualLocalizer.Components {
                     StringStartIndex = CurrentIndex;
                     StringStartLine = CurrentLine;
                     StringStartAbsoluteOffset = CurrentAbsoluteOffset;
-                    if (previousChar == '@') {
+                    if (GetCharBack(1) == '@') {
                         isVerbatimString = true;
                         StringStartIndex--;
                     }
                 }
-            } else if (!insideComment && isVerbatimString && insideString && previousChar == stringStartChar) {
-                if (previousPreviousChar != stringStartChar && (previousPreviousChar != '@' || CurrentAbsoluteOffset - StringStartAbsoluteOffset > 3)) {
-                    insideString = false;
-                }
-                if (previousPreviousChar != '@' && (previousPreviousChar != stringStartChar || previousPreviousPreviousChar == stringStartChar)
-                    && (CurrentAbsoluteOffset - StringStartAbsoluteOffset > 4 || sameCharInLine == 4)) {
-                    insideString = false;
-                }
-            }
+            } 
         }
         
        

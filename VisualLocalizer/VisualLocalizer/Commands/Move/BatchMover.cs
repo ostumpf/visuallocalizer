@@ -104,7 +104,7 @@ namespace VisualLocalizer.Commands {
                         }
 
                         // check if such item already exists in destination file
-                        keyConflict = resultItem.DestinationItem.StringKeyInConflict(resultItem.Key, resultItem.Value);
+                        keyConflict = resultItem.DestinationItem.GetKeyConflictType(resultItem.Key, resultItem.Value);
                         if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE)
                             throw new InvalidOperationException(string.Format("Key \"{0}\" already exists with different value.", resultItem.Key));
                         resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key); // if key already exists, return its name (solves case-sensitivity problems)

@@ -214,6 +214,19 @@ namespace VisualLocalizer.Library {
         }
 
         /// <summary>
+        /// Returns value of "Extension" property, if present, null otherwise
+        /// </summary>
+        public static string GetExtension(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            try {
+                return (string)item.Properties.Item("Extension").Value;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Returns value of "CustomTool" property, if present, null otherwise
         /// </summary>
         public static string GetCustomTool(this ProjectItem item) {
@@ -251,5 +264,18 @@ namespace VisualLocalizer.Library {
                 return false;
             }
         }
+
+        /// <summary>
+        /// Returns true if given item has ".resx" extension (either set in project item properties or in a file name)
+        /// </summary>        
+        public static bool IsItemResX(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            string ext = item.GetExtension();
+            if (ext == null) ext = Path.GetExtension(item.GetFullPath());
+
+            return ext.ToLower() == ".resx";
+        }
+
     }
 }

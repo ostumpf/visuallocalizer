@@ -16,74 +16,112 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Components {
+
+    /// <summary>
+    /// Provides functionality for managing files and documents in Visual Studio.
+    /// </summary>
     internal class VLDocumentViewsManager : DocumentViewsManager {
 
-        private static HashSet<string> lockedDocuments, lockedDocumentsWaiting;
-        private static IVsRunningDocumentTable IVsRunningDocumentTable;
+        /// <summary>
+        /// Set of opened locked documents, keys are file paths
+        /// </summary>
+        private static HashSet<string> lockedDocuments;
+
+        /// <summary>
+        /// Set of closed locked documents (waiting to be locked after opening), keys are file paths
+        /// </summary>
+        private static HashSet<string> lockedDocumentsWaiting;        
         private static EnvDTE80.DTE2 DTE;
 
         static VLDocumentViewsManager() {
-            IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
+            IVsRunningDocumentTable IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
             DTE = (EnvDTE80.DTE2)Package.GetGlobalService(typeof(EnvDTE.DTE));
+            if (IVsRunningDocumentTable == null || DTE == null) throw new InvalidOperationException("Cannot consume VLDocumentViewsManager services.");
 
             lockedDocuments = new HashSet<string>();
             lockedDocumentsWaiting = new HashSet<string>();
 
             uint evCookie;
+            // register file open and close events
             RDTEvents rdtEvents = new RDTEvents();
             rdtEvents.FileOpened += new Action<string>(rdtEvents_FileOpened);
             rdtEvents.FileClosed += new Action<string>(rdtEvents_FileClosed);
-            IVsRunningDocumentTable.AdviseRunningDocTableEvents(rdtEvents, out evCookie);
+          
+            int hr = IVsRunningDocumentTable.AdviseRunningDocTableEvents(rdtEvents, out evCookie);
+            Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Called when file is closed; if it was locked, it is added to the set of documents waiting to be locked again on next open
+        /// </summary>        
         private static void rdtEvents_FileClosed(string path) {
+            if (path == null) throw new ArgumentNullException("path");
+
             if (lockedDocuments.Contains(path)) {
                 lockedDocuments.Remove(path);
                 lockedDocumentsWaiting.Add(path);
             }
         }
 
+        /// <summary>
+        /// Called when file is opened; set of documents waiting to be locked is checked and document locked if appropriate
+        /// </summary>        
         private static void rdtEvents_FileOpened(string path) {
+            if (path == null) throw new ArgumentNullException("path");
+
             if (lockedDocumentsWaiting.Contains(path)) {
                 lockedDocumentsWaiting.Remove(path);
                 SetFileReadonly(path, true);
             }
         }
 
+        /// <summary>
+        /// Modifes lock on the document. This lock persists if document is closed and reopened.
+        /// </summary>
+        /// <param name="path">File path</param>
+        /// <param name="setreadonly">True to set document readonly</param>
         public static void SetFileReadonly(string path, bool setreadonly) {
-            if (string.IsNullOrEmpty(path)) return;
+            if (path == null) throw new ArgumentNullException("path");
 
-            if (RDTManager.IsFileOpen(path)) {
+            if (RDTManager.IsFileOpen(path)) { // file is open
                 IVsWindowFrame frame = DocumentViewsManager.GetWindowFrameForFile(path, false);
                 object docData;
-                int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+                int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData); // get document buffer
                 Marshal.ThrowExceptionForHR(hr);
 
-                if (docData is ResXEditor) {
-                    (docData as ResXEditor).ReadOnly = setreadonly;                    
-                } else {
+                if (docData is ResXEditor) { // file is opened in ResXEditor
+                    (docData as ResXEditor).ReadOnly = setreadonly; // use custom method to set it readonly                   
+                } else { // file is opened in VS editor
                     Document document = DTE.Documents.Item(path);
                     document.ReadOnly = setreadonly;
                 }
+                // add/remove the document from locked documents list
                 if (setreadonly) {
                     if (!lockedDocuments.Contains(path)) lockedDocuments.Add(path);
                 } else {
                     lockedDocuments.Remove(path);
                 }
-            } else {
-                if (setreadonly) {
+            } else { // file is closed
+                if (setreadonly) { // add file to waiting documents set
                     if (!lockedDocumentsWaiting.Contains(path)) lockedDocumentsWaiting.Add(path);
-                } else {
+                } else { // remove the file from waiting documents
                     lockedDocumentsWaiting.Remove(path);
                 }
             }
         }
 
+        /// <summary>
+        /// Returns true if given file was locked using SetFileReadonly method
+        /// </summary>
         public static bool IsFileLocked(string path) {
-            if (string.IsNullOrEmpty(path)) return false;
+            if (path == null) throw new ArgumentNullException("path");
+
             return lockedDocuments.Contains(path) || lockedDocumentsWaiting.Contains(path);
         }       
 
+        /// <summary>
+        /// Releases locks from all files previously locked by SetFileReadonly method
+        /// </summary>
         public static void ReleaseLocks() {
             while (lockedDocuments.Count > 0) {
                 string path = lockedDocuments.First();
@@ -94,18 +132,25 @@ namespace VisualLocalizer.Components {
             lockedDocumentsWaiting.Clear();
         }
 
+        /// <summary>
+        /// Replaces opened file's buffer with given data
+        /// </summary>        
         public static void SaveDataToBuffer(Dictionary<string, ResXDataNode> data, string file) {
-            object docData = GetDocData(file);
+            if (data == null) throw new ArgumentNullException("data");
+            if (file == null) throw new ArgumentNullException("file");
 
-            if (docData is ResXEditor) {
+            object docData = GetDocData(file); // get document buffer
+
+            if (docData is ResXEditor) { // opened in VL editor
                 ResXEditor editor = docData as ResXEditor;
                 editor.UIControl.SetData(data);
                 editor.IsDirty = true;
-            } else {
-                IVsTextLines textLines = GetTextLinesFrom(docData);
+            } else { // opened in default VS editor
+                IVsTextLines textLines = GetTextLinesFrom(docData); // get document line buffer
                 ResXResourceWriter writer = null;
                 MemoryStream stream = null;
                 try {
+                    // create new memory stream and fill it with new ResX content
                     stream = new MemoryStream();
                     writer = new ResXResourceWriter(stream);
                     writer.BasePath = Path.GetDirectoryName(file);
@@ -115,6 +160,7 @@ namespace VisualLocalizer.Components {
                     writer.Generate();
                     writer.Close();
 
+                    // replace current buffer with the memory stream content, leaving no undo units
                     SaveStreamToBuffer(stream, textLines, true);
                 } finally {
                     if (stream != null) stream.Close();
@@ -122,20 +168,31 @@ namespace VisualLocalizer.Components {
             }            
         }
 
+        /// <summary>
+        /// Replaces given IVsTextLines with given MemoryStream content
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="textLines"></param>
+        /// <param name="removeFromUndoStack">True if new undo units (created by this operation) should be removed</param>
         public static void SaveStreamToBuffer(MemoryStream stream, IVsTextLines textLines, bool removeFromUndoStack) {
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (textLines == null) throw new ArgumentNullException("textLines");
+
             byte[] buffer = stream.ToArray();
-            string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3);
+            string text = Encoding.UTF8.GetString(buffer, 3, buffer.Length - 3); // get ResX file text
 
             int lastLine, lastLineIndex;
             int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
             Marshal.ThrowExceptionForHR(hr);
 
             TextSpan[] spans = null;
+            // replace current buffer text with new text
             hr = textLines.ReplaceLines(0, 0, lastLine, lastLineIndex, Marshal.StringToBSTR(text), text.Length, spans);
             Marshal.ThrowExceptionForHR(hr);
 
             if (removeFromUndoStack) {
                 IOleUndoManager manager;
+                // previous operation created undo unit - remove it
                 hr = textLines.GetUndoManager(out manager);
                 Marshal.ThrowExceptionForHR(hr);
 
@@ -143,20 +200,30 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Returns content of opened ResX file's buffer
+        /// </summary>
+        /// <param name="data">Content of the buffer</param>
+        /// <param name="file">File path</param>
         public static void LoadDataFromBuffer(ref Dictionary<string,ResXDataNode> data, string file) {
-            object docData = GetDocData(file);
+            if (file == null) throw new ArgumentNullException("file");
+
+            object docData = GetDocData(file); // get document's buffer
 
             if (docData is ResXEditor) {
                 ResXEditor editor = docData as ResXEditor;
                 data = editor.UIControl.GetData(false);
             } else {
-                IVsTextLines textLines = GetTextLinesFrom(docData);
-                string textBuffer = GetTextFrom(textLines);
+                IVsTextLines textLines = GetTextLinesFrom(docData); // get text buffer
+                string textBuffer = GetTextFrom(textLines); // get plain text
                 
                 ResXResourceReader reader = null;
                 try {
                     data = new Dictionary<string, ResXDataNode>();
+                    
+                    // use reader to parse given ResX text
                     reader = ResXResourceReader.FromFileContents(textBuffer);
+                    reader.BasePath = Path.GetDirectoryName(file);
                     reader.UseResXDataNodes = true;
                     foreach (DictionaryEntry entry in reader) {
                         data.Add(entry.Key.ToString().ToLower(), entry.Value as ResXDataNode);
@@ -168,7 +235,12 @@ namespace VisualLocalizer.Components {
             
         }
 
+        /// <summary>
+        /// Returns content of the given text buffer in a string
+        /// </summary>       
         public static string GetTextFrom(IVsTextLines textLines) {
+            if (textLines == null) throw new ArgumentNullException("textLines");
+
             int lastLine, lastLineIndex;
             int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
             Marshal.ThrowExceptionForHR(hr);
@@ -180,7 +252,12 @@ namespace VisualLocalizer.Components {
             return textBuffer;
         }
 
+        /// <summary>
+        /// Returns document data object for given opened file
+        /// </summary>        
         public static object GetDocData(string file) {
+            if (file == null) throw new ArgumentNullException("file");
+
             IVsWindowFrame frame = GetWindowFrameForFile(file, false);
             if (frame == null) throw new InvalidOperationException("Cannot get window frame - is file opened?");
 
@@ -191,6 +268,9 @@ namespace VisualLocalizer.Components {
             return docData;
         }
 
+        /// <summary>
+        /// Returns text buffer object for given document data object
+        /// </summary>        
         private static IVsTextLines GetTextLinesFrom(object docData) {
             IVsTextLines textLines = null;
             var buffer = docData as VsTextBuffer;
@@ -210,7 +290,9 @@ namespace VisualLocalizer.Components {
             return textLines;
         }
 
-
+        /// <summary>
+        /// Implementation of IVsRunningDocTableEvents, exposing FileOpened and FileClosed events
+        /// </summary>
         private class RDTEvents : IVsRunningDocTableEvents {
 
             public event Action<string> FileOpened;
@@ -222,7 +304,9 @@ namespace VisualLocalizer.Components {
 
             public int OnAfterDocumentWindowHide(uint docCookie, IVsWindowFrame pFrame) {
                 object o;
-                pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out o);
+                int hr = pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out o);
+                Marshal.ThrowExceptionForHR(hr);
+
                 string path = o.ToString();
                 if (FileClosed != null) {
                     FileClosed(path);
@@ -241,7 +325,9 @@ namespace VisualLocalizer.Components {
             public int OnBeforeDocumentWindowShow(uint docCookie, int fFirstShow, IVsWindowFrame pFrame) {
                 if (fFirstShow == 1) {
                     object o;
-                    pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out o);
+                    int hr = pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out o);
+                    Marshal.ThrowExceptionForHR(hr);
+
                     string path = o.ToString();
                     if (FileOpened != null) {
                         FileOpened(path);

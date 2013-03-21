@@ -27,50 +27,54 @@ namespace VisualLocalizer.Commands {
         /// Starts the command, taking array of selected project items as a parameter
         /// </summary>        
         public void Process(Array array) {
-            searchedProjectItems.Clear();
-            loadedResxItems.Clear();
+            try {
+                searchedProjectItems.Clear();
+                loadedResxItems.Clear();
 
-            // find all ResX files contained within selected project items
-            List<GlobalTranslateProjectItem> resxFiles = new List<GlobalTranslateProjectItem>();
-            foreach (UIHierarchyItem o in array) {
-                if (o.Object is ProjectItem) {
-                    ProjectItem item = (ProjectItem)o.Object;
-                    searchForResxFiles(item, resxFiles);
-                } else if (o.Object is Project) {
-                    Project proj = (Project)o.Object;
-                    searchForResxFiles(proj.ProjectItems, resxFiles);
-                } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
-            }
-
-            // display form, allowing user to choose source and target language and select ResX files, where translation should be performed
-            GlobalTranslateForm form = new GlobalTranslateForm(resxFiles);
-            if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
-                List<AbstractTranslateInfoItem> data = new List<AbstractTranslateInfoItem>();
-                try {
-                    // collect string data from checked ResX files
-                    ProgressBarHandler.StartIndeterminate();
-                    foreach (GlobalTranslateProjectItem item in resxFiles)
-                        if (item.Checked) {
-                            addDataForTranslation(item, data);
-                        }
-                    ProgressBarHandler.StopIndeterminate();
-
-                    // translate collected data using given language pair
-                    TranslationHandler.Translate(data, form.Provider, form.LanguagePair.FromLanguage, form.LanguagePair.ToLanguage);
-
-                    // replace original texts with the translated ones
-                    ProgressBarHandler.StartIndeterminate();
-                    foreach (AbstractTranslateInfoItem i in data) {
-                        i.ApplyTranslation();
-                    }   
-                } finally {
-                    // unloads all ResX files that were originally closed
-                    foreach (ResXProjectItem item in loadedResxItems) {
-                        item.Flush();
-                        item.Unload();
-                    }
-                    ProgressBarHandler.StopIndeterminate();
+                // find all ResX files contained within selected project items
+                List<GlobalTranslateProjectItem> resxFiles = new List<GlobalTranslateProjectItem>();
+                foreach (UIHierarchyItem o in array) {
+                    if (o.Object is ProjectItem) {
+                        ProjectItem item = (ProjectItem)o.Object;
+                        searchForResxFiles(item, resxFiles);
+                    } else if (o.Object is Project) {
+                        Project proj = (Project)o.Object;
+                        searchForResxFiles(proj.ProjectItems, resxFiles);
+                    } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
                 }
+
+                // display form, allowing user to choose source and target language and select ResX files, where translation should be performed
+                GlobalTranslateForm form = new GlobalTranslateForm(resxFiles);
+                if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
+                    List<AbstractTranslateInfoItem> data = new List<AbstractTranslateInfoItem>();
+                    try {
+                        // collect string data from checked ResX files
+                        ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+                        foreach (GlobalTranslateProjectItem item in resxFiles)
+                            if (item.Checked) {
+                                addDataForTranslation(item, data);
+                            }
+                        ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+
+                        // translate collected data using given language pair
+                        TranslationHandler.Translate(data, form.Provider, form.LanguagePair.FromLanguage, form.LanguagePair.ToLanguage);
+
+                        // replace original texts with the translated ones
+                        ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+                        foreach (AbstractTranslateInfoItem i in data) {
+                            i.ApplyTranslation();
+                        }
+                    } finally {
+                        // unloads all ResX files that were originally closed
+                        foreach (ResXProjectItem item in loadedResxItems) {
+                            item.Flush();
+                            item.Unload();
+                        }
+                        ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+                    }
+                }
+            } finally {
+                MenuManager.OperationInProgress = false;
             }
         }
 
@@ -137,7 +141,7 @@ namespace VisualLocalizer.Commands {
             if (searchedProjectItems.Contains(item)) return;
             searchForResxFiles(item.ProjectItems, resxFiles);
 
-            if (ResXProjectItem.IsItemResX(item)) {
+            if (item.IsItemResX()) {
                 GlobalTranslateProjectItem r = new GlobalTranslateProjectItem(item);                
                 r.Checked = false;
                 r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath())

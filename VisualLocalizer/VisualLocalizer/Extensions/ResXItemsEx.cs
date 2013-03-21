@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 namespace VisualLocalizer.Extensions {
     public static class ProjectItemEx {
         public static List<ResXProjectItem> GetResXItemsAround(this Project project, ProjectItem sourceItem, bool includeInternal, bool includeReadonly) {
-            List<ProjectItem> items = project.GetFiles(ResXProjectItem.IsItemResX, true, includeReadonly);
+            List<ProjectItem> items = project.GetFiles(ProjectEx.IsItemResX, true, includeReadonly);
             
             List<ResXProjectItem> resxItems = new List<ResXProjectItem>();
             items.ForEach((i) => {
@@ -124,7 +124,7 @@ namespace VisualLocalizer.Extensions {
 
         public static string GetResXCultureNeutralName(this ProjectItem projectItem) {
             Match m = Regex.Match(projectItem.Name, @"(.*)\..+(\.resx)", RegexOptions.IgnoreCase);
-            if (!m.Success || m.Groups.Count <= 2) throw new Exception("Project item is culture neutral!");
+            if (!m.Success || m.Groups.Count <= 2) return projectItem.Name;
 
             return m.Groups[1].Value + m.Groups[2].Value;
         }

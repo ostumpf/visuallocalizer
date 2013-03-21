@@ -28,7 +28,7 @@ namespace VisualLocalizer.Gui {
         private MenuItem destinationContextMenu;
 
         public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel)
-            : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver()) {
+            : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver(true,true)) {
             this.parentToolPanel = panel;
             this.MultiSelect = true;
             this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
@@ -292,7 +292,7 @@ namespace VisualLocalizer.Gui {
                 string value = row.Value;
                 
                 string errorText = "Duplicate key entry - key is already present in resource file with different value";
-                CONTAINS_KEY_RESULT keyConflict = resxItem.StringKeyInConflict(key, value);
+                CONTAINS_KEY_RESULT keyConflict = resxItem.GetKeyConflictType(key, value);
                 switch (keyConflict) {
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:                        
                         row.ErrorMessages.Remove(errorText);

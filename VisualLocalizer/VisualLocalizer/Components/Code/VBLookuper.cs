@@ -6,17 +6,20 @@ using EnvDTE;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Components {
-    
+
+    /// <summary>
+    /// Implements PreProcessChar() method according to VB specifications.
+    /// </summary>
+    /// <typeparam name="T">Type of result item</typeparam>
     internal class VBLookuper<T> : AbstractCodeLookuper<T> where T : AbstractResultItem, new() {
 
         protected override void PreProcessChar(ref bool insideComment, ref bool insideString, ref bool isVerbatimString, out bool skipLine) {
-            skipLine = false;
-            char next = globalIndex + 1 < text.Length ? text[globalIndex + 1] : '?';
+            skipLine = false;            
 
             if (currentChar == '\'' && !insideString) {
                 skipLine = true;
-            } else if (!insideString && char.ToLower(currentChar) == 'm' && char.ToLower(previousChar) == 'e' 
-                && char.ToLower(previousPreviousChar) == 'r' && !next.CanBePartOfIdentifier() && !previousPreviousPreviousChar.CanBePartOfIdentifier()) {
+            } else if (!insideString && char.ToLower(currentChar) == 'm' && char.ToLower(GetCharBack(1)) == 'e'
+                && char.ToLower(GetCharBack(2)) == 'r' && !GetCharBack(-1).CanBePartOfIdentifier() && !GetCharBack(3).CanBePartOfIdentifier()) {
                 skipLine = true;
             } else {
                 if (currentChar == '"') {
@@ -26,8 +29,9 @@ namespace VisualLocalizer.Components {
                         StringStartIndex = CurrentIndex;
                         StringStartLine = CurrentLine;
                         StringStartAbsoluteOffset = CurrentAbsoluteOffset;
-                    } else {                        
-                        if (next != '"' && previousChar != '"') {
+                    } else {
+                        int q = CountBack('"', globalIndex);
+                        if (GetCharBack(-1) != '"' && ((q % 2 == 0 && CurrentAbsoluteOffset - q > StringStartAbsoluteOffset) || (q % 2 != 0 && CurrentAbsoluteOffset - q == StringStartAbsoluteOffset))) {
                             insideString = false;
                         }
                     }

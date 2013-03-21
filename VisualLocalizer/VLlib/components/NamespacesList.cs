@@ -98,6 +98,9 @@ namespace VisualLocalizer.Library {
             return addUsing;
         }
 
+        /// <summary>
+        /// Returns first namespace in which given class could belong (such combination exists)
+        /// </summary>        
         public UsedNamespaceItem ResolveNewReference(string referenceClass, Project project) {
             foreach (UsedNamespaceItem item in this) {
                 if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {

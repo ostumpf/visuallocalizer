@@ -932,7 +932,7 @@ namespace VisualLocalizer.Editor {
 
                 int rowsAdded = 0;
                 foreach (var pair in resxParent.GetAllStringReferences(false)) {
-                    if (Editor.ProjectItem.StringKeyInConflict(pair.Key, pair.Value) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
+                    if (Editor.ProjectItem.GetKeyConflictType(pair.Key, pair.Value) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
                         ResXStringGridRow newRow = (ResXStringGridRow)stringGrid.Add(pair.Key, new ResXDataNode(pair.Key, pair.Value), true);
                         stringGrid.StringRowAdded(newRow);
                         rowsAdded++;
@@ -974,7 +974,7 @@ namespace VisualLocalizer.Editor {
                             
                             resxChild.BeginBatch();
                             foreach (var pair in stringGrid.GetData(true)) {
-                                if (resxChild.StringKeyInConflict(pair.Key,pair.Value.GetValue<string>())==CONTAINS_KEY_RESULT.DOESNT_EXIST) {
+                                if (resxChild.GetKeyConflictType(pair.Key,pair.Value.GetValue<string>())==CONTAINS_KEY_RESULT.DOESNT_EXIST) {
                                     resxChild.AddString(pair.Key, pair.Value.GetValue<string>());
                                     wasUpdated = true;
                                 }

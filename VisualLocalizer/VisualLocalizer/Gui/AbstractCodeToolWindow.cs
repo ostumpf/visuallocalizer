@@ -42,22 +42,7 @@ namespace VisualLocalizer.Gui {
             return VSConstants.S_OK;
         }
        
-        public int OnShow(int fShow) {
-            /*string current="?";
-            if (Enum.IsDefined(typeof(__FRAMESHOW), fShow)) current = ((__FRAMESHOW)fShow).ToString();
-            if (Enum.IsDefined(typeof(__FRAMESHOW2), fShow)) current = ((__FRAMESHOW2)fShow).ToString();
-            if (Enum.IsDefined(typeof(__FRAMESHOW3), fShow)) current = ((__FRAMESHOW3)fShow).ToString();
-
-            string prev = "?";
-            if (Enum.IsDefined(typeof(__FRAMESHOW), prevfShow)) prev = ((__FRAMESHOW)prevfShow).ToString();
-            if (Enum.IsDefined(typeof(__FRAMESHOW2), prevfShow)) prev = ((__FRAMESHOW2)prevfShow).ToString();
-            if (Enum.IsDefined(typeof(__FRAMESHOW3), prevfShow)) prev = ((__FRAMESHOW3)prevfShow).ToString(); 
-
-            VisualLocalizer.Library.MessageBox.Show(VisualLocalizerPackage.VisualStudioVersion.ToString() +
-               " " + prev +
-               " -> " + current);
-            */
-         
+        public int OnShow(int fShow) {         
             if (fShow == (int)__FRAMESHOW2.FRAMESHOW_BeforeWinHidden) {
                 if (WindowHidden != null) WindowHidden(this, null);
             }            

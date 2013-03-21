@@ -7,9 +7,16 @@ using VisualLocalizer.Library;
 using EnvDTE;
 
 namespace VisualLocalizer.Components {
+
+    /// <summary>
+    /// Represents lookuper of string literals in ASP .NET C# code blocks
+    /// </summary>
     internal sealed class AspNetCSharpStringLookuper : CSharpLookuper<AspNetStringResultItem> {
 
-        private NamespacesList declaredNamespaces;
+        /// <summary>
+        /// Namespaces imported in the file
+        /// </summary>
+        private NamespacesList declaredNamespaces { get; set; }
         private static AspNetCSharpStringLookuper instance;
 
         private AspNetCSharpStringLookuper() { }
@@ -19,15 +26,24 @@ namespace VisualLocalizer.Components {
                 if (instance == null) instance = new AspNetCSharpStringLookuper();
                 return instance;
             }
-        }
-
+        }     
+        
+        /// <summary>
+        /// Returns list of string literals result items in given block of code
+        /// </summary>
+        /// <param name="projectItem">Project item where code belongs</param>
+        /// <param name="isGenerated">Whether project item is designer file</param>
+        /// <param name="text">Text to search</param>
+        /// <param name="blockSpan">Position of the code block</param>
+        /// <param name="className">Substitute for class name - file name</param>
+        /// <param name="declaredNamespaces">Namespaces imported in the file</param>        
         public List<AspNetStringResultItem> LookForStrings(ProjectItem projectItem, bool isGenerated, string text, BlockSpan blockSpan, string className, NamespacesList declaredNamespaces) {            
             this.declaredNamespaces = declaredNamespaces;
             return base.LookForStrings(projectItem, isGenerated, text, blockSpan);
         }
 
         protected override AspNetStringResultItem AddStringResult(List<AspNetStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            if (originalValue.StartsWith("@")) originalValue = originalValue.Substring(1);
+            if (originalValue.StartsWith("@") && isVerbatimString) originalValue = originalValue.Substring(1);
             AspNetStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
 
             resultItem.DeclaredNamespaces = declaredNamespaces;            

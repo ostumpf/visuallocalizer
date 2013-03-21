@@ -7,12 +7,14 @@ using System.Windows.Forms;
 using VisualLocalizer.Gui;
 
 namespace VisualLocalizer.Components {
+
+    /// <summary>
+    /// Enhances KeyValueIdentifierConflictResolver functionality with comparing with respect to destination ResX files (used in Batch move toolgrid)
+    /// </summary>
     internal class DestinationKeyValueConflictResolver : KeyValueIdentifierConflictResolver {
 
-        public DestinationKeyValueConflictResolver() : base(true, true) { }
-
-        public DestinationKeyValueConflictResolver(bool ignoreCase, bool enableSameValues)
-            : base(ignoreCase, enableSameValues) {            
+        public DestinationKeyValueConflictResolver(bool ignoreCase, bool enableSameKeys)
+            : base(ignoreCase, enableSameKeys) {            
         }
 
         protected override void SetConflictedItems(IKeyValueSource row1, IKeyValueSource row2, bool p) {
@@ -20,6 +22,8 @@ namespace VisualLocalizer.Components {
 
             object dest1 = (row1 as DataGridViewRow).Cells[grid.DestinationColumnName].Value;
             object dest2 = (row2 as DataGridViewRow).Cells[grid.DestinationColumnName].Value;
+            
+            // items are in conflict only if their destination files are the same
             p = p && (dest1 == null || dest2 == null || dest1.ToString() == dest2.ToString());
 
             base.SetConflictedItems(row1, row2, p);
