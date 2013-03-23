@@ -780,14 +780,15 @@ namespace VisualLocalizer.Editor {
                     item.ApplyTranslation();
                 }
             } catch (Exception ex) {
-                string text = string.Empty;
+                Dictionary<string, string> add = null;
                 if (ex is CannotParseResponseException) {
                     CannotParseResponseException cpex = ex as CannotParseResponseException;
-                    text = string.Format("Full response:\n{0}", cpex.FullResponse);
+                    add = new Dictionary<string, string>();
+                    add.Add("Full response:", cpex.FullResponse);
                 }
 
-                VLOutputWindow.VisualLocalizerPane.WriteException(ex, text);
-                VisualLocalizer.Library.MessageBox.ShowException(ex, text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex, add);
+                VisualLocalizer.Library.MessageBox.ShowException(ex, add);
             }
         }
 

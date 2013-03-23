@@ -132,9 +132,14 @@ namespace VisualLocalizer.Editor {
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(Items.Count);
             foreach (ListViewKeyItem item in Items) {                
                 if (item.ErrorMessages.Count > 0 && throwExceptions) throw new Exception(item.ErrorMessages.First());
-
-                object value = item.DataNode.FileRef == null ? item.DataNode.GetValue((ITypeResolutionService)null) : item.DataNode.FileRef;
-                ResXDataNode node = new ResXDataNode(item.Key, value);
+                
+                ResXDataNode node;
+                if (item.DataNode.FileRef == null) {
+                    node = new ResXDataNode(item.Key, item.DataNode.GetValue((ITypeResolutionService)null));
+                } else {
+                    node = new ResXDataNode(item.Key, item.DataNode.FileRef);
+                }
+                
                 node.Comment = item.SubItems["Comment"].Text;
                 data.Add(item.Key, node);
             }

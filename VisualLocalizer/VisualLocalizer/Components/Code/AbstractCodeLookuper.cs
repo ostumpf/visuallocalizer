@@ -266,7 +266,7 @@ namespace VisualLocalizer.Components {
             span.iStartLine = StringStartLine - 1;
             span.iStartIndex = StringStartIndex;
             span.iEndLine = CurrentLine - 1;
-            span.iEndIndex = CurrentIndex + (isVerbatimString ? 0 : 1);
+            span.iEndIndex = CurrentIndex + 1;
 
             // generate result item
             var resultItem = new T();
@@ -275,7 +275,7 @@ namespace VisualLocalizer.Components {
             resultItem.ComesFromDesignerFile = this.SourceItemGenerated;
             resultItem.ReplaceSpan = span;
             resultItem.AbsoluteCharOffset = StringStartAbsoluteOffset - (isVerbatimString ? 1 : 0);
-            resultItem.AbsoluteCharLength = originalValue.Length;            
+            resultItem.AbsoluteCharLength = originalValue.Length + (isVerbatimString ? 1 : 0);            
             resultItem.IsWithinLocalizableFalse = IsWithinLocFalse;
             resultItem.IsMarkedWithUnlocalizableComment = isUnlocalizableCommented;
 

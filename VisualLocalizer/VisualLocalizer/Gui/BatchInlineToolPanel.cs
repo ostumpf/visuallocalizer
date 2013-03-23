@@ -11,19 +11,40 @@ using System.ComponentModel;
 
 namespace VisualLocalizer.Gui {
     
+    /// <summary>
+    /// Content of the "Batch inline" toolwindow.
+    /// </summary>
     internal sealed class BatchInlineToolPanel : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
         
+        /// <summary>
+        /// Issued when row is double-clicked - causes corresponding block of code in the code window to be selected
+        /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
 
         public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowFilterContext) {
             this.MultiSelect = true;
             this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
+            // create context menu with option to (un)check selected rows
             ContextMenu contextMenu = new ContextMenu();
 
             MenuItem stateMenu = new MenuItem("State");
-            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => { setCheckStateOfSelected(true); }));
-            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => { setCheckStateOfSelected(false); }));
+            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => {
+                try {
+                    setCheckStateOfSelected(true);
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+            }));
+            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => {
+                try {
+                    setCheckStateOfSelected(false);
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+            }));
             contextMenu.MenuItems.Add(stateMenu);            
 
             this.ContextMenu = contextMenu;
@@ -78,12 +99,20 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        /// <summary>
+        /// Sets grid content
+        /// </summary>        
         public override void SetData(List<CodeReferenceResultItem> value) {
+            if (value == null) throw new ArgumentNullException("value");
+
             Rows.Clear();
             errorRows.Clear();
             this.SuspendLayout();
+
+            // adjust "context" column visibility according to the settings
             if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
 
+            // create new row for each result item
             foreach (var item in value) {
                 DataGridViewCheckedRow<CodeReferenceResultItem> row = new DataGridViewCheckedRow<CodeReferenceResultItem>();
                 row.DataSourceItem = item;
@@ -110,7 +139,7 @@ namespace VisualLocalizer.Gui {
 
                 DataGridViewTextBoxCell destinationCell = new DataGridViewTextBoxCell();
                 destinationCell.Value = item.DestinationItem.ToString();
-                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.GetFullPath(), true);
+                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.GetFullPath(), true); // lock selected destination file
                 row.Cells.Add(destinationCell);
                 
                 DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
@@ -140,6 +169,7 @@ namespace VisualLocalizer.Gui {
             this.OnResize(null);
             NotifyErrorRowsChanged();
 
+            // perform sorting
             if (SortedColumn != null) {
                 Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
             }

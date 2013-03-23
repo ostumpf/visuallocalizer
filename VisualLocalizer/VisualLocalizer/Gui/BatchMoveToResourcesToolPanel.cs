@@ -10,15 +10,34 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Gui {
+
+    /// <summary>
+    /// Represents tool panel displayed in the "Batch move" toolwindow
+    /// </summary>
     internal sealed class BatchMoveToResourcesToolPanel : Panel,IHighlightRequestSource {
-        
+
+        /// <summary>
+        /// Issued when row is double-clicked - causes corresponding block of code in the code window to be selected
+        /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
+                       
+        /// <summary>
+        /// Local copy of filter criteria. This copy can be edited, but the changes will not be saved in settings.
+        /// </summary>
+        private Dictionary<string, AbstractLocalizationCriterion> filterCriteriaCopy;
+
+        /// <summary>
+        /// Names of the custom criteria currently present in the tool panel
+        /// </summary>
+        private HashSet<string> filterCustomCriteriaNames;
+
         private TableLayoutPanel filterPanel;
         private SplitContainer splitContainer;
         private bool SplitterMoving;
-        private Dictionary<string, AbstractLocalizationCriterion> filterCriteriaCopy;
-        private HashSet<string> filterCustomCriteriaNames;
 
+        /// <summary>
+        /// Creates new instance, initialization of GUI
+        /// </summary>
         public BatchMoveToResourcesToolPanel() {
             this.SuspendLayout();
             this.Dock = DockStyle.Fill;
@@ -26,6 +45,7 @@ namespace VisualLocalizer.Gui {
             filterCriteriaCopy = new Dictionary<string, AbstractLocalizationCriterion>();
             filterCustomCriteriaNames = new HashSet<string>();
 
+            // update filter criteria on settings load
             SettingsObject.Instance.SettingsLoaded += new Action(SettingsUpdated);
 
             ToolGrid = new BatchMoveToResourcesToolGrid(this);
@@ -45,60 +65,82 @@ namespace VisualLocalizer.Gui {
 
             this.ResumeLayout(true);
 
-            FilterVisible = false;
+            FilterVisible = false; // set filter hidden
             
             splitContainer.SplitterMoved += new SplitterEventHandler(splitContainer_SplitterMoved);
             splitContainer.SplitterMoving += new SplitterCancelEventHandler(splitContainer_SplitterMoving);
         }
 
+        /// <summary>
+        /// Set SplitterMoving to true
+        /// </summary>        
         private void splitContainer_SplitterMoving(object sender, SplitterCancelEventArgs e) {
             SplitterMoving = true;            
         }
 
+        /// <summary>
+        /// After splitter moving finished
+        /// </summary>        
         private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e) {
-            if (SplitterMoving)
-                SettingsObject.Instance.BatchMoveSplitterDistance = splitContainer.SplitterDistance;
+            if (SplitterMoving) // if splitter was moving before
+                SettingsObject.Instance.BatchMoveSplitterDistance = splitContainer.SplitterDistance; // remember splitter distance in settings
             SplitterMoving = false;
         }
 
+        /// <summary>
+        /// Called when settings are loaded from registry or are updated in Tools/Options. Refreshes display of custom criteria.
+        /// </summary>
         public void SettingsUpdated() {
             splitContainer.SuspendLayout();
 
-            List<AbstractLocalizationCriterion> toAdd = new List<AbstractLocalizationCriterion>();
-            HashSet<string> used = new HashSet<string>();
-            
-            foreach (var crit in SettingsObject.Instance.CustomLocalizabilityCriteria) {
-                if (filterCustomCriteriaNames.Contains(crit.Name + "box")) {
-                    filterPanel.Controls[crit.Name + "label"].Text = crit.Description;
-                    
-                    LocalizationCustomCriterion oldCrit= (LocalizationCustomCriterion)filterCriteriaCopy[crit.Name];
-                    oldCrit.Predicate = crit.Predicate;
-                    oldCrit.Regex = crit.Regex;
-                    oldCrit.Target = crit.Target;                    
+            try {
+                List<AbstractLocalizationCriterion> toAdd = new List<AbstractLocalizationCriterion>();
+                HashSet<string> used = new HashSet<string>();
 
-                    used.Add(crit.Name + "box");
-                    used.Add(crit.Name + "label");
-                } else {
-                    toAdd.Add(crit);
+                foreach (var crit in SettingsObject.Instance.CustomLocalizabilityCriteria) {
+                    if (filterCustomCriteriaNames.Contains(crit.Name + "box")) { // the criterion is already present in the tool panel
+                        filterPanel.Controls[crit.Name + "label"].Text = crit.Description; // update its text
+
+                        // update its data
+                        LocalizationCustomCriterion oldCrit = (LocalizationCustomCriterion)filterCriteriaCopy[crit.Name];
+                        oldCrit.Predicate = crit.Predicate;
+                        oldCrit.Regex = crit.Regex;
+                        oldCrit.Target = crit.Target;
+
+                        // add it to he future list of criteria in the tool panel
+                        used.Add(crit.Name + "box");
+                        used.Add(crit.Name + "label");
+                    } else { // the criterion is not yet in the tool panel - add it
+                        toAdd.Add(crit);
+                    }
                 }
+
+                // remove all criteria that were not "touched" by previous operation, i.e. were deleted in the settings
+                foreach (string name in filterCustomCriteriaNames.Except(used)) {
+                    filterPanel.Controls.RemoveByKey(name); // remove from GUI
+                    if (name.EndsWith("box")) filterCriteriaCopy.Remove(name.Substring(0, name.Length - 3)); // remove from local copy of criteria
+                }
+
+                filterCustomCriteriaNames = used; // set new list of criteria in the tool panel
+                foreach (var crit in toAdd) { // add new custom criteria
+                    addCriterionOption(crit);
+                }
+
+                // recalculate localization probability with new criteria
+                ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
+
+                splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
 
-            foreach (string name in filterCustomCriteriaNames.Except(used)) {
-                filterPanel.Controls.RemoveByKey(name);
-                if (name.EndsWith("box")) filterCriteriaCopy.Remove(name.Substring(0, name.Length - 3));
-            }
-
-            filterCustomCriteriaNames = used;
-            foreach (var crit in toAdd) {
-                addCriterionOption(crit);
-            }
-
-            ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
-
-            splitContainer.SplitterDistance = SettingsObject.Instance.BatchMoveSplitterDistance;
             splitContainer.ResumeLayout();
         }
 
+        /// <summary>
+        /// Creates filter panel GUI
+        /// </summary>
         private void InitializeFilterPanel() {
             filterPanel = new TableLayoutPanel();
             filterPanel.Dock = DockStyle.Top;
@@ -118,77 +160,106 @@ namespace VisualLocalizer.Gui {
             for (int i = 0; i < rowCount; i++) filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             filterPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
+            // add criteria boxes
             foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
                 addCriterionOption(crit);
-            }
-      
+            }      
         }
 
+        /// <summary>
+        /// Adds given criterion to the GUI and local copy of criteria
+        /// </summary>       
         private void addCriterionOption(AbstractLocalizationCriterion crit) {
-            ComboBox box = null;
-            Label label = null;
+            if (crit == null) throw new ArgumentNullException("crit");
 
-            box = new ComboBox();
-            box.DropDownStyle = ComboBoxStyle.DropDownList;
-            box.Tag = crit.Name;
-            box.Items.Add(LocalizationCriterionAction.FORCE_ENABLE.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction.FORCE_DISABLE.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction.VALUE.ToHumanForm() + " " + crit.Weight);
-            box.Items.Add(LocalizationCriterionAction.IGNORE.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction2.CHECK.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction2.CHECK_REMOVE.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction2.UNCHECK.ToHumanForm());
-            box.Items.Add(LocalizationCriterionAction2.REMOVE.ToHumanForm());
-            box.Width = 130;
-            box.Name = crit.Name + "box";
-            box.SelectedIndex = (int)crit.Action;
-            box.SelectedIndexChanged += new EventHandler(box_SelectedIndexChanged);
+            try {
+                ComboBox box = null;
+                Label label = null;
 
-            label = new Label();
-            label.Name = crit.Name + "label";
-            label.Text = crit.Description;
-            label.Dock = DockStyle.Fill;
-            label.AutoEllipsis = true;
-            label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+                box = new ComboBox();
+                box.DropDownStyle = ComboBoxStyle.DropDownList;
+                box.Tag = crit.Name;
+                box.Items.Add(LocalizationCriterionAction.FORCE_ENABLE.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction.FORCE_DISABLE.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction.VALUE.ToHumanForm() + " " + crit.Weight);
+                box.Items.Add(LocalizationCriterionAction.IGNORE.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction2.CHECK.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction2.CHECK_REMOVE.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction2.UNCHECK.ToHumanForm());
+                box.Items.Add(LocalizationCriterionAction2.REMOVE.ToHumanForm());
+                box.Width = 130;
+                box.Name = crit.Name + "box";
+                box.SelectedIndex = (int)crit.Action;
+                box.SelectedIndexChanged += new EventHandler(box_SelectedIndexChanged);
 
-            filterPanel.Controls.Add(label);
-            filterPanel.Controls.Add(box);
+                label = new Label();
+                label.Name = crit.Name + "label";
+                label.Text = crit.Description;
+                label.Dock = DockStyle.Fill;
+                label.AutoEllipsis = true;
+                label.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 
-            if (crit is LocalizationCustomCriterion) {
-                filterCustomCriteriaNames.Add(label.Name);
-                filterCustomCriteriaNames.Add(box.Name);
+                filterPanel.Controls.Add(label);
+                filterPanel.Controls.Add(box);
+
+                if (crit is LocalizationCustomCriterion) {
+                    filterCustomCriteriaNames.Add(label.Name);
+                    filterCustomCriteriaNames.Add(box.Name);
+                }
+
+                // add deep copy of the criterion to the local copy of criteria
+                filterCriteriaCopy.Add(crit.Name, crit.DeepCopy());
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-
-            filterCriteriaCopy.Add(crit.Name, crit.DeepCopy());
         }
 
         private bool ignoreLocRecalculation = false;
+
+        /// <summary>
+        /// Sets actions of all criteria to values from settings and performs recalculation of localization probability.
+        /// </summary>
         public void ResetFilterSettings() {
-            ignoreLocRecalculation=true;
-            foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
-                filterCriteriaCopy[crit.Name].Action = crit.Action;
-                (filterPanel.Controls[crit.Name + "box"] as ComboBox).SelectedIndex = (int)crit.Action;
+            try {
+                ignoreLocRecalculation = true; // prevent changes in checkboxes to trigger localization probability recalculation
+
+                // update the actions
+                foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
+                    filterCriteriaCopy[crit.Name].Action = crit.Action;
+                    (filterPanel.Controls[crit.Name + "box"] as ComboBox).SelectedIndex = (int)crit.Action;
+                }
+                ignoreLocRecalculation = false;
+
+                // recalculate loc. probability
+                ToolGrid.RecalculateLocProbability(filterCriteriaCopy, true);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            } finally {
+                ignoreLocRecalculation = false;
             }
-            ignoreLocRecalculation = false;
-            ToolGrid.RecalculateLocProbability(filterCriteriaCopy, true);
         }
 
+        /// <summary>
+        /// Criterion action combobox value changed
+        /// </summary>        
         private void box_SelectedIndexChanged(object sender, EventArgs e) {
             ComboBox cBox = (sender as ComboBox);
             if (cBox.SelectedIndex == -1) return;
-            if (ignoreLocRecalculation) return;
+            if (ignoreLocRecalculation) return; // ignore the change (set in ResetFilterSettings())
 
             try {
                 string critName = (string)cBox.Tag;
-                if (Enum.IsDefined(typeof(LocalizationCriterionAction), cBox.SelectedIndex)) {
+                if (Enum.IsDefined(typeof(LocalizationCriterionAction), cBox.SelectedIndex)) { // it is a standard criterion action (Force localization, Ignore...)
                     LocalizationCriterionAction newAction = (LocalizationCriterionAction)cBox.SelectedIndex;
 
-                    filterCriteriaCopy[critName].Action = newAction;
-                    ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false);
-                } else {
+                    filterCriteriaCopy[critName].Action = newAction; // set the value in local copy of criteria
+                    ToolGrid.RecalculateLocProbability(filterCriteriaCopy, false); // recalculate localization probability
+                } else { // it is a special action (Check, Uncheck, ...)
                     LocalizationCriterionAction2 newAction = (LocalizationCriterionAction2)(cBox.SelectedIndex - Enum.GetValues(typeof(LocalizationCriterionAction)).Length);
 
-                    ToolGrid.ApplyFilterAction(filterCriteriaCopy[critName], newAction);
+                    ToolGrid.ApplyFilterAction(filterCriteriaCopy[critName], newAction); // apply the action
                 }
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
@@ -196,13 +267,23 @@ namespace VisualLocalizer.Gui {
             }
         }       
        
+        /// <summary>
+        /// Row double-clicked
+        /// </summary>        
         private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {
             if (HighlightRequired != null) HighlightRequired(sender, e);
         }
 
+        /// <summary>
+        /// Inner grid containing the result items
+        /// </summary>
         public BatchMoveToResourcesToolGrid ToolGrid { get; private set; }
         
         private bool _FilterVisible;
+
+        /// <summary>
+        /// Gets / sets visiblity of the filter tool panel
+        /// </summary>
         public bool FilterVisible {
             get {
                 return _FilterVisible;

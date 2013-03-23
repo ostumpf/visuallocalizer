@@ -36,7 +36,9 @@ namespace VisualLocalizer.Library {
         /// </summary>
         /// <param name="wrap">True to display full text, false to display one line</param>
         public void SetWrapContents(bool wrap) {
-            if (RelativeLine >= FullTextLines.Length || RelativeLine < 0 || FullTextLines == null)
+            if (FullTextLines == null) return;
+
+            if (RelativeLine >= FullTextLines.Length || RelativeLine < 0)
                 throw new InvalidOperationException("Insufficiently initialized DataGridViewDynamicWrapCell.");
 
             if (!wrap) {                                

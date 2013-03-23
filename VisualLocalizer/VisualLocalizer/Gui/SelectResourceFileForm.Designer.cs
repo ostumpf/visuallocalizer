@@ -41,8 +41,8 @@
             this.fullBox = new System.Windows.Forms.RadioButton();
             this.usingBox = new System.Windows.Forms.RadioButton();
             this.referenceLabel = new System.Windows.Forms.Label();
-            this.existingValueLabel = new System.Windows.Forms.Label();
             this.existingLabel = new System.Windows.Forms.Label();
+            this.existingValueBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel3.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
@@ -67,8 +67,8 @@
             this.tableLayoutPanel1.Controls.Add(this.flowLayoutPanel1, 2, 4);
             this.tableLayoutPanel1.Controls.Add(this.flowLayoutPanel2, 0, 2);
             this.tableLayoutPanel1.Controls.Add(this.referenceLabel, 2, 2);
-            this.tableLayoutPanel1.Controls.Add(this.existingValueLabel, 1, 3);
             this.tableLayoutPanel1.Controls.Add(this.existingLabel, 0, 3);
+            this.tableLayoutPanel1.Controls.Add(this.existingValueBox, 1, 3);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -76,7 +76,7 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.Size = new System.Drawing.Size(647, 167);
             this.tableLayoutPanel1.TabIndex = 0;
@@ -109,10 +109,10 @@
             this.errorLabel.AutoSize = true;
             this.errorLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.errorLabel.ForeColor = System.Drawing.Color.Red;
-            this.errorLabel.Location = new System.Drawing.Point(402, 109);
-            this.errorLabel.Margin = new System.Windows.Forms.Padding(10, 4, 10, 4);
+            this.errorLabel.Location = new System.Drawing.Point(397, 117);
+            this.errorLabel.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             this.errorLabel.Name = "errorLabel";
-            this.errorLabel.Size = new System.Drawing.Size(235, 22);
+            this.errorLabel.Size = new System.Drawing.Size(245, 14);
             this.errorLabel.TabIndex = 1015;
             this.errorLabel.Text = "error";
             this.errorLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -181,7 +181,7 @@
             this.valueLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.valueLabel.Location = new System.Drawing.Point(3, 29);
             this.valueLabel.Name = "valueLabel";
-            this.valueLabel.Size = new System.Drawing.Size(81, 40);
+            this.valueLabel.Size = new System.Drawing.Size(81, 48);
             this.valueLabel.TabIndex = 1018;
             this.valueLabel.Text = "Value:";
             this.valueLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -196,7 +196,7 @@
             this.valueBox.Multiline = true;
             this.valueBox.Name = "valueBox";
             this.valueBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.valueBox.Size = new System.Drawing.Size(552, 32);
+            this.valueBox.Size = new System.Drawing.Size(552, 40);
             this.valueBox.TabIndex = 2;
             this.valueBox.TextChanged += new System.EventHandler(this.valueBox_TextChanged);
             // 
@@ -239,7 +239,7 @@
             this.flowLayoutPanel2.Controls.Add(this.fullBox);
             this.flowLayoutPanel2.Controls.Add(this.usingBox);
             this.flowLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowLayoutPanel2.Location = new System.Drawing.Point(3, 72);
+            this.flowLayoutPanel2.Location = new System.Drawing.Point(3, 80);
             this.flowLayoutPanel2.MinimumSize = new System.Drawing.Size(300, 25);
             this.flowLayoutPanel2.Name = "flowLayoutPanel2";
             this.flowLayoutPanel2.Size = new System.Drawing.Size(300, 30);
@@ -278,7 +278,7 @@
             this.tableLayoutPanel1.SetColumnSpan(this.referenceLabel, 2);
             this.referenceLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.referenceLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.referenceLabel.Location = new System.Drawing.Point(307, 69);
+            this.referenceLabel.Location = new System.Drawing.Point(307, 77);
             this.referenceLabel.Name = "referenceLabel";
             this.referenceLabel.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
             this.referenceLabel.Size = new System.Drawing.Size(337, 36);
@@ -286,28 +286,29 @@
             this.referenceLabel.Text = "reference";
             this.referenceLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
-            // existingValueLabel
-            // 
-            this.existingValueLabel.AutoEllipsis = true;
-            this.tableLayoutPanel1.SetColumnSpan(this.existingValueLabel, 2);
-            this.existingValueLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.existingValueLabel.Location = new System.Drawing.Point(90, 105);
-            this.existingValueLabel.MaximumSize = new System.Drawing.Size(250, 30);
-            this.existingValueLabel.Name = "existingValueLabel";
-            this.existingValueLabel.Size = new System.Drawing.Size(250, 30);
-            this.existingValueLabel.TabIndex = 1022;
-            this.existingValueLabel.Text = "existingValue";
-            // 
             // existingLabel
             // 
             this.existingLabel.AutoSize = true;
             this.existingLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.existingLabel.Location = new System.Drawing.Point(3, 105);
+            this.existingLabel.Location = new System.Drawing.Point(3, 113);
             this.existingLabel.Name = "existingLabel";
-            this.existingLabel.Size = new System.Drawing.Size(81, 30);
+            this.existingLabel.Size = new System.Drawing.Size(81, 22);
             this.existingLabel.TabIndex = 1023;
             this.existingLabel.Text = "Current Value:";
             this.existingLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            // 
+            // existingValueBox
+            // 
+            this.existingValueBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.existingValueBox.Location = new System.Drawing.Point(88, 114);
+            this.existingValueBox.Margin = new System.Windows.Forms.Padding(1);
+            this.existingValueBox.Multiline = true;
+            this.existingValueBox.Name = "existingValueBox";
+            this.existingValueBox.ReadOnly = true;
+            this.existingValueBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.existingValueBox.Size = new System.Drawing.Size(215, 20);
+            this.existingValueBox.TabIndex = 1024;
+            this.existingValueBox.TextChanged += new System.EventHandler(this.existingValueBox_TextChanged);
             // 
             // SelectResourceFileForm
             // 
@@ -355,7 +356,7 @@
         private System.Windows.Forms.Button inlineButton;
         private System.Windows.Forms.Button overwriteButton;
         private System.Windows.Forms.Label referenceLabel;
-        private System.Windows.Forms.Label existingValueLabel;
         private System.Windows.Forms.Label existingLabel;
+        private System.Windows.Forms.TextBox existingValueBox;
     }
 }

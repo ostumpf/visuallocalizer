@@ -15,63 +15,102 @@ using System.IO;
 
 namespace VisualLocalizer.Gui {
 
+    /// <summary>
+    /// Represents "Batch inline" toolwindow
+    /// </summary>
     [Guid("E7755751-5A96-451b-9DFF-DCA1422CCA0A")]
     internal sealed class BatchInlineToolWindow : AbstractCodeToolWindow<BatchInlineToolPanel> {
 
+        /// <summary>
+        /// Creates new instance
+        /// </summary>
         public BatchInlineToolWindow() {
-            this.Caption = "Batch Inline - Visual Localizer";
+            this.Caption = "Batch Inline - Visual Localizer"; // window title
+
+            // set the toolbar
             this.ToolBar = new CommandID(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarID);
             this.ToolBarLocation = (int)VSTWT_LOCATION.VSTWT_TOP;
 
             OleMenuCommandService menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
+            if (menuService == null) throw new InvalidOperationException("Cannot obtain OleMenuCommandService.");
+
+            // add "Run" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRunID,
                 new EventHandler(runClick), null, menuService);
 
+            // add "Remove unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRemoveUncheckedID,
                 new EventHandler(removeUnchecked), null, menuService);
 
+            // add "Restore unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarPutBackUncheckedID,
                 new EventHandler(restoreUnchecked), null, menuService);
         }
 
+        /// <summary>
+        /// When window is closed
+        /// </summary>        
         protected override void OnWindowHidden(object sender, EventArgs e) {
-            VLDocumentViewsManager.ReleaseLocks();
-            MenuManager.OperationInProgress = false;
+            VLDocumentViewsManager.ReleaseLocks(); // unlock all previously locked documents
+            MenuManager.OperationInProgress = false; // enable other operations to run
         }
 
+        /// <summary>
+        /// "Remove unchecked" button clicked
+        /// </summary>        
         private void removeUnchecked(object sender, EventArgs e) {
-            panel.RemoveUncheckedRows(true);
+            try {
+                panel.RemoveUncheckedRows(true);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// "Restore unchecked" button clicked
+        /// </summary>        
         private void restoreUnchecked(object sender, EventArgs e) {
-            panel.RestoreRemovedRows();
+            try {
+                panel.RestoreRemovedRows();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// "Run" button clicked
+        /// </summary>        
         private void runClick(object sender, EventArgs e) {
             int checkedRows = panel.CheckedRowsCount;
             int rowCount = panel.Rows.Count;
             int rowErrors = 0;
 
             try {
-                VLDocumentViewsManager.ReleaseLocks();
-                MenuManager.OperationInProgress = false;
-                BatchInliner inliner = new BatchInliner(panel.Rows);
+                VLDocumentViewsManager.ReleaseLocks(); // unlock locked documents
+                MenuManager.OperationInProgress = false; // permit other operations
+                BatchInliner inliner = new BatchInliner(panel.Rows); 
 
-                inliner.Inline(panel.GetData(), false, ref rowErrors);
+                inliner.Inline(panel.GetData(), false, ref rowErrors); // run inliner
                
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
             } finally {
-                ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave);
+                ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
 
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);
             }
         }
 
-        public void SetData(List<CodeReferenceResultItem> value) {
-            panel.SetData(value);
+        /// <summary>
+        /// Set content of toolwindow
+        /// </summary>        
+        public void SetData(List<CodeReferenceResultItem> list) {
+            if (list == null) throw new ArgumentNullException("list");
+            panel.SetData(list);
         }
     }
 }

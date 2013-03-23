@@ -339,12 +339,12 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Sets check state of all selected rows to specified value
         /// </summary>
-        protected void setCheckStateOfSelected(bool p) {
+        protected void setCheckStateOfSelected(bool check) {
             if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column
 
             foreach (DataGridViewRow row in SelectedRows) {
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value;
-                row.Cells[CheckBoxColumnName].Value = p;
+                row.Cells[CheckBoxColumnName].Value = check;
                 OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));
             }
             UpdateCheckHeader();

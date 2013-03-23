@@ -9,15 +9,24 @@ using System.Windows.Forms;
 using System.Globalization;
 
 namespace VisualLocalizer.Gui {
+
+    /// <summary>
+    /// Dialog enabling user to create new translation language pair
+    /// </summary>
     public partial class NewLanguagePairWindow : Form {
 
         private CultureInfo[] displayedCultures;
 
+        /// <summary>
+        /// Creates new instance
+        /// </summary>
+        /// <param name="displayOptionalAddToList">True if checkbox "add to the list" should be displayed</param>
         public NewLanguagePairWindow(bool displayOptionalAddToList) {
             InitializeComponent();
 
+            // add translation languages
             displayedCultures = CultureInfo.GetCultures(CultureTypes.FrameworkCultures);
-            sourceBox.Items.Add("(auto)");
+            sourceBox.Items.Add("(auto)"); // add option "auto" to source languages (translation service auto-detects source language)
             foreach (var culture in displayedCultures) {                
                 sourceBox.Items.Add(culture.DisplayName);
                 targetBox.Items.Add(culture.DisplayName);
@@ -36,22 +45,37 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        /// <summary>
+        /// Language from which the text will be translated
+        /// </summary>
         public string SourceLanguage {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Language to which the text will be translated
+        /// </summary>
         public string TargetLanguage {
             get;
             private set;
         }
 
+        /// <summary>
+        /// True if this language pair should be remembered
+        /// </summary>
         public bool AddToList {
             get;
             private set;
         }
 
         private bool ctrlDown = false;
+
+        /// <summary>
+        /// Handles CTRL+Enter and Escape to close the form
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void NewLanguagePairWindow_KeyDown(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.Escape) {
                 e.Handled = true;
@@ -73,7 +97,7 @@ namespace VisualLocalizer.Gui {
 
         private void NewLanguagePairWindow_FormClosing(object sender, FormClosingEventArgs e) {
             if (sourceBox.SelectedIndex == 0) {
-                SourceLanguage = string.Empty;
+                SourceLanguage = string.Empty; // "auto" option was selected
             } else {
                 SourceLanguage = displayedCultures[sourceBox.SelectedIndex - 1].TwoLetterISOLanguageName;
             }

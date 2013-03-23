@@ -8,7 +8,16 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace VisualLocalizer.Gui {
+
+    /// <summary>
+    /// Dialog enabling user to modify resource comments in ResX editor
+    /// </summary>
     public partial class CommentWindow : Form {
+
+        /// <summary>
+        /// Creates new instance
+        /// </summary>
+        /// <param name="oldComment">Current comment, displayed as initial text</param>
         public CommentWindow(string oldComment) {
             InitializeComponent();
             this.Icon = VSPackage._400;
@@ -16,12 +25,18 @@ namespace VisualLocalizer.Gui {
             commentBox.Text = oldComment;
         }
 
-        public string Comment { get; private set; }
+        public string Comment {
+            get;
+            private set;
+        }
 
         private void CommentWindow_FormClosing(object sender, FormClosingEventArgs e) {
             Comment = commentBox.Text;
         }
 
+        /// <summary>
+        /// Handle CTRL+Enter and Escape closing events
+        /// </summary>
         private bool ctrlDown = false;
         private void CommentWindow_KeyDown(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.Escape) {

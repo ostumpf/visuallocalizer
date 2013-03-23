@@ -369,14 +369,15 @@ namespace VisualLocalizer.Commands {
 
                 globalTranslateCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
             } catch (Exception ex) {
-                string text = string.Empty;
+                Dictionary<string, string> add = null;
                 if (ex is CannotParseResponseException) {
-                    CannotParseResponseException cpex = ex as CannotParseResponseException;
-                    text = string.Format("Full response:\n{0}", cpex.FullResponse);
+                    CannotParseResponseException cpex = ex as CannotParseResponseException;                    
+                    add = new Dictionary<string, string>();
+                    add.Add("Full response:", cpex.FullResponse);
                 }
 
-                VLOutputWindow.VisualLocalizerPane.WriteException(ex, text);
-                MessageBox.ShowException(ex, text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex, add);
+                MessageBox.ShowException(ex, add);
             } 
         }
 

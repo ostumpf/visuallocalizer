@@ -93,8 +93,13 @@ namespace VisualLocalizer.Library {
             WriteLine("{0} occurred while processing command.\nMessage: {1}\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
         }
 
-        public void WriteException(Exception ex, string addText) {
-            WriteLine("{0} occurred while processing command.\nMessage: {1}\n" + addText + "\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+        public void WriteException(Exception ex, Dictionary<string,string> moreData) {
+            WriteLine("{0} occurred while processing command.\nMessage: {1}\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+            if (moreData != null) {
+                foreach (var pair in moreData) {
+                    WriteLine("{0}:\n{1}", pair.Key, pair.Value);
+                }
+            }
         }
 
         public void WriteTaskItem(string text,VSTASKPRIORITY priority,VSTASKCATEGORY category,string subcategory,

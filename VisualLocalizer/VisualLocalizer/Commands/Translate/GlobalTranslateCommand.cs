@@ -144,8 +144,7 @@ namespace VisualLocalizer.Commands {
             if (item.IsItemResX()) {
                 GlobalTranslateProjectItem r = new GlobalTranslateProjectItem(item);                
                 r.Checked = false;
-                r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath())
-                    || RDTManager.IsFileReadonly(item.GetFullPath());
+                r.Readonly = VLDocumentViewsManager.IsFileLocked(item.GetFullPath()) || RDTManager.IsFileReadonly(item.GetFullPath());
 
                 resxFiles.Add(r);
             }

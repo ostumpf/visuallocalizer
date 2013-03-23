@@ -151,7 +151,7 @@
     <Compile Include="Editor\UndoUnits\StringRowAddUndoUnit.cs" />
     <Compile Include="Editor\VsColorTable.cs" />
     <Compile Include="Extensions\ResXItemsEx.cs" />
-    <Compile Include="Gui\AbstractCheckedGridViewEx.cs" />
+    <Compile Include="Components\AbstractCheckedGridViewEx.cs" />
     <Compile Include="Gui\AbstractCodeToolWindow.cs" />
     <Compile Include="Gui\BatchInlineToolPanel.cs">
       <SubType>Component</SubType>

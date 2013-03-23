@@ -100,8 +100,6 @@ namespace VisualLocalizer.Extensions {
                 return FILETYPE.CSHARP;
             } else if (s.EndsWithAny(StringConstants.AspxExtensions)) {
                 return FILETYPE.ASPX;
-            } else if (s.EndsWithAny(StringConstants.RazorExtensions)) {
-                return FILETYPE.RAZOR;
             } else if (s.EndsWithAny(StringConstants.VBExtensions)) {
                 return FILETYPE.VB;
             } else {

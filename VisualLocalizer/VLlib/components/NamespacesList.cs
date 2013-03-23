@@ -79,18 +79,22 @@ namespace VisualLocalizer.Library {
                     }
 
                     if (codeType != null) { // class with given name exists
-                        addUsing = false;
-                        if (item.Namespace == designerNamespace) { // it's the right class
-                            if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
-                        } else { // it's a wrong class and referencing it without prefix would cause error
-                            string newAlias = GetAlias(designerNamespace);
-                            if (!string.IsNullOrEmpty(newAlias)) { // add alias
-                                referenceText.NamespacePart = newAlias;
-                            } else { // add full namespace
-                                referenceText.NamespacePart = designerNamespace;
+                        if (addUsing) { // we haven't yet found a match
+                            addUsing = false;
+                            if (item.Namespace == designerNamespace) { // it's the right class
+                                if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
+                            } else { // it's a wrong class and referencing it without prefix would cause error
+                                string newAlias = GetAlias(designerNamespace);
+                                if (!string.IsNullOrEmpty(newAlias)) { // add alias
+                                    referenceText.NamespacePart = newAlias;
+                                } else { // add full namespace
+                                    referenceText.NamespacePart = designerNamespace;
+                                }
                             }
+                        } else { // such class already exists - must use full name
+                            addUsing = false;
+                            referenceText.NamespacePart = designerNamespace;
                         }
-                        break;
                     }
 
                // }

@@ -84,7 +84,7 @@ namespace VisualLocalizer.Commands {
         public void Move(List<CodeStringResultItem> dataList, ref int errorRows) {
             Func<IList, int, CodeStringResultItem> getter = new Func<IList, int, CodeStringResultItem>((list, index) => {
                 return (list[index] as DataGridViewCheckedRow<CodeStringResultItem>).DataSourceItem;
-            });
+            });            
 
             for (int i = dataList.Count - 1; i >= 0; i--) {
                 int newItemLength = -1;
@@ -99,7 +99,9 @@ namespace VisualLocalizer.Commands {
                     if (resultItem.MoveThisItem) { // row was checked in the toolwindow                        
                         Validate(resultItem); // check that key, value and destination item was specifed and that row has no errors
                         if (!resultItem.DestinationItem.IsLoaded) {
-                            resultItem.DestinationItem.Load();
+                            resultItem.DestinationItem.Load();                            
+                        }
+                        if (!loadedResxItems.Contains(resultItem.DestinationItem)) {
                             loadedResxItems.Add(resultItem.DestinationItem);
                         }
 

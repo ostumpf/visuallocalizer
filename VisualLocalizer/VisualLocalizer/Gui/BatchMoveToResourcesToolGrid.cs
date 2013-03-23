@@ -15,15 +15,54 @@ using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Extensions;
 using System.ComponentModel;
+
 namespace VisualLocalizer.Gui {
 
+    /// <summary>
+    /// Represents grid displayed in "Batch move" tool window
+    /// </summary>
     internal sealed class BatchMoveToResourcesToolGrid : AbstractKeyValueGridView<CodeStringResultItem>, IHighlightRequestSource {
 
+        /// <summary>
+        /// Issued when row is double-clicked - causes corresponding block of code in the code window to be selected
+        /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
+
+        /// <summary>
+        /// Error displayed when no destination file is selected for a result item
+        /// </summary>
+        private const string NoDestinationFileError = "Destination file not set";
+
+        /// <summary>
+        /// Error displayed when two keys in the grid have same names but different values
+        /// </summary>
+        private const string DuplicateKeyError = "Duplicate key entry - key is already present in resource file with different value";
+
+        /// <summary>
+        /// Working set of filter criteria
+        /// </summary>
+        private Dictionary<string, AbstractLocalizationCriterion> lastSetCriteria;
+        
+        /// <summary>
+        /// Cache of possible destination ResX files - are common for each project
+        /// </summary>
         private Dictionary<Project, DataGridViewComboBoxCell.ObjectCollection> destinationItemsCache = new Dictionary<Project, DataGridViewComboBoxCell.ObjectCollection>();
+        
+        /// <summary>
+        /// Cache of ResX files - key is display name of the ResX file
+        /// </summary>
         private Dictionary<string, ResXProjectItem> resxItemsCache = new Dictionary<string, ResXProjectItem>();        
+        
+        /// <summary>
+        /// ResX files loaded in this instance (unloaded in the Unload() method)
+        /// </summary>
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
+        
+        /// <summary>
+        /// New key was created in "key" column combo box
+        /// </summary>
         private bool valueAdded = false;
+
         private BatchMoveToResourcesToolPanel parentToolPanel;
         private MenuItem destinationContextMenu;
 
@@ -33,10 +72,19 @@ namespace VisualLocalizer.Gui {
             this.MultiSelect = true;
             this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
 
+            // used to modify "key" column combo box style
             this.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(BatchMoveToResourcesToolPanel_EditingControlShowing);
+            
+            // handles adding of new key in the "key" column combo box
             this.CellValidating += new DataGridViewCellValidatingEventHandler(BatchMoveToResourcesToolPanel_CellValidating);
+            
+            // triggers HighlightRequired event
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
+
+            // called during sorting - extracts data from cells
             this.SortCompare += new DataGridViewSortCompareEventHandler(BatchMoveToResourcesToolGrid_SortCompare);
+
+            // displayes context menu
             this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
             DataGridViewKeyValueRow<CodeReferenceResultItem> template = new DataGridViewKeyValueRow<CodeReferenceResultItem>();
@@ -46,8 +94,22 @@ namespace VisualLocalizer.Gui {
             ContextMenu contextMenu = new ContextMenu();
             
             MenuItem stateMenu = new MenuItem("State");
-            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => { setCheckStateOfSelected(true); }));
-            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => { setCheckStateOfSelected(false); }));
+            stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => {
+                try {
+                    setCheckStateOfSelected(true);
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+            }));
+            stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => {
+                try {
+                    setCheckStateOfSelected(false);
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+            }));
             contextMenu.MenuItems.Add(stateMenu);
 
             destinationContextMenu = new MenuItem("Common destination");
@@ -59,13 +121,27 @@ namespace VisualLocalizer.Gui {
 
         #region public members
 
-        public void Unload() {
-            foreach (var item in loadedItems)
-                item.Unload();
-            loadedItems.Clear();
+        /// <summary>
+        /// Unloads all loaded ResX files
+        /// </summary>
+        public void UnloadResXItems() {
+            try {
+                if (loadedItems != null) {
+                    foreach (var item in loadedItems)
+                        item.Unload();
+                    loadedItems.Clear();
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// Sets content of the grid
+        /// </summary>        
         public override void SetData(List<CodeStringResultItem> value) {
+            if (value == null) throw new ArgumentNullException("value");
             base.SetData(value);
 
             this.Rows.Clear();
@@ -75,6 +151,7 @@ namespace VisualLocalizer.Gui {
             CheckedRowsCount = 0;            
             SuspendLayout();            
 
+            // set "context" column visibility according to settings
             if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
 
             foreach (CodeStringResultItem item in value) {
@@ -94,9 +171,10 @@ namespace VisualLocalizer.Gui {
 
                 DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
                 
+                // add key name suggestions
                 foreach (string key in item.GetKeyNameSuggestions()) {
                     keyCell.Items.Add(key);
-                    if (keyCell.Value == null)
+                    if (keyCell.Value == null) // add first suggestion as default value
                         keyCell.Value = key;
                 }
 
@@ -111,6 +189,8 @@ namespace VisualLocalizer.Gui {
                 row.Cells.Add(sourceCell);
 
                 DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
+
+                // add possible ResX files as destinations
                 destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem));
                 if (destinationCell.Items.Count > 0)
                     destinationCell.Value = destinationCell.Items[0].ToString();
@@ -140,61 +220,84 @@ namespace VisualLocalizer.Gui {
             this.ResumeLayout();            
             this.OnResize(null);
             
-            parentToolPanel.ResetFilterSettings();
+            parentToolPanel.ResetFilterSettings(); // reset filter according to settings
             UpdateCheckHeader();
 
+            // perform sorting
             if (SortedColumn != null) {
                 Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
             }
         }
 
-        private Dictionary<string, AbstractLocalizationCriterion> lastSetCriteria;
+        /// <summary>
+        /// Recalculates localization probability of all rows with given criteria set
+        /// </summary>
+        /// <param name="criteria">Criteria set</param>
+        /// <param name="changeChecks">True if checkboxes should be (un)checked according to localization probability value</param>
         public void RecalculateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, bool changeChecks) {
             if (Rows.Count == 0) return;
             lastSetCriteria = criteria;
 
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
-                updateLocProbability(criteria, row, changeChecks);
+                updateLocProbability(criteria, row, changeChecks); // update loc. probability for the row
             }
           
-            UpdateCheckHeader();
+            UpdateCheckHeader(); 
         }
 
+        /// <summary>
+        /// Applies given criterion action to rows satisfying given criterion
+        /// </summary>        
         public void ApplyFilterAction(AbstractLocalizationCriterion crit, LocalizationCriterionAction2 act) {
-            List<DataGridViewRow> toBeDeletedRows = new List<DataGridViewRow>();
+            if (crit == null) throw new ArgumentNullException("crit");
+
+            List<DataGridViewRow> toBeDeletedRows = new List<DataGridViewRow>(); // list of rows to be deleted
+
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
                 bool oldCheckValue = (bool)row.Cells[CheckBoxColumnName].Value;
-                bool newCheckValue = oldCheckValue;    
-                var evalResult = crit.Eval(row.DataSourceItem);
+                bool newCheckValue = oldCheckValue;     
+                var evalResult = crit.Eval(row.DataSourceItem); // criterion evaluation result
 
-                if (evalResult == true) {                                                        
-                    if (act == LocalizationCriterionAction2.CHECK || act == LocalizationCriterionAction2.CHECK_REMOVE) {
+                if (evalResult == true) { // row satisfies the criterion
+                    if (act == LocalizationCriterionAction2.CHECK || act == LocalizationCriterionAction2.CHECK_REMOVE) { // check the row
                         row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = true;
                         newCheckValue = true;
                     } else if (act == LocalizationCriterionAction2.UNCHECK) {
-                        row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = false;
+                        row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = false; // uncheck the row
                         newCheckValue = false;
                     } else if (act == LocalizationCriterionAction2.REMOVE) {
-                        toBeDeletedRows.Add(row);
+                        row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = false;
+                        toBeDeletedRows.Add(row); // add row to the list of rows to be deleted
                         newCheckValue = false;
                     }                    
-                } else if (evalResult == false && act == LocalizationCriterionAction2.CHECK_REMOVE) {
-                    toBeDeletedRows.Add(row);
+                } else if (evalResult == false && act == LocalizationCriterionAction2.CHECK_REMOVE) { 
+                    toBeDeletedRows.Add(row); 
                     newCheckValue = false;
                 }
 
-                changeRowCheckState(row, oldCheckValue, newCheckValue);
+                changeRowCheckState(row, oldCheckValue, newCheckValue); // change row check state
             }
 
-            foreach (var row in toBeDeletedRows) {
+
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in toBeDeletedRows) {
+                ConflictResolver.TryAdd(row.Key, null, row); // remove the row from conflict resolver
+                row.Cells[KeyColumnName].Tag = null;
+                row.ErrorText = null;
                 Rows.Remove(row);
-            }                       
+                
+                removedRows.Add(row); // add to the list of remebered rows
+            }
+
+            UpdateCheckHeader();
         }
 
         #endregion
 
         #region overridable members
 
+        /// <summary>
+        /// Initialize grid GUI
+        /// </summary>
         protected override void InitializeColumns() {
             base.InitializeColumns();
 
@@ -240,19 +343,33 @@ namespace VisualLocalizer.Gui {
             this.Columns.Add(column);
         }
 
+        /// <summary>
+        /// Returns result item associated with the given row, initialized with row values
+        /// </summary>        
         protected override CodeStringResultItem GetResultItemFromRow(DataGridViewRow originalRow) {
+            if (originalRow == null) throw new ArgumentNullException("originalRow");
+
             DataGridViewKeyValueRow<CodeStringResultItem> row = originalRow as DataGridViewKeyValueRow<CodeStringResultItem>;
 
             CodeStringResultItem item = row.DataSourceItem;
-            item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
+            if (CheckBoxColumnName != null && Columns.Contains(CheckBoxColumnName)) {
+                item.MoveThisItem = (bool)(row.Cells[CheckBoxColumnName].Value);
+            } else {
+                item.MoveThisItem = true;
+            }
+
             item.Key = row.Key;
             item.Value = row.Value;
 
-            string dest = (string)row.Cells[DestinationColumnName].Value;
-            if (!string.IsNullOrEmpty(dest) && resxItemsCache.ContainsKey(dest))
-                item.DestinationItem = resxItemsCache[dest];
-            else
+            if (DestinationColumnName != null && Columns.Contains(DestinationColumnName)) {
+                string dest = (string)row.Cells[DestinationColumnName].Value;
+                if (!string.IsNullOrEmpty(dest) && resxItemsCache.ContainsKey(dest))
+                    item.DestinationItem = resxItemsCache[dest];
+                else
+                    item.DestinationItem = null;
+            } else {
                 item.DestinationItem = null;
+            }
 
             item.ErrorText = row.ErrorText;
 
@@ -261,48 +378,58 @@ namespace VisualLocalizer.Gui {
         }
 
         protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
-            if (Columns[e.ColumnIndex].Name == KeyColumnName) {
-                if (valueAdded) {
-                    DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)Rows[e.RowIndex].Cells[KeyColumnName];
-                    cell.Value = cell.Items[0];
-                    valueAdded = false;
+            try {
+                if (Columns[e.ColumnIndex].Name == KeyColumnName) {
+                    if (valueAdded) { // new key name was created
+                        DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)Rows[e.RowIndex].Cells[KeyColumnName];
+                        cell.Value = cell.Items[0];
+                        valueAdded = false;
+                    }
                 }
+
+                // update localization probability
+                updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex], false);
+
+                base.OnCellEndEdit(e);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-            updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex], false);
-            base.OnCellEndEdit(e);
         }
 
+        /// <summary>
+        /// Validates given row and updates its error messages
+        /// </summary>        
         protected override void Validate(DataGridViewKeyValueRow<CodeStringResultItem> row) {
             object dest = row.Cells[DestinationColumnName].Value;
-            bool existsSameValue = false; 
-            string destError = "Destination file not set";
-            if (dest == null) {
-                row.ErrorMessages.Add(destError);
+            bool existsSameValue = false;             
+
+            if (dest == null) { // no destination file was selected
+                row.ErrorMessages.Add(NoDestinationFileError);
             } else {
-                row.ErrorMessages.Remove(destError);
+                row.ErrorMessages.Remove(NoDestinationFileError);
 
                 ResXProjectItem resxItem = resxItemsCache[dest.ToString()];
                 if (!resxItem.IsLoaded) {
-                    resxItem.Load();
-                    VLDocumentViewsManager.SetFileReadonly(resxItem.InternalProjectItem.GetFullPath(), true);
+                    resxItem.Load(); // load the ResX file
+                    VLDocumentViewsManager.SetFileReadonly(resxItem.InternalProjectItem.GetFullPath(), true); // lock it
                     loadedItems.Add(resxItem);
                 }
 
                 string key = row.Key;
                 string value = row.Value;
-                
-                string errorText = "Duplicate key entry - key is already present in resource file with different value";
-                CONTAINS_KEY_RESULT keyConflict = resxItem.GetKeyConflictType(key, value);
+                                
+                CONTAINS_KEY_RESULT keyConflict = resxItem.GetKeyConflictType(key, value); // get conflict type
                 switch (keyConflict) {
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:                        
-                        row.ErrorMessages.Remove(errorText);
+                        row.ErrorMessages.Remove(DuplicateKeyError);
                         existsSameValue=true;
                         break;
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE:                        
-                        row.ErrorMessages.Add(errorText);
+                        row.ErrorMessages.Add(DuplicateKeyError);
                         break;
                     case CONTAINS_KEY_RESULT.DOESNT_EXIST:                        
-                        row.ErrorMessages.Remove(errorText);
+                        row.ErrorMessages.Remove(DuplicateKeyError);
                         break;
                 }
 
@@ -311,10 +438,10 @@ namespace VisualLocalizer.Gui {
                 if (originalValue == null) row.Cells[KeyColumnName].Tag = key;
             }            
 
-            row.UpdateErrorSetDisplay();
+            row.UpdateErrorSetDisplay(); // update error messages
 
             if (row.ErrorMessages.Count == 0) {
-                if (existsSameValue) {
+                if (existsSameValue) { // set background color according to conflict type
                     row.DefaultCellStyle.BackColor = ExistingKeySameValueColor;
                 } else {
                     row.DefaultCellStyle.BackColor = Color.White;
@@ -324,12 +451,15 @@ namespace VisualLocalizer.Gui {
         
         #endregion      
 
+        /// <summary>
+        /// Recalculate localization probability for given row, using given criteria
+        /// </summary>        
         private void updateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row, bool changeChecks) {
             int newLocProb = GetResultItemFromRow(row).GetLocalizationProbability(criteria);
             row.Cells[LocProbColumnName].Tag = newLocProb;
             row.Cells[LocProbColumnName].Value = newLocProb + "%";
 
-            if (changeChecks) {
+            if (changeChecks) { // row should be (un)checked according to localization probability 
                 bool isChecked = (bool)row.Cells[CheckBoxColumnName].Value;
                 bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
@@ -346,7 +476,12 @@ namespace VisualLocalizer.Gui {
             }
         }
         
+        /// <summary>
+        /// Returns possible destination files for given project item
+        /// </summary>        
         private DataGridViewComboBoxCell.ObjectCollection CreateDestinationOptions(DataGridViewComboBoxCell cell, ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
             if (!destinationItemsCache.ContainsKey(item.ContainingProject)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
                 foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(item, true, false)) {
@@ -362,6 +497,11 @@ namespace VisualLocalizer.Gui {
             return destinationItemsCache[item.ContainingProject];
         }
                 
+        /// <summary>
+        /// Used to determine whether new value was added to "key" column combo box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BatchMoveToResourcesToolPanel_CellValidating(object sender, DataGridViewCellValidatingEventArgs e) {
             valueAdded = false;
             if (Columns[e.ColumnIndex].Name == KeyColumnName) {
@@ -373,6 +513,10 @@ namespace VisualLocalizer.Gui {
             }            
         }
 
+        /// <summary>
+        /// Called during sort process, extracts compare data from cells and compares them; this needs to be done only for "localization probability" column,
+        /// other columns are handled automatically
+        /// </summary>        
         private void BatchMoveToResourcesToolGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e) {
             if (e.Column.Name == LocProbColumnName) {
                 int val1;
@@ -385,53 +529,77 @@ namespace VisualLocalizer.Gui {
                 e.Handled = true;
             }
         }
-
+        
         protected override bool ProcessDataGridViewKey(KeyEventArgs e) {            
             if (this.IsCurrentCellInEditMode) {
+                // prevents GridView default actions for these keys
                 if (e.KeyData == Keys.Left || e.KeyData == Keys.Right || e.KeyData==Keys.Home || e.KeyData==Keys.End) {
                     return false;
                 } else return base.ProcessDataGridViewKey(e);
             } else return base.ProcessDataGridViewKey(e);
         }
 
-        private void BatchMoveToResourcesToolPanel_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e) {
+        /// <summary>
+        /// Modifies display of "key" column combo box
+        /// </summary>        
+        private void BatchMoveToResourcesToolPanel_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e) {            
             if (Columns[CurrentCell.ColumnIndex].Name == KeyColumnName && e.Control is ComboBox) {
                 ComboBox box = e.Control as ComboBox;
                 box.DropDownStyle = ComboBoxStyle.DropDown;                     
             }                        
         }        
 
+        /// <summary>
+        /// Context menu is shown
+        /// </summary>        
         private void ContextMenu_Popup(object sender, EventArgs e) {
-            destinationContextMenu.MenuItems.Clear();
-            if (SelectedRows.Count == 0) return;
+            try {
+                destinationContextMenu.MenuItems.Clear(); // remove all possible destinations items
+                if (SelectedRows.Count == 0) return;
 
-            HashSet<string> options = new HashSet<string>();
-            var destCell = SelectedRows[0].Cells[DestinationColumnName] as DataGridViewComboBoxCell;
-            foreach (string dest in destCell.Items) {
-                if (!string.IsNullOrEmpty(dest)) {
-                    options.Add(dest);
+                // sets possible destinations to intersection of possible destinations of all selected rows
+                HashSet<string> options = new HashSet<string>();
+                var destCell = SelectedRows[0].Cells[DestinationColumnName] as DataGridViewComboBoxCell;
+                foreach (string dest in destCell.Items) {
+                    if (!string.IsNullOrEmpty(dest)) {
+                        options.Add(dest);
+                    }
                 }
-            }
-            
-            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
-                DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)row.Cells[DestinationColumnName];
-                options.IntersectWith(cell.Items.Cast<string>());
-            }
 
-            destinationContextMenu.Enabled = options.Count > 0;
-            foreach (string item in options) {
-                MenuItem menuItem = new MenuItem(item);
-                menuItem.Tag = resxItemsCache[item];
-                menuItem.Click += new EventHandler((o, a) => { setDestinationOfSelected((ResXProjectItem)(o as MenuItem).Tag); });                
-                destinationContextMenu.MenuItems.Add(menuItem);
+                foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
+                    DataGridViewComboBoxCell cell = (DataGridViewComboBoxCell)row.Cells[DestinationColumnName];
+                    options.IntersectWith(cell.Items.Cast<string>());
+                }
+
+                // add the intersection to the menu
+                destinationContextMenu.Enabled = options.Count > 0;
+                foreach (string item in options) {
+                    MenuItem menuItem = new MenuItem(item);
+                    menuItem.Tag = resxItemsCache[item];
+                    menuItem.Click += new EventHandler((o, a) => { setDestinationOfSelected((ResXProjectItem)(o as MenuItem).Tag); });
+                    destinationContextMenu.MenuItems.Add(menuItem);
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }        
 
+        /// <summary>
+        /// Sets destination file of selected rows to given ResX file
+        /// </summary>        
         private void setDestinationOfSelected(ResXProjectItem item) {
-            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
-                row.Cells[DestinationColumnName].Value = item.ToString();
-                Validate(row);
-            }            
+            try {
+                if (item == null) throw new ArgumentNullException("item");
+
+                foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in SelectedRows) {
+                    row.Cells[DestinationColumnName].Value = item.ToString();
+                    Validate(row);
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string CheckBoxColumnName {
