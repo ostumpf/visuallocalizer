@@ -8,10 +8,25 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Specifies type of ASP .NET output elements
     /// </summary>
     public enum OutputElementKind { 
-        PLAIN, // <%= 
-        HTML_ESCAPED, // <%:
-        EXPRESSION, // <%$
-        BIND // <$#
+        /// <summary>
+        /// Blocks starting with <%=  
+        /// </summary>
+        PLAIN,
+
+        /// <summary>
+        /// Blocks starting with <%:  
+        /// </summary>
+        HTML_ESCAPED,
+
+        /// <summary>
+        /// Blocks starting with <%$  
+        /// </summary>
+        EXPRESSION,
+
+        /// <summary>
+        /// Blocks starting with <%#  
+        /// </summary>
+        BIND
     }
 
     /// <summary>

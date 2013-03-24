@@ -356,7 +356,7 @@ namespace VisualLocalizer.Components {
         /// Adds few lines of code as a context to the result item
         /// </summary>        
         private void AddContextToItem(AbstractResultItem item) {
-            if (!Settings.SettingsObject.Instance.ShowFilterContext) return;
+            if (!Settings.SettingsObject.Instance.ShowContextColumn) return;
             item.ContextRelativeLine = 0;
 
             int currentPos = item.AbsoluteCharOffset;

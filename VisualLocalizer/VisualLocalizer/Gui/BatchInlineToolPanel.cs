@@ -21,7 +21,7 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
 
-        public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowFilterContext) {
+        public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowContextColumn) {
             this.MultiSelect = true;
             this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
@@ -110,7 +110,7 @@ namespace VisualLocalizer.Gui {
             this.SuspendLayout();
 
             // adjust "context" column visibility according to the settings
-            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
+            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
 
             // create new row for each result item
             foreach (var item in value) {

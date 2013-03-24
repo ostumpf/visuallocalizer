@@ -107,7 +107,7 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         protected virtual Trie<CodeReferenceTrieElement> GetActualTrie() {
             if (!trieCache.ContainsKey(currentlyProcessedItem.ContainingProject)) {
-                var resxItems = currentlyProcessedItem.ContainingProject.GetResXItemsAround(null, false, true);
+                var resxItems = currentlyProcessedItem.ContainingProject.GetResXItemsAround(false, true);
                 trieCache.Add(currentlyProcessedItem.ContainingProject, resxItems.CreateTrie());
             }
             return trieCache[currentlyProcessedItem.ContainingProject]; 

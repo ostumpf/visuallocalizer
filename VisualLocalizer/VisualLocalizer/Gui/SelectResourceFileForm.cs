@@ -19,9 +19,20 @@ namespace VisualLocalizer.Gui {
     /// Represents possible results of this dialog
     /// </summary>
     internal enum SELECT_RESOURCE_FILE_RESULT { 
-        OK, // new key will be added to the resource file
-        OVERWRITE, // such key already exists, it will be overwritten with new provided value
-        INLINE // existing key will be referenced
+        /// <summary>
+        /// New key will be added to the resource file
+        /// </summary>
+        OK, 
+
+        /// <summary>
+        /// Such key already exists, it will be overwritten with new provided value
+        /// </summary>
+        OVERWRITE, 
+
+        /// <summary>
+        /// Existing key will be referenced
+        /// </summary>
+        INLINE 
     }
 
     /// <summary>
@@ -73,7 +84,7 @@ namespace VisualLocalizer.Gui {
            
             valueBox.Text = resultItem.Value;
             // add possible destination files
-            foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(resultItem.SourceItem, true, false)) {
+            foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(true, false)) {
                 comboBox.Items.Add(item);
             }
 

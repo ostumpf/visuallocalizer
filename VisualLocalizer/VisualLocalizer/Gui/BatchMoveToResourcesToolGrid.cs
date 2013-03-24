@@ -67,7 +67,7 @@ namespace VisualLocalizer.Gui {
         private MenuItem destinationContextMenu;
 
         public BatchMoveToResourcesToolGrid(BatchMoveToResourcesToolPanel panel)
-            : base(SettingsObject.Instance.ShowFilterContext, new DestinationKeyValueConflictResolver(true,true)) {
+            : base(SettingsObject.Instance.ShowContextColumn, new DestinationKeyValueConflictResolver(true,true)) {
             this.parentToolPanel = panel;
             this.MultiSelect = true;
             this.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
@@ -117,7 +117,10 @@ namespace VisualLocalizer.Gui {
             contextMenu.Popup += new EventHandler(ContextMenu_Popup);
 
             this.ContextMenu = contextMenu;
-        }        
+
+            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+        }
+        
 
         #region public members
 
@@ -152,7 +155,7 @@ namespace VisualLocalizer.Gui {
             SuspendLayout();            
 
             // set "context" column visibility according to settings
-            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowFilterContext;
+            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
 
             foreach (CodeStringResultItem item in value) {
                 DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
@@ -466,7 +469,20 @@ namespace VisualLocalizer.Gui {
 
                 changeRowCheckState(row, isChecked, willBeChecked);
             }
-        }    
+        }
+
+        /// <summary>
+        /// Called when settings "key name policy" changed - must re-evaluate keys
+        /// </summary>
+        private void Instance_RevalidationRequested() {
+            if (!this.Visible) return;
+
+            foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
+                if (row.IsNewRow) continue;
+
+                Validate(row);
+            }
+        }        
 
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
             if (HighlightRequired != null && e.RowIndex >= 0) {
@@ -484,7 +500,7 @@ namespace VisualLocalizer.Gui {
 
             if (!destinationItemsCache.ContainsKey(item.ContainingProject)) {                
                 DataGridViewComboBoxCell.ObjectCollection resxItems = new DataGridViewComboBoxCell.ObjectCollection(cell);
-                foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(item, true, false)) {
+                foreach (ResXProjectItem projectItem in item.ContainingProject.GetResXItemsAround(true, false)) {
                     if (!string.IsNullOrEmpty(projectItem.Class) && !string.IsNullOrEmpty(projectItem.Namespace)) {
                         string key = projectItem.ToString();
                         resxItems.Add(key);

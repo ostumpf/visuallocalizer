@@ -8,36 +8,203 @@ using EnvDTE;
 using System.Text.RegularExpressions;
 
 namespace VisualLocalizer.Settings {
-    internal enum LocalizationCriterionAction { FORCE_ENABLE, FORCE_DISABLE, VALUE, IGNORE }
-    internal enum LocalizationCriterionAction2 { CHECK, CHECK_REMOVE, UNCHECK, REMOVE }
-    internal enum LocalizationCriterionTarget { VALUE, NAMESPACE_NAME, METHOD_NAME, CLASS_NAME, ELEMENT_PREFIX, ELEMENT_NAME, VARIABLE_NAME }
-    internal enum LocalizationCriterionPredicate { MATCHES, DOESNT_MATCH, IS_NULL, NO_LETTERS, ONLY_CAPS, NO_WHITESPACE }
+
+    /// <summary>
+    /// Set of actions assignable to criteria in the Tools/Options
+    /// </summary>
+    internal enum LocalizationCriterionAction { 
+        /// <summary>
+        /// Force localize
+        /// </summary>
+        FORCE_ENABLE, 
+
+        /// <summary>
+        /// Force not localize
+        /// </summary>
+        FORCE_DISABLE, 
+        
+        /// <summary>
+        /// Set specific value affecting localization probability calculation
+        /// </summary>
+        VALUE, 
+        
+        /// <summary>
+        /// Ignore this criterion
+        /// </summary>
+        IGNORE
+    }
+
+    /// <summary>
+    /// Set of actions assignable to criteria in the filter panel
+    /// </summary>
+    internal enum LocalizationCriterionAction2 { 
+        /// <summary>
+        /// Check rows satisfying the criterion
+        /// </summary>
+        CHECK, 
+
+        /// <summary>
+        /// Check rows satisfying the criterion and remove the rest
+        /// </summary>
+        CHECK_REMOVE, 
+
+        /// <summary>
+        /// Uncheck rows satisfying the criterion
+        /// </summary>
+        UNCHECK,
+ 
+        /// <summary>
+        /// Remove rows satisfying the criterion
+        /// </summary>
+        REMOVE 
+    }
+
+    /// <summary>
+    /// Represents target of evaluation - which part of the result item should be tested
+    /// </summary>
+    internal enum LocalizationCriterionTarget { 
+        /// <summary>
+        /// Value of the string literal
+        /// </summary>
+        VALUE, 
+
+        /// <summary>
+        /// Name of the namespace the literal lies in
+        /// </summary>
+        NAMESPACE_NAME, 
+
+        /// <summary>
+        /// Name of the method the literal lies in
+        /// </summary>
+        METHOD_NAME, 
+
+        /// <summary>
+        /// Name of the class the literal lies in
+        /// </summary>
+        CLASS_NAME, 
+
+        /// <summary>
+        /// Element's prefix, if the result item comes from ASP .NET element
+        /// </summary>
+        ELEMENT_PREFIX,
+
+        /// <summary>
+        /// Element's name, if the result item comes from ASP .NET element
+        /// </summary>
+        ELEMENT_NAME,
+
+        /// <summary>
+        /// Name of the variable the string literal initializes
+        /// </summary>
+        VARIABLE_NAME 
+    }
     
+    /// <summary>
+    /// Predicate for custom criteria
+    /// </summary>
+    internal enum LocalizationCriterionPredicate { 
+        /// <summary>
+        /// Target matches given regular expression
+        /// </summary>
+        MATCHES,
+
+        /// <summary>
+        /// Target doesn't match given regular expression
+        /// </summary>
+        DOESNT_MATCH,
+
+        /// <summary>
+        /// Target is null
+        /// </summary>
+        IS_NULL,
+
+        /// <summary>
+        /// Target contains no letters
+        /// </summary>
+        NO_LETTERS,
+
+        /// <summary>
+        /// Target contains only CAPITAL letters
+        /// </summary>
+        ONLY_CAPS,
+
+        /// <summary>
+        /// Target doesn't contain any whitespace characters
+        /// </summary>
+        NO_WHITESPACE 
+    }
+    
+    /// <summary>
+    /// Base class for localization criteria
+    /// </summary>
     internal abstract class AbstractLocalizationCriterion {
+        /// <summary>
+        /// Maximal reachable localization probability
+        /// </summary>
         public const int MAX_LOC_PROBABILITY = 100;
+
+        /// <summary>
+        /// Treshold value - result items having LP at least this value will be checked when added to batch move toolwindow's grid
+        /// </summary>
         public const int TRESHOLD_LOC_PROBABILITY = 50;
 
+        /// <summary>
+        /// Action to take when this criterion is met
+        /// </summary>
         public LocalizationCriterionAction Action { get; set; }
+
+        /// <summary>
+        /// Parameter for "Set value" action
+        /// </summary>
         public int Weight { get; set; }
+
+        /// <summary>
+        /// Name of this criterion
+        /// </summary>
         public string Name { get; set; }
 
         protected AbstractLocalizationCriterion() { }
 
+        /// <summary>
+        /// Creates new instance
+        /// </summary>        
         public AbstractLocalizationCriterion(string name, LocalizationCriterionAction action, int weight) {
+            if (name == null) throw new ArgumentNullException("name");
+
             this.Action = action;
             this.Weight = weight;
             this.Name = name;
         }
 
+        /// <summary>
+        /// Evaluates given result item
+        /// </summary>        
+        /// <returns>Null if the criterion is not relevant for the result item (testing element prefix for C# string literal...), true if it is relevant and the result item satisfies the condition, false otherwise</returns>
         public abstract bool? Eval(CodeStringResultItem resultItem);        
+
+        /// <summary>
+        /// Returns human-readeble description of this criterion
+        /// </summary>
         public abstract string Description { get; protected set; }
+
+        /// <summary>
+        /// Creates deep copy
+        /// </summary>        
         public abstract AbstractLocalizationCriterion DeepCopy();
 
+        /// <summary>
+        /// Returns string that is used to save this criterion in the registry
+        /// </summary>        
         public virtual string ToRegData() {
             return string.Format("{0}/{1}", (int)Action, Weight);
         }
 
+        /// <summary>
+        /// Treats given string as a result of ToRegData() method; parses it and sets values accordingly 
+        /// </summary>        
         public virtual void FromRegData(string data) {
+            if (data == null) throw new ArgumentNullException("data");
+
             string[] a = data.Split('/');
             if (a.Length < 2) throw new Exception("Invalid registry data '" + data + "'");
 
@@ -53,18 +220,28 @@ namespace VisualLocalizer.Settings {
         }
     }
 
-    internal sealed class LocalizationCriterion : AbstractLocalizationCriterion {        
+    /// <summary>
+    /// Represents common criterion - these are hard-coded and user can edit only their actions
+    /// </summary>
+    internal sealed class LocalizationCommonCriterion : AbstractLocalizationCriterion {        
+        /// <summary>
+        /// Predicate evaluating given result item
+        /// </summary>
         public Func<CodeStringResultItem, bool?> Predicate { get; private set; }
 
-        private LocalizationCriterion() { }
+        private LocalizationCommonCriterion() { }
 
-        public LocalizationCriterion(string name, string description, LocalizationCriterionAction option, int weight, Func<CodeStringResultItem, bool?> predicate)
-            : base(name, option, weight) {     
+        public LocalizationCommonCriterion(string name, string description, LocalizationCriterionAction option, int weight, Func<CodeStringResultItem, bool?> predicate)
+            : base(name, option, weight) {
+            if (description == null) throw new ArgumentNullException("description");
+            if (predicate == null) throw new ArgumentNullException("predicate");
+
             this.Description = description;
             this.Predicate = predicate;
         }
 
         public override bool? Eval(CodeStringResultItem resultItem) {
+            if (resultItem == null) throw new ArgumentNullException("resultItem");
             return Predicate(resultItem);
         }
        
@@ -79,20 +256,35 @@ namespace VisualLocalizer.Settings {
         }
 
         public override AbstractLocalizationCriterion DeepCopy() {
-            LocalizationCriterion crit = new LocalizationCriterion();
+            LocalizationCommonCriterion crit = new LocalizationCommonCriterion();
             internalDeepCopy(crit);
             crit.Predicate = Predicate;
             return crit;
         }
     }
 
+    /// <summary>
+    /// Represents custom criterion - these are created by the user in the Tools/Options settings
+    /// </summary>
     internal sealed class LocalizationCustomCriterion : AbstractLocalizationCriterion {
+
+        /// <summary>
+        /// Regular expression to test (if relevant)
+        /// </summary>
         public string Regex { get; set; }        
+
+        /// <summary>
+        /// Target of the evaluation (what should be evaluated - method name, class name, value...)
+        /// </summary>
         public LocalizationCriterionTarget Target { get; set; }
+
+        /// <summary>
+        /// Predicate for evaluation (matches, doesn't match, is null...)
+        /// </summary>
         public LocalizationCriterionPredicate Predicate { get; set; }
         private static Random rnd = new Random();
 
-        protected LocalizationCustomCriterion() {             
+        protected LocalizationCustomCriterion() {                         
         }
 
         public LocalizationCustomCriterion(LocalizationCriterionAction action, int weight)
@@ -100,6 +292,8 @@ namespace VisualLocalizer.Settings {
         }
 
         public override bool? Eval(CodeStringResultItem resultItem) {
+            if (resultItem == null) throw new ArgumentNullException("resultItem");
+
             bool relevant;
             string testString = getTarget(resultItem, out relevant);
             if (!relevant) return null;
@@ -141,6 +335,11 @@ namespace VisualLocalizer.Settings {
             return null;
         }
 
+        /// <summary>
+        /// Returns target property's value
+        /// </summary>
+        /// <param name="resultItem">Result item from which the value is taken</param>
+        /// <param name="relevant">OUT - true if the target is relevant for the result item</param>        
         private string getTarget(CodeStringResultItem resultItem, out bool relevant) {
             string testString = null;
             NetStringResultItem cResItem = resultItem as NetStringResultItem;
@@ -153,33 +352,33 @@ namespace VisualLocalizer.Settings {
                     testString = resultItem.Value;
                     break;
                 case LocalizationCriterionTarget.NAMESPACE_NAME:
-                    if (cResItem == null) return null;
+                    if (cResItem == null) return null; // ASP .NET result items don't have namespaces
                     relevant = true;
                     CodeNamespace nmspc = cResItem.NamespaceElement;
                     if (nmspc != null) testString = nmspc.FullName;
                     break;
                 case LocalizationCriterionTarget.METHOD_NAME:
-                    if (cResItem == null) return null;
+                    if (cResItem == null) return null; // ASP .NET result items don't have methods
                     relevant = true;
                     testString = cResItem.MethodElementName;
                     break;
                 case LocalizationCriterionTarget.CLASS_NAME:
-                    if (cResItem == null) return null;
+                    if (cResItem == null) return null; // ASP .NET result items don't have classes
                     relevant = true;
                     testString = cResItem.ClassOrStructElementName;
                     break;
                 case LocalizationCriterionTarget.ELEMENT_NAME:
-                    if (aResItem == null) return null;
+                    if (aResItem == null) return null;  // C# or VB result items don't have element names
                     relevant = true;
                     testString = aResItem.ElementName;
                     break;
                 case LocalizationCriterionTarget.ELEMENT_PREFIX:
-                    if (aResItem == null) return null;
+                    if (aResItem == null) return null;  // C# or VB result items don't have element prefixes
                     relevant = true;
                     testString = aResItem.ElementPrefix;
                     break;
                 case LocalizationCriterionTarget.VARIABLE_NAME:
-                    if (cResItem == null) return null;
+                    if (cResItem == null) return null; ; // ASP .NET result items don't initialize variables
                     relevant = true;
                     testString = cResItem.VariableElementName;
                     break;
@@ -229,6 +428,9 @@ namespace VisualLocalizer.Settings {
         }
     }
 
+    /// <summary>
+    /// Extension class for translating localization enums into human readeble form
+    /// </summary>
     static class LocalizationEnumsTranslations {
         public static string ToHumanForm(this LocalizationCriterionAction act) {
             switch (act) {
@@ -295,6 +497,8 @@ namespace VisualLocalizer.Settings {
                     return "uncheck rows";
                 case LocalizationCriterionAction2.REMOVE:
                     return "remove rows";
+                default:
+                    throw new Exception("Unknown LocalizationCriterionAction2: " + act);
             }
             return null;
         }

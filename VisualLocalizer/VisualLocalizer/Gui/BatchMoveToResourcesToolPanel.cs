@@ -161,7 +161,7 @@ namespace VisualLocalizer.Gui {
             filterPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             // add criteria boxes
-            foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
+            foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCommonCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
                 addCriterionOption(crit);
             }      
         }
@@ -225,7 +225,7 @@ namespace VisualLocalizer.Gui {
                 ignoreLocRecalculation = true; // prevent changes in checkboxes to trigger localization probability recalculation
 
                 // update the actions
-                foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
+                foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCommonCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
                     filterCriteriaCopy[crit.Name].Action = crit.Action;
                     (filterPanel.Controls[crit.Name + "box"] as ComboBox).SelectedIndex = (int)crit.Action;
                 }

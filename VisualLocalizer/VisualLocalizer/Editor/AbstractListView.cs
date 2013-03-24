@@ -389,7 +389,7 @@ namespace VisualLocalizer.Editor {
             
             if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
-                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(null, false, true));
+                resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(false, true));
                 
                 if (item.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;

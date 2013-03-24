@@ -25,7 +25,22 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Enumeration used in GetKeyConflictType - represents possible relations between a new key and existing data.
     /// </summary>
-    public enum CONTAINS_KEY_RESULT { EXISTS_WITH_SAME_VALUE, EXISTS_WITH_DIFF_VALUE, DOESNT_EXIST }
+    public enum CONTAINS_KEY_RESULT { 
+        /// <summary>
+        /// Key already exists in the file and has the same value
+        /// </summary>
+        EXISTS_WITH_SAME_VALUE, 
+
+        /// <summary>
+        /// Key already exists in the file but has different value
+        /// </summary>
+        EXISTS_WITH_DIFF_VALUE, 
+
+        /// <summary>
+        /// Key is not present in the file
+        /// </summary>
+        DOESNT_EXIST 
+    }
 
     /// <summary>
     /// Represents ResX file in Solution Explorer's hierarchy.

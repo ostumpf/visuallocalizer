@@ -7,6 +7,10 @@ using System.Windows.Forms;
 using System.Drawing;
 
 namespace VisualLocalizer.Settings {
+
+    /// <summary>
+    /// Represents parent of Editor and Filter settings managers (parent node in Tools/Options)
+    /// </summary>
     internal sealed class GeneralSettingsManager : AbstractSettingsManager {
 
         private bool propertyChangedHooked = false;
@@ -14,10 +18,11 @@ namespace VisualLocalizer.Settings {
         private EditorSettingsManager editorManager = new EditorSettingsManager();
 
         public override void LoadSettingsFromStorage() {
-              if (!propertyChangedHooked) {
-                  SettingsObject.Instance.PropertyChanged += new Action<CHANGE_CATEGORY>(Instance_PropertyChanged);
-                  propertyChangedHooked = true;
-              }
+            // add PropertyChanged handler - save changed settings category
+            if (!propertyChangedHooked) {
+                SettingsObject.Instance.PropertyChanged += new Action<CHANGE_CATEGORY>(Instance_PropertyChanged);
+                propertyChangedHooked = true;
+            }
 
              filterManager.LoadSettingsFromStorage();
              editorManager.LoadSettingsFromStorage();

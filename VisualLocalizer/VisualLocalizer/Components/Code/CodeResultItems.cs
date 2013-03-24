@@ -100,25 +100,25 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns criteria displayed in toolwindow's filter, used to calculate localization probability
         /// </summary>        
-        public static Dictionary<string, LocalizationCriterion> GetCriteria() {
-            var localizationCriteriaList = new Dictionary<string, LocalizationCriterion>();
+        public static Dictionary<string, LocalizationCommonCriterion> GetCriteria() {
+            var localizationCriteriaList = new Dictionary<string, LocalizationCommonCriterion>();
 
-            var designerFilePredicate = new LocalizationCriterion("ComesFromDesignerFile",
+            var designerFilePredicate = new LocalizationCommonCriterion("ComesFromDesignerFile",
                 "String comes from designer file",
                 LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.ComesFromDesignerFile; });
 
-            var clientCommentPredicate = new LocalizationCriterion("ComesFromClientComment",
+            var clientCommentPredicate = new LocalizationCommonCriterion("ComesFromClientComment",
                 "String is located in commented code",
                 LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.ComesFromClientComment; });
 
-            var localizableFalsePredicate = new LocalizationCriterion("IsWithinLocalizableFalse",
+            var localizableFalsePredicate = new LocalizationCommonCriterion("IsWithinLocalizableFalse",
                 "String is within Localizable[false] block",
                 LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.IsWithinLocalizableFalse; });
 
-            var unlocalizableCommentPredicate = new LocalizationCriterion("IsMarkedWithUnlocalizableComment",
+            var unlocalizableCommentPredicate = new LocalizationCommonCriterion("IsMarkedWithUnlocalizableComment",
                 "String is marked with VL_NO_LOC",
                 LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.IsMarkedWithUnlocalizableComment; });
@@ -303,10 +303,10 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns criteria displayed in toolwindow's filter, used to calculate localization probability
         /// </summary>      
-        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+        public static new Dictionary<string, LocalizationCommonCriterion> GetCriteria() {
             var localizationCriteriaList = AbstractResultItem.GetCriteria();
 
-            var wasVerbatimPredicate = new LocalizationCriterion("WasVerbatim",
+            var wasVerbatimPredicate = new LocalizationCommonCriterion("WasVerbatim",
                 "Is verbatim string",
                 LocalizationCriterionAction.VALUE, 10, 
                 (item) => { return item.WasVerbatim; });
@@ -358,7 +358,7 @@ namespace VisualLocalizer.Components {
             SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);
         }
 
-        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+        public static new Dictionary<string, LocalizationCommonCriterion> GetCriteria() {
             return CodeStringResultItem.GetCriteria();
         }
     }
@@ -508,35 +508,35 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns criteria displayed in toolwindow's filter, used to calculate localization probability
         /// </summary>   
-        public static new Dictionary<string, LocalizationCriterion> GetCriteria() {
+        public static new Dictionary<string, LocalizationCommonCriterion> GetCriteria() {
             var localizationCriteriaList = CodeStringResultItem.GetCriteria();
 
-            var comesFromElementPredicate = new LocalizationCriterion("ComesFromElement",
+            var comesFromElementPredicate = new LocalizationCommonCriterion("ComesFromElement",
                 "String comes from ASP .NET element attribute",
                 LocalizationCriterionAction.VALUE, 20,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromElement; });
 
-            var comesFromInlineExpressionPredicate = new LocalizationCriterion("ComesFromInlineExpression",
+            var comesFromInlineExpressionPredicate = new LocalizationCommonCriterion("ComesFromInlineExpression",
                 "String comes from ASP .NET inline expression",
                 LocalizationCriterionAction.FORCE_ENABLE, 0,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromInlineExpression; });
 
-            var localizabilityProvedPredicate = new LocalizationCriterion("LocalizabilityProved",
+            var localizabilityProvedPredicate = new LocalizationCommonCriterion("LocalizabilityProved",
                 "ASP.NET attribute's type is String",
                 LocalizationCriterionAction.VALUE, 70,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.LocalizabilityProved; });
 
-            var comesFromPlainTextPredicate = new LocalizationCriterion("ComesFromPlainText",
+            var comesFromPlainTextPredicate = new LocalizationCommonCriterion("ComesFromPlainText",
                 "String literal comes from ASP .NET plain text",
                 LocalizationCriterionAction.VALUE, 20,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromPlainText; });
 
-            var comesFromDirectivePredicate = new LocalizationCriterion("ComesFromDirective",
+            var comesFromDirectivePredicate = new LocalizationCommonCriterion("ComesFromDirective",
                 "String literal comes from ASP .NET directive",
                 LocalizationCriterionAction.VALUE, -10,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromDirective; });
 
-            var comesFromCodeBlockPredicate = new LocalizationCriterion("ComesFromCodeBlock",
+            var comesFromCodeBlockPredicate = new LocalizationCommonCriterion("ComesFromCodeBlock",
                 "String literal comes from ASP .NET code block",
                 LocalizationCriterionAction.VALUE, 0,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromCodeBlock; });

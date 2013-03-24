@@ -33,7 +33,7 @@ namespace VisualLocalizer.Commands {
                 CodeNamespace codeNamespace = codeClass.GetNamespace();
 
                 // get list of all references in given code block
-                List<VBCodeReferenceResultItem> items = VBCodeReferenceLookuper.Instance.LookForReferences(currentDocument.ProjectItem, text, startPoint, currentDocument.ProjectItem.ContainingProject.GetResXItemsAround(null, false, true).CreateTrie(),
+                List<VBCodeReferenceResultItem> items = VBCodeReferenceLookuper.Instance.LookForReferences(currentDocument.ProjectItem, text, startPoint, currentDocument.ProjectItem.ContainingProject.GetResXItemsAround(false, true).CreateTrie(),
                     codeNamespace.GetUsedNamespaces(currentDocument.ProjectItem), false, currentDocument.ProjectItem.ContainingProject, null);
 
                 // select the reference located in current selection (if any)

@@ -353,7 +353,7 @@ namespace VisualLocalizer.Editor {
             ResXProjectItem resxItem = Editor.ProjectItem;
             if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
                 Project containingProject = resxItem.InternalProjectItem.ContainingProject;
-                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(null, false, true));
+                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(false, true));
 
                 List<Project> projects = new List<Project>();
                 

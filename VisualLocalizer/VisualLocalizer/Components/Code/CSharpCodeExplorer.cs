@@ -200,7 +200,7 @@ namespace VisualLocalizer.Components {
         /// Adds context to the result item, coming from code block starting at given position
         /// </summary> 
         protected void AddContextToItem(AbstractResultItem item, EditPoint2 editPoint) {
-            if (!Settings.SettingsObject.Instance.ShowFilterContext) return;
+            if (!Settings.SettingsObject.Instance.ShowContextColumn) return;
 
             StringBuilder context = new StringBuilder();
             // indices +1 !!

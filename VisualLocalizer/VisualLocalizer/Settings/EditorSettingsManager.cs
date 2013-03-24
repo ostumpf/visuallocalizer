@@ -12,11 +12,33 @@ using System.Drawing;
 using VisualLocalizer.Gui;
 using System.Diagnostics;
 using VisualLocalizer.Translate;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Settings {
 
-    internal enum BAD_KEY_NAME_POLICY { IGNORE_COMPLETELY, IGNORE_ON_NO_DESIGNER, WARN_ALWAYS }
+    /// <summary>
+    /// Options how to handle invalid key names in ResX files
+    /// </summary>
+    internal enum BAD_KEY_NAME_POLICY { 
+        /// <summary>
+        /// Ignore possible errors
+        /// </summary>
+        IGNORE_COMPLETELY, 
 
+        /// <summary>
+        /// Ignore the errors, if given ResX file has no custom designer file
+        /// </summary>
+        IGNORE_ON_NO_DESIGNER, 
+
+        /// <summary>
+        /// Report the error
+        /// </summary>
+        WARN_ALWAYS 
+    }
+
+    /// <summary>
+    /// Represents page of Editor settings in Tools/Options and also handles saving the EDITOR category of settings 
+    /// </summary>
     [Guid("82B0FBD1-ACF3-4974-B83F-2B06B4F839F0")]
     internal sealed class EditorSettingsManager : AbstractSettingsManager {
 
@@ -152,170 +174,190 @@ namespace VisualLocalizer.Settings {
 
         #region DialogPage
 
+        /// <summary>
+        /// Returns the content control
+        /// </summary>
         protected override IWin32Window Window {
             get {
-                if (tablePanel == null) InitializeDialogPage();
-                PopulateTable();
-                return tablePanel;
+                try {
+                    if (tablePanel == null) InitializeDialogPage();
+                    PopulateTable();
+                    return tablePanel;
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+                return null;
             }
         }
 
+        /// <summary>
+        /// Create the GUI
+        /// </summary>
         private void InitializeDialogPage() {
-            tablePanel = new TableLayoutPanel();
-            tablePanel.Dock = DockStyle.Fill;
+            try {
+                tablePanel = new TableLayoutPanel();
+                tablePanel.Dock = DockStyle.Fill;
 
-            tablePanel.RowCount = 3;
-            tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tablePanel.RowCount = 3;
+                tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            tablePanel.ColumnCount = 1;            
-            tablePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                tablePanel.ColumnCount = 1;
+                tablePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            Label intervalLabel = new Label();
-            intervalLabel.AutoSize = true;
-            intervalLabel.Margin = new Padding(0, 6, 0, 0);
-            intervalLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
-            intervalLabel.Text = "Reference update interval (ms):";
+                Label intervalLabel = new Label();
+                intervalLabel.AutoSize = true;
+                intervalLabel.Margin = new Padding(0, 6, 0, 0);
+                intervalLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+                intervalLabel.Text = "Reference update interval (ms):";
 
-            intervalBox = new NumericUpDown();
-            intervalBox.Width = 80;
-            intervalBox.Minimum = 1000;
-            intervalBox.Maximum = int.MaxValue;
-            intervalBox.ThousandsSeparator = true;
-            intervalBox.Increment = 1000;
-            intervalBox.InterceptArrowKeys = true;
+                intervalBox = new NumericUpDown();
+                intervalBox.Width = 80;
+                intervalBox.Minimum = 1000;
+                intervalBox.Maximum = int.MaxValue;
+                intervalBox.ThousandsSeparator = true;
+                intervalBox.Increment = 1000;
+                intervalBox.InterceptArrowKeys = true;
 
-            Label keyBehaviorLabel = new Label();
-            keyBehaviorLabel.AutoSize = true;
-            keyBehaviorLabel.Margin = new Padding(0, 6, 0, 0);
-            keyBehaviorLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
-            keyBehaviorLabel.Text = "Invalid key name policy:";
+                Label keyBehaviorLabel = new Label();
+                keyBehaviorLabel.AutoSize = true;
+                keyBehaviorLabel.Margin = new Padding(0, 6, 0, 0);
+                keyBehaviorLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+                keyBehaviorLabel.Text = "Invalid key name policy:";
 
-            keyBehaviorBox = new ComboBox();
-            keyBehaviorBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            keyBehaviorBox.Width = 250;
-            keyBehaviorBox.Items.Add("Ignore always");
-            keyBehaviorBox.Items.Add("Ignore when no designer class is generated");
-            keyBehaviorBox.Items.Add("Always issue error");
+                keyBehaviorBox = new ComboBox();
+                keyBehaviorBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                keyBehaviorBox.Width = 250;
+                keyBehaviorBox.Items.Add("Ignore always");
+                keyBehaviorBox.Items.Add("Ignore when no designer class is generated");
+                keyBehaviorBox.Items.Add("Always issue error");
 
-            GroupBox intervalGroup = new GroupBox();
-            intervalGroup.AutoSize = true;
-            intervalGroup.Dock = DockStyle.Fill;
-            intervalGroup.Text = "Reference Counter";
+                GroupBox intervalGroup = new GroupBox();
+                intervalGroup.AutoSize = true;
+                intervalGroup.Dock = DockStyle.Fill;
+                intervalGroup.Text = "Reference Counter";
 
-            TableLayoutPanel intervalInnerPanel = new TableLayoutPanel();
-            intervalInnerPanel.AutoSize = true;
-            intervalInnerPanel.Dock = DockStyle.Fill;
-            intervalInnerPanel.ColumnCount = 2;
-            intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            intervalInnerPanel.RowCount = 2;
-            intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                TableLayoutPanel intervalInnerPanel = new TableLayoutPanel();
+                intervalInnerPanel.AutoSize = true;
+                intervalInnerPanel.Dock = DockStyle.Fill;
+                intervalInnerPanel.ColumnCount = 2;
+                intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                intervalInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                intervalInnerPanel.RowCount = 2;
+                intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                intervalInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            intervalInnerPanel.Controls.Add(intervalLabel, 0, 0);
-            intervalInnerPanel.Controls.Add(intervalBox, 1, 0);
-            intervalInnerPanel.Controls.Add(keyBehaviorLabel, 0, 1);
-            intervalInnerPanel.Controls.Add(keyBehaviorBox, 1, 1);
-            
-            intervalGroup.Controls.Add(intervalInnerPanel);
+                intervalInnerPanel.Controls.Add(intervalLabel, 0, 0);
+                intervalInnerPanel.Controls.Add(intervalBox, 1, 0);
+                intervalInnerPanel.Controls.Add(keyBehaviorLabel, 0, 1);
+                intervalInnerPanel.Controls.Add(keyBehaviorBox, 1, 1);
 
-            bingLabel = new Label();
-            bingLabel.AutoSize = true;
-            bingLabel.TextAlign = ContentAlignment.MiddleRight;
-            bingLabel.Anchor = AnchorStyles.Right;
-            bingLabel.Text = "Bing AppId:";
+                intervalGroup.Controls.Add(intervalInnerPanel);
 
-            bingBox = new TextBox();
-            bingBox.Width = 300;
+                bingLabel = new Label();
+                bingLabel.AutoSize = true;
+                bingLabel.TextAlign = ContentAlignment.MiddleRight;
+                bingLabel.Anchor = AnchorStyles.Right;
+                bingLabel.Text = "Bing AppId:";
 
-            LinkLabel bingLink = new LinkLabel();
-            bingLink.AutoSize = true;
-            bingLink.Text = "Get AppID";
-            bingLink.Margin = new Padding(0, 6, 0, 0);
-            bingLink.Click += new EventHandler(bingLink_Click);
+                bingBox = new TextBox();
+                bingBox.Width = 300;
 
-            languagePairsLabel = new Label();
-            languagePairsLabel.AutoSize = true;
-            languagePairsLabel.TextAlign = ContentAlignment.MiddleRight;
-            languagePairsLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
-            languagePairsLabel.Text = "Language pairs:";
+                LinkLabel bingLink = new LinkLabel();
+                bingLink.AutoSize = true;
+                bingLink.Text = "Get AppID";
+                bingLink.Margin = new Padding(0, 6, 0, 0);
+                bingLink.Click += new EventHandler(bingLink_Click);
 
-            langTable = new TableLayoutPanel();
-            langTable.AutoSize = true;
-            langTable.Dock = DockStyle.Fill;
-            langTable.ColumnCount = 2;
-            langTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            langTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));            
+                languagePairsLabel = new Label();
+                languagePairsLabel.AutoSize = true;
+                languagePairsLabel.TextAlign = ContentAlignment.MiddleRight;
+                languagePairsLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+                languagePairsLabel.Text = "Language pairs:";
 
-            langTable.RowCount = 4;
-            langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                langTable = new TableLayoutPanel();
+                langTable.AutoSize = true;
+                langTable.Dock = DockStyle.Fill;
+                langTable.ColumnCount = 2;
+                langTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                langTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            languagePairsBox = new ListBox();
-            languagePairsBox.Size = new Size(100, 110);            
-            languagePairsBox.SelectedIndexChanged += new EventHandler(languagePairsBox_SelectedIndexChanged);
+                langTable.RowCount = 4;
+                langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                langTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            addButton = new Button();
-            addButton.Width = 100;
-            addButton.Click += new EventHandler(addButton_Click);
-            addButton.Text = "Add pair";
+                languagePairsBox = new ListBox();
+                languagePairsBox.Size = new Size(100, 110);
+                languagePairsBox.SelectedIndexChanged += new EventHandler(languagePairsBox_SelectedIndexChanged);
 
-            removeButton = new Button();
-            removeButton.Width = 100;
-            removeButton.Click += new EventHandler(removeButton_Click);
-            removeButton.Text = "Remove pair";
+                addButton = new Button();
+                addButton.Width = 100;
+                addButton.Click += new EventHandler(addButton_Click);
+                addButton.Text = "Add pair";
 
-            moveUpButton = new Button();
-            moveUpButton.Width = 100;
-            moveUpButton.Click += new EventHandler(moveUpButton_Click);
-            moveUpButton.Text = "Move up";
+                removeButton = new Button();
+                removeButton.Width = 100;
+                removeButton.Click += new EventHandler(removeButton_Click);
+                removeButton.Text = "Remove pair";
 
-            moveDownButton = new Button();
-            moveDownButton.Width = 100;
-            moveDownButton.Click += new EventHandler(moveDownButton_Click);
-            moveDownButton.Text = "Move down";
+                moveUpButton = new Button();
+                moveUpButton.Width = 100;
+                moveUpButton.Click += new EventHandler(moveUpButton_Click);
+                moveUpButton.Text = "Move up";
 
-            langTable.Controls.Add(languagePairsBox, 0, 0);
-            langTable.SetRowSpan(languagePairsBox, 4);
-            langTable.Controls.Add(addButton, 1, 0);
-            langTable.Controls.Add(removeButton, 1, 1);
-            langTable.Controls.Add(moveUpButton, 1, 2);
-            langTable.Controls.Add(moveDownButton, 1, 3);
+                moveDownButton = new Button();
+                moveDownButton.Width = 100;
+                moveDownButton.Click += new EventHandler(moveDownButton_Click);
+                moveDownButton.Text = "Move down";
 
-            GroupBox languageGroup = new GroupBox();
-            languageGroup.AutoSize = true;
-            languageGroup.Dock = DockStyle.Fill;
-            languageGroup.Text = "Translation Services";
+                langTable.Controls.Add(languagePairsBox, 0, 0);
+                langTable.SetRowSpan(languagePairsBox, 4);
+                langTable.Controls.Add(addButton, 1, 0);
+                langTable.Controls.Add(removeButton, 1, 1);
+                langTable.Controls.Add(moveUpButton, 1, 2);
+                langTable.Controls.Add(moveDownButton, 1, 3);
 
-            TableLayoutPanel languageInnerPanel = new TableLayoutPanel();
-            languageInnerPanel.AutoSize = true;
-            languageInnerPanel.Dock = DockStyle.Fill;
-            languageInnerPanel.ColumnCount = 3;
-            languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            languageInnerPanel.RowCount = 2;
-            languageInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            languageInnerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                GroupBox languageGroup = new GroupBox();
+                languageGroup.AutoSize = true;
+                languageGroup.Dock = DockStyle.Fill;
+                languageGroup.Text = "Translation Services";
 
-            languageInnerPanel.Controls.Add(bingLabel, 0, 0);
-            languageInnerPanel.Controls.Add(bingBox, 1, 0);
-            languageInnerPanel.Controls.Add(bingLink, 2, 0);
+                TableLayoutPanel languageInnerPanel = new TableLayoutPanel();
+                languageInnerPanel.AutoSize = true;
+                languageInnerPanel.Dock = DockStyle.Fill;
+                languageInnerPanel.ColumnCount = 3;
+                languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                languageInnerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                languageInnerPanel.RowCount = 2;
+                languageInnerPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                languageInnerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            languageInnerPanel.Controls.Add(languagePairsLabel, 0, 1);
-            languageInnerPanel.Controls.Add(langTable, 1, 1);
-            languageInnerPanel.SetColumnSpan(langTable, 2);
+                languageInnerPanel.Controls.Add(bingLabel, 0, 0);
+                languageInnerPanel.Controls.Add(bingBox, 1, 0);
+                languageInnerPanel.Controls.Add(bingLink, 2, 0);
 
-            languageGroup.Controls.Add(languageInnerPanel);
+                languageInnerPanel.Controls.Add(languagePairsLabel, 0, 1);
+                languageInnerPanel.Controls.Add(langTable, 1, 1);
+                languageInnerPanel.SetColumnSpan(langTable, 2);
 
-            tablePanel.Controls.Add(intervalGroup, 0, 0);
-            tablePanel.Controls.Add(languageGroup, 0, 1);
+                languageGroup.Controls.Add(languageInnerPanel);
+
+                tablePanel.Controls.Add(intervalGroup, 0, 0);
+                tablePanel.Controls.Add(languageGroup, 0, 1);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }        
 
+        /// <summary>
+        /// Populate created table with current settings data
+        /// </summary>
         private void PopulateTable() {
             intervalBox.Value = SettingsObject.Instance.ReferenceUpdateInterval;
             bingBox.Text = SettingsObject.Instance.BingAppId;
@@ -329,39 +371,59 @@ namespace VisualLocalizer.Settings {
             keyBehaviorBox.SelectedIndex = (int)SettingsObject.Instance.BadKeyNamePolicy;
         }
 
+        /// <summary>
+        /// Called when this settings page is displayed
+        /// </summary>        
         protected override void OnActivate(CancelEventArgs e) {
-            base.OnActivate(e);
+            try {
+                base.OnActivate(e);
 
-            if (closed) {
-                PopulateTable();
-                closed = false;
+                if (closed) { // displayed for the first time - populate with data
+                    PopulateTable();
+                    closed = false;
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
+        /// <summary>
+        /// When the settings dialog is cancelled
+        /// </summary>        
         protected override void OnClosed(EventArgs e) {
             base.OnClosed(e);
 
             closed = true;
         }
 
+        /// <summary>
+        /// When "Apply" button was hit in the settings dialog; save current GUI state into the settings
+        /// </summary>        
         protected override void OnApply(PageApplyEventArgs e) {
-            if (e.ApplyBehavior == ApplyKind.Apply) {
-                SettingsObject.Instance.IgnorePropertyChanges = true;
-                
-                SettingsObject.Instance.ReferenceUpdateInterval = (int)intervalBox.Value;
-                SettingsObject.Instance.BingAppId = string.IsNullOrEmpty(bingBox.Text) ? null : bingBox.Text;
-                SettingsObject.Instance.LanguagePairs.Clear();
-                foreach (SettingsObject.LanguagePair newPair in languagePairsBox.Items) {
-                    SettingsObject.Instance.LanguagePairs.Add(newPair);
+            try {
+                if (e.ApplyBehavior == ApplyKind.Apply) {
+                    SettingsObject.Instance.IgnorePropertyChanges = true;
+
+                    SettingsObject.Instance.ReferenceUpdateInterval = (int)intervalBox.Value;
+                    SettingsObject.Instance.BingAppId = string.IsNullOrEmpty(bingBox.Text) ? null : bingBox.Text;
+                    SettingsObject.Instance.LanguagePairs.Clear();
+                    foreach (SettingsObject.LanguagePair newPair in languagePairsBox.Items) {
+                        SettingsObject.Instance.LanguagePairs.Add(newPair);
+                    }
+
+                    // key policy changed - loaded keys must be re-evaluated (in open ResX files etc.)
+                    bool forceRevalidation = SettingsObject.Instance.BadKeyNamePolicy != (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
+                    SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
+
+                    if (forceRevalidation) SettingsObject.Instance.NotifyRevalidationRequested();
                 }
-
-                bool forceRevalidation = SettingsObject.Instance.BadKeyNamePolicy != (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
-                SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
-
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            } finally {
                 SettingsObject.Instance.IgnorePropertyChanges = false;
                 SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
-
-                if (forceRevalidation) SettingsObject.Instance.NotifyRevalidationRequested();
             }
         }
 
@@ -370,46 +432,71 @@ namespace VisualLocalizer.Settings {
         #region listeners
 
         private void languagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
-            bool selected = languagePairsBox.SelectedIndex != -1;
+            try {
+                bool selected = languagePairsBox.SelectedIndex != -1;
 
-            removeButton.Enabled = selected;
-            moveDownButton.Enabled = selected && languagePairsBox.SelectedIndex != languagePairsBox.Items.Count - 1;
-            moveUpButton.Enabled = selected && languagePairsBox.SelectedIndex != 0;
+                removeButton.Enabled = selected; // can remove item when some is selected
+                moveDownButton.Enabled = selected && languagePairsBox.SelectedIndex != languagePairsBox.Items.Count - 1; // cannot move down the last item
+                moveUpButton.Enabled = selected && languagePairsBox.SelectedIndex != 0; // cannot move up the uppermost item
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }        
 
+        /// <summary>
+        /// Adds new language pair by displaying dialog
+        /// </summary>        
         private void addButton_Click(object sender, EventArgs e) {
-            NewLanguagePairWindow win = new NewLanguagePairWindow(false);
-            if (win.ShowDialog() == DialogResult.OK) {
-                SettingsObject.LanguagePair newPair = new SettingsObject.LanguagePair() {
-                    FromLanguage = win.SourceLanguage,
-                    ToLanguage = win.TargetLanguage
-                };
-                if (languagePairsBox.Items.Contains(newPair)) {
-                    VisualLocalizer.Library.MessageBox.ShowError("This language pair is already in the list!");
-                    return;
+            try {
+                NewLanguagePairWindow win = new NewLanguagePairWindow(false);
+                if (win.ShowDialog() == DialogResult.OK) {
+                    SettingsObject.LanguagePair newPair = new SettingsObject.LanguagePair() {
+                        FromLanguage = win.SourceLanguage,
+                        ToLanguage = win.TargetLanguage
+                    };
+                    if (languagePairsBox.Items.Contains(newPair)) throw new Exception("This language pair is already in the list!");
+                    languagePairsBox.Items.Add(newPair);
                 }
-                languagePairsBox.Items.Add(newPair);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-
         }
 
+        /// <summary>
+        /// Moves selected language pair up by one
+        /// </summary>        
         private void moveUpButton_Click(object sender, EventArgs e) {
-            if (languagePairsBox.SelectedIndex <= 0) return;
+            try {
+                if (languagePairsBox.SelectedIndex <= 0) return;
 
-            int originalIndex = languagePairsBox.SelectedIndex;
-            int upperIndex = originalIndex - 1;
+                int originalIndex = languagePairsBox.SelectedIndex;
+                int upperIndex = originalIndex - 1;
 
-            switchItems(originalIndex, upperIndex);
+                switchItems(originalIndex, upperIndex);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// Moves selected language pair down by one
+        /// </summary>        
         private void moveDownButton_Click(object sender, EventArgs e) {
-            if (languagePairsBox.SelectedIndex == -1) return;
-            if (languagePairsBox.SelectedIndex == languagePairsBox.Items.Count - 1) return;
+            try {
+                if (languagePairsBox.SelectedIndex == -1) return;
+                if (languagePairsBox.SelectedIndex == languagePairsBox.Items.Count - 1) return;
 
-            int originalIndex = languagePairsBox.SelectedIndex;
-            int downIndex = originalIndex + 1;
+                int originalIndex = languagePairsBox.SelectedIndex;
+                int downIndex = originalIndex + 1;
 
-            switchItems(originalIndex, downIndex);
+                switchItems(originalIndex, downIndex);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         private void switchItems(int originalIndex, int newIndex) {
@@ -420,12 +507,23 @@ namespace VisualLocalizer.Settings {
             languagePairsBox.SelectedIndex = newIndex;
         }
 
+        /// <summary>
+        /// Removes selected language pair
+        /// </summary>        
         private void removeButton_Click(object sender, EventArgs e) {
-            if (languagePairsBox.SelectedIndex == -1) return;
+            try {
+                if (languagePairsBox.SelectedIndex == -1) return;
 
-            languagePairsBox.Items.RemoveAt(languagePairsBox.SelectedIndex);
+                languagePairsBox.Items.RemoveAt(languagePairsBox.SelectedIndex);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// "Get AppID" link was clicked - display browser with Bing url
+        /// </summary>        
         private void bingLink_Click(object sender, EventArgs e) {
             try {
                 Process browser = new Process();
@@ -433,7 +531,8 @@ namespace VisualLocalizer.Settings {
                 browser.StartInfo.UseShellExecute = true;
                 browser.Start();
             } catch (Exception ex) {
-                VisualLocalizer.Library.MessageBox.ShowError(ex.Message);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 

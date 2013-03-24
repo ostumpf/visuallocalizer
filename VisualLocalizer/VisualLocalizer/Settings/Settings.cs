@@ -6,28 +6,61 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Settings {
     
+    /// <summary>
+    /// Categories of settings values, corresponding to subfolders in Tools/Options pages.
+    /// </summary>
     internal enum CHANGE_CATEGORY { FILTER = 1, EDITOR = 2 }
 
+    /// <summary>
+    /// Holds all Visual Localizer settings saved in VS registry. Implemented as singleton.
+    /// </summary>
     internal sealed class SettingsObject {
 
+        /// <summary>
+        /// Settings property changed
+        /// </summary>
         public event Action<CHANGE_CATEGORY> PropertyChanged;
+
+        /// <summary>
+        /// Settings were changed (loaded or modified)
+        /// </summary>
         public event Action SettingsLoaded;
+
+        /// <summary>
+        /// Identifiers policy changed - existing keys must be re-validated
+        /// </summary>
         public event Action RevalidationRequested;
+
+        /// <summary>
+        /// True if PropertyChanged event should not be issued despite changes of the properties
+        /// </summary>
+        public bool IgnorePropertyChanges { get; set; }
+
+        /// <summary>
+        /// Unmodifiable set of filter criteria
+        /// </summary>
+        public Dictionary<string, LocalizationCommonCriterion> CommonLocalizabilityCriteria { get; private set; }
+
+        /// <summary>
+        /// Modifiable set of filter criteria
+        /// </summary>
+        public List<LocalizationCustomCriterion> CustomLocalizabilityCriteria { get; private set; }
 
         private static SettingsObject instance;
         private SettingsObject() {            
-            LanguagePairs = new List<LanguagePair>();  
-            
+            LanguagePairs = new List<LanguagePair>();              
             CustomLocalizabilityCriteria = new List<LocalizationCustomCriterion>();
+
             ResetCriteria();
-        }
+        }        
 
-        public bool IgnorePropertyChanges { get; set; }
-        public Dictionary<string, LocalizationCriterion> CommonLocalizabilityCriteria { get; private set; }
-        public List<LocalizationCustomCriterion> CustomLocalizabilityCriteria { get; private set; }
-
+        /// <summary>
+        /// Resets criteria to original state (no custom criteria, common criteria initialized with default values)
+        /// </summary>
         public void ResetCriteria() {
             CustomLocalizabilityCriteria.Clear();
+
+            // merge CSharpStringResultItem and AspNetStringResultItem criteria
             CommonLocalizabilityCriteria = CSharpStringResultItem.GetCriteria();
             var aspnetMembers = AspNetStringResultItem.GetCriteria();
 
@@ -36,7 +69,12 @@ namespace VisualLocalizer.Settings {
                     CommonLocalizabilityCriteria.Add(pair.Key, pair.Value);
         }
 
+
         private int _NamespacePolicyIndex;
+
+        /// <summary>
+        /// Index of option selected in "Batch move" toolwindow's "Namespace policy" combobox
+        /// </summary>
         public int NamespacePolicyIndex {
             get {
                 return _NamespacePolicyIndex;
@@ -48,6 +86,10 @@ namespace VisualLocalizer.Settings {
         }
 
         private int _MarkNotLocalizableStringsIndex;
+        
+        /// <summary>
+        /// Index of option selected in "Batch move" toolwindow's "Mark unchecked strings" combobox
+        /// </summary>
         public int MarkNotLocalizableStringsIndex {
             get {
                 return _MarkNotLocalizableStringsIndex;
@@ -59,6 +101,10 @@ namespace VisualLocalizer.Settings {
         }
 
         private int _BatchMoveSplitterDistance;
+
+        /// <summary>
+        /// Distance of SplitContainer's splitter in "Batch move" toolwindow
+        /// </summary>
         public int BatchMoveSplitterDistance {
             get {
                 return _BatchMoveSplitterDistance;
@@ -71,6 +117,10 @@ namespace VisualLocalizer.Settings {
 
 
         private bool _UseReflectionInAsp;
+
+        /// <summary>
+        /// True if reflection and web.config's settings should be used to determine object's types in ASP .NET
+        /// </summary>
         public bool UseReflectionInAsp {
             get {
                 return _UseReflectionInAsp;
@@ -81,20 +131,31 @@ namespace VisualLocalizer.Settings {
             }
         }
 
-        private bool _ShowFilterContext;
-        public bool ShowFilterContext {
+        private bool _ShowContextColumn;
+
+        /// <summary>
+        /// True if "context" column should be displayed in "batch" toolwindow's grid
+        /// </summary>
+        public bool ShowContextColumn {
             get {
-                return _ShowFilterContext;
+                return _ShowContextColumn;
             }
             set {
-                _ShowFilterContext = value;
+                _ShowContextColumn = value;
                 NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             }
         }
 
+        /// <summary>
+        /// Translation language pairs (source and target languages)
+        /// </summary>
         public List<LanguagePair> LanguagePairs { get; private set; }
 
         private string _BingAppId;
+
+        /// <summary>
+        /// Identification necessary to consume the Bing translation service
+        /// </summary>
         public string BingAppId {
             get {
                 return _BingAppId;
@@ -106,6 +167,10 @@ namespace VisualLocalizer.Settings {
         }
 
         private int _ReferenceUpdateInterval;
+
+        /// <summary>
+        /// Interval (ms) in which reference-counting thread looks up references (ResX editor)
+        /// </summary>
         public int ReferenceUpdateInterval {
             get {
                 return _ReferenceUpdateInterval;
@@ -117,6 +182,10 @@ namespace VisualLocalizer.Settings {
         }
 
         private BAD_KEY_NAME_POLICY _BadKeyNamePolicy;
+
+        /// <summary>
+        /// How to handle invalid ResX keys
+        /// </summary>
         public BAD_KEY_NAME_POLICY BadKeyNamePolicy {
             get {
                 return _BadKeyNamePolicy;
@@ -134,20 +203,32 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Fire PropertyChanged event
+        /// </summary>        
         public void NotifyPropertyChanged(CHANGE_CATEGORY category) {
             if (PropertyChanged != null && !IgnorePropertyChanges) PropertyChanged(category);
         }
 
+        /// <summary>
+        /// Fire SettingsLoaded event
+        /// </summary>        
         public void NotifySettingsLoaded() {
             if (SettingsLoaded != null) SettingsLoaded();
         }
 
+        /// <summary>
+        /// Fire RevalidationRequested event
+        /// </summary>        
         public void NotifyRevalidationRequested() {
             if (RevalidationRequested != null) RevalidationRequested();
         }
 
+        /// <summary>
+        /// Used to hold source and target language in translation process
+        /// </summary>
         internal sealed class LanguagePair {
-            public string FromLanguage { get; set; }
+            public string FromLanguage { get; set; } // can be null - auto-detection of source language will be used if possible
             public string ToLanguage { get; set; }
 
             public override int GetHashCode() {
