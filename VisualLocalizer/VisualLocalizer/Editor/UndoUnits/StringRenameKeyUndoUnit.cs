@@ -10,11 +10,17 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents action of renaming key of string resource in editor
+    /// </summary>
     [Guid("A524A5E7-EF67-4b42-BBB1-25706700A1AD")]
     internal sealed class StringRenameKeyUndoUnit : RenameKeyUndoUnit {
 
         public StringRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXEditorControl control, string oldKey, string newKey) 
             : base(oldKey, newKey) {
+            if (sourceRow == null) throw new ArgumentNullException("sourceRow");
+            if (control == null) throw new ArgumentNullException("control");
+
             this.SourceRow = sourceRow;
             this.Control = control;
         }
@@ -32,11 +38,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private void UpdateSourceReferences(string from, string to) {
             try {                
+                // suspend the reference lookuper thread
                 Control.ReferenceCounterThreadSuspended = true;
                 Control.UpdateReferencesCount(SourceRow);
 
                 ChangeColumnValue(from, to);
 
+                // if the rows has no errors, perform pseudo-refactoring
                 if (SourceRow.ErrorMessages.Count == 0) {
                     int errors = 0;
                     int count = SourceRow.CodeReferences.Count;

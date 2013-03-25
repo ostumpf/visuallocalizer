@@ -96,7 +96,7 @@ namespace VisualLocalizer.Gui {
             MenuItem stateMenu = new MenuItem("State");
             stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => {
                 try {
-                    setCheckStateOfSelected(true);
+                    SetCheckStateOfSelected(true);
                 } catch (Exception ex) {
                     VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                     VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -104,7 +104,7 @@ namespace VisualLocalizer.Gui {
             }));
             stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => {
                 try {
-                    setCheckStateOfSelected(false);
+                    SetCheckStateOfSelected(false);
                 } catch (Exception ex) {
                     VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                     VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -242,7 +242,7 @@ namespace VisualLocalizer.Gui {
             lastSetCriteria = criteria;
 
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
-                updateLocProbability(criteria, row, changeChecks); // update loc. probability for the row
+                UpdateLocProbability(criteria, row, changeChecks); // update loc. probability for the row
             }
           
             UpdateCheckHeader(); 
@@ -278,7 +278,7 @@ namespace VisualLocalizer.Gui {
                     newCheckValue = false;
                 }
 
-                changeRowCheckState(row, oldCheckValue, newCheckValue); // change row check state
+                ChangeRowCheckState(row, oldCheckValue, newCheckValue); // change row check state
             }
 
 
@@ -391,7 +391,7 @@ namespace VisualLocalizer.Gui {
                 }
 
                 // update localization probability
-                updateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex], false);
+                UpdateLocProbability(lastSetCriteria, (DataGridViewKeyValueRow<CodeStringResultItem>)Rows[e.RowIndex], false);
 
                 base.OnCellEndEdit(e);
             } catch (Exception ex) {
@@ -457,7 +457,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Recalculate localization probability for given row, using given criteria
         /// </summary>        
-        private void updateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row, bool changeChecks) {
+        private void UpdateLocProbability(Dictionary<string, AbstractLocalizationCriterion> criteria, DataGridViewKeyValueRow<CodeStringResultItem> row, bool changeChecks) {
             int newLocProb = GetResultItemFromRow(row).GetLocalizationProbability(criteria);
             row.Cells[LocProbColumnName].Tag = newLocProb;
             row.Cells[LocProbColumnName].Value = newLocProb + "%";
@@ -467,7 +467,7 @@ namespace VisualLocalizer.Gui {
                 bool willBeChecked = (newLocProb >= AbstractLocalizationCriterion.TRESHOLD_LOC_PROBABILITY);
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value = willBeChecked;
 
-                changeRowCheckState(row, isChecked, willBeChecked);
+                ChangeRowCheckState(row, isChecked, willBeChecked);
             }
         }
 
@@ -545,7 +545,14 @@ namespace VisualLocalizer.Gui {
                 e.Handled = true;
             }
         }
-        
+
+        /// <summary>
+        /// Processes keys used for navigating in the <see cref="T:System.Windows.Forms.DataGridView" />.
+        /// </summary>
+        /// <param name="e">Contains information about the key that was pressed.</param>
+        /// <returns>
+        /// true if the key was processed; otherwise, false.
+        /// </returns>
         protected override bool ProcessDataGridViewKey(KeyEventArgs e) {            
             if (this.IsCurrentCellInEditMode) {
                 // prevents GridView default actions for these keys
@@ -592,7 +599,7 @@ namespace VisualLocalizer.Gui {
                 foreach (string item in options) {
                     MenuItem menuItem = new MenuItem(item);
                     menuItem.Tag = resxItemsCache[item];
-                    menuItem.Click += new EventHandler((o, a) => { setDestinationOfSelected((ResXProjectItem)(o as MenuItem).Tag); });
+                    menuItem.Click += new EventHandler((o, a) => { SetDestinationOfSelected((ResXProjectItem)(o as MenuItem).Tag); });
                     destinationContextMenu.MenuItems.Add(menuItem);
                 }
             } catch (Exception ex) {
@@ -604,7 +611,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Sets destination file of selected rows to given ResX file
         /// </summary>        
-        private void setDestinationOfSelected(ResXProjectItem item) {
+        private void SetDestinationOfSelected(ResXProjectItem item) {
             try {
                 if (item == null) throw new ArgumentNullException("item");
 
@@ -618,18 +625,27 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        /// <summary>
+        /// Returns name of the column with checkbox
+        /// </summary>
         public override string CheckBoxColumnName {
             get { return "MoveThisItem"; }
         }
 
+        /// <summary>
+        /// Returns name of the column used to hold key
+        /// </summary>
         public override string KeyColumnName {
             get { return "Key"; }
         }
 
+        /// <summary>
+        /// Returns name of the column used to hold value
+        /// </summary>
         public override string ValueColumnName {
             get { return "Value"; }
         }
-
+        
         public string LocProbColumnName {
             get { return "LocalizationProbability"; }
         }

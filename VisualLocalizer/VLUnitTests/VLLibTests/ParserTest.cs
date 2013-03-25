@@ -66,7 +66,7 @@ namespace VLUnitTests {
 
         private int index = 0;
 
-        private void checkAttrs(List<AttributeInfo> a, List<AttributeInfo> b) {
+        private void CheckAttrs(List<AttributeInfo> a, List<AttributeInfo> b) {
             for (int i = 0; i < a.Count; i++) {
                 Assert.AreEqual(a[i].Name, b[i].Name);
                 Assert.AreEqual(a[i].ContainsAspTags, b[i].ContainsAspTags);
@@ -110,7 +110,7 @@ namespace VLUnitTests {
             validAttrs.Add(new AttributeInfo() { Name = "CodeFile", Value = "EditPeople.aspx.cs", ContainsAspTags = false });
             validAttrs.Add(new AttributeInfo() { Name = "Inherits", Value = "EditPeople", ContainsAspTags = false });
 
-            checkAttrs(validAttrs, context.Attributes);
+            CheckAttrs(validAttrs, context.Attributes);
             
             index++;
         }
@@ -168,7 +168,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "PUBLIC", Value = "-//W3C//DTD XHTML 1.0 Transitional//EN", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "", Value = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 2) {
                 matched = true;
@@ -179,7 +179,7 @@ namespace VLUnitTests {
                 List<AttributeInfo> validAttrs = new List<AttributeInfo>();
                 validAttrs.Add(new AttributeInfo() { Name = "xmlns", Value = "http://www.w3.org/1999/xhtml", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 3) {
                 matched = true;
@@ -191,7 +191,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "id", Value = "Head1", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "runat", Value = "server", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 4) {
                 matched = true;
@@ -220,7 +220,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "EntityTypeName", Value = "", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "TableName", Value = "Persons", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 11) {
                 matched = true;
@@ -236,7 +236,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "DataKeyNames", Value = "PersonID", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "DataSourceID", Value = "LinqDataSource1", ContainsAspTags = false });
                 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 12) {
                 matched = true;
@@ -257,7 +257,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "runat", Value = "server", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "Text", Value = "<%# Eval(\"PersonID\") %>", ContainsAspTags = true });
                 
-                checkAttrs(validAttrs, context.Attributes);
+                CheckAttrs(validAttrs, context.Attributes);
             }
             if (index == 16) {
                 matched = true;
@@ -277,7 +277,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "runat", Value = "server", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "Text", Value = "<%# Bind(\"LastName\") %>", ContainsAspTags = true });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 20) {
                 matched = true;
@@ -301,7 +301,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "AccessKey", Value = "asdsad", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "BackColor", Value = "44", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 23) {
                 matched = true;
@@ -317,7 +317,7 @@ namespace VLUnitTests {
                 validAttrs.Add(new AttributeInfo() { Name = "CommandName", Value = "Cancel", ContainsAspTags = false });
                 validAttrs.Add(new AttributeInfo() { Name = "Text", Value = "<%-- visible --%>Cancel", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 25) {
                 matched = true;
@@ -329,7 +329,7 @@ namespace VLUnitTests {
                 List<AttributeInfo> validAttrs = new List<AttributeInfo>();
                 validAttrs.Add(new AttributeInfo() { Name = "ID", Value = "Text1", ContainsAspTags = false });
                 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 27) {
                 matched = true;
@@ -341,7 +341,7 @@ namespace VLUnitTests {
                 List<AttributeInfo> validAttrs = new List<AttributeInfo>();
                 validAttrs.Add(new AttributeInfo() { Name = "ID", Value = "Text2", ContainsAspTags = false });
 
-                checkAttrs(validAttrs, context.Attributes);                
+                CheckAttrs(validAttrs, context.Attributes);                
             }
             if (index == 32) {
                 matched = true;
@@ -353,7 +353,7 @@ namespace VLUnitTests {
                 List<AttributeInfo> validAttrs = new List<AttributeInfo>();
                 validAttrs.Add(new AttributeInfo() { Name = "ID", Value = "<%= \"TEST3\" %>", ContainsAspTags = true });
 
-                checkAttrs(validAttrs, context.Attributes);
+                CheckAttrs(validAttrs, context.Attributes);
             }
             if (index == 34) {
                 matched = true;
@@ -365,7 +365,7 @@ namespace VLUnitTests {
                 List<AttributeInfo> validAttrs = new List<AttributeInfo>();
                 validAttrs.Add(new AttributeInfo() { Name = "ID", Value = "<%: \"TEST4\" %>", ContainsAspTags = true });
 
-                checkAttrs(validAttrs, context.Attributes);
+                CheckAttrs(validAttrs, context.Attributes);
             }
             Assert.IsTrue(matched);
             index++;

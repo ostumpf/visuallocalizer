@@ -234,7 +234,7 @@ namespace VisualLocalizer.Library {
                     NotifyDocChanged();
                 }
                 return VSConstants.S_OK;
-            } catch (Exception ex) {
+            } catch (Exception) {
                 return VSConstants.E_ABORT;
             } finally {
                 // RefreshPropertiesWindow();
@@ -431,7 +431,7 @@ namespace VisualLocalizer.Library {
                             reloadTimer = new Timer();
                             fileChangedTimerSet = true;
                             reloadTimer.Interval = 1000;
-                            reloadTimer.Tick += new EventHandler(reloadTimer_Tick);
+                            reloadTimer.Tick += new EventHandler(ReloadTimer_Tick);
                             reloadTimer.Enabled = true;
                         }
                     }
@@ -440,7 +440,7 @@ namespace VisualLocalizer.Library {
             return VSConstants.S_OK;
         }
 
-        private void reloadTimer_Tick(object sender, EventArgs e) {
+        private void ReloadTimer_Tick(object sender, EventArgs e) {
             reloadTimer.Enabled = false;           
             reloadTimer = null;
 

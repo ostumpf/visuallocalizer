@@ -85,7 +85,7 @@
             this.detailsButton.TabIndex = 1;
             this.detailsButton.Text = "Show details";
             this.detailsButton.UseVisualStyleBackColor = true;
-            this.detailsButton.Click += new System.EventHandler(this.detailsButton_Click);
+            this.detailsButton.Click += new System.EventHandler(this.DetailsButton_Click);
             // 
             // errorIconBox
             // 

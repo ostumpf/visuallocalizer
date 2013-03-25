@@ -27,6 +27,10 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         public abstract T GetCodeReferenceResultItem();
 
+        /// <summary>
+        /// Called on click - overriden in derived class to provide desired functionality.
+        /// Initializes basic variables, common for all derived commands.
+        /// </summary>       
         public override void Process() {
             base.Process(); // initialize basic variables            
 
@@ -34,7 +38,7 @@ namespace VisualLocalizer.Commands {
             if (resultItem != null) {
                 try {
                     int x,y;
-                    // get span of reference (may be complicated in case of references like <%= Resources.key %> )
+                    // get span of reference (may be complicated in case of references like &lt;%= Resources.key %> )
                     TextSpan inlineSpan = resultItem.GetInlineReplaceSpan(false, out x, out y);
                     
                     // get string literal that can be inserted into the code (unescape...)

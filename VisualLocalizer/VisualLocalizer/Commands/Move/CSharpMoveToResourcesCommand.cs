@@ -15,8 +15,9 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class CSharpMoveToResourcesCommand : MoveToResourcesCommand<CSharpStringResultItem> {
 
+
         /// <summary>
-        /// Evaluates current selection and returns instance of CSharpStringResultItem, representing the string literal.        
+        /// Gets result item from current selection. Returns null in any case of errors and exceptions.
         /// </summary>        
         protected override CSharpStringResultItem GetReplaceStringItem() {
             if (currentCodeModel == null)

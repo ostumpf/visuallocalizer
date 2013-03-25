@@ -36,15 +36,15 @@ namespace VisualLocalizer.Gui {
 
             // add "Run" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRunID,
-                new EventHandler(runClick), null, menuService);
+                new EventHandler(RunClick), null, menuService);
 
             // add "Remove unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRemoveUncheckedID,
-                new EventHandler(removeUnchecked), null, menuService);
+                new EventHandler(RemoveUnchecked), null, menuService);
 
             // add "Restore unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarPutBackUncheckedID,
-                new EventHandler(restoreUnchecked), null, menuService);
+                new EventHandler(RestoreUnchecked), null, menuService);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// "Remove unchecked" button clicked
         /// </summary>        
-        private void removeUnchecked(object sender, EventArgs e) {
+        private void RemoveUnchecked(object sender, EventArgs e) {
             try {
                 panel.RemoveUncheckedRows(true);
             } catch (Exception ex) {
@@ -70,7 +70,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// "Restore unchecked" button clicked
         /// </summary>        
-        private void restoreUnchecked(object sender, EventArgs e) {
+        private void RestoreUnchecked(object sender, EventArgs e) {
             try {
                 panel.RestoreRemovedRows();
             } catch (Exception ex) {
@@ -82,7 +82,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// "Run" button clicked
         /// </summary>        
-        private void runClick(object sender, EventArgs e) {
+        private void RunClick(object sender, EventArgs e) {
             int checkedRows = panel.CheckedRowsCount;
             int rowCount = panel.Rows.Count;
             int rowErrors = 0;

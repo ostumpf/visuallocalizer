@@ -8,6 +8,9 @@ using VisualLocalizer.Commands;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Undo unit for key rename action in list view
+    /// </summary>
     [Guid("406668D9-6E03-47c8-B838-FA4EE1EF1896")]
     internal sealed class ListViewRenameKeyUndoUnit : RenameKeyUndoUnit {
 
@@ -17,12 +20,16 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         public ListViewRenameKeyUndoUnit(ResXEditorControl control, AbstractListView listView, ListViewKeyItem item, string oldKey, string newKey)
             : base(oldKey, newKey) {
+            if (control == null) throw new ArgumentNullException("control");
+            if (listView == null) throw new ArgumentNullException("listView");
+            if (item == null) throw new ArgumentNullException("item");
+
             this.Item = item;
             this.ListView = listView;
             this.Control = control;
         }
 
-        public override void Undo() {
+        public override void Undo() {            
             UpdateSourceReferences(NewKey, OldKey);
         }
 
@@ -32,18 +39,21 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         private void UpdateSourceReferences(string from, string to) {
             try {
+                // suspend reference lookuper thread and update references for the item
                 Control.ReferenceCounterThreadSuspended = true;
                 Control.UpdateReferencesCount(Item);
 
+                // change the keys
                 Item.Text = to;
-                Item.BeforeEditValue = from;
-                Item.AfterEditValue = to;
+                Item.BeforeEditKey = from;
+                Item.AfterEditKey = to;
                 ListView.Validate(Item);
                 ListView.NotifyDataChanged();
 
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditValue, Item.AfterEditValue);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditKey, Item.AfterEditKey);
                 if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
 
+                // if item has no errors, perform pseudo-refactoring
                 if (Item.ErrorMessages.Count == 0) {
                     int errors = 0;
                     int count = Item.CodeReferences.Count;

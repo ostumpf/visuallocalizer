@@ -6,11 +6,17 @@ using System.Windows.Forms;
 using System.Drawing;
 
 namespace VisualLocalizer.Editor {
-    internal class VsColorTable : ProfessionalColorTable {
+
+    /// <summary>
+    /// Contains Visual Studio version-specific color themes, used to paint ResX editor's toolstrip's background. Contains 
+    /// three colors, creating a vertical gradient.
+    /// </summary>
+    internal sealed class VsColorTable : ProfessionalColorTable {
 
         private Color beginColor, middleColor, endColor;
 
         public VsColorTable() {
+            // initialize the colors based on current VS version
             switch (VisualLocalizerPackage.VisualStudioVersion) {
                 case VS_VERSION.VS2008:
                     beginColor = ColorTranslator.FromHtml("#FAFAFD");
@@ -36,8 +42,19 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Upper gradient color
+        /// </summary>
         public override Color ToolStripGradientBegin { get { return beginColor; } }
+
+        /// <summary>
+        /// Middle gradient color
+        /// </summary>
         public override Color ToolStripGradientMiddle { get { return middleColor; } }
+
+        /// <summary>
+        /// Bottom gradient color
+        /// </summary>
         public override Color ToolStripGradientEnd { get { return endColor; } }
     }
 }

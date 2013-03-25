@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
+using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Undo unit for "Make embedded" action on list view's resources
+    /// </summary>
     [Guid("DD50A387-8EAF-4451-9595-5C1674CAC03B")]
     internal sealed class ListViewMakeEmbeddedUndoUnit : AbstractUndoUnit {
         private List<ListViewKeyItem> Items { get; set; }
@@ -14,17 +18,30 @@ namespace VisualLocalizer.Editor.UndoUnits {
         private bool Deleted { get; set; }
 
         public ListViewMakeEmbeddedUndoUnit(AbstractListView listView, List<ListViewKeyItem> items, bool delete) {
+            if (listView == null) throw new ArgumentNullException("listView");
+            if (items == null) throw new ArgumentNullException("items");
+
             this.Items = items;
             this.ListView = listView;
             this.Deleted = delete;
         }
         
         public override void Undo() {
-            ListView.MakeResourcesExternal(Items, !Deleted, false);
+            try {
+                ListView.MakeResourcesExternal(Items, !Deleted, false);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override void Redo() {
-            ListView.MakeResourcesEmbedded(Items, Deleted, false);
+            try {
+                ListView.MakeResourcesEmbedded(Items, Deleted, false);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string GetUndoDescription() {

@@ -13,6 +13,9 @@ namespace VisualLocalizer.Library {
         string Key { get; }
         string Value { get; }
 
+        /// <summary>
+        /// Items with the same key
+        /// </summary>
         List<IKeyValueSource> ItemsWithSameKey { get; set; }
         
         /// <summary>
@@ -20,6 +23,9 @@ namespace VisualLocalizer.Library {
         /// </summary>
         HashSet<IKeyValueSource> ConflictItems { get; }
                 
+        /// <summary>
+        /// Returns error messages associated with this item
+        /// </summary>
         HashSet<string> ErrorMessages { get; }
 
         /// <summary>

@@ -54,7 +54,7 @@ namespace VisualLocalizer.Library {
             detailsBox.Hide();
         }
 
-        private void detailsButton_Click(object sender, EventArgs e) {
+        private void DetailsButton_Click(object sender, EventArgs e) {
             var rowStyle = tableLayoutPanel1.RowStyles[2];
             detailsDisplayed = !detailsDisplayed;
 

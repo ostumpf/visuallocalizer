@@ -23,10 +23,21 @@ using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Editor {    
 
+    /// <summary>
+    /// Represents String tab in the ResX editor
+    /// </summary>
     internal sealed class ResXStringGrid : AbstractKeyValueGridView<ResXDataNode>, IDataTabItem {
 
+        /// <summary>
+        /// Issued when data changed in GUI and the document should be marked dirty
+        /// </summary>
         public event EventHandler DataChanged;
+
+        /// <summary>
+        /// Issued when selected items collection changed and certain GUI elements should be enabled/disabled
+        /// </summary>
         public event EventHandler ItemsStateChanged;
+ 
         public event Action<string, string> LanguagePairAdded;        
 
         private TextBox CurrentlyEditedTextBox;
@@ -47,13 +58,16 @@ namespace VisualLocalizer.Editor {
             this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             this.AutoSize = true;            
 
-            this.editorControl.RemoveRequested += new Action<REMOVEKIND>(editorControl_RemoveRequested);
+            // to remove rows
+            this.editorControl.RemoveRequested += new Action<REMOVEKIND>(EditorControl_RemoveRequested);
+
+            // to change depending buttons and context menu state (enabled/disabled)
             this.SelectionChanged += new EventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.NewRowNeeded += new DataGridViewRowEventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.MouseDown += new MouseEventHandler(ResXStringGrid_MouseDown);
-            this.editorControl.NewTranslatePairAdded+=new Action<TRANSLATE_PROVIDER>(editorControl_TranslateRequested);
-            this.editorControl.TranslateRequested+=new Action<TRANSLATE_PROVIDER,string,string>(editorControl_TranslateRequested);
-            this.editorControl.InlineRequested += new Action<INLINEKIND>(editorControl_InlineRequested);
+            this.editorControl.NewTranslatePairAdded+=new Action<TRANSLATE_PROVIDER>(EditorControl_TranslateRequested);
+            this.editorControl.TranslateRequested+=new Action<TRANSLATE_PROVIDER,string,string>(EditorControl_TranslateRequested);
+            this.editorControl.InlineRequested += new Action<INLINEKIND>(EditorControl_InlineRequested);
             this.Resize += new EventHandler(ResXStringGrid_Resize);
             this.ColumnWidthChanged += new DataGridViewColumnEventHandler(ResXStringGrid_ColumnWidthChanged);
 
@@ -61,6 +75,7 @@ namespace VisualLocalizer.Editor {
             rowTemplate.MinimumHeight = 24;
             this.RowTemplate = rowTemplate;
 
+            // create context menu
             editContextMenuItem = new MenuItem("Edit cell");
             editContextMenuItem.Shortcut = Shortcut.F2;
             editContextMenuItem.Click += new EventHandler((o, e) => { this.BeginEdit(true); });
@@ -80,17 +95,17 @@ namespace VisualLocalizer.Editor {
             
             deleteContextMenuItem = new MenuItem("Remove");
             deleteContextMenuItem.Shortcut = Shortcut.Del;            
-            deleteContextMenuItem.Click += new EventHandler((o, e) => { editorControl_RemoveRequested(REMOVEKIND.REMOVE); }); 
+            deleteContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_RemoveRequested(REMOVEKIND.REMOVE); }); 
             
             inlineContextMenu = new MenuItem("Inline");
 
             inlineContextMenuItem = new MenuItem("Inline");
             inlineContextMenuItem.Shortcut = Shortcut.CtrlI;
-            inlineContextMenuItem.Click += new EventHandler((o, e) => { editorControl_InlineRequested(INLINEKIND.INLINE); }); 
+            inlineContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_InlineRequested(INLINEKIND.INLINE); }); 
             
             inlineRemoveContextMenuItem = new MenuItem("Inline && remove");
             inlineRemoveContextMenuItem.Shortcut = Shortcut.CtrlShiftI;            
-            inlineRemoveContextMenuItem.Click += new EventHandler((o, e) => { editorControl_InlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE); });
+            inlineRemoveContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_InlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE); });
 
             inlineContextMenu.MenuItems.Add(inlineContextMenuItem);
             inlineContextMenu.MenuItems.Add(inlineRemoveContextMenuItem);
@@ -115,7 +130,7 @@ namespace VisualLocalizer.Editor {
             contextMenu.MenuItems.Add(translateMenu);
             contextMenu.MenuItems.Add("-");
             contextMenu.MenuItems.Add(deleteContextMenuItem);
-            contextMenu.Popup += new EventHandler(contextMenu_Popup);
+            contextMenu.Popup += new EventHandler(ContextMenu_Popup);
             this.ContextMenu = contextMenu;
 
             this.ColumnHeadersHeight = 24;            
@@ -125,8 +140,12 @@ namespace VisualLocalizer.Editor {
 
         #region IDataTabItem members
 
+        /// <summary>
+        /// Returns current working data
+        /// </summary>
+        /// <param name="throwExceptions">False if no exceptions should be thrown on errors (used by reference lookuper thread)</param>
         public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
-            EndEdit();
+            EndEdit(); // cancel editting a cell
 
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>(RowCount);
             foreach (ResXStringGridRow row in Rows) {
@@ -134,10 +153,12 @@ namespace VisualLocalizer.Editor {
                     if (throwExceptions) {
                         throw new Exception(row.ErrorText);
                     } else {
-                        if (row.DataSourceItem != null) {
-                            string rndFile = Path.GetRandomFileName();
-                            ResXDataNode newNode = new ResXDataNode(rndFile.Replace('@', '_'), row.DataSourceItem.GetValue<string>());
-                            newNode.Comment = string.Format("@@@{0}-@-{1}-@-{2}", (int)row.Status, row.DataSourceItem.Name, row.DataSourceItem.Comment);
+                        if (row.DataSourceItem != null) { // save under fake key (it may be null)
+                            string rndFile = Path.GetRandomFileName().CreateIdentifier(LANGUAGE.CSHARP);
+                            ResXDataNode newNode = new ResXDataNode(rndFile, row.DataSourceItem.GetValue<string>());
+                            
+                            // save all data in the comment
+                            newNode.Comment = CreateMangledComment(row); // mangles all resource data to comment
                             data.Add(newNode.Name.ToLower(), newNode);
                         }
                     }
@@ -147,19 +168,32 @@ namespace VisualLocalizer.Editor {
             }
 
             return data;
-        }        
-
-        public bool CanContainItem(ResXDataNode node) {
-            return node.HasValue<string>();
         }
 
+        /// <summary>
+        /// Returns true if given node's type matches the type of items this control holds
+        /// </summary>
+        public bool CanContainItem(ResXDataNode node) {
+            if (node == null) throw new ArgumentNullException("node");
+            return node.HasValue<string>(); // only strings are allows
+        }
+
+        /// <summary>
+        /// Begins batch adding items
+        /// </summary>
         public void BeginAdd() {
             base.SetData(null);
             this.SuspendLayout();
             Rows.Clear();            
         }
 
-        public IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) {
+        /// <summary>
+        /// Adds given resource to the control
+        /// </summary>   
+        public IKeyValueSource Add(string key, ResXDataNode value) {
+            if (key == null) throw new ArgumentNullException("key");
+            if (value == null) throw new ArgumentNullException("value");
+
             ResXStringGridRow row = new ResXStringGridRow();
             PopulateRow(row, value);
 
@@ -169,25 +203,37 @@ namespace VisualLocalizer.Editor {
             return row;
         }
 
+        /// <summary>
+        /// Ends batch adding items and refreshes the view
+        /// </summary>
         public void EndAdd() {
-            if (SortedColumn != null) {
+            if (SortedColumn != null) { // reset sorting
                 SortedColumn.HeaderCell.SortGlyphDirection = SortOrder.None;
             }
             this.ResumeLayout();                               
         }
 
+        /// <summary>
+        /// Returns status for Cut and Copy commands, based on currently selected items
+        /// </summary>
         public COMMAND_STATUS CanCutOrCopy {
             get {
                 return (HasSelectedItems && !IsEditing && !ReadOnly) ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
+        /// <summary>
+        /// Returns status for Paste command, based on currently selected items
+        /// </summary>
         public COMMAND_STATUS CanPaste {
             get {
                 return (Clipboard.ContainsText() && !IsEditing && !ReadOnly) ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
             }
         }
 
+        /// <summary>
+        /// Copies selected rows to clipboard, separating columns with , and rows with ;
+        /// </summary>
         public bool Copy() {
             StringBuilder content = new StringBuilder();
             foreach (DataGridViewRow row in SelectedRows) {
@@ -198,27 +244,39 @@ namespace VisualLocalizer.Editor {
             return true;
         }
 
+        /// <summary>
+        /// Performs Cut command
+        /// </summary>    
         public bool Cut() {
-            bool ok = Copy();
+            bool ok = Copy(); // perform copy
             if (!ok) return false;
 
-            editorControl_RemoveRequested(REMOVEKIND.REMOVE);            
+            EditorControl_RemoveRequested(REMOVEKIND.REMOVE);  // remove the rows          
 
             return true;
         }
 
+        /// <summary>
+        /// Returns true if this list is not empty
+        /// </summary>
         public bool HasItems {
             get {
                 return Rows.Count > 1;
             }
         }
 
+        /// <summary>
+        /// Returns true if there are selected items in this list
+        /// </summary>
         public bool HasSelectedItems {
             get {
                 return (SelectedRows.Count > 1 || (SelectedRows.Count == 1 && !SelectedRows[0].IsNewRow));
             }
         }
 
+        /// <summary>
+        /// Gets/sets whether this control is readonly
+        /// </summary>
         public bool DataReadOnly {
             get {
                 return ReadOnly;
@@ -228,6 +286,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Performs Select All command
+        /// </summary> 
         public bool SelectAllItems() {
             foreach (DataGridViewRow row in Rows)
                 if (!row.IsNewRow) row.Selected = true;
@@ -235,20 +296,32 @@ namespace VisualLocalizer.Editor {
             return true;
         }
 
+        /// <summary>
+        /// Returns true if a resource is being edited
+        /// </summary>
         public bool IsEditing {
             get {
                 return IsCurrentCellInEditMode;
             }
         }
 
+        /// <summary>
+        /// Fires DataChanged() event
+        /// </summary>
         public void NotifyDataChanged() {
             if (DataChanged != null) DataChanged(this, null);
         }
 
+        /// <summary>
+        /// Fires ItemsStateChanged() event
+        /// </summary>
         public void NotifyItemsStateChanged() {
             if (ItemsStateChanged != null) ItemsStateChanged(this.Parent, null);
         }
 
+        /// <summary>
+        /// Selects this tab
+        /// </summary>
         public void SetContainingTabPageSelected() {
             TabPage page = Parent as TabPage;
             if (page == null) return;
@@ -263,11 +336,19 @@ namespace VisualLocalizer.Editor {
 
         #region AbstractKeyValueGridView members        
 
+        /// <summary>
+        /// This method is not supported, data are added using the Add() method
+        /// </summary>
         public override void SetData(List<ResXDataNode> list) {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Validate the key/value pair of the row
+        /// </summary>   
         protected override void Validate(DataGridViewKeyValueRow<ResXDataNode> row) {
+            if (row == null) throw new ArgumentNullException("row");
+
             string key = row.Key;
             string value = row.Value;
 
@@ -278,14 +359,23 @@ namespace VisualLocalizer.Editor {
             row.UpdateErrorSetDisplay();
         }
 
+        /// <summary>
+        /// No checkbox is displayed
+        /// </summary>
         public override string CheckBoxColumnName {
             get { return null; }
         }
 
+        /// <summary>
+        /// Returns name of the column used to hold key
+        /// </summary>
         public override string KeyColumnName {
             get { return "KeyColumn"; }
         }
 
+        /// <summary>
+        /// Returns name of the column used to hold value
+        /// </summary>
         public override string ValueColumnName {
             get { return "ValueColumn"; }
         }        
@@ -294,6 +384,9 @@ namespace VisualLocalizer.Editor {
 
         #region protected members - virtual
 
+        /// <summary>
+        /// Initializes grid columns
+        /// </summary>
         protected override void InitializeColumns() {
             ignoreColumnWidthChange = true;
 
@@ -338,14 +431,21 @@ namespace VisualLocalizer.Editor {
             this.Columns.Add(referencesColumn);
 
             ignoreColumnWidthChange = false;
-        }        
+        }
 
+        /// <summary>
+        /// Processes keys used for navigating in the <see cref="T:System.Windows.Forms.DataGridView" />.
+        /// </summary>
+        /// <param name="e">Contains information about the key that was pressed.</param>
+        /// <returns>
+        /// true if the key was processed; otherwise, false.
+        /// </returns>
         protected override bool ProcessDataGridViewKey(KeyEventArgs e) {
             if (this.IsCurrentCellInEditMode && this.EditingControl is TextBox) {
                 TextBox box = this.EditingControl as TextBox;
-                if (e.KeyData == Keys.Home || e.KeyData == Keys.End) {
+                if (e.KeyData == Keys.Home || e.KeyData == Keys.End) { // Home and End are enabled within the cell
                     return false;
-                } else if (e.KeyData == Keys.Enter) {
+                } else if (e.KeyData == Keys.Enter) { // pressing enter adds new row to the edited content
                     int selectionStart = box.SelectionStart;
                     box.Text = box.Text.Remove(selectionStart, box.SelectionLength).Insert(selectionStart, Environment.NewLine);
                     box.SelectionStart = selectionStart + Environment.NewLine.Length;
@@ -353,32 +453,45 @@ namespace VisualLocalizer.Editor {
                     return true;
                 } else return base.ProcessDataGridViewKey(e);
             } else return base.ProcessDataGridViewKey(e);
-        }        
-
-        protected override void OnEditingControlShowing(DataGridViewEditingControlShowingEventArgs e) {            
-            base.OnEditingControlShowing(e);
-            if (!CurrentCellAddress.IsEmpty && CurrentCellAddress.X == 1 || CurrentCellAddress.X == 2 && e.Control is TextBox) {
-                TextBox box = e.Control as TextBox;
-                box.AcceptsReturn = true;
-                box.Multiline = true;
-                box.WordWrap = true;
-            }
-            if (e.Control is TextBox) {
-                CurrentlyEditedTextBox = e.Control as TextBox;
-            }
-            UpdateContextItemsEnabled();
-            NotifyItemsStateChanged();
         }
 
-        protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {
-            base.OnCellBeginEdit(e);
-
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Forms.DataGridView.EditingControlShowing" /> event.
+        /// </summary>
+        /// <param name="e">A <see cref="T:System.Windows.Forms.DataGridViewEditingControlShowingEventArgs" /> that contains information about the editing control.</param>
+        protected override void OnEditingControlShowing(DataGridViewEditingControlShowingEventArgs e) {
             try {
+                base.OnEditingControlShowing(e);
+                if (!CurrentCellAddress.IsEmpty && CurrentCellAddress.X == 1 || CurrentCellAddress.X == 2 && e.Control is TextBox) {
+                    // edited is value or comment - enable multiline content
+                    TextBox box = e.Control as TextBox;
+                    box.AcceptsReturn = true;
+                    box.Multiline = true;
+                    box.WordWrap = true;
+                }
+                if (e.Control is TextBox) {
+                    CurrentlyEditedTextBox = e.Control as TextBox;
+                }
+                UpdateContextItemsEnabled();
+                NotifyItemsStateChanged();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Called before editting a cell - suspends reference lookuper thread and sets current key as last valid
+        /// </summary>        
+        protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {            
+            try {
+                base.OnCellBeginEdit(e);
+
                 if (e.ColumnIndex == 0) {
                     ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
                     if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
 
-                    editorControl.ReferenceCounterThreadSuspended = true;
+                    editorControl.ReferenceCounterThreadSuspended = true; 
                     editorControl.UpdateReferencesCount(row);
                 }                
             } catch (Exception ex) {
@@ -387,6 +500,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Called after editting a cell
+        /// </summary>        
         protected override void OnCellEndEdit(DataGridViewCellEventArgs e) {
             try {
                 if (e.RowIndex == Rows.Count - 1) return;
@@ -396,68 +512,64 @@ namespace VisualLocalizer.Editor {
                 if (e.ColumnIndex >= 0 && e.RowIndex >= 0) {
                     ResXStringGridRow row = Rows[e.RowIndex] as ResXStringGridRow;
                     bool isNewRow = false;
-                    if (row.DataSourceItem == null) {
+                    if (row.DataSourceItem == null) { // last empty row was edited, new row has been added
                         isNewRow = true;
                         row.DataSourceItem = new ResXDataNode("(new)", string.Empty);                        
                     }
                     ResXDataNode node = row.DataSourceItem;
 
-                    if (Columns[e.ColumnIndex].Name == KeyColumnName) {
+                    if (Columns[e.ColumnIndex].Name == KeyColumnName) { // key was edited
                         string newKey = (string)row.Cells[KeyColumnName].Value;
                         if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
 
                         if (isNewRow) {
-                            setNewKey(row, newKey);
+                            SetNewKey(row, newKey);
                             row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
-                        } else {
-                            if (string.Compare(newKey, node.Name) != 0) {
-                                StringKeyRenamed(row, newKey);
-                                setNewKey(row, newKey);
-                                NotifyDataChanged();
-                            }
-                        }                        
-                    } else if (Columns[e.ColumnIndex].Name == ValueColumnName) {
+                        } else if (string.Compare(newKey, node.Name) != 0) {
+                            // key has changed
+                            StringKeyRenamed(row, newKey);
+                            SetNewKey(row, newKey);
+                            NotifyDataChanged();
+                        }                     
+                    } else if (Columns[e.ColumnIndex].Name == ValueColumnName) { // value was edited
                         string newValue = (string)row.Cells[ValueColumnName].Value;
                         if (isNewRow) {
                             row.Status = ResXStringGridRow.STATUS.KEY_NULL;
                             row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
-                        } else {
-                            if (string.Compare(newValue, node.GetValue<string>()) != 0) {
-                                StringValueChanged(row, node.GetValue<string>(), newValue);
-                                NotifyDataChanged();
+                        } else if (string.Compare(newValue, node.GetValue<string>()) != 0) {
+                            // value has changed
+                            StringValueChanged(row, node.GetValue<string>(), newValue);
+                            NotifyDataChanged();
 
-                                string key = (string)row.Cells[KeyColumnName].Value;
-                                ResXDataNode newNode;
-                                if (string.IsNullOrEmpty(key)) {
-                                    newNode = new ResXDataNode("A", newValue);
-                                    row.Status = ResXStringGridRow.STATUS.KEY_NULL;
-                                } else {
-                                    newNode = new ResXDataNode(key, newValue);
-                                    row.Status = ResXStringGridRow.STATUS.OK;
-                                }
-
-                                newNode.Comment = (string)row.Cells[CommentColumnName].Value;
-                                row.DataSourceItem = newNode;
+                            string key = (string)row.Cells[KeyColumnName].Value;
+                            ResXDataNode newNode;
+                            if (string.IsNullOrEmpty(key)) {
+                                newNode = new ResXDataNode("A", newValue);
+                                row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            } else {
+                                newNode = new ResXDataNode(key, newValue);
+                                row.Status = ResXStringGridRow.STATUS.OK;
                             }
+
+                            newNode.Comment = (string)row.Cells[CommentColumnName].Value;
+                            row.DataSourceItem = newNode;
                         }
-                    } else {
+                    } else { // comment was edited
                         string newComment = (string)row.Cells[CommentColumnName].Value;
                         if (isNewRow) {
                             row.Status = ResXStringGridRow.STATUS.KEY_NULL;
                             row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
-                        } else {
-                            if (string.Compare(newComment, node.Comment) != 0) {
-                                StringCommentChanged(row, node.Comment, newComment);
-                                NotifyDataChanged();
+                        } else if (string.Compare(newComment, node.Comment) != 0) {
+                            StringCommentChanged(row, node.Comment, newComment);
+                            NotifyDataChanged();
 
-                                node.Comment = newComment;
-                            }
+                            node.Comment = newComment;
                         }
                     }
                 }
@@ -470,19 +582,34 @@ namespace VisualLocalizer.Editor {
             }
         }
         
+        /// <summary>
+        /// This method is not supported, data are obtained using the GetData() method
+        /// </summary>        
         protected override ResXDataNode GetResultItemFromRow(DataGridViewRow row) {
             throw new NotImplementedException();
         }
-        
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Forms.Control.PreviewKeyDown" /> event.
+        /// </summary>
+        /// <param name="e">A <see cref="T:System.Windows.Forms.PreviewKeyDownEventArgs" /> that contains the event data.</param>
         protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e) {
-            UpdateContextItemsEnabled();
-            base.OnPreviewKeyDown(e);
+            try {
+                UpdateContextItemsEnabled();
+                base.OnPreviewKeyDown(e);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         #endregion
 
         #region public members
         
+        /// <summary>
+        /// Called after comment was changed - adds undo unit
+        /// </summary>        
         public void StringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
             string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringChangeCommentUndoUnit unit = new StringChangeCommentUndoUnit(row, this, key, oldComment, newComment);
@@ -491,6 +618,9 @@ namespace VisualLocalizer.Editor {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", key);
         }
 
+        /// <summary>
+        /// Called after value was changed - adds undo unit
+        /// </summary> 
         public void StringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
             string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringChangeValueUndoUnit unit = new StringChangeValueUndoUnit(row, this, key, oldValue, newValue, row.DataSourceItem.Comment);
@@ -499,52 +629,75 @@ namespace VisualLocalizer.Editor {
             VLOutputWindow.VisualLocalizerPane.WriteLine("Edited value of \"{0}\"", key);
         }
 
+        /// <summary>
+        /// Called after key was changed - adds undo unit and performs refactoring of code
+        /// </summary> 
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
             string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
             StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, editorControl, oldKey, newKey);
+            editorControl.Editor.AddUndoUnit(unit);
 
             if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
+                // obtain ResX project item
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
                 resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(false, true));
 
                 if (row.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
                     int count = row.CodeReferences.Count;
+                    
+                    // set new key
                     row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
 
+                    // run the replacer
                     BatchReferenceReplacer replacer = new BatchReferenceReplacer(row.CodeReferences);
                     replacer.Inline(row.CodeReferences, true, ref errors);
 
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code, {1} errors", count, errors);
                 }                
-            }
-            editorControl.Editor.AddUndoUnit(unit);
+            }            
         }
 
+        /// <summary>
+        /// Called when new row was added to the grid
+        /// </summary>        
         public void StringRowAdded(ResXStringGridRow row) {
+            if (row == null) throw new ArgumentNullException("row");
+
             StringRowsAdded(new List<ResXStringGridRow>() { row });
         }
 
+        /// <summary>
+        /// Called when new rows were added to the grid - creates appropriate undo unit
+        /// </summary>        
         public void StringRowsAdded(List<ResXStringGridRow> rows) {
+            if (rows == null) throw new ArgumentNullException("rows");
+
             StringRowAddUndoUnit unit = new StringRowAddUndoUnit(editorControl, rows, this, editorControl.conflictResolver);
             editorControl.Editor.AddUndoUnit(unit);
         }
 
+        /// <summary>
+        /// Adds given clipboard text to the grid - values separated with , and rows separated with ; format is expected
+        /// </summary>
+        /// <param name="text"></param>
         public void AddClipboardText(string text) {
-            string[] rows = text.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+            if (text == null) throw new ArgumentNullException("text");
+
+            string[] rows = text.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries); // get the rows
             List<ResXStringGridRow> addedRows = new List<ResXStringGridRow>();
             foreach (string row in rows) {
-                string[] columns = row.Split(',');
+                string[] columns = row.Split(','); // get the columns
                 if (columns.Length != 3) continue;
 
-                string key = columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage);
+                string key = columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage); // modify key so that is a valid identifier
                 string value = columns[1];
                 string comment = columns[2];
 
-                ResXDataNode node = new ResXDataNode(key, value);
+                ResXDataNode node = new ResXDataNode(key, value); // create new resource
                 node.Comment = comment;
 
-                ResXStringGridRow newRow = Add(key, node, true) as ResXStringGridRow;
+                ResXStringGridRow newRow = Add(key, node) as ResXStringGridRow; // add a row with the resource
                 addedRows.Add(newRow);   
             }
 
@@ -557,7 +710,11 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Public wrapper for Validate(ResXStringGridRow) method
+        /// </summary>        
         public void ValidateRow(ResXStringGridRow row) {
+            if (row == null) throw new ArgumentNullException("row");
             Validate(row);
         }        
 
@@ -569,19 +726,22 @@ namespace VisualLocalizer.Editor {
             get { return "References"; }
         }
 
+        /// <summary>
+        /// Returns true if all selected rows' code references were succesfully looked up
+        /// </summary>
         public bool AreReferencesKnownOnSelected {
             get {
                 bool ok = true;
                 foreach (DataGridViewRow row in SelectedRows) {
                     object o = row.Cells[ReferencesColumnName].Value;
-                    if (o == null) {
+                    if (o == null) { // reference count column must have a value
                         ok = false;
                         break;
                     }
 
                     string s = o.ToString();
                     int iv;
-                    ok = ok && !string.IsNullOrEmpty(s) && int.TryParse(s, out iv);
+                    ok = ok && !string.IsNullOrEmpty(s) && int.TryParse(s, out iv); // the value must be a number
                 }
                 return ok;
             }
@@ -591,15 +751,37 @@ namespace VisualLocalizer.Editor {
 
         #region private members        
 
+        /// <summary>
+        /// Serializes resource data to a string
+        /// </summary>        
+        private string CreateMangledComment(ResXStringGridRow row) {
+            if (row == null) throw new ArgumentNullException("row");
+
+            return string.Format("@@@{0}-@-{1}-@-{2}", (int)row.Status, row.DataSourceItem.Name, row.DataSourceItem.Comment);
+        }   
+
+        /// <summary>
+        /// Parses given string created by CreateMangledComment() method and returns stored data
+        /// </summary>        
         private string[] GetMangledCommentData(string comment) {
-            string p = comment.Substring(3);
+            if (comment == null) throw new ArgumentNullException("comment");
+
+            string p = comment.Substring(3); // remove @@@
             string[] data = p.Split(new string[] { "-@-" }, StringSplitOptions.None);
+            if (data.Length != 3) throw new InvalidOperationException("Mangled comment is invalid: " + comment);
+
             return data;
         }
 
+        /// <summary>
+        /// Populates given row with data from given ResX node
+        /// </summary>        
         private void PopulateRow(ResXStringGridRow row, ResXDataNode node) {
+            if (row == null) throw new ArgumentNullException("row");
+            if (node == null) throw new ArgumentNullException("node");
+
             string name, value, comment;
-            if (node.Comment.StartsWith("@@@")) {
+            if (node.Comment.StartsWith("@@@")) { // it's a mangled comment (row was not valid when saving)
                 string[] data = GetMangledCommentData(node.Comment);
 
                 row.Status = (ResXStringGridRow.STATUS)int.Parse(data[0]);
@@ -607,6 +789,7 @@ namespace VisualLocalizer.Editor {
                 comment = data[2];
                 value = node.GetValue<string>();
 
+                // set key
                 if (row.Status == ResXStringGridRow.STATUS.OK) {
                     node.Name = name;
                 } else {
@@ -614,7 +797,7 @@ namespace VisualLocalizer.Editor {
                 }
 
                 node.Comment = comment;
-            } else {
+            } else { // the node is ok
                 name = node.Name;
                 value = node.GetValue<string>();
                 comment = node.Comment;
@@ -642,7 +825,12 @@ namespace VisualLocalizer.Editor {
             row.MinimumHeight = 25;
         }
 
-        private void setNewKey(ResXStringGridRow row, string newKey) {
+        /// <summary>
+        /// Updates row's status according to a new key
+        /// </summary>        
+        private void SetNewKey(ResXStringGridRow row, string newKey) {
+            if (row == null) throw new ArgumentNullException("row");
+
             if (string.IsNullOrEmpty(newKey)) {
                 row.Status = ResXStringGridRow.STATUS.KEY_NULL;                
             } else {
@@ -651,7 +839,13 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private void editorControl_RemoveRequested(REMOVEKIND flags, bool addUndoUnit, out RemoveStringsUndoUnit undoUnit) {
+        /// <summary>
+        /// Called when Remove button was clicked in editor's toolbar
+        /// </summary>
+        /// <param name="flags">Bitmask of REMOVEKIND values, settings parameters for the action</param>
+        /// <param name="addUndoUnit">True if undo unit should be added for the operation</param>
+        /// <param name="undoUnit">Created undo unit (if any)</param>
+        private void EditorControl_RemoveRequested(REMOVEKIND flags, bool addUndoUnit, out RemoveStringsUndoUnit undoUnit) {
             undoUnit = null;
             try {
                 if (!this.Visible) return;
@@ -664,6 +858,7 @@ namespace VisualLocalizer.Editor {
 
                     foreach (ResXStringGridRow row in SelectedRows) {
                         if (!row.IsNewRow) {
+                            // remove the row from the conflict resolver
                             editorControl.conflictResolver.TryAdd(row.Key, null, row, editorControl.Editor.ProjectItem, null);
 
                             row.Cells[KeyColumnName].Tag = null;
@@ -675,6 +870,7 @@ namespace VisualLocalizer.Editor {
                     }
 
                     if (dataChanged) {
+                        // create and add the undo unit
                         undoUnit = new RemoveStringsUndoUnit(editorControl, copyRows, this, editorControl.conflictResolver);
                         if (addUndoUnit) {                            
                             editorControl.Editor.AddUndoUnit(undoUnit);
@@ -692,29 +888,40 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private void editorControl_RemoveRequested(REMOVEKIND flags) {
+        private void EditorControl_RemoveRequested(REMOVEKIND flags) {
             RemoveStringsUndoUnit u;
-            editorControl_RemoveRequested(flags, true, out u);
+            EditorControl_RemoveRequested(flags, true, out u);
         }
 
+        /// <summary>
+        /// Handles display of the context menu
+        /// </summary>        
         private void ResXStringGrid_MouseDown(object sender, MouseEventArgs e) {
-            if (e.Button == MouseButtons.Right && !IsEditing) {
-                HitTestInfo info = this.HitTest(e.X, e.Y);
-                if (info != null && info.ColumnIndex >= 0 && info.RowIndex >= 0 && info.RowIndex != Rows.Count - 1) {
-                    if (SelectedRows.Count == 0) {
-                        Rows[info.RowIndex].Selected = true;                        
-                    } else {
-                        if (!Rows[info.RowIndex].Selected) {
-                            ClearSelection();
+            try {
+                if (e.Button == MouseButtons.Right && !IsEditing) {
+                    HitTestInfo info = this.HitTest(e.X, e.Y);
+                    if (info != null && info.ColumnIndex >= 0 && info.RowIndex >= 0 && info.RowIndex != Rows.Count - 1) {
+                        if (SelectedRows.Count == 0) { // set current row as selected
                             Rows[info.RowIndex].Selected = true;
+                        } else {
+                            if (!Rows[info.RowIndex].Selected) { // if unselected row was clicked
+                                ClearSelection();
+                                Rows[info.RowIndex].Selected = true; // set it as the only selected one
+                            }
                         }
+                        CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
+                        this.ContextMenu.Show(this, e.Location);
                     }
-                    CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
-                    this.ContextMenu.Show(this, e.Location);
                 }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }        
 
+        /// <summary>
+        /// Updates context menu item's state (disabled/enabled)
+        /// </summary>
         private void UpdateContextItemsEnabled() {
             cutContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
@@ -725,59 +932,83 @@ namespace VisualLocalizer.Editor {
             translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
         }
 
-        private void contextMenu_Popup(object sender, EventArgs e) {
-            UpdateContextItemsEnabled();
-
-            foreach (MenuItem menuItem in translateMenu.MenuItems) {
-                menuItem.MenuItems.Clear();
-                TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
-
-                bool enabled = true;
-                if (provider == TRANSLATE_PROVIDER.BING) {
-                    enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
-                }
-
-                menuItem.Enabled = enabled;
-
-                foreach (var pair in SettingsObject.Instance.LanguagePairs) {
-                    MenuItem newItem = new MenuItem(pair.ToString());
-                    newItem.Tag = pair;
-                    newItem.Click += new EventHandler((o, args) => {
-                        SettingsObject.LanguagePair sentPair = (o as MenuItem).Tag as SettingsObject.LanguagePair;
-                        editorControl_TranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
-                    });
-                    newItem.Enabled = enabled;
-                    menuItem.MenuItems.Add(newItem);
-                }
-
-                MenuItem addItem = new MenuItem("New language pair...", new EventHandler((o, args) => {
-                    editorControl_TranslateRequested(provider);
-                }));
-                addItem.Enabled = enabled;
-                menuItem.MenuItems.Add(addItem);
-            }
-
-        }
-
-        private void editorControl_TranslateRequested(TRANSLATE_PROVIDER provider) {
-            NewLanguagePairWindow win = new NewLanguagePairWindow(true);
-            if (win.ShowDialog() == DialogResult.OK) {
-                if (win.AddToList && LanguagePairAdded != null) {
-                    LanguagePairAdded(win.SourceLanguage, win.TargetLanguage);
-                }
-                editorControl_TranslateRequested(provider, win.SourceLanguage, win.TargetLanguage);
-            }
-        }
-
-        private void editorControl_TranslateRequested(TRANSLATE_PROVIDER provider, string from, string to) {
+        /// <summary>
+        /// Called before displaying the context menu
+        /// </summary>        
+        private void ContextMenu_Popup(object sender, EventArgs e) {
             try {
+                UpdateContextItemsEnabled();
+
+                foreach (MenuItem menuItem in translateMenu.MenuItems) { // for each translation provider
+                    menuItem.MenuItems.Clear(); // clear current language pair menu items
+                    TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
+
+                    // if the provider is Bing, AppId is required
+                    bool enabled = true;
+                    if (provider == TRANSLATE_PROVIDER.BING) {
+                        enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
+                    }
+
+                    menuItem.Enabled = enabled;
+
+                    // add current language pairs from settings
+                    foreach (var pair in SettingsObject.Instance.LanguagePairs) {
+                        MenuItem newItem = new MenuItem(pair.ToString());
+                        newItem.Tag = pair;
+                        newItem.Click += new EventHandler((o, args) => {
+                            SettingsObject.LanguagePair sentPair = (o as MenuItem).Tag as SettingsObject.LanguagePair;
+                            EditorControl_TranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
+                        });
+                        newItem.Enabled = enabled;
+                        menuItem.MenuItems.Add(newItem);
+                    }
+
+                    // add option to add a new language pair
+                    MenuItem addItem = new MenuItem("New language pair...", new EventHandler((o, args) => {
+                        EditorControl_TranslateRequested(provider);
+                    }));
+                    addItem.Enabled = enabled;
+                    menuItem.MenuItems.Add(addItem);
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Called when "New language pair..." menu item was clicked
+        /// </summary>        
+        private void EditorControl_TranslateRequested(TRANSLATE_PROVIDER provider) {
+            try {
+                NewLanguagePairWindow win = new NewLanguagePairWindow(true); // select or create new language pair
+                if (win.ShowDialog() == DialogResult.OK) {
+                    if (win.AddToList && LanguagePairAdded != null) {
+                        LanguagePairAdded(win.SourceLanguage, win.TargetLanguage); // add the language pair to the settings list
+                    }
+                    EditorControl_TranslateRequested(provider, win.SourceLanguage, win.TargetLanguage); // perform translation
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Translate selected rows
+        /// </summary>
+        /// <param name="provider">Translation provider to handle the process</param>
+        /// <param name="from">Source language (can be null)</param>
+        /// <param name="to">Target language</param>
+        private void EditorControl_TranslateRequested(TRANSLATE_PROVIDER provider, string from, string to) {
+            try {                
                 List<AbstractTranslateInfoItem> data = new List<AbstractTranslateInfoItem>();
-                AddToTranslationList(SelectedRows, data);
+                AddToTranslationList(SelectedRows, data); // collect data to translate
 
                 TranslationHandler.Translate(data, provider, from, to);
 
                 foreach (AbstractTranslateInfoItem item in data) {
-                    item.ApplyTranslation();
+                    item.ApplyTranslation(); // modify the editor's data
                 }
             } catch (Exception ex) {
                 Dictionary<string, string> add = null;
@@ -792,7 +1023,13 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Extracts data from specified list for translation
+        /// </summary>        
         public void AddToTranslationList(IEnumerable list, List<AbstractTranslateInfoItem> data) {
+            if (list == null) throw new ArgumentNullException("list");
+            if (data == null) throw new ArgumentNullException("data");
+
             foreach (ResXStringGridRow row in list) {
                 if (!row.IsNewRow) {
                     if (!string.IsNullOrEmpty(row.Key)) {
@@ -806,33 +1043,41 @@ namespace VisualLocalizer.Editor {
             }            
         }
 
-        private void editorControl_InlineRequested(INLINEKIND kind) {
+        /// <summary>
+        /// Called from editor when Inline operation is requested
+        /// </summary>
+        /// <param name="kind">Bitmask of INLINEKIND parameters</param>
+        private void EditorControl_InlineRequested(INLINEKIND kind) {
+            // show confirmation
             DialogResult result = VisualLocalizer.Library.MessageBox.Show("This operation is irreversible, cannot be undone globally, only using undo managers in open files. Do you want to proceed?",
                 null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND, OLEMSGICON.OLEMSGICON_WARNING);
             
             if (result == DialogResult.Yes) {
                 try {
-                    editorControl.ReferenceCounterThreadSuspended = true;
+                    editorControl.ReferenceCounterThreadSuspended = true; // suspend reference lookuper thread
 
                     if ((kind & INLINEKIND.INLINE) == INLINEKIND.INLINE) {
-                        editorControl.UpdateReferencesCount((IEnumerable)SelectedRows);
+                        editorControl.UpdateReferencesCount((IEnumerable)SelectedRows); // update references for specified rows manually
 
                         List<CodeReferenceResultItem> totalList = new List<CodeReferenceResultItem>();
 
-                        foreach (ResXStringGridRow row in SelectedRows) {
+                        foreach (ResXStringGridRow row in SelectedRows) { 
                             if (!row.IsNewRow) {
                                 totalList.AddRange(row.CodeReferences);
                             }
                         }
                         BatchInliner inliner = new BatchInliner(totalList);
-
+                        
+                        // run inliner
                         int errors = 0;
                         inliner.Inline(totalList, false, ref errors);
                         VLOutputWindow.VisualLocalizerPane.WriteLine("Inlining of selected rows finished - found {0} references, {1} finished successfuly", totalList.Count, totalList.Count - errors);
                     }
+                    
                     if ((kind & INLINEKIND.REMOVE) == INLINEKIND.REMOVE) {
+                        // remove the rows if requested
                         RemoveStringsUndoUnit removeUnit = null;
-                        editorControl_RemoveRequested(REMOVEKIND.REMOVE, false, out removeUnit);
+                        EditorControl_RemoveRequested(REMOVEKIND.REMOVE, false, out removeUnit);
                     }
 
                     StringInlinedUndoItem undoItem = new StringInlinedUndoItem(SelectedRows.Count);
@@ -846,19 +1091,26 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Handles column width change
+        /// </summary>        
         private void ResXStringGrid_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e) {
             if (ignoreColumnWidthChange) return;
             if (e.Column.Name == ReferencesColumnName) return;
 
-            resizeColumnsFavore(Columns[e.Column.Index + 1].Name);
+            ResizeColumnsFavore(Columns[e.Column.Index + 1].Name);
         }
 
         private void ResXStringGrid_Resize(object sender, EventArgs e) {
-            resizeColumnsFavore(ValueColumnName);
+            ResizeColumnsFavore(ValueColumnName);
         }
 
         private bool ignoreColumnWidthChange;
-        private void resizeColumnsFavore(string columnName) {
+
+        /// <summary>
+        /// Resizes the columns to fit in the given space, leaving the extra space to the specified column
+        /// </summary>        
+        private void ResizeColumnsFavore(string columnName) {
             int restWidth = 0;
             foreach (DataGridViewColumn col in Columns)
                 if (col.Name != columnName) restWidth += col.Width;

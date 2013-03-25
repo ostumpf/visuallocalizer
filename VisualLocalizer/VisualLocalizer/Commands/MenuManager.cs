@@ -50,48 +50,48 @@ namespace VisualLocalizer.Commands {
             // registers context menu in code windows
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.CodeMenu, null,
-                new EventHandler(codeMenuQueryStatus),VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(CodeMenuQueryStatus),VisualLocalizerPackage.Instance.menuService);
 
             // registers context menu in Solution Explorer
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.SolExpMenu, null,
-                new EventHandler(solExpMenuQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(SolExpMenuQueryStatus), VisualLocalizerPackage.Instance.menuService);
             
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.MoveCodeMenuItem,
-                new EventHandler(moveToResourcesClick), null, VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(MoveToResourcesClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.InlineCodeMenuItem,
-                new EventHandler(inlineClick), null, VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(InlineClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveCodeMenuItem,
-                new EventHandler(batchMoveCodeClick), null, VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchMoveCodeClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveSolExpMenuItem,
-                new EventHandler(batchMoveSolExpClick), new EventHandler(batchSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchMoveSolExpClick), new EventHandler(BatchSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineCodeMenuItem,
-                new EventHandler(batchInlineCodeClick), null, VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchInlineCodeClick), null, VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.TranslateSolExpMenuItem,
-                new EventHandler(translateSolExpClick), new EventHandler(translateSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(TranslateSolExpClick), new EventHandler(TranslateSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineSolExpMenuItem,
-                new EventHandler(batchInlineSolExpClick), new EventHandler(batchSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchInlineSolExpClick), new EventHandler(BatchSolExpQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchInlineSelectionCodeMenuItem,
-                new EventHandler(batchInlineSelectionCodeClick), new EventHandler(selectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchInlineSelectionCodeClick), new EventHandler(SelectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
 
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveSelectionCodeMenuItem,
-                new EventHandler(batchMoveSelectionCodeClick), new EventHandler(selectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
+                new EventHandler(BatchMoveSelectionCodeClick), new EventHandler(SelectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace VisualLocalizer.Commands {
         /// Determines whether "Visual Localizer" menu will be visible in the context menu of the active document.
         /// Modifies its sender accordingly.
         /// </summary>        
-        private void codeMenuQueryStatus(object sender, EventArgs args) {
+        private void CodeMenuQueryStatus(object sender, EventArgs args) {
             try {
                 Document doc = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
                 OleMenuCommand cmd = (OleMenuCommand)sender;
@@ -156,7 +156,7 @@ namespace VisualLocalizer.Commands {
         /// Determines whether active document's selection is non-empty and therefore "Batch move on selection" 
         /// and "Batch inline on selection" should be enabled in the context menu
         /// </summary>        
-        private void selectionCodeQueryStatus(object sender, EventArgs args) {
+        private void SelectionCodeQueryStatus(object sender, EventArgs args) {
             try {
                 OleMenuCommand cmd = (OleMenuCommand)sender;
 
@@ -184,7 +184,7 @@ namespace VisualLocalizer.Commands {
         /// Determines whether "Visual Localizer" menu should be visible in Solution Explorer's context menu.
         /// This happens only when all selected items are of known type.
         /// </summary>        
-        private void solExpMenuQueryStatus(object sender, EventArgs args) {
+        private void SolExpMenuQueryStatus(object sender, EventArgs args) {
             try {
                 Array selectedItems = (Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems;
                 bool menuOk = selectedItems.Length > 0;
@@ -216,18 +216,18 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void translateSolExpQueryStatus(object sender, EventArgs args) {
+        private void TranslateSolExpQueryStatus(object sender, EventArgs args) {
             (sender as OleMenuCommand).Enabled = globalTranslateEnabled;
         }
 
-        private void batchSolExpQueryStatus(object sender, EventArgs args) {
+        private void BatchSolExpQueryStatus(object sender, EventArgs args) {
             (sender as OleMenuCommand).Enabled = batchOperationsEnabled;
         }
 
         /// <summary>
         /// Handles "Move to resources" command from code context menu.
         /// </summary>        
-        private void moveToResourcesClick(object sender, EventArgs args) {
+        private void MoveToResourcesClick(object sender, EventArgs args) {
             bool enteredOk = false;
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Move to resources', because another operation is in progress.");
@@ -254,7 +254,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Inline" command from code context menu.
         /// </summary>        
-        private void inlineClick(object sender, EventArgs args) {
+        private void InlineClick(object sender, EventArgs args) {
             bool enteredOk = false;
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Inline', because another operation is in progress.");
@@ -281,7 +281,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch move on document" command from code context menu.
         /// </summary>        
-        private void batchMoveCodeClick(object sender, EventArgs args) {
+        private void BatchMoveCodeClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
                 OperationInProgress = true;
@@ -301,7 +301,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch move" command from Solution Explorer's context menu.
         /// </summary>        
-        private void batchMoveSolExpClick(object sender, EventArgs args) {
+        private void BatchMoveSolExpClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
                 OperationInProgress = true;
@@ -321,7 +321,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch inline on document" command from code context menu.
         /// </summary>        
-        private void batchInlineCodeClick(object sender, EventArgs args) {
+        private void BatchInlineCodeClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
                 OperationInProgress = true;
@@ -342,7 +342,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch inline" command from Solution Explorer's context menu.
         /// </summary>        
-        private void batchInlineSolExpClick(object sender, EventArgs args) {
+        private void BatchInlineSolExpClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
                 OperationInProgress = true;
@@ -362,7 +362,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Translate resources" command from Solution Explorer's context menu.
         /// </summary>        
-        private void translateSolExpClick(object sender, EventArgs args) {
+        private void TranslateSolExpClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Global translate', because another operation is in progress.");
                 OperationInProgress = true;
@@ -384,7 +384,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch inline on selection" command from code context menu.
         /// </summary>        
-        private void batchInlineSelectionCodeClick(object sender, EventArgs args) {
+        private void BatchInlineSelectionCodeClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch inline', because another operation is in progress.");
                 OperationInProgress = true;
@@ -404,7 +404,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Handles "Batch move on selection" command from code context menu.
         /// </summary>        
-        private void batchMoveSelectionCodeClick(object sender, EventArgs args) {
+        private void BatchMoveSelectionCodeClick(object sender, EventArgs args) {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
                 OperationInProgress = true;

@@ -10,6 +10,9 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents undo unit for the action of removing string resources from the grid
+    /// </summary>
     [Guid("1E58253F-ED20-4b1b-8E52-06E4D0A023B6")]
     internal sealed class RemoveStringsUndoUnit : AbstractUndoUnit {
 
@@ -19,6 +22,11 @@ namespace VisualLocalizer.Editor.UndoUnits {
         private ResXEditorControl Control { get; set; }
 
         public RemoveStringsUndoUnit(ResXEditorControl control, List<ResXStringGridRow> elements, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
+            if (control == null) throw new ArgumentNullException("control");
+            if (elements == null) throw new ArgumentNullException("elements");
+            if (grid == null) throw new ArgumentNullException("grid");
+            if (conflictResolver == null) throw new ArgumentNullException("conflictResolver");
+
             this.Elements = elements;
             this.Grid = grid;
             this.ConflictResolver = conflictResolver;
@@ -26,31 +34,47 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
-            Grid.SuspendLayout();
-            foreach (var element in Elements.Where((el) => { return el != null; }).OrderBy((el) => { return el.IndexAtDeleteTime; })) {
-                Grid.Rows.Insert(element.IndexAtDeleteTime, element);
-                Grid.ValidateRow(element);
-            }
-            Grid.ResumeLayout();
-            Grid.NotifyDataChanged();
+            try {
+                Grid.SuspendLayout();
+                
+                // insert rows back to their positions
+                foreach (var element in Elements.Where((el) => { return el != null; }).OrderBy((el) => { return el.IndexAtDeleteTime; })) {
+                    Grid.Rows.Insert(element.IndexAtDeleteTime, element);
+                    Grid.ValidateRow(element); // revalidate
+                }
+                Grid.ResumeLayout();
+                Grid.NotifyDataChanged();
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} string rows", Elements.Count);
-            Grid.SetContainingTabPageSelected();
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} string rows", Elements.Count);
+                Grid.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override void Redo() {
-            Grid.SuspendLayout();
-            foreach (var element in Elements.Where((el) => { return el != null; }).OrderByDescending((el) => { return el.IndexAtDeleteTime; })) {
-                ResXStringGridRow row = Grid.Rows[element.IndexAtDeleteTime] as ResXStringGridRow;
-                ConflictResolver.TryAdd(row.Key, null, row, Control.Editor.ProjectItem, null);
-                row.Cells[Grid.KeyColumnName].Tag = null;
-                Grid.Rows.RemoveAt(element.IndexAtDeleteTime);
-            }
-            Grid.ResumeLayout();
-            Grid.NotifyDataChanged();
+            try {
+                Grid.SuspendLayout();
+                foreach (var element in Elements.Where((el) => { return el != null; }).OrderByDescending((el) => { return el.IndexAtDeleteTime; })) {
+                    ResXStringGridRow row = Grid.Rows[element.IndexAtDeleteTime] as ResXStringGridRow;
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Re-deleted {0} string rows", Elements.Count);
-            Grid.SetContainingTabPageSelected();
+                    // unregister from the conflict resolver
+                    ConflictResolver.TryAdd(row.Key, null, row, Control.Editor.ProjectItem, null);
+                    row.Cells[Grid.KeyColumnName].Tag = null;
+
+                    // remvoe the row
+                    Grid.Rows.RemoveAt(element.IndexAtDeleteTime);
+                }
+                Grid.ResumeLayout();
+                Grid.NotifyDataChanged();
+
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Re-deleted {0} string rows", Elements.Count);
+                Grid.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string GetUndoDescription() {
@@ -63,41 +87,4 @@ namespace VisualLocalizer.Editor.UndoUnits {
         
     }
 
-   /* internal sealed class StringsElement {
-
-        public StringsElement(int index, ResXDataNode DataNode, ResXStringGridRow.STATUS status) {
-            this.Index = index;
-            this.DataNode = DataNode;
-            this.Status = status;
-        }
-
-        public ResXStringGridRow CreateRow() {
-            ResXStringGridRow row = new ResXStringGridRow();
-
-            DataGridViewTextBoxCell keyCell = new DataGridViewTextBoxCell();            
-            if (Status == ResXStringGridRow.STATUS.OK) {
-                keyCell.Value = DataNode.Name;
-            } else {
-                keyCell.Value = "";
-            }
-            DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
-            valueCell.Value = DataNode.GetValue<string>();
-
-            DataGridViewTextBoxCell commentCell = new DataGridViewTextBoxCell();
-            commentCell.Value = DataNode.Comment;
-            
-            row.Cells.Add(keyCell);
-            row.Cells.Add(valueCell);
-            row.Cells.Add(commentCell);
-            row.DataSourceItem = DataNode;
-            row.Status = Status;
-            row.MinimumHeight = 25;
-
-            return row;
-        }
-
-        public int Index { get; set; }
-        public ResXDataNode DataNode { get; set; }
-        public ResXStringGridRow.STATUS Status { get; set; }
-    }*/
 }

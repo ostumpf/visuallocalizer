@@ -30,7 +30,7 @@ namespace VLSetupFinalizer {
                 
                 // if user checked the option in installer GUI
                 if (key.ToLower().StartsWith("checkbox") && value == "1")
-                    register(key, devenvPaths);                
+                    RegisterToVS(key, devenvPaths);                
             }
 
             string paths = string.Join("|", devenvPaths.ToArray());            
@@ -60,10 +60,10 @@ namespace VLSetupFinalizer {
         /// Registers VL in VS specified by param - executes "devenv /setup /nosetupvstemplates"
         /// </summary>
         /// <param name="param">checkbox2008, checkbox2010 or checkbox2012</param>
-        private void register(string param, List<string> devenvPaths) {
+        private void RegisterToVS(string param, List<string> devenvPaths) {
             string key;
             string subpath;            
-            getInstallKey(param, out key, out subpath);
+            GetInstallKey(param, out key, out subpath);
             
             using (RegistryKey setupKey = Registry.LocalMachine.OpenSubKey(key)) {
                 if (setupKey != null) {
@@ -85,7 +85,7 @@ namespace VLSetupFinalizer {
         /// <param name="param">Passed from installer GUI - either checkbox2008, checkbox2010 or checkbox2012</param>
         /// <param name="key">Output param - registry key path</param>
         /// <param name="subpath">Output param - subfolder, where devenv is located</param>
-        private void getInstallKey(string param, out string key, out string subpath) {
+        private void GetInstallKey(string param, out string key, out string subpath) {
             switch (param) {
                 case "checkbox2008":
                     key = @"SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS";

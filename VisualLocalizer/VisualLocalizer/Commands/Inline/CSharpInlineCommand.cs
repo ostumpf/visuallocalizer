@@ -15,6 +15,9 @@ namespace VisualLocalizer.Commands {
     /// Represents "inline" command on a C# source code
     /// </summary>
     internal sealed class CSharpInlineCommand : InlineCommand<CSharpCodeReferenceResultItem> {
+        /// <summary>
+        /// Should return result item located in current selection point. Returns null in any case of errors and exceptions.
+        /// </summary>       
         public override CSharpCodeReferenceResultItem GetCodeReferenceResultItem() {
             if (currentCodeModel == null) throw new Exception("Current document has no CodeModel.");
 

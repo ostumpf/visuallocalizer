@@ -49,7 +49,7 @@ namespace VisualLocalizer.Gui {
             SettingsObject.Instance.SettingsLoaded += new Action(SettingsUpdated);
 
             ToolGrid = new BatchMoveToResourcesToolGrid(this);
-            ToolGrid.HighlightRequired += new EventHandler<CodeResultItemEventArgs>(grid_HighlightRequired);
+            ToolGrid.HighlightRequired += new EventHandler<CodeResultItemEventArgs>(Grid_HighlightRequired);
             
             InitializeFilterPanel();
 
@@ -67,21 +67,21 @@ namespace VisualLocalizer.Gui {
 
             FilterVisible = false; // set filter hidden
             
-            splitContainer.SplitterMoved += new SplitterEventHandler(splitContainer_SplitterMoved);
-            splitContainer.SplitterMoving += new SplitterCancelEventHandler(splitContainer_SplitterMoving);
+            splitContainer.SplitterMoved += new SplitterEventHandler(SplitContainer_SplitterMoved);
+            splitContainer.SplitterMoving += new SplitterCancelEventHandler(SplitContainer_SplitterMoving);
         }
 
         /// <summary>
         /// Set SplitterMoving to true
         /// </summary>        
-        private void splitContainer_SplitterMoving(object sender, SplitterCancelEventArgs e) {
+        private void SplitContainer_SplitterMoving(object sender, SplitterCancelEventArgs e) {
             SplitterMoving = true;            
         }
 
         /// <summary>
         /// After splitter moving finished
         /// </summary>        
-        private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e) {
+        private void SplitContainer_SplitterMoved(object sender, SplitterEventArgs e) {
             if (SplitterMoving) // if splitter was moving before
                 SettingsObject.Instance.BatchMoveSplitterDistance = splitContainer.SplitterDistance; // remember splitter distance in settings
             SplitterMoving = false;
@@ -123,7 +123,7 @@ namespace VisualLocalizer.Gui {
 
                 filterCustomCriteriaNames = used; // set new list of criteria in the tool panel
                 foreach (var crit in toAdd) { // add new custom criteria
-                    addCriterionOption(crit);
+                    AddCriterionOption(crit);
                 }
 
                 // recalculate localization probability with new criteria
@@ -162,14 +162,14 @@ namespace VisualLocalizer.Gui {
 
             // add criteria boxes
             foreach (var crit in SettingsObject.Instance.CommonLocalizabilityCriteria.Values.Combine<AbstractLocalizationCriterion, LocalizationCommonCriterion, LocalizationCustomCriterion>(SettingsObject.Instance.CustomLocalizabilityCriteria)) {
-                addCriterionOption(crit);
+                AddCriterionOption(crit);
             }      
         }
 
         /// <summary>
         /// Adds given criterion to the GUI and local copy of criteria
         /// </summary>       
-        private void addCriterionOption(AbstractLocalizationCriterion crit) {
+        private void AddCriterionOption(AbstractLocalizationCriterion crit) {
             if (crit == null) throw new ArgumentNullException("crit");
 
             try {
@@ -190,7 +190,7 @@ namespace VisualLocalizer.Gui {
                 box.Width = 130;
                 box.Name = crit.Name + "box";
                 box.SelectedIndex = (int)crit.Action;
-                box.SelectedIndexChanged += new EventHandler(box_SelectedIndexChanged);
+                box.SelectedIndexChanged += new EventHandler(Box_SelectedIndexChanged);
 
                 label = new Label();
                 label.Name = crit.Name + "label";
@@ -244,7 +244,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Criterion action combobox value changed
         /// </summary>        
-        private void box_SelectedIndexChanged(object sender, EventArgs e) {
+        private void Box_SelectedIndexChanged(object sender, EventArgs e) {
             ComboBox cBox = (sender as ComboBox);
             if (cBox.SelectedIndex == -1) return;
             if (ignoreLocRecalculation) return; // ignore the change (set in ResetFilterSettings())
@@ -270,7 +270,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Row double-clicked
         /// </summary>        
-        private void grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {
+        private void Grid_HighlightRequired(object sender, CodeResultItemEventArgs e) {
             if (HighlightRequired != null) HighlightRequired(sender, e);
         }
 

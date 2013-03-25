@@ -53,6 +53,9 @@ namespace VisualLocalizer.Settings {
 
         #region IProfileManager
 
+        /// <summary>
+        /// Loads settings from registry storage (on package load)
+        /// </summary>
         public override void LoadSettingsFromStorage() {
             VisualLocalizerPackage package = VisualLocalizerPackage.Instance;
             RegistryKey rootKey = package.UserRegistryRoot;
@@ -92,6 +95,10 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Loads settings from XML (on import settings)
+        /// </summary>
+        /// <param name="reader"></param>
         public override void LoadSettingsFromXml(IVsSettingsReader reader) {
             SettingsObject.Instance.IgnorePropertyChanges = true;
 
@@ -122,6 +129,9 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.NotifySettingsLoaded();
         }
 
+        /// <summary>
+        /// Never called (bug?)
+        /// </summary>
         public override void ResetSettings() {
             SettingsObject.Instance.IgnorePropertyChanges = true;
 
@@ -135,6 +145,9 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.NotifySettingsLoaded();
         }
 
+        /// <summary>
+        /// Saves settings to registry storage
+        /// </summary>
         public override void SaveSettingsToStorage() {
             VisualLocalizerPackage package = VisualLocalizerPackage.Instance;
             RegistryKey rootKey = package.UserRegistryRoot;
@@ -156,6 +169,10 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Saves settings to XML (on settings export)
+        /// </summary>
+        /// <param name="writer"></param>
         public override void SaveSettingsToXml(IVsSettingsWriter writer) {
             WriteIntToXml(writer, "ReferenceUpdateInterval", SettingsObject.Instance.ReferenceUpdateInterval);
             WriteIntToXml(writer, "BadKeyNamePolicy", (int)SettingsObject.Instance.BadKeyNamePolicy);
@@ -269,7 +286,7 @@ namespace VisualLocalizer.Settings {
                 bingLink.AutoSize = true;
                 bingLink.Text = "Get AppID";
                 bingLink.Margin = new Padding(0, 6, 0, 0);
-                bingLink.Click += new EventHandler(bingLink_Click);
+                bingLink.Click += new EventHandler(BingLink_Click);
 
                 languagePairsLabel = new Label();
                 languagePairsLabel.AutoSize = true;
@@ -292,26 +309,26 @@ namespace VisualLocalizer.Settings {
 
                 languagePairsBox = new ListBox();
                 languagePairsBox.Size = new Size(100, 110);
-                languagePairsBox.SelectedIndexChanged += new EventHandler(languagePairsBox_SelectedIndexChanged);
+                languagePairsBox.SelectedIndexChanged += new EventHandler(LanguagePairsBox_SelectedIndexChanged);
 
                 addButton = new Button();
                 addButton.Width = 100;
-                addButton.Click += new EventHandler(addButton_Click);
+                addButton.Click += new EventHandler(AddButton_Click);
                 addButton.Text = "Add pair";
 
                 removeButton = new Button();
                 removeButton.Width = 100;
-                removeButton.Click += new EventHandler(removeButton_Click);
+                removeButton.Click += new EventHandler(RemoveButton_Click);
                 removeButton.Text = "Remove pair";
 
                 moveUpButton = new Button();
                 moveUpButton.Width = 100;
-                moveUpButton.Click += new EventHandler(moveUpButton_Click);
+                moveUpButton.Click += new EventHandler(MoveUpButton_Click);
                 moveUpButton.Text = "Move up";
 
                 moveDownButton = new Button();
                 moveDownButton.Width = 100;
-                moveDownButton.Click += new EventHandler(moveDownButton_Click);
+                moveDownButton.Click += new EventHandler(MoveDownButton_Click);
                 moveDownButton.Text = "Move down";
 
                 langTable.Controls.Add(languagePairsBox, 0, 0);
@@ -367,7 +384,7 @@ namespace VisualLocalizer.Settings {
                 languagePairsBox.Items.Add(pair);
             }
 
-            languagePairsBox_SelectedIndexChanged(null, null);
+            LanguagePairsBox_SelectedIndexChanged(null, null);
             keyBehaviorBox.SelectedIndex = (int)SettingsObject.Instance.BadKeyNamePolicy;
         }
 
@@ -431,7 +448,7 @@ namespace VisualLocalizer.Settings {
 
         #region listeners
 
-        private void languagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
+        private void LanguagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
             try {
                 bool selected = languagePairsBox.SelectedIndex != -1;
 
@@ -447,7 +464,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Adds new language pair by displaying dialog
         /// </summary>        
-        private void addButton_Click(object sender, EventArgs e) {
+        private void AddButton_Click(object sender, EventArgs e) {
             try {
                 NewLanguagePairWindow win = new NewLanguagePairWindow(false);
                 if (win.ShowDialog() == DialogResult.OK) {
@@ -467,14 +484,14 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Moves selected language pair up by one
         /// </summary>        
-        private void moveUpButton_Click(object sender, EventArgs e) {
+        private void MoveUpButton_Click(object sender, EventArgs e) {
             try {
                 if (languagePairsBox.SelectedIndex <= 0) return;
 
                 int originalIndex = languagePairsBox.SelectedIndex;
                 int upperIndex = originalIndex - 1;
 
-                switchItems(originalIndex, upperIndex);
+                SwitchItems(originalIndex, upperIndex);
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -484,7 +501,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Moves selected language pair down by one
         /// </summary>        
-        private void moveDownButton_Click(object sender, EventArgs e) {
+        private void MoveDownButton_Click(object sender, EventArgs e) {
             try {
                 if (languagePairsBox.SelectedIndex == -1) return;
                 if (languagePairsBox.SelectedIndex == languagePairsBox.Items.Count - 1) return;
@@ -492,14 +509,14 @@ namespace VisualLocalizer.Settings {
                 int originalIndex = languagePairsBox.SelectedIndex;
                 int downIndex = originalIndex + 1;
 
-                switchItems(originalIndex, downIndex);
+                SwitchItems(originalIndex, downIndex);
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
-        private void switchItems(int originalIndex, int newIndex) {
+        private void SwitchItems(int originalIndex, int newIndex) {
             object upperItem = languagePairsBox.Items[newIndex];
             languagePairsBox.Items[newIndex] = languagePairsBox.Items[originalIndex];
             languagePairsBox.Items[originalIndex] = upperItem;
@@ -510,7 +527,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Removes selected language pair
         /// </summary>        
-        private void removeButton_Click(object sender, EventArgs e) {
+        private void RemoveButton_Click(object sender, EventArgs e) {
             try {
                 if (languagePairsBox.SelectedIndex == -1) return;
 
@@ -524,7 +541,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// "Get AppID" link was clicked - display browser with Bing url
         /// </summary>        
-        private void bingLink_Click(object sender, EventArgs e) {
+        private void BingLink_Click(object sender, EventArgs e) {
             try {
                 Process browser = new Process();
                 browser.StartInfo = new ProcessStartInfo(BingTranslator.GET_BING_APPID_URL);

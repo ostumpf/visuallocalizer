@@ -9,6 +9,9 @@ using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents un-undoable action of inlining a string resource from editor (editor part)
+    /// </summary>
     [Guid("25CC582E-F07A-4ac0-A5C0-9A6DA49272E6")]
     internal sealed class StringInlinedUndoItem : AbstractUndoUnit {
 

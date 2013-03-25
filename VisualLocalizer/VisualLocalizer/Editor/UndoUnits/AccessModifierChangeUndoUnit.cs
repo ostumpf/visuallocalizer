@@ -11,6 +11,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
     internal enum SELECTION_CHANGE_INITIATOR { UNDO_MANAGER, INITIALIZER }
 
+    /// <summary>
+    /// Undo unit for "Access modifier" change
+    /// </summary>
     [Guid("34402E28-02BB-4f34-A907-EC0C0AF594F3")]
     internal sealed class AccessModifierChangeUndoUnit : AbstractUndoUnit {
 

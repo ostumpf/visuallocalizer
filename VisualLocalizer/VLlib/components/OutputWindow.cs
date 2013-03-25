@@ -30,20 +30,20 @@ namespace VisualLocalizer.Library {
 
             // obtain standard VS output window panes (if they exist)
 
-            OutputWindowPane buildPane = getStandardPane(VSConstants.GUID_BuildOutputWindowPane);
+            OutputWindowPane buildPane = GetStandardPane(VSConstants.GUID_BuildOutputWindowPane);
             if (buildPane != null) cache.Add(VSConstants.GUID_BuildOutputWindowPane, buildPane);            
 
-            OutputWindowPane generalPane = getStandardPane(VSConstants.GUID_OutWindowGeneralPane);
+            OutputWindowPane generalPane = GetStandardPane(VSConstants.GUID_OutWindowGeneralPane);
             if (generalPane != null) cache.Add(VSConstants.GUID_OutWindowGeneralPane, generalPane);            
 
-            OutputWindowPane debugPane = getStandardPane(VSConstants.GUID_OutWindowDebugPane);
+            OutputWindowPane debugPane = GetStandardPane(VSConstants.GUID_OutWindowDebugPane);
             if (debugPane != null) cache.Add(VSConstants.GUID_OutWindowDebugPane, debugPane);            
         }
 
         /// <summary>
         /// Gets output window pane with specified GUID wrapped in OutputWindowPane wrapper
         /// </summary>        
-        protected static OutputWindowPane getStandardPane(Guid paneGuid) {
+        protected static OutputWindowPane GetStandardPane(Guid paneGuid) {
             if (paneGuid == null) throw new ArgumentNullException("paneGuid");
 
             IVsOutputWindowPane pane = null;

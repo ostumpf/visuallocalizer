@@ -49,9 +49,9 @@ namespace VisualLocalizer.Gui {
                 formatBox.Enabled = false;
             } else { // initialize values
                 formatBox.SelectedIndex = 0;
-                widthBox_TextChanged(null, null);
-                heightBox_TextChanged(null, null);
-                nameBox_TextChanged(null, null);
+                WidthBox_TextChanged(null, null);
+                HeightBox_TextChanged(null, null);
+                NameBox_TextChanged(null, null);
             }
 
             okButton.Focus();
@@ -92,40 +92,40 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Updates "OK" button state according to validity of input data
         /// </summary>
-        private void updateOkEnabled() {
+        private void UpdateOkEnabled() {
             okButton.Enabled = widthOk && heightOk && nameOk;
         }
 
         /// <summary>
         /// Text of the width box changed - try parse given content and set error if necessary
         /// </summary>        
-        private void widthBox_TextChanged(object sender, EventArgs e) {
+        private void WidthBox_TextChanged(object sender, EventArgs e) {
             int result;
             bool ok = int.TryParse(widthBox.Text, out result);
             ImageWidth = result;
             widthOk = ok && result > 0; // dimensions must be positive
             widthBox.BackColor = ok ? Color.White : errorColor;
 
-            updateOkEnabled();
+            UpdateOkEnabled();
         }
 
         /// <summary>
         /// Text of the height box changed - try parse given content and set error if necessary
         /// </summary>        
-        private void heightBox_TextChanged(object sender, EventArgs e) {
+        private void HeightBox_TextChanged(object sender, EventArgs e) {
             int result;
             bool ok = int.TryParse(heightBox.Text, out result);
             ImageHeight = result;
             heightOk = ok && result > 0; // dimensions must be positive
             heightBox.BackColor = ok ? Color.White : errorColor;
 
-            updateOkEnabled();
+            UpdateOkEnabled();
         }
 
         /// <summary>
         /// File name changed - check for invalid characters and set error if necessary
         /// </summary>        
-        private void nameBox_TextChanged(object sender, EventArgs e) {
+        private void NameBox_TextChanged(object sender, EventArgs e) {
             string name = nameBox.Text;
             bool ok = true;
             foreach (char c in Path.GetInvalidFileNameChars()) {
@@ -140,13 +140,13 @@ namespace VisualLocalizer.Gui {
             nameBox.BackColor = ok ? Color.White : errorColor;
             ImageName = name;
 
-            updateOkEnabled();
+            UpdateOkEnabled();
         }
 
         /// <summary>
         /// Format changed
         /// </summary>        
-        private void formatBox_SelectedIndexChanged(object sender, EventArgs e) {
+        private void FormatBox_SelectedIndexChanged(object sender, EventArgs e) {
             ImageFormat = ((FormatBoxItem)formatBox.SelectedItem);
         }
 

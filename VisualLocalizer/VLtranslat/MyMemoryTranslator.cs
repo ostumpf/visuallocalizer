@@ -22,6 +22,12 @@ namespace VisualLocalizer.Translate {
             return instance;
         }
 
+        /// <summary>
+        /// Translates the specified from language.
+        /// </summary>
+        /// <param name="fromLanguage">From language.</param>
+        /// <param name="toLanguage">To language.</param>
+        /// <param name="untranslatedText">The untranslated text.</param>
         public string Translate(string fromLanguage, string toLanguage, string untranslatedText) {
             if (string.IsNullOrEmpty(untranslatedText)) return untranslatedText;
             if (string.IsNullOrEmpty(toLanguage)) throw new ArgumentNullException("toLanguage");

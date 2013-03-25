@@ -21,7 +21,7 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Obtains SVsStatusbar service instance
         /// </summary>
-        private static void checkInstance() {            
+        private static void CheckInstance() {            
             if (statusBar == null) statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
         }
 
@@ -29,7 +29,7 @@ namespace VisualLocalizer.Library {
         /// Starts indeterminate animation with given icon
         /// </summary>        
         public static void StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants icon) {
-            checkInstance();
+            CheckInstance();
             object i = (short)icon;
             
             int hr = statusBar.Animation(1, ref i);
@@ -40,7 +40,7 @@ namespace VisualLocalizer.Library {
         /// Stops indeterminate animation with given icon
         /// </summary>
         public static void StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants icon) {
-            checkInstance();
+            CheckInstance();
             object i = (short)icon;
 
             int hr = statusBar.Animation(0, ref i);
@@ -53,7 +53,7 @@ namespace VisualLocalizer.Library {
         /// <param name="totalAmount">Total number of units of work that will be done</param>
         /// <param name="text">Text to display in the status bar</param>
         public static void StartDeterminate(int totalAmount, string text) {
-            checkInstance();
+            CheckInstance();
 
             statusBarCookie = 0;
             total = (uint)totalAmount;
@@ -68,7 +68,7 @@ namespace VisualLocalizer.Library {
         /// <param name="text">Text that will be visible for 500ms</param>
         /// <param name="readyText">Text that will be set to status bar after that</param>
         public static void StopDeterminate(string text, string readyText) {
-            checkInstance();
+            CheckInstance();
 
             int hr = statusBar.Progress(ref statusBarCookie, 1, text, total, total);
             Marshal.ThrowExceptionForHR(hr);
@@ -96,7 +96,7 @@ namespace VisualLocalizer.Library {
         /// <param name="completed">Number of units of work that has already been completed</param>
         /// <param name="text">Text to be displayed in status bar</param>
         public static void SetDeterminateProgress(int completed, string text) {
-            checkInstance();
+            CheckInstance();
 
             int hr = statusBar.Progress(ref statusBarCookie, 1, text, (uint)completed, total);
             Marshal.ThrowExceptionForHR(hr);

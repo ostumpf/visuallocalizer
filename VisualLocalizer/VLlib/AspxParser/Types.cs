@@ -9,22 +9,22 @@ namespace VisualLocalizer.Library.AspxParser {
     /// </summary>
     public enum OutputElementKind { 
         /// <summary>
-        /// Blocks starting with <%=  
+        /// Blocks starting with &lt;%=  
         /// </summary>
         PLAIN,
 
         /// <summary>
-        /// Blocks starting with <%:  
+        /// Blocks starting with &lt;%:  
         /// </summary>
         HTML_ESCAPED,
 
         /// <summary>
-        /// Blocks starting with <%$  
+        /// Blocks starting with &lt;%$  
         /// </summary>
         EXPRESSION,
 
         /// <summary>
-        /// Blocks starting with <%#  
+        /// Blocks starting with &lt;%#  
         /// </summary>
         BIND
     }

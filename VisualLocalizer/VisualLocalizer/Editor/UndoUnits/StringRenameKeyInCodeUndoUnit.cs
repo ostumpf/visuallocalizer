@@ -8,6 +8,9 @@ using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents un-undoable action of inlining a string resource from editor (code part)
+    /// </summary>
     [Guid("AA762234-2BD9-4dc6-A19B-356A3D4357E0")]
     internal sealed class StringRenameKeyInCodeUndoUnit : AbstractUndoUnit {
 

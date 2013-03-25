@@ -10,25 +10,51 @@ using EnvDTE;
 using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor {
-    internal class ListViewKeyItem : ListViewItem, IReferencableKeyValueSource {
 
-        protected Color ErrorColor = Color.FromArgb(255, 213, 213);
+    /// <summary>
+    /// Represents resource item with image, icon, sound or file value, displayed in ResX editor.
+    /// </summary>
+    internal sealed class ListViewKeyItem : ListViewItem, IReferencableKeyValueSource {
+        
+        /// <summary>
+        /// Background color displayed in case of error
+        /// </summary>
+        private Color ErrorColor = Color.FromArgb(255, 213, 213);
 
         public ListViewKeyItem(AbstractListView parent) {
-            _ItemsWithSameKey = new List<IKeyValueSource>();
-            _ConflictRows = new HashSet<IKeyValueSource>();
-            _ErrorSet = new HashSet<string>();
+            ItemsWithSameKey = new List<IKeyValueSource>();
+            ConflictItems = new HashSet<IKeyValueSource>();
+            ErrorMessages = new HashSet<string>();
             FileRefOk = true;
             CodeReferences = new List<CodeReferenceResultItem>();
             this.AbstractListView = parent;
         }
 
+        /// <summary>
+        /// Holds this item's content
+        /// </summary>
         public ResXDataNode DataNode { get; set; }
-        public string BeforeEditValue { get; set; }
-        public string AfterEditValue { get; set; }
+
+        /// <summary>
+        /// Value of the key before editting
+        /// </summary>
+        public string BeforeEditKey { get; set; }
+
+        /// <summary>
+        /// Value of the key after editting
+        /// </summary>
+        public string AfterEditKey { get; set; }
+
+        /// <summary>
+        /// Parent list view
+        /// </summary>
         public AbstractListView AbstractListView { get; private set; }
 
         private bool _FileRefOk;
+
+        /// <summary>
+        /// True if this resource is external and FileRef points to existing file
+        /// </summary>
         public bool FileRefOk {
             get {
                 return _FileRefOk;
@@ -45,38 +71,35 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// ListView items do not have string values
+        /// </summary>
         public string Value {
             get { return null; }
         }
-
+    
         public int IndexAtDeleteTime { get; set; }
         public REMOVEKIND RemoveKind { get; set; }
         public ProjectItems NeighborItems { get; set; }
 
-        private List<IKeyValueSource> _ItemsWithSameKey;
-        public List<IKeyValueSource> ItemsWithSameKey {
-            get {
-                return _ItemsWithSameKey;
-            }
-            set {
-                _ItemsWithSameKey = value;
-            }
-        }
+        /// <summary>
+        /// Items with the same key
+        /// </summary>
+        public List<IKeyValueSource> ItemsWithSameKey { get; set; }
 
-        private HashSet<IKeyValueSource> _ConflictRows;
-        public HashSet<IKeyValueSource> ConflictItems {
-            get {
-                return _ConflictRows;
-            }
-        }
+        /// <summary>
+        /// Items that are in conflict with this item (have the same key and possibly different values)
+        /// </summary>
+        public HashSet<IKeyValueSource> ConflictItems { get; private set; }
 
-        private HashSet<string> _ErrorSet;
-        public HashSet<string> ErrorMessages {
-            get {
-                return _ErrorSet;
-            }
-        }
+        /// <summary>
+        /// Returns error messages associated with this item
+        /// </summary>
+        public HashSet<string> ErrorMessages { get; private set; }
 
+        /// <summary>
+        /// Updates display of errors for this item (called after change in ErrorMessages)
+        /// </summary>
         public void UpdateErrorSetDisplay() {
             if (!FileRefOk) {
                 this.BackColor = ErrorColor;
@@ -92,14 +115,21 @@ namespace VisualLocalizer.Editor {
             }          
         }
 
+        /// <summary>
+        /// List of references to the resource in code (used to display number and to enable key renaming)
+        /// </summary>
         public List<CodeReferenceResultItem> CodeReferences {
             get;
             set;
         }
 
+        /// <summary>
+        /// Updates display of the references count
+        /// </summary>
+        /// <param name="determinated">True if number of references was successfuly calculated</param>
         public void UpdateReferenceCount(bool determinated) {
-            ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s), 
-                ErrorMessages.Count == 0 && determinated ? CodeReferences.Count.ToString():"?");            
+            ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s),
+                ErrorMessages.Count == 0 && determinated ? CodeReferences.Count.ToString() : "?");             
         }
     }
 }

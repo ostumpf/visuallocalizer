@@ -89,7 +89,12 @@ namespace VisualLocalizer {
         public static readonly string[] CsExtensions = { ".cs" };
         public static readonly string[] VBExtensions = { ".vb" };
         public static readonly string[] AspxExtensions = { ".aspx", ".master", ".ascx" };
-        
+
+        public static readonly string[] IMAGE_FILE_EXT = { ".png", ".gif", ".bmp", ".jpg", ".jpeg", ".tif", ".tiff" };
+        public static readonly string[] ICON_FILE_EXT = { ".ico" };
+        public static readonly string[] SOUND_FILE_EXT = { ".wav" };
+        public static readonly string[] TEXT_FILE_EXT = { ".txt" };
+
         public const string WindowsCSharpProject = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}";
         public const string WindowsVBProject = "{F184B08F-C81C-45F6-A57F-5ABD9991F28F}";
         public const string WebApplicationProject = "{349C5851-65DF-11DA-9384-00065B846F21}";

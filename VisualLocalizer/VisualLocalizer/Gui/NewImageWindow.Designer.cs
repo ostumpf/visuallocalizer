@@ -84,7 +84,7 @@
             this.formatBox.Name = "formatBox";
             this.formatBox.Size = new System.Drawing.Size(103, 21);
             this.formatBox.TabIndex = 1;
-            this.formatBox.SelectedIndexChanged += new System.EventHandler(this.formatBox_SelectedIndexChanged);
+            this.formatBox.SelectedIndexChanged += new System.EventHandler(this.FormatBox_SelectedIndexChanged);
             // 
             // dimensionsLabel
             // 
@@ -117,7 +117,7 @@
             this.widthBox.TabIndex = 0;
             this.widthBox.Text = "800";
             this.widthBox.WordWrap = false;
-            this.widthBox.TextChanged += new System.EventHandler(this.widthBox_TextChanged);
+            this.widthBox.TextChanged += new System.EventHandler(this.WidthBox_TextChanged);
             // 
             // crossLabel
             // 
@@ -138,7 +138,7 @@
             this.heightBox.TabIndex = 2;
             this.heightBox.Text = "600";
             this.heightBox.WordWrap = false;
-            this.heightBox.TextChanged += new System.EventHandler(this.heightBox_TextChanged);
+            this.heightBox.TextChanged += new System.EventHandler(this.HeightBox_TextChanged);
             // 
             // nameLabel
             // 
@@ -159,7 +159,7 @@
             this.nameBox.Size = new System.Drawing.Size(256, 20);
             this.nameBox.TabIndex = 5;
             this.nameBox.Text = "(new image)";
-            this.nameBox.TextChanged += new System.EventHandler(this.nameBox_TextChanged);
+            this.nameBox.TextChanged += new System.EventHandler(this.NameBox_TextChanged);
             // 
             // buttonsPanel
             // 

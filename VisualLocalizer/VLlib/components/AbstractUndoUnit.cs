@@ -51,7 +51,7 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         public void Do(IOleUndoManager pUndoManager) {
             // do all PrependUnits
-            List<IOleUndoUnit> prepunits = handleUnits(PrependUnits, pUndoManager);
+            List<IOleUndoUnit> prepunits = HandleUnits(PrependUnits, pUndoManager);
 
             if (isUndo) {
                 Undo();
@@ -60,7 +60,7 @@ namespace VisualLocalizer.Library {
             }
 
             // do all AppendUnits
-            List<IOleUndoUnit> appunits = handleUnits(AppendUnits, pUndoManager);
+            List<IOleUndoUnit> appunits = HandleUnits(AppendUnits, pUndoManager);
 
             this.AppendUnits.Clear();
             this.PrependUnits.Clear();
@@ -78,7 +78,7 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Performs given units and removes them from the stack
         /// </summary>        
-        private List<IOleUndoUnit> handleUnits(List<IOleUndoUnit> units, IOleUndoManager pUndoManager) {
+        private List<IOleUndoUnit> HandleUnits(List<IOleUndoUnit> units, IOleUndoManager pUndoManager) {
             foreach (IOleUndoUnit unit in units)
                 unit.Do(pUndoManager);
             

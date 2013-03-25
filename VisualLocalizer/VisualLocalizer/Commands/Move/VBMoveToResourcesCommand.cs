@@ -11,6 +11,10 @@ using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
     internal sealed class VBMoveToResourcesCommand : MoveToResourcesCommand<VBStringResultItem> {
+
+        /// <summary>
+        /// Gets result item from current selection. Returns null in any case of errors and exceptions.
+        /// </summary>        
         protected override VBStringResultItem GetReplaceStringItem() {
             if (currentCodeModel == null)
                 throw new Exception("Current document has no CodeModel.");

@@ -32,12 +32,46 @@ using VisualLocalizer.Commands;
 
 namespace VisualLocalizer.Editor {
 
+    /// <summary>
+    /// Options for removing items
+    /// </summary>
     [Flags]
-    internal enum REMOVEKIND { REMOVE = 1, EXCLUDE = 2, DELETE_FILE = 4 }
+    internal enum REMOVEKIND { 
+        /// <summary>
+        /// Item should be removed from the list/grid
+        /// </summary>
+        REMOVE = 1, 
 
+        /// <summary>
+        /// Referenced resource should be excluded from the project
+        /// </summary>
+        EXCLUDE = 2, 
+
+        /// <summary>
+        /// Referenced resource should be deleted from disk
+        /// </summary>
+        DELETE_FILE = 4 
+    }
+
+    /// <summary>
+    /// Options for inlining items
+    /// </summary>
     [Flags]
-    internal enum INLINEKIND { INLINE = 1, REMOVE = 2 }
+    internal enum INLINEKIND { 
+        /// <summary>
+        /// Item should be inlined
+        /// </summary>
+        INLINE = 1, 
 
+        /// <summary>
+        /// Item should be removed from the grid
+        /// </summary>
+        REMOVE = 2 
+    }
+
+    /// <summary>
+    /// Represents GUI of the ResX editor
+    /// </summary>
     internal sealed class ResXEditorControl : TableLayoutPanel,IEditorControl {
 
         private ResXStringGrid stringGrid;
@@ -56,11 +90,6 @@ namespace VisualLocalizer.Editor {
         private ToolStripComboBox codeGenerationBox;
         private bool readOnly;
 
-        private readonly string[] IMAGE_FILE_EXT = { ".png", ".gif", ".bmp", ".jpg", ".jpeg", ".tif", ".tiff" };
-        private readonly string[] ICON_FILE_EXT = { ".ico" };
-        private readonly string[] SOUND_FILE_EXT = { ".wav" };
-        private readonly string[] TEXT_FILE_EXT = { ".txt" };
-
         public event EventHandler DataChanged;
         public event Action<REMOVEKIND> RemoveRequested;
         public event Action<View> ViewKindChanged;
@@ -74,70 +103,86 @@ namespace VisualLocalizer.Editor {
         public bool ReferenceCounterThreadSuspended = false;
         private System.Threading.Thread referenceUpdaterThread;
 
+        /// <summary>
+        /// Initializes the GUI
+        /// </summary>        
         public void Init<T>(AbstractSingleViewEditor<T> editor) where T : Control, IEditorControl, new() {
-            this.Editor = editor as ResXEditor;
+            try {
+                this.Editor = editor as ResXEditor;
 
-            this.referenceLister = new ReferenceLister();
+                // initialize the reference lookuper thread
+                this.referenceLister = new ReferenceLister();
 
-            this.referenceUpdaterThread = new System.Threading.Thread(ReferenceLookuperThread);
-            this.referenceUpdaterThread.IsBackground = true;
-            this.referenceUpdaterThread.Priority = System.Threading.ThreadPriority.BelowNormal;
+                this.referenceUpdaterThread = new System.Threading.Thread(ReferenceLookuperThread);
+                this.referenceUpdaterThread.IsBackground = true;
+                this.referenceUpdaterThread.Priority = System.Threading.ThreadPriority.BelowNormal;
 
-            this.Dock = DockStyle.Fill;
-            this.DoubleBuffered = true;
-            this.conflictResolver = new KeyValueIdentifierConflictResolver(true, false);
+                this.Dock = DockStyle.Fill;
+                this.DoubleBuffered = true;
+                this.conflictResolver = new KeyValueIdentifierConflictResolver(true, false);
 
-            initToolStrip();
-            initTabControl();            
+                InitToolStrip();
+                InitTabControl();
 
-            this.RowCount = 2;
-            this.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                this.RowCount = 2;
+                this.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                this.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            this.ColumnCount = 1;
-            this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                this.ColumnCount = 1;
+                this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            this.Controls.Add(toolStrip, 0, 0);
-            this.Controls.Add(tabs, 0, 1);
+                this.Controls.Add(toolStrip, 0, 0);
+                this.Controls.Add(tabs, 0, 1);
 
-            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+                // revalidate the keys on RevalidationRequested event
+                SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }       
 
+        /// <summary>
+        /// Returns instance of the editor
+        /// </summary>
         public ResXEditor Editor {
             get;
-            set;
+            private set;
         }
 
-        private void initToolStrip() {
+        /// <summary>
+        /// Initializes the toolstrip GUI
+        /// </summary>
+        private void InitToolStrip() {
             ToolStripManager.Renderer = new ToolStripProfessionalRenderer(new VsColorTable());
 
             toolStrip = new ToolStrip();
             toolStrip.Dock = DockStyle.Top;
 
             addButton = new ToolStripSplitButton("&Add Resource");
-            addButton.ButtonClick += new EventHandler(addExistingResources);
-            addButton.DropDownItems.Add("Existing File", null, new EventHandler(addExistingResources));
+            addButton.ButtonClick += new EventHandler(AddExistingResources);
+            addButton.DropDownItems.Add("Existing File", null, new EventHandler(AddExistingResources));
             addButton.DropDownItems.Add(new ToolStripSeparator());
             ToolStripMenuItem newItem = new ToolStripMenuItem("New");
-            newItem.DropDownItems.Add("String",null,new EventHandler(addNewString));
-            newItem.DropDownItems.Add("Icon", null, new EventHandler((o, e) => { addNewImage(typeof(Icon), iconsListView, "Icons"); }));
-            newItem.DropDownItems.Add("Image", null, new EventHandler((o, e) => { addNewImage(typeof(Bitmap), imagesListView, "Images"); }));
+            newItem.DropDownItems.Add("String",null,new EventHandler(AddNewString));
+            newItem.DropDownItems.Add("Icon", null, new EventHandler((o, e) => { AddNewImage(typeof(Icon), iconsListView, "Icons"); }));
+            newItem.DropDownItems.Add("Image", null, new EventHandler((o, e) => { AddNewImage(typeof(Bitmap), imagesListView, "Images"); }));
             addButton.DropDownItems.Add(newItem);
             toolStrip.Items.Add(addButton);
 
             mergeButton = new ToolStripDropDownButton("&Merge with ResX File");
-            mergeButton.DropDownItems.Add("Merge && &Preserve Both", null, new EventHandler(mergeButton_PreserveClick));
-            mergeButton.DropDownItems.Add("Merge && &Delete Source", null, new EventHandler(mergeButton_DeleteClick));
+            mergeButton.DropDownItems.Add("Merge && &Preserve Both", null, new EventHandler(MergeButton_PreserveClick));
+            mergeButton.DropDownItems.Add("Merge && &Delete Source", null, new EventHandler(MergeButton_DeleteClick));
             toolStrip.Items.Add(mergeButton);
 
             toolStrip.Items.Add(new ToolStripSeparator());
 
             profferKeysButton = new ToolStripButton("Proffer");
-            profferKeysButton.Click += new EventHandler(profferKeysButton_Click);
+            profferKeysButton.Click += new EventHandler(ProfferKeysButton_Click);
             toolStrip.Items.Add(profferKeysButton);
 
             updateKeysButton = new ToolStripButton("Synchronize");
-            updateKeysButton.Click += new EventHandler(updateKeysButton_Click);
+            updateKeysButton.Click += new EventHandler(UpdateKeysButton_Click);
             toolStrip.Items.Add(updateKeysButton);
 
             toolStrip.Items.Add(new ToolStripSeparator());
@@ -154,13 +199,13 @@ namespace VisualLocalizer.Editor {
             toolStrip.Items.Add(removeButton);
 
             inlineButton = new ToolStripSplitButton("&Inline");
-            inlineButton.ButtonClick += new EventHandler(inlineButton_ButtonClick);
+            inlineButton.ButtonClick += new EventHandler(InlineButton_ButtonClick);
             inlineButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            inlineButton.DropDownItems.Add("Inline && &remove", null, new EventHandler(inlineAndRemoveButton_ButtonClick)); 
+            inlineButton.DropDownItems.Add("Inline && &remove", null, new EventHandler(InlineAndRemoveButton_ButtonClick)); 
             toolStrip.Items.Add(inlineButton);
 
             translateButton = new ToolStripDropDownButton("&Translate");
-            translateButton.DropDownOpening += new EventHandler(translateButton_DropDownOpening);
+            translateButton.DropDownOpening += new EventHandler(TranslateButton_DropDownOpening);
 
             foreach (TRANSLATE_PROVIDER prov in Enum.GetValues(typeof(TRANSLATE_PROVIDER))) {
                 ToolStripMenuItem menuItem = new ToolStripMenuItem(prov.ToHumanForm());
@@ -206,14 +251,17 @@ namespace VisualLocalizer.Editor {
             codeGenerationBox.ComboBox.Items.Add("Internal");
             codeGenerationBox.ComboBox.Items.Add("Public");
             codeGenerationBox.ComboBox.Items.Add("No designer class");            
-            codeGenerationBox.SelectedIndexChanged += new EventHandler(noFocusBoxSelectedIndexChanged);
-            codeGenerationBox.SelectedIndexChanged += new EventHandler(codeGenerationBox_SelectedIndexChanged);
+            codeGenerationBox.SelectedIndexChanged += new EventHandler(NoFocusBoxSelectedIndexChanged);
+            codeGenerationBox.SelectedIndexChanged += new EventHandler(CodeGenerationBox_SelectedIndexChanged);
             codeGenerationBox.Margin = new Padding(2);
             
             toolStrip.Items.Add(codeGenerationBox);
         }          
        
-        private void initTabControl() {
+        /// <summary>
+        /// Initializes the tabs GUI
+        /// </summary>
+        private void InitTabControl() {
             tabs = new ResXTabControl();
             tabs.Dock = DockStyle.Fill;
             tabs.ItemSize = new Size(25, 80);
@@ -226,7 +274,7 @@ namespace VisualLocalizer.Editor {
             stringGrid = new ResXStringGrid(this);            
             stringGrid.DataChanged += new EventHandler((o, args) => { DataChanged(o, args); });            
             stringGrid.ItemsStateChanged += new EventHandler(UpdateToolStripButtonsEnable);
-            stringGrid.LanguagePairAdded += new Action<string, string>(stringGrid_LanguagePairAdded);
+            stringGrid.LanguagePairAdded += new Action<string, string>(StringGrid_LanguagePairAdded);
             stringGrid.Name = "Content";
             stringTab.Controls.Add(stringGrid);
             tabs.TabPages.Add(stringTab);
@@ -250,25 +298,36 @@ namespace VisualLocalizer.Editor {
 
         #region public members
 
+        /// <summary>
+        /// Returns IDataTabItem for given page
+        /// </summary>        
         public IDataTabItem GetContentFromTabPage(TabPage page) {
-            if (page == null) return null;
+            if (page == null) throw new ArgumentNullException("page");
+
             Control content = page.Controls.ContainsKey("Content") ? page.Controls["Content"] : null;
             if (content is IDataTabItem && content != null)
                 return content as IDataTabItem;
             else
-                return null;
+                throw new InvalidOperationException("Cannot obtain content of " + page.Text);
         }
 
+        /// <summary>
+        /// Places given data in respective tabs
+        /// </summary>        
         public void SetData(Dictionary<string, ResXDataNode> data) {
+            if (data == null) throw new ArgumentNullException("data");
+
+            // disable "Access modifier" checkbox if file is not a part of solution
             if (Editor.ProjectItem ==null || (Editor.ProjectItem.InternalProjectItem.ContainingProject != null && Editor.ProjectItem.InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject))
                 codeGenerationBox.Enabled = false;
 
             codeGenerationBox.Tag = SELECTION_CHANGE_INITIATOR.INITIALIZER;
-            codeGenerationBox.SelectedItem = GetResXCodeGenerationMode();
+            codeGenerationBox.SelectedItem = GetResXCodeGenerationMode(); // get current "Access modifier"
 
             List<IDataTabItem> dataTabItems = new List<IDataTabItem>();
-            ReferenceCounterThreadSuspended = true;
+            ReferenceCounterThreadSuspended = true; // suspend the reference lookuper thread
 
+            // call BeginAdd() on each page
             foreach (TabPage page in this.tabs.TabPages) {
                 IDataTabItem content = GetContentFromTabPage(page);
                 if (content != null) {
@@ -279,22 +338,28 @@ namespace VisualLocalizer.Editor {
                 }
             }
 
+            // determine in which page the ResX node should be placed ("Files" can contain any data)
             foreach (var pair in data) {
                 foreach (var item in dataTabItems) {
                     if (item.CanContainItem(pair.Value)) {
-                        item.Add(pair.Key, pair.Value, true);
+                        item.Add(pair.Key, pair.Value);
                         break;
                     }
                 }
             }
 
+            // call EndAdd() on each page
             foreach (IDataTabItem tabItem in dataTabItems)
                 tabItem.EndAdd();
 
-            ReferenceCounterThreadSuspended = false;
+            ReferenceCounterThreadSuspended = false; // resume reference lookuper thread
             if (!referenceUpdaterThread.IsAlive) referenceUpdaterThread.Start(); 
         }
 
+        /// <summary>
+        /// Collects data from the pages
+        /// </summary>
+        /// <param name="throwExceptions">True if exception should be thrown in case some item is not valid</param>        
         public Dictionary<string, ResXDataNode> GetData(bool throwExceptions) {
             Dictionary<string, ResXDataNode> data = new Dictionary<string, ResXDataNode>();
 
@@ -308,58 +373,25 @@ namespace VisualLocalizer.Editor {
             return data;
         }
 
-        private void ReferenceLookuperThread() {
-            bool init = true;
-            while (!IsDisposed) {
-                try {
-                    if (init) {
-                        UpdateReferencesCount();
-                        init = false;
-                    }
-                    System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
-                    if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
-                        UpdateReferencesCount();
-                } catch (Exception ex) {
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("{0} occured on reference lookuper thread: {1}", ex.GetType().Name, ex.Message);
-                }
-            }
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(Editor.FileName));
-        }
-
-        public void UpdateReferencesCount() {
-            ArrayList list = new ArrayList();            
-            
-            foreach (ResXStringGridRow row in stringGrid.Rows)
-                if (!row.IsNewRow) list.Add(row);
-
-            filesListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, filesListView.Items);
-            imagesListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, imagesListView.Items);
-            iconsListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, iconsListView.Items);
-            soundsListView.Invoke(new Action<IList, IEnumerable>((l, s) => addRange(l, s)), list, soundsListView.Items);            
-
-            UpdateReferencesCount(list);
-        }
-
-        private void addRange(IList list, IEnumerable source) {
-            foreach (IReferencableKeyValueSource item in source)
-                list.Add(item);
-        }
-
-        public void UpdateReferencesCount(IReferencableKeyValueSource src) {
-            UpdateReferencesCount(new List<IReferencableKeyValueSource>() { src });
-        }
-
+        /// <summary>
+        /// Updates reference count for given list of items
+        /// </summary>        
         public void UpdateReferencesCount(IEnumerable items) {
+            if (items == null) throw new ArgumentNullException("items");
+
             ResXProjectItem resxItem = Editor.ProjectItem;
+
+            // if edited file is part of solution
             if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
+                // get ResX project items
                 Project containingProject = resxItem.InternalProjectItem.ContainingProject;
                 resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(false, true));
 
-                List<Project> projects = new List<Project>();
-                
-                projects.Add(containingProject);
+                // create list of all projects in which references will be seeked
+                List<Project> projects = new List<Project>();                
+                projects.Add(containingProject); // add this project
                 foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
-                    foreach (Project proj in solutionProject.GetReferencedProjects()) {
+                    foreach (Project proj in solutionProject.GetReferencedProjects()) { // add referenced projects
                         if (proj == containingProject) {
                             projects.Add(solutionProject);
                             break;
@@ -367,18 +399,21 @@ namespace VisualLocalizer.Editor {
                     }
                 }
 
+                // determine whether this ResX file has implicit designer file
                 bool impliedDesignerItem = false;
-                if (containingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                if (containingProject.Kind.ToUpper() == StringConstants.WebSiteProject) { // must be located in ASP .NET WebSite project
                     string relative = resxItem.InternalProjectItem.GetRelativeURL();
+                    // must be in the App_GlobalResources folder
                     impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
                 }
 
-                if (resxItem.DesignerItem == null && !impliedDesignerItem) {
+                if (resxItem.DesignerItem == null && !impliedDesignerItem) { // this indicates an error
                     foreach (IReferencableKeyValueSource item in items) {
                         item.CodeReferences.Clear();
                         item.UpdateReferenceCount(false);
                     }
                 } else {
+                    // build trie
                     Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
                     foreach (IReferencableKeyValueSource item in items) {                        
                         string referenceKey;
@@ -393,8 +428,9 @@ namespace VisualLocalizer.Editor {
                     }
                     trie.CreatePredecessorsAndShortcuts();
 
-                    referenceLister.Process(projects, trie, resxItem);
+                    referenceLister.Process(projects, trie, resxItem); // run lookuper
 
+                    // display results
                     foreach (IReferencableKeyValueSource item in items) {
                         item.CodeReferences.Clear();
                         /*item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
@@ -409,27 +445,45 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-
+        /// <summary>
+        /// Sets this editor as readonly
+        /// </summary>        
         public void SetReadOnly(bool readOnly) {
-            foreach (TabPage page in tabs.TabPages) {
-                IDataTabItem item = GetContentFromTabPage(page);
-                item.DataReadOnly = readOnly;
+            try {
+                foreach (TabPage page in tabs.TabPages) {
+                    IDataTabItem item = GetContentFromTabPage(page);
+                    item.DataReadOnly = readOnly;
+                }
+                this.readOnly = readOnly;
+                UpdateToolStripButtonsEnable(null, null);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-            this.readOnly = readOnly;
-            UpdateToolStripButtonsEnable(null, null);
         }
 
+        /// <summary>
+        /// Executes Paste with clipboard data
+        /// </summary>
+        /// <returns>True if operation was successful</returns>
         public bool ExecutePaste() {
             return ExecutePaste(Clipboard.GetDataObject());
         }
 
+        /// <summary>
+        /// Executes Paste with given data object
+        /// </summary>
+        /// <returns>True if operation was successful</returns>
         public bool ExecutePaste(System.Windows.Forms.IDataObject iData) {
             try {
-                if (iData.GetDataPresent(StringConstants.FILE_LIST)) {
+                if (iData == null) throw new ArgumentNullException("iData");
+
+                if (iData.GetDataPresent(StringConstants.FILE_LIST)) { // contains Windows Explorer-like file list
                     string[] files = (string[])iData.GetData(StringConstants.FILE_LIST);                    
-                    addExistingFiles(files);
+                    AddExistingFiles(files);
                     return true;
                 } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
+                    // contains plain text
                     stringGrid.AddClipboardText((string)iData.GetData("Text"));
                     tabs.SelectedTab = stringTab;
                     return true;
@@ -442,11 +496,11 @@ namespace VisualLocalizer.Editor {
                         }
                     }
 
-                    if (iData.GetDataPresent(typeof(List<object>))) {
-                        internalEmbeddedPaste((List<object>)iData.GetData(typeof(List<object>)), dataTabItems);                        
+                    if (iData.GetDataPresent(typeof(List<object>))) { // embedded data added by this editor
+                        InternalEmbeddedPaste((List<object>)iData.GetData(typeof(List<object>)), dataTabItems);                        
                         return true;
-                    } else if (iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
-                        internalSolExpPaste((MemoryStream)iData.GetData(StringConstants.SOLUTION_EXPLORER_FILE_LIST), dataTabItems);                        
+                    } else if (iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) { // contains Solution Explorer file list
+                        InternalSolExpPaste((MemoryStream)iData.GetData(StringConstants.SOLUTION_EXPLORER_FILE_LIST), dataTabItems);                        
                         return true;
                     } else return false;
                 }
@@ -457,115 +511,171 @@ namespace VisualLocalizer.Editor {
             return false;
         }            
 
+        /// <summary>
+        /// Executes Copy operation on selected tab
+        /// </summary>
+        /// <returns>True if operation was successful</returns>
         public bool ExecuteCopy() {
             try {
                 IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.Copy();
-                else
-                    return false;
+                if (content != null) return content.Copy();
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
-
-                return false;
-            }            
+            }
+            return false;
         }
 
+        /// <summary>
+        /// Executes Cut operation on selected tab
+        /// </summary>
+        /// <returns>True if operation was successful</returns>
         public bool ExecuteCut() {
             try {
                 IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.Cut();
-                else
-                    return false;
+                if (content != null) return content.Cut();                
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);                
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Executes Select All operation on selected tab
+        /// </summary>
+        /// <returns>True if operation was successful</returns>
+        public bool ExecuteSelectAll() {
+            try {
+                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                if (content != null) return content.SelectAllItems();
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
-
-                return false;
             }
+            return false;
         }
 
-        public bool ExecuteSelectAll() {
-            IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-            if (content != null)
-                return content.SelectAllItems();
-            else
-                return false;
-        }
-
+        /// <summary>
+        /// Returns CanCutOrCopy of the selected tab
+        /// </summary>
         public COMMAND_STATUS CanCutOrCopy {
             get {
-                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.CanCutOrCopy;
-                else
-                    return COMMAND_STATUS.UNSUPPORTED;
+                try {
+                    IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                    if (content != null) return content.CanCutOrCopy;
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+                return COMMAND_STATUS.UNSUPPORTED;
             }
         }
 
+        /// <summary>
+        /// Returns CanPaste of the selected tab
+        /// </summary>
         public COMMAND_STATUS CanPaste {
             get {
-                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.CanPaste;
-                else
-                    return COMMAND_STATUS.UNSUPPORTED;
+                try {
+                    IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                    if (content != null) return content.CanPaste;
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+                return COMMAND_STATUS.UNSUPPORTED;
             }
         }
 
+        /// <summary>
+        /// Returns true if Delete command can be performed on selected tab
+        /// </summary>
         public COMMAND_STATUS CanDelete {
             get {
-                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.HasSelectedItems && !content.IsEditing && !content.DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
-                else
-                    return COMMAND_STATUS.UNSUPPORTED;
+                try {
+                    IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                    if (content != null) return content.HasSelectedItems && !content.IsEditing && !content.DataReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+                return COMMAND_STATUS.UNSUPPORTED;
             }
         }
 
+        /// <summary>
+        /// Returns true if Select All command can be performed on selected tab
+        /// </summary>
         public COMMAND_STATUS CanSelectAll {
             get {
-                IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
-                if (content != null)
-                    return content.HasItems && !content.IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
-                else
-                    return COMMAND_STATUS.UNSUPPORTED;
+                try {
+                    IDataTabItem content = GetContentFromTabPage(tabs.SelectedTab);
+                    if (content != null) return content.HasItems && !content.IsEditing ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    VisualLocalizer.Library.MessageBox.ShowException(ex);
+                }
+                return COMMAND_STATUS.UNSUPPORTED;
             }
         }
 
+        /// <summary>
+        /// Issue the RemoveRequested event
+        /// </summary>        
         public void NotifyRemoveRequested(REMOVEKIND kind) {
             if (RemoveRequested != null) RemoveRequested(kind);
         }
 
+        /// <summary>
+        /// Called by GlobalTranslate command, adds string resources values to translation list
+        /// </summary>        
         public void AddForTranslation(List<AbstractTranslateInfoItem> list) {
+            if (list == null) throw new ArgumentNullException("list");
             stringGrid.AddToTranslationList(stringGrid.Rows, list);
+        }
+
+        /// <summary>
+        /// Updates references count for specified item
+        /// </summary>
+        /// <param name="src"></param>
+        public void UpdateReferencesCount(IReferencableKeyValueSource src) {
+            if (src == null) throw new ArgumentNullException("src");
+            UpdateReferencesCount(new List<IReferencableKeyValueSource>() { src });
         }
 
         #endregion
 
         #region private - adding resources        
 
-        private void addExistingResources(object sender, EventArgs e) {
+        /// <summary>
+        /// Displays dialog letting user choose the files, copies them (if appropriate) to project's folder and references them as resources.
+        /// </summary>        
+        private void AddExistingResources(object sender, EventArgs e) {
             try {
-                string imageFilter = "*" + string.Join(";*", IMAGE_FILE_EXT);
-                string iconFilter = "*" + string.Join(";*", ICON_FILE_EXT);
-                string soundFilter = "*" + string.Join(";*", SOUND_FILE_EXT);
+                string imageFilter = "*" + string.Join(";*", StringConstants.IMAGE_FILE_EXT);
+                string iconFilter = "*" + string.Join(";*", StringConstants.ICON_FILE_EXT);
+                string soundFilter = "*" + string.Join(";*", StringConstants.SOUND_FILE_EXT);
                 uint selectedFilter = (uint)Math.Max(0, tabs.SelectedIndex - 1);
 
                 string[] files = VisualLocalizer.Library.MessageBox.SelectFilesViaDlg("Select files", Path.GetDirectoryName(Editor.FileName),
                     string.Format("Image files({0})\0{0}\0Icon files({1})\0{1}\0Sound files({2})\0{2}\0", imageFilter, iconFilter, soundFilter), selectedFilter, OPENFILENAME.OFN_ALLOWMULTISELECT);
                 if (files == null) return;
 
-                addExistingFiles(files);                
+                AddExistingFiles(files);                
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
-        internal void addExistingFiles(IEnumerable<string> files) {
+        /// <summary>
+        /// Adds given list of files as resources, creating folder structure Resources/Images, Resources/Icons etc.
+        /// </summary>
+        /// <param name="files">List of full paths to the files</param>
+        internal void AddExistingFiles(IEnumerable<string> files) {
+            if (files == null) throw new ArgumentNullException("files");
+
             Project project = null;
             bool userDefinedSolution=VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem);
             if (userDefinedSolution) {
@@ -579,30 +689,31 @@ namespace VisualLocalizer.Editor {
                 string extension = Path.GetExtension(file);
                 if (!string.IsNullOrEmpty(extension)) extension = extension.ToLower();
 
-                if (IMAGE_FILE_EXT.Contains(extension)) {
-                    if (imagesFolder == null && project != null) imagesFolder = project.AddResourceDir("Images");
-                    newItems.Add(addExistingItem(imagesListView, imagesFolder, file, typeof(Bitmap), true));
+                if (StringConstants.IMAGE_FILE_EXT.Contains(extension)) {
+                    if (imagesFolder == null && project != null) imagesFolder = project.AddResourceDir("Images"); // create Resources/Images folder
+                    newItems.Add(AddExistingItem(imagesListView, imagesFolder, file, typeof(Bitmap))); // add the file
                     tabs.SelectedTab = imagesTab;
-                } else if (ICON_FILE_EXT.Contains(extension)) {
-                    if (iconsFolder == null && project != null) iconsFolder = project.AddResourceDir("Icons");
-                    newItems.Add(addExistingItem(iconsListView, iconsFolder, file, typeof(Icon), true));
+                } else if (StringConstants.ICON_FILE_EXT.Contains(extension)) {
+                    if (iconsFolder == null && project != null) iconsFolder = project.AddResourceDir("Icons"); // create Resources/Icons folder
+                    newItems.Add(AddExistingItem(iconsListView, iconsFolder, file, typeof(Icon)));
                     tabs.SelectedTab = iconsTab;
-                } else if (SOUND_FILE_EXT.Contains(extension)) {
-                    if (soundFolder == null && project != null) soundFolder = project.AddResourceDir("Sounds");
-                    newItems.Add(addExistingItem(soundsListView, soundFolder, file, typeof(MemoryStream), true));
+                } else if (StringConstants.SOUND_FILE_EXT.Contains(extension)) {
+                    if (soundFolder == null && project != null) soundFolder = project.AddResourceDir("Sounds"); // create Resources/Sounds folder
+                    newItems.Add(AddExistingItem(soundsListView, soundFolder, file, typeof(MemoryStream)));
                     tabs.SelectedTab = soundsTab;
                 } else {
-                    if (filesFolder == null && project != null) filesFolder = project.AddResourceDir("Others");
-                    if (TEXT_FILE_EXT.Contains(extension)) {
-                        newItems.Add(addExistingItem(filesListView, filesFolder, file, typeof(string), true));
-                    } else {
-                        newItems.Add(addExistingItem(filesListView, filesFolder, file, typeof(byte[]), true));
+                    if (filesFolder == null && project != null) filesFolder = project.AddResourceDir("Others"); // create Resources/Others folder
+                    if (StringConstants.TEXT_FILE_EXT.Contains(extension)) { // is text file
+                        newItems.Add(AddExistingItem(filesListView, filesFolder, file, typeof(string)));
+                    } else { // is binary file
+                        newItems.Add(AddExistingItem(filesListView, filesFolder, file, typeof(byte[])));
                     }
                     tabs.SelectedTab = filesTab;
                 }
             }
 
             if (newItems.Count > 0) {
+                // add undo unit
                 ListViewItemsAddUndoUnit unit = new ListViewItemsAddUndoUnit(this, newItems, conflictResolver);
                 Editor.AddUndoUnit(unit);
 
@@ -610,13 +721,21 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private ListViewKeyItem addExistingItem(AbstractListView list, ProjectItem folder, string file, Type type, bool showThumbnails) {
+        /// <summary>
+        /// Adds given file resource to the given tab and folder
+        /// </summary>        
+        /// <returns>The new item</returns>
+        private ListViewKeyItem AddExistingItem(AbstractListView list, ProjectItem folder, string file, Type type) {
+            if (list == null) throw new ArgumentNullException("list");
+            if (type == null) throw new ArgumentNullException("type");
+            if (file == null) throw new ArgumentNullException("file");
+
             string fileName = Path.GetFileName(file);
             string localFile = null;
             bool localFileExists,fileSameAsLocalFile;            
             ListViewKeyItem addedListItem;
 
-            if (folder == null) {
+            if (folder == null) { // when this file is not a part of soluton
                 localFileExists = false;
                 fileSameAsLocalFile = true;
             } else {                
@@ -625,21 +744,23 @@ namespace VisualLocalizer.Editor {
                 fileSameAsLocalFile = string.Compare(Path.GetFullPath(localFile), Path.GetFullPath(file), true) == 0;             
             }
 
-            if (localFileExists) {
-                if (fileSameAsLocalFile) {
+            if (localFileExists) { // file with same name already exists in the project
+                if (fileSameAsLocalFile) { // it's the same file that is being added
+                    // get existing item
                     ListViewKeyItem existingListItem = list.ItemFromName(Path.GetFileNameWithoutExtension(file));
-                    if (existingListItem == null) {
-                        addedListItem = addExistingItem(list, file, type, showThumbnails);
-                    } else {
+                    if (existingListItem == null) { // item does not exist - add it
+                        addedListItem = AddExistingItem(list, file, type);
+                    } else { // item exists - add copy with different name
                         string copyFileName = GenerateCopyFileName(file);
                         File.Copy(file, copyFileName);
 
                         ProjectItem newItem = folder.ProjectItems.AddFromFile(copyFileName);
-                        setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
+                        SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
 
-                        addedListItem = addExistingItem(list, copyFileName, type, showThumbnails);    
+                        addedListItem = AddExistingItem(list, copyFileName, type);    
                     }
-                } else {
+                } else { // local file is different from the added
+                    // create conflictResolveAction - what should be done if user chooses to overwrite the files
                     Action conflictResolveAction = null;
                     if (folder.ProjectItems.ContainsItem(localFile)) {
                         ProjectItem existingItem = folder.ProjectItems.Item(localFile);
@@ -648,68 +769,229 @@ namespace VisualLocalizer.Editor {
                         conflictResolveAction = new Action(() => { File.Delete(localFile); });
                     }     
 
+                    // display dialog asking user if overwrite
                     DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("Item \"{0}\" already exists. Do you want to overwrite the file?", fileName), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_QUERY);
                     string fullPath = localFile;
-                    if (result == DialogResult.Yes) {
+                    if (result == DialogResult.Yes) { // yes, overwrite
                         if (conflictResolveAction != null) {
-                            conflictResolveAction();
+                            conflictResolveAction(); // remove the local file
                         }
 
+                        // add copy of the new file
                         if (folder != null) {
                             ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
-                            setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
+                            SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                             fullPath = newItem.GetFullPath();
                         } else {
                             fullPath = file;
                         }
-                    } else {
+                    } else { // don't overwrite - just make sure the file is in the project
                         if (!folder.ProjectItems.ContainsItem(Path.GetFileName(localFile))) {
                             ProjectItem newItem = folder.ProjectItems.AddFromFile(localFile);
-                            setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
+                            SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                         }
                     }
 
-                    if (list.Items.ContainsKey(fullPath)) {
-                        addedListItem = list.UpdateDataOf(fullPath);
-                    } else {
-                        addedListItem = addExistingItem(list, fullPath, type, showThumbnails);
+                    if (list.Items.ContainsKey(fullPath)) { // item already exists in the list
+                        addedListItem = list.UpdateDataOf(fullPath); // update its data
+                    } else { // add new item
+                        addedListItem = AddExistingItem(list, fullPath, type);
                     }
 
                     list.Refresh();
                     list.NotifyDataChanged();                    
                 }
-            } else {
+            } else { // local file does not exist - add it
                 if (folder == null) {
-                    addedListItem = addExistingItem(list, file, type, showThumbnails);
+                    addedListItem = AddExistingItem(list, file, type);
                 } else {
                     ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
-                    setBuildAction(newItem, prjBuildAction.prjBuildActionNone);
+                    SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                     string fullPath = newItem.GetFullPath();
 
-                    addedListItem = addExistingItem(list, fullPath, type, showThumbnails);
+                    addedListItem = AddExistingItem(list, fullPath, type);
                 }
             }
             return addedListItem;
         }
 
-        private void internalEmbeddedPaste(List<object> list, List<AbstractListView> dataTabItems) {
+       /// <summary>
+       /// Adds specified file to given list view
+       /// </summary>       
+       /// <returns>Newly created list view item</returns>
+        private ListViewKeyItem AddExistingItem(AbstractListView list, string fullPath, Type type) {
+            if (list == null) throw new ArgumentNullException("list");
+            if (fullPath == null) throw new ArgumentNullException("fullPath");
+            if (type == null) throw new ArgumentNullException("type");
+
+            string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier(Editor.ProjectItem.DesignerLanguage);
+
+            ResXDataNode node = new ResXDataNode(name, new ResXFileRef(fullPath, type.AssemblyQualifiedName));
+            ListViewKeyItem newItem = list.Add(name, node) as ListViewKeyItem;
+            list.NotifyDataChanged();
+            list.NotifyItemsStateChanged();
+
+            return newItem;
+        }
+
+        /// <summary>
+        /// Adds new string resource
+        /// </summary>        
+        private void AddNewString(object sender, EventArgs e) {
+            try {
+                tabs.SelectedTab = stringTab;
+                stringGrid.ClearSelection();
+
+                stringGrid.Rows.Add();
+
+                DataGridViewCell cell = stringGrid.Rows[stringGrid.Rows.Count - 2].Cells[stringGrid.KeyColumnName];
+                cell.Value = "(new)";
+                cell.Selected = true;
+
+                stringGrid.CurrentCell = cell;
+                stringGrid.BeginEdit(true);
+                cell.Tag = null;
+
+                stringGrid.NotifyDataChanged();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Handles creating new image and adding it to the resources
+        /// </summary>        
+        private void AddNewImage(Type resourceType, AbstractListView listView, string resourceSubfolder) {
+            try {
+                if (resourceType == null) throw new ArgumentNullException("resourceType");
+                if (listView == null) throw new ArgumentNullException("listView");
+                if (resourceSubfolder == null) throw new ArgumentNullException("resourceSubfolder");
+
+                // display dialog letting user choose the format and dimensions
+                NewImageWindow win = new NewImageWindow(resourceType == typeof(Icon));
+                win.Owner = (Form)Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd));
+
+                if (win.ShowDialog(this) == DialogResult.OK) {
+                    Solution solution = VisualLocalizerPackage.Instance.DTE.Solution;
+
+                    string imageName = win.ImageName.ToLower();
+
+                    // determine whether file name has extension specified
+                    bool hasExtension = false;
+                    foreach (var item in win.ImageFormat.Extensions)
+                        if (imageName.EndsWith(item)) hasExtension = true;
+                    
+                    if (!hasExtension) {
+                        imageName = win.ImageName + win.ImageFormat.Extensions[0]; // add extension to a file name
+                    } else {
+                        imageName = win.ImageName;
+                    }
+                    
+                    ListViewKeyItem newItem;
+                    if (!solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem)) {
+                        newItem = AddNewImageNoSolution(imageName, resourceType, listView, resourceSubfolder, win);
+                    } else {
+                        newItem = AddNewImageWithSolution(imageName, solution, resourceType, listView, resourceSubfolder, win);
+                    }
+
+                    // create the undo unit
+                    ListViewNewItemCreateUndoUnit unit = new ListViewNewItemCreateUndoUnit(this, newItem, conflictResolver);
+                    Editor.AddUndoUnit(unit);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Created and added new object \"{0}\"", newItem.DataNode.FileRef.FileName);
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds new image file to the project resources
+        /// </summary>
+        /// <param name="imageName">Image name including extension</param>
+        /// <param name="solution">Parent solution</param>
+        /// <param name="resourceType">Type of the image (Bitmap or Icon)</param>
+        /// <param name="listView">List in which the image should be added</param>
+        /// <param name="resourceSubfolder">Folder in which the file should be created</param>
+        /// <param name="win">Dialog containing data like format and dimensions</param>
+        /// <returns>The newly created item</returns>
+        private ListViewKeyItem AddNewImageWithSolution(string imageName, Solution solution, Type resourceType, AbstractListView listView, string resourceSubfolder, NewImageWindow win) {
+            ProjectItem thisItem = solution.FindProjectItem(Editor.FileName);
+            if (thisItem == null) {
+                return AddNewImageNoSolution(imageName, resourceType, listView, resourceSubfolder, win);
+            } else {
+                Project project = thisItem.ContainingProject;
+
+                ProjectItem imagesFolder = project.AddResourceDir(resourceSubfolder);
+                string imagesFolderPath = imagesFolder.GetFullPath();
+                string newImagePath = Path.Combine(imagesFolderPath, imageName);
+
+                if (imagesFolder.ProjectItems.ContainsItem(imageName))
+                    throw new Exception(string.Format("File \"{0}\" already exists!", imageName));
+
+                // create new image
+                Bitmap bmp = new Bitmap(win.ImageWidth, win.ImageHeight);
+                bmp.Save(newImagePath, win.ImageFormat.Value); // save it in the file
+                bmp.Dispose();
+
+                // add project item corresponding to the image
+                ProjectItem newImageItem = imagesFolder.ProjectItems.AddFromFile(newImagePath);
+                SetBuildAction(newImageItem, prjBuildAction.prjBuildActionNone);   
+
+                Window newImageWindow = newImageItem.Open(null); // open the image
+                if (newImageWindow != null) newImageWindow.Activate();
+
+                return AddExistingItem(listView, newImagePath, resourceType);
+            }
+        }
+
+        /// <summary>
+        /// Adds new image file to the project resources
+        /// </summary>        
+        private ListViewKeyItem AddNewImageNoSolution(string imageName, Type resourceType, AbstractListView listView, string resourceSubfolder, NewImageWindow win) {
+            string currentDir = Path.GetDirectoryName(Editor.FileName);
+            string newImagePath = Path.Combine(currentDir, imageName);
+
+            if (File.Exists(newImagePath))
+                throw new Exception(string.Format("File \"{0}\" already exists!", imageName));
+
+            Bitmap bmp = new Bitmap(win.ImageWidth, win.ImageHeight);
+            bmp.Save(newImagePath, win.ImageFormat.Value);
+            bmp.Dispose();
+
+            Window newWindow = VisualLocalizerPackage.Instance.DTE.OpenFile(null, newImagePath);
+            if (newWindow != null) newWindow.Activate();
+
+            return AddExistingItem(listView, newImagePath, resourceType);
+        }
+
+        /// <summary>
+        /// Pastes given embedded objects
+        /// </summary>        
+        private void InternalEmbeddedPaste(List<object> list, List<AbstractListView> dataTabItems) {
             ListViewItemsAddUndoUnit unit = null;
             List<ListViewKeyItem> newItems = null;
             try {
+                if (list == null) throw new ArgumentNullException("list");
+                if (dataTabItems == null) throw new ArgumentNullException("dataTabItems");
+
                 newItems = new List<ListViewKeyItem>();
-                unit = new ListViewItemsAddUndoUnit(this, newItems, conflictResolver);               
+                unit = new ListViewItemsAddUndoUnit(this, newItems, conflictResolver);
 
                 foreach (ResXDataNode o in list) {
                     foreach (var item in dataTabItems) {
-                        if (item.CanContainItem(o)) {
-                            string name = GetNextCopyName(o.Name);
+                        if (item.CanContainItem(o)) { // select proper tab for the item
+                            // generate new unique name
+                            string name = GetNextCopyName(o.Name); 
                             bool contains = true;
                             while (contains) {
                                 contains = item.ItemFromName(name) != null;
                                 if (contains) name = GetNextCopyName(name);
                             }
 
-                            ListViewKeyItem newItem = (ListViewKeyItem)item.Add(name, o, true);
+                            ListViewKeyItem newItem = (ListViewKeyItem)item.Add(name, o);
                             newItems.Add(newItem);
 
                             break;
@@ -724,42 +1006,56 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private void internalSolExpPaste(MemoryStream memoryStream, List<AbstractListView> dataTabItems) {
-            byte[] buffer = new byte[memoryStream.Length];
-            memoryStream.Read(buffer, 0, buffer.Length);
+        /// <summary>
+        /// Pastes data from Solution Explorer's clipboard
+        /// </summary>
+        /// <param name="memoryStream">Stream containing Solution Explorer-initialized data about copied files</param>        
+        private void InternalSolExpPaste(MemoryStream memoryStream, List<AbstractListView> dataTabItems) {
+            if (memoryStream == null) throw new ArgumentNullException("memoryStream");
+            if (dataTabItems == null) throw new ArgumentNullException("dataTabItems");
 
-            string text = Encoding.UTF8.GetString(buffer);
+            byte[] buffer = new byte[memoryStream.Length];
+            memoryStream.Read(buffer, 0, buffer.Length); // read all stream
+
+            string text = Encoding.UTF8.GetString(buffer); // create text
             List<string> paths = new List<string>();
             StringBuilder dataBuilder = new StringBuilder();
 
+            // remove single occurences of \0 
             char prevChar = '?';
             foreach (char c in text) {
                 if (c != '\0' || prevChar == '\0') dataBuilder.Append(c);
-                prevChar=c;
+                prevChar = c;
             }
 
+            // create file list
             string[] data = dataBuilder.ToString().Split(Path.GetInvalidPathChars(), StringSplitOptions.RemoveEmptyEntries);
             foreach (string path in data) {
                 if (File.Exists(path)) {
                     paths.Add(path);
                 }
             }
-
-            addExistingFiles(paths);
-        }   
-
-        private void setBuildAction(ProjectItem item, prjBuildAction prjBuildAction) {
-            if (item == null) return;
-            if (item.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
             
-            try {
-                item.Properties.Item("BuildAction").Value = prjBuildAction;
-            } catch (Exception) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Error setting BuildAction of " + item.Name);
-            }
+            // add the files
+            AddExistingFiles(paths);
         }
 
+        /// <summary>
+        /// Sets "Build Action" of specified item
+        /// </summary>        
+        private void SetBuildAction(ProjectItem item, prjBuildAction prjBuildAction) {
+            if (item == null) throw new ArgumentNullException("item");
+            if (item.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
+            
+            item.Properties.Item("BuildAction").Value = prjBuildAction;            
+        }
+
+        /// <summary>
+        /// Generates new similar but non-existing file name
+        /// </summary>        
         private string GenerateCopyFileName(string file) {
+            if (file == null) throw new ArgumentNullException("file");
+
             string dir = Path.GetDirectoryName(file);
             string name = Path.GetFileNameWithoutExtension(file);
             string ext = Path.GetExtension(file);
@@ -773,7 +1069,12 @@ namespace VisualLocalizer.Editor {
             return Path.GetFullPath(newName);
         }
 
+        /// <summary>
+        /// Returns "next step" name - i.e. "name" -> "name1", "name1" -> "name2"
+        /// </summary>
         private string GetNextCopyName(string name) {
+            if (name == null) throw new ArgumentNullException("name");
+
             Match match = Regex.Match(name, "(.*)(\\d{1,})$");
             if (match.Success) {
                 int i = int.Parse(match.Groups[2].Value);
@@ -785,142 +1086,43 @@ namespace VisualLocalizer.Editor {
             return name;
         }
 
-        private ListViewKeyItem addExistingItem(AbstractListView list, string fullPath, Type type, bool showThumbnails) {                        
-            string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier(Editor.ProjectItem.DesignerLanguage);
-
-            ResXDataNode node = new ResXDataNode(name, new ResXFileRef(fullPath, type.AssemblyQualifiedName));
-            ListViewKeyItem newItem = list.Add(name, node, showThumbnails) as ListViewKeyItem;
-            list.NotifyDataChanged();
-            list.NotifyItemsStateChanged();
-
-            return newItem;
-        }
-
-        private void addNewString(object sender, EventArgs e) {
-            tabs.SelectedTab = stringTab;
-            stringGrid.ClearSelection();
-
-            stringGrid.Rows.Add();
-
-            DataGridViewCell cell = stringGrid.Rows[stringGrid.Rows.Count - 2].Cells[stringGrid.KeyColumnName]; 
-            cell.Value = "(new)";
-            cell.Selected = true;
-
-            stringGrid.CurrentCell = cell;
-            stringGrid.BeginEdit(true);
-            cell.Tag = null;
-
-            stringGrid.NotifyDataChanged();
-        }
-
-        private void addNewImage(Type resourceType,AbstractListView listView,string resourceSubfolder) {
-            NewImageWindow win = new NewImageWindow(resourceType == typeof(Icon));
-            win.Owner = (Form)Form.FromHandle(new IntPtr(VisualLocalizerPackage.Instance.DTE.MainWindow.HWnd));
-            
-            if (win.ShowDialog(this) == DialogResult.OK) {
-                try {
-                    Solution solution = VisualLocalizerPackage.Instance.DTE.Solution;
-
-                    string imageName = win.ImageName.ToLower();
-                    bool hasExtension = false;
-                    foreach (var item in win.ImageFormat.Extensions)
-                        if (imageName.EndsWith(item)) hasExtension = true;
-                    if (!hasExtension) {
-                        imageName = win.ImageName + win.ImageFormat.Extensions[0];
-                    } else {
-                        imageName = win.ImageName;
-                    }
-
-                    // TODO - fileref
-                    ListViewKeyItem newItem;
-                    if (!solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem)) {
-                        newItem = addNewImageNoSolution(imageName, resourceType, listView, resourceSubfolder, win);
-                    } else {
-                        newItem = addNewImageWithSolution(imageName, solution, resourceType, listView, resourceSubfolder, win);
-                    }
-
-                    ListViewNewItemCreateUndoUnit unit = new ListViewNewItemCreateUndoUnit(this, newItem, conflictResolver);
-                    Editor.AddUndoUnit(unit);
-
-                    VLOutputWindow.VisualLocalizerPane.WriteLine("Created and added new object \"{0}\"", newItem.DataNode.FileRef.FileName);
-                } catch (Exception ex) {
-                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
-                    VisualLocalizer.Library.MessageBox.ShowException(ex);
-                }
-            }
-        }
-
-        private ListViewKeyItem addNewImageWithSolution(string imageName, Solution solution, Type resourceType, AbstractListView listView, string resourceSubfolder, NewImageWindow win) {
-            ProjectItem thisItem = solution.FindProjectItem(Editor.FileName);
-            if (thisItem == null) {
-                return addNewImageNoSolution(imageName, resourceType, listView, resourceSubfolder, win);
-            } else {
-                Project project = thisItem.ContainingProject;
-
-                ProjectItem imagesFolder = project.AddResourceDir(resourceSubfolder);
-                string imagesFolderPath = imagesFolder.GetFullPath();
-                string newImagePath = Path.Combine(imagesFolderPath, imageName);
-
-                if (imagesFolder.ProjectItems.ContainsItem(imageName))
-                    throw new Exception(string.Format("File \"{0}\" already exists!", imageName));
-
-                Bitmap bmp = new Bitmap(win.ImageWidth, win.ImageHeight);
-                bmp.Save(newImagePath, win.ImageFormat.Value);
-                bmp.Dispose();
-
-                ProjectItem newImageItem = imagesFolder.ProjectItems.AddFromFile(newImagePath);
-                Window newImageWindow = newImageItem.Open(null);
-                if (newImageWindow != null) newImageWindow.Activate();
-
-                setBuildAction(newImageItem, prjBuildAction.prjBuildActionNone);                
-
-                return addExistingItem(listView, newImagePath, resourceType, true);
-            }
-        }
-
-        private ListViewKeyItem addNewImageNoSolution(string imageName, Type resourceType, AbstractListView listView, string resourceSubfolder, NewImageWindow win) {
-            string currentDir = Path.GetDirectoryName(Editor.FileName);
-            string newImagePath = Path.Combine(currentDir, imageName);
-
-            if (File.Exists(newImagePath))
-                throw new Exception(string.Format("File \"{0}\" already exists!", imageName));
-
-            Bitmap bmp = new Bitmap(win.ImageWidth, win.ImageHeight);
-            bmp.Save(newImagePath, win.ImageFormat.Value);
-            bmp.Dispose();
-
-            Window newWindow = VisualLocalizerPackage.Instance.DTE.OpenFile(null, newImagePath);
-            if (newWindow != null) newWindow.Activate();
-
-            return addExistingItem(listView, newImagePath, resourceType, true);
-        }
-
         #endregion
 
         #region private - listeners
 
+        /// <summary>
+        /// Requestes revalidation of keys (after settings change)
+        /// </summary>
         private void Instance_RevalidationRequested() {
             foreach (ResXStringGridRow row in stringGrid.Rows) {
                 if (row.IsNewRow) continue;
                 row.Cells[stringGrid.KeyColumnName].Tag = row.Cells[stringGrid.KeyColumnName].Value;
                 stringGrid.ValidateRow(row);
             }
-            validateListView(imagesListView);
-            validateListView(soundsListView);
-            validateListView(iconsListView);
-            validateListView(filesListView);
+            ValidateListView(imagesListView);
+            ValidateListView(soundsListView);
+            ValidateListView(iconsListView);
+            ValidateListView(filesListView);
         }
 
-        private void validateListView(AbstractListView view) {
+        /// <summary>
+        /// Revalidates all keys in specified list
+        /// </summary>        
+        private void ValidateListView(AbstractListView view) {
             foreach (ListViewKeyItem item in view.Items) {
-                item.BeforeEditValue = item.AfterEditValue = item.Key;
+                item.BeforeEditKey = item.AfterEditKey = item.Key;
                 view.Validate(item);
             }
         }
 
-        private void updateKeysButton_Click(object sender, EventArgs e) {
-            string myNeutralName = Editor.ProjectItem.GetCultureNeutralName();
-            try {                
+        /// <summary>
+        /// Called when "Update" button is clicked - finds culture neutral parent file and adds all its string resources to this file, if not already present
+        /// </summary>
+        private void UpdateKeysButton_Click(object sender, EventArgs e) {            
+            try {
+                string myNeutralName = Editor.ProjectItem.GetCultureNeutralName();
+
+                // find parent (culture neutral) item
                 ProjectItem parentItem = null;
                 foreach (ProjectItem projectItem in Editor.ProjectItem.InternalProjectItem.Collection)
                     if (projectItem.Name == myNeutralName) {
@@ -930,10 +1132,11 @@ namespace VisualLocalizer.Editor {
 
                 ResXProjectItem resxParent = ResXProjectItem.ConvertToResXItem(parentItem, parentItem.ContainingProject);
 
+                // add not existing keys
                 int rowsAdded = 0;
                 foreach (var pair in resxParent.GetAllStringReferences(false)) {
                     if (Editor.ProjectItem.GetKeyConflictType(pair.Key, pair.Value) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
-                        ResXStringGridRow newRow = (ResXStringGridRow)stringGrid.Add(pair.Key, new ResXDataNode(pair.Key, pair.Value), true);
+                        ResXStringGridRow newRow = (ResXStringGridRow)stringGrid.Add(pair.Key, new ResXDataNode(pair.Key, pair.Value));
                         stringGrid.StringRowAdded(newRow);
                         rowsAdded++;
                     }
@@ -945,22 +1148,28 @@ namespace VisualLocalizer.Editor {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Synchronize successful - added {0} rows from \"{1}\"", rowsAdded, parentItem.Name);
                 }
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Synchronize error, from \"{0}\", text: {1}", myNeutralName, ex.Message);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }            
         }
 
-        private void profferKeysButton_Click(object sender, EventArgs e) {
+        /// <summary>
+        /// Called when "Proffer" button is clicked - finds all culture-specific "descendants" of this file and updates their string resources
+        /// </summary>        
+        private void ProfferKeysButton_Click(object sender, EventArgs e) {
             try {
                 string childrenString = null;
                 foreach (ProjectItem projectItem in Editor.ProjectItem.InternalProjectItem.Collection)
+                    // if current project item is culture-specific version of this file
                     if (projectItem.IsCultureSpecificResX() && projectItem.GetResXCultureNeutralName() == Editor.ProjectItem.InternalProjectItem.Name) {
                         string fullPath = projectItem.GetFullPath();
                         bool wasUpdated = false;
 
-                        if (RDTManager.IsFileOpen(fullPath)) {
+                        if (RDTManager.IsFileOpen(fullPath)) { // file is open
                             Dictionary<string, ResXDataNode> data = null; 
-                            VLDocumentViewsManager.LoadDataFromBuffer(ref data, fullPath);
+                            VLDocumentViewsManager.LoadDataFromBuffer(ref data, fullPath); // load current data from buffer
 
+                            // add all non-existing data
                             foreach (var pair in stringGrid.GetData(true)) {                                
                                 if (!data.ContainsKey(pair.Key)) {
                                     data.Add(pair.Key, pair.Value);
@@ -968,8 +1177,8 @@ namespace VisualLocalizer.Editor {
                                 }
                             }
 
-                            VLDocumentViewsManager.SaveDataToBuffer(data, fullPath);
-                        } else {
+                            VLDocumentViewsManager.SaveDataToBuffer(data, fullPath); // save the buffer
+                        } else { // file is closed
                             ResXProjectItem resxChild = ResXProjectItem.ConvertToResXItem(projectItem, projectItem.ContainingProject);
                             
                             resxChild.BeginBatch();
@@ -982,6 +1191,7 @@ namespace VisualLocalizer.Editor {
                             resxChild.EndBatch();
                         }
 
+                        // update list of modified files
                         if (wasUpdated) {
                             if (string.IsNullOrEmpty(childrenString)) {
                                 childrenString = projectItem.Name;
@@ -997,94 +1207,126 @@ namespace VisualLocalizer.Editor {
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Proffer OK, updated {0}", childrenString);
                 }
             } catch (Exception ex) {
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Proffer error, text: {0}", ex.Message);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }   
 
-        private void translateButton_DropDownOpening(object sender, EventArgs eargs) {
-            foreach (ToolStripMenuItem menuItem in translateButton.DropDownItems) {
-                menuItem.DropDownItems.Clear();
-                TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
+        /// <summary>
+        /// Called when "Translate" button is opening, displays list of existing language pairs
+        /// </summary>        
+        private void TranslateButton_DropDownOpening(object sender, EventArgs eargs) {
+            try {
+                foreach (ToolStripMenuItem menuItem in translateButton.DropDownItems) { // for each translation provider
+                    menuItem.DropDownItems.Clear(); // clear current language pairs
+                    TRANSLATE_PROVIDER provider = (TRANSLATE_PROVIDER)menuItem.Tag;
 
-                bool enabled = true;
-                if (provider == TRANSLATE_PROVIDER.BING) {
-                    enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
+                    // Bing AppID is required for this provider
+                    bool enabled = true;
+                    if (provider == TRANSLATE_PROVIDER.BING) {
+                        enabled = !string.IsNullOrEmpty(SettingsObject.Instance.BingAppId);
+                    }
+
+                    menuItem.Enabled = enabled;
+
+                    // add saved language pairs
+                    foreach (var pair in SettingsObject.Instance.LanguagePairs) {
+                        ToolStripMenuItem newItem = new ToolStripMenuItem(pair.ToString());
+                        newItem.Tag = pair;
+                        newItem.Click += new EventHandler((o, e) => {
+                            SettingsObject.LanguagePair sentPair = (o as ToolStripMenuItem).Tag as SettingsObject.LanguagePair;
+                            NotifyTranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
+                        });
+                        newItem.Enabled = enabled;
+                        menuItem.DropDownItems.Add(newItem);
+                    }
+
+                    // add option to add new language pair
+                    ToolStripMenuItem addItem = new ToolStripMenuItem("New language pair...", null, new EventHandler((o, e) => {
+                        NotifyNewTranslatePairAdded(provider);
+                    }));
+                    addItem.Enabled = enabled;
+                    menuItem.DropDownItems.Add(addItem);
                 }
-
-                menuItem.Enabled = enabled;
-
-                foreach (var pair in SettingsObject.Instance.LanguagePairs) {
-                    ToolStripMenuItem newItem = new ToolStripMenuItem(pair.ToString());
-                    newItem.Tag = pair;
-                    newItem.Click += new EventHandler((o, e) => {
-                        SettingsObject.LanguagePair sentPair = (o as ToolStripMenuItem).Tag as SettingsObject.LanguagePair;
-                        notifyTranslateRequested(provider, sentPair.FromLanguage, sentPair.ToLanguage);
-                    });
-                    newItem.Enabled = enabled;
-                    menuItem.DropDownItems.Add(newItem);
-                }
-
-                ToolStripMenuItem addItem = new ToolStripMenuItem("New language pair...", null, new EventHandler((o, e) => {
-                    notifyNewTranslatePairAdded(provider);
-                }));
-                addItem.Enabled = enabled;
-                menuItem.DropDownItems.Add(addItem);   
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
         }
 
-        private void stringGrid_LanguagePairAdded(string sourceLanguage, string targetLanguage) {
-            SettingsObject.LanguagePair newPair = new SettingsObject.LanguagePair() {
-                FromLanguage = sourceLanguage,
-                ToLanguage = targetLanguage
-            };
+        /// <summary>
+        /// Called when new language pair should be added to the settings
+        /// </summary>        
+        private void StringGrid_LanguagePairAdded(string sourceLanguage, string targetLanguage) {
+            try {
+                SettingsObject.LanguagePair newPair = new SettingsObject.LanguagePair() {
+                    FromLanguage = sourceLanguage,
+                    ToLanguage = targetLanguage
+                };
 
-            bool contains = false;
-            foreach (var pair in SettingsObject.Instance.LanguagePairs)
-                if (pair.Equals(newPair)) {
-                    contains = true;
-                    break;
+                bool contains = false;
+                foreach (var pair in SettingsObject.Instance.LanguagePairs)
+                    if (pair.Equals(newPair)) {
+                        contains = true;
+                        break;
+                    }
+
+                if (!contains) {
+                    SettingsObject.Instance.LanguagePairs.Add(newPair);
+                    SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Added new language pair \"{0}\"", newPair);
                 }
-
-            if (!contains) {
-                SettingsObject.Instance.LanguagePairs.Add(newPair);
-                SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine("Added new language pair \"{0}\"", newPair);
-            } 
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
+        /// <summary>
+        /// Updates "View" style of the list views
+        /// </summary>        
         private void ViewCheckStateChanged(object sender, EventArgs e) {
-            ToolStripMenuItem senderItem = sender as ToolStripMenuItem;
-            if (senderItem.CheckState == CheckState.Unchecked) return;
+            try {
+                ToolStripMenuItem senderItem = sender as ToolStripMenuItem;
+                if (senderItem.CheckState == CheckState.Unchecked) return;
 
-            foreach (ToolStripMenuItem item in viewButton.DropDownItems)
-                if (item != senderItem) item.CheckState = CheckState.Unchecked;
+                foreach (ToolStripMenuItem item in viewButton.DropDownItems)
+                    if (item != senderItem) item.CheckState = CheckState.Unchecked;
 
-            notifyViewKindChanged((View)senderItem.Tag);
+                NotifyViewKindChanged((View)senderItem.Tag);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }        
 
-        private void noFocusBoxSelectedIndexChanged(object sender, EventArgs e) {
+        private void NoFocusBoxSelectedIndexChanged(object sender, EventArgs e) {
             toolStrip.Focus();
         }                
 
-        private void inlineButton_ButtonClick(object sender, EventArgs e) {
-            notifyInlineRequested(INLINEKIND.INLINE);
+        private void InlineButton_ButtonClick(object sender, EventArgs e) {
+            NotifyInlineRequested(INLINEKIND.INLINE);
         }
 
-        private void inlineAndRemoveButton_ButtonClick(object sender, EventArgs e) {
-            notifyInlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE);
+        private void InlineAndRemoveButton_ButtonClick(object sender, EventArgs e) {
+            NotifyInlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE);
         }
 
-        private void mergeButton_PreserveClick(object sender, EventArgs e) {
+        private void MergeButton_PreserveClick(object sender, EventArgs e) {
             MergeWithFile(false);
         }
 
-        private void mergeButton_DeleteClick(object sender, EventArgs e) {
+        private void MergeButton_DeleteClick(object sender, EventArgs e) {
             MergeWithFile(true);
         }
         
         private string previousValue = null;       
-        private void codeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
+
+        /// <summary>
+        /// Called when "Access modifier" changed
+        /// </summary>        
+        private void CodeGenerationBox_SelectedIndexChanged(object sender, EventArgs e) {
             if (!VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem)) return;
             if (!codeGenerationBox.Enabled) return;
             if (Editor.ProjectItem.InternalProjectItem.ContainingProject.Kind.ToUpperInvariant() == StringConstants.WebSiteProject) return;
@@ -1125,7 +1367,58 @@ namespace VisualLocalizer.Editor {
 
         #endregion
 
+        /// <summary>
+        /// Updates code references to resources periodically in interval specified in settings
+        /// </summary>
+        private void ReferenceLookuperThread() {
+            bool init = true;
+            while (!IsDisposed) {
+                try {
+                    if (init) { // on startup
+                        UpdateReferencesCount();
+                        init = false;
+                    }
+                    // wait
+                    System.Threading.Thread.Sleep(SettingsObject.Instance.ReferenceUpdateInterval);
+
+                    // update
+                    if (Visible && !IsDisposed && !ReferenceCounterThreadSuspended)
+                        UpdateReferencesCount();
+                } catch (Exception ex) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("Error occured on reference lookuper thread:");
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                }
+            }
+            VLOutputWindow.VisualLocalizerPane.WriteLine("Reference lookuper thread of \"{0}\" terminated", Path.GetFileName(Editor.FileName));
+        }
+
+        /// <summary>
+        /// Updates references count for all items in every tab
+        /// </summary>
+        private void UpdateReferencesCount() {
+            ArrayList list = new ArrayList();
+
+            foreach (ResXStringGridRow row in stringGrid.Rows)
+                if (!row.IsNewRow) list.Add(row);
+
+            filesListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, filesListView.Items);
+            imagesListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, imagesListView.Items);
+            iconsListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, iconsListView.Items);
+            soundsListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, soundsListView.Items);
+
+            UpdateReferencesCount(list);
+        }
+
+        private void AddRange(IList list, IEnumerable source) {
+            foreach (IReferencableKeyValueSource item in source)
+                list.Add(item);
+        }
+
+        /// <summary>
+        /// Returns "Access modifier" value for this document, or null if changing "Access modifier" is disabled
+        /// </summary>        
         private string GetResXCodeGenerationMode() {
+            // if the file is not part of the solution, the combo box should be disabled
             if (!VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(Editor.ProjectItem.InternalProjectItem)) return null;
             if (!codeGenerationBox.Enabled) return null;
 
@@ -1148,7 +1441,16 @@ namespace VisualLocalizer.Editor {
             return null;
         }        
 
+        /// <summary>
+        /// Creates tab page with given content
+        /// </summary>
+        /// <param name="header">Text in header</param>
+        /// <param name="content">Content control</param>
+        /// <returns>New tab page</returns>
         private TabPage CreateItemTabPage(string header, AbstractListView content) {
+            if (header == null) throw new ArgumentNullException("header");
+            if (content == null) throw new ArgumentNullException("content");
+
             TabPage tab = new TabPage(header);
             tab.BorderStyle = BorderStyle.None;
             content.Dock = DockStyle.Fill;
@@ -1161,9 +1463,14 @@ namespace VisualLocalizer.Editor {
             return tab;
         }
 
+        /// <summary>
+        /// Performs "Merge" operation
+        /// </summary>
+        /// <param name="deleteSource">True if source file should be deleted</param>
         private void MergeWithFile(bool deleteSource) {
             ResXResourceReader reader = null;
             try {
+                // display dialog and let user choose the file that should be merged with this one
                 string[] files = VisualLocalizer.Library.MessageBox.SelectFilesViaDlg("Select file", Path.GetDirectoryName(Editor.FileName),
                     "ResX file\0*.resx\0", 0, 0);
                 if (files == null) return;
@@ -1173,6 +1480,7 @@ namespace VisualLocalizer.Editor {
                 if (Path.GetFullPath(file) == Path.GetFullPath(Editor.FileName)) throw new Exception("Cannot select same file as the one being edited!");
 
                 if (deleteSource) {
+                    // display confirmation about deleting source files
                     DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("You have chosen to delete source file \"{0}\". Do you really want to do so?", Path.GetFileName(file)), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNOCANCEL, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_THIRD, OLEMSGICON.OLEMSGICON_WARNING);
                     if (result == DialogResult.Cancel) return;
                     if (result == DialogResult.No) deleteSource = false;
@@ -1189,12 +1497,12 @@ namespace VisualLocalizer.Editor {
                 }
 
                 IEnumerable enumarable;
-                if (RDTManager.IsFileOpen(file)) {
+                if (RDTManager.IsFileOpen(file)) { // source file is open - read data from its buffer
                     Dictionary<string, ResXDataNode> data = null;
                     VLDocumentViewsManager.LoadDataFromBuffer(ref data, file);
 
                     enumarable = (IEnumerable)data;
-                } else {
+                } else { // source file is closed - read data from disk
                     reader = new ResXResourceReader(file);
                     reader.BasePath = Path.GetDirectoryName(file);
                     reader.UseResXDataNodes = true;
@@ -1209,8 +1517,9 @@ namespace VisualLocalizer.Editor {
                         ResXDataNode node = (o is DictionaryEntry) ? ((DictionaryEntry)o).Value as ResXDataNode : ((KeyValuePair<string, ResXDataNode>)o).Value;
                         string key = (o is DictionaryEntry) ? ((DictionaryEntry)o).Key.ToString() : ((KeyValuePair<string, ResXDataNode>)o).Key;
 
+                        // select propert tab for the new node
                         if (item.CanContainItem(node)) {
-                            IKeyValueSource newItem = item.Add(key, node, true);
+                            IKeyValueSource newItem = item.Add(key, node);
                             if (newItem is ResXStringGridRow) {
                                 StringRowAddUndoUnit undoUnit = new StringRowAddUndoUnit(this,
                                     new List<ResXStringGridRow>() { newItem as ResXStringGridRow }, stringGrid, conflictResolver);
@@ -1227,14 +1536,16 @@ namespace VisualLocalizer.Editor {
                         }
                     }
                 }                
-
+                
+                // create undo unit
                 MergeUndoUnit unit = new MergeUndoUnit(Path.GetFileName(file), units);
                 Editor.AddUndoUnit(unit);
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Merged files \"{0}\" and \"{1}\"", Editor.FileName, file);
 
                 if (deleteSource) {
+                    // delete source files
                     ProjectItem item = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(file);
-                    if (item != null) item.Delete();
+                    if (item != null) item.Delete(); // remove them from project
                     File.Delete(file);
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Deleted file after merge: \"{1}\"", file);
                 }
@@ -1246,56 +1557,64 @@ namespace VisualLocalizer.Editor {
             }
         }
 
-        private void notifyViewKindChanged(View newView) {
+        private void NotifyViewKindChanged(View newView) {
             if (ViewKindChanged != null) ViewKindChanged(newView);
         }
 
+        /// <summary>
+        /// Updates state (enabled/disabled) of the toolstrip buttons
+        /// </summary>   
         private void UpdateToolStripButtonsEnable(object sender, EventArgs e) {
-            bool selectedString = stringGrid.Visible;
-            IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
+            try {
+                bool selectedString = stringGrid.Visible;
+                IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
 
-            inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && stringGrid.AreReferencesKnownOnSelected;
-            removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
-            viewButton.Enabled = !selectedString && !item.IsEditing;
-            addButton.Enabled = !readOnly;
-            translateButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-            mergeButton.Enabled = !readOnly;
+                inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && stringGrid.AreReferencesKnownOnSelected;
+                removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+                removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+                removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
+                viewButton.Enabled = !selectedString && !item.IsEditing;
+                addButton.Enabled = !readOnly;
+                translateButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+                mergeButton.Enabled = !readOnly;
 
-            if (Editor.ProjectItem != null) {
-                bool specific = Editor.ProjectItem.IsCultureSpecific();
+                if (Editor.ProjectItem != null) {
+                    bool specific = Editor.ProjectItem.IsCultureSpecific();
 
-                if (specific) {                    
-                    bool parentExists = Editor.ProjectItem.InternalProjectItem.Collection.ContainsItem(Editor.ProjectItem.GetCultureNeutralName());
-                    updateKeysButton.Enabled = selectedString &&!item.IsEditing && !readOnly && parentExists;
+                    if (specific) {
+                        bool parentExists = Editor.ProjectItem.InternalProjectItem.Collection.ContainsItem(Editor.ProjectItem.GetCultureNeutralName());
+                        updateKeysButton.Enabled = selectedString && !item.IsEditing && !readOnly && parentExists;
+                    } else {
+                        bool childExists = false;
+                        foreach (ProjectItem projectItem in Editor.ProjectItem.InternalProjectItem.Collection)
+                            if (projectItem.IsCultureSpecificResX() && projectItem.GetResXCultureNeutralName() == Editor.ProjectItem.InternalProjectItem.Name) {
+                                childExists = true;
+                                break;
+                            }
+                        profferKeysButton.Enabled = selectedString && !item.IsEditing && !readOnly && childExists;
+                    }
+
+                    profferKeysButton.Visible = !specific;
+                    updateKeysButton.Visible = specific;
                 } else {
-                    bool childExists = false;
-                    foreach (ProjectItem projectItem in Editor.ProjectItem.InternalProjectItem.Collection)
-                        if (projectItem.IsCultureSpecificResX() && projectItem.GetResXCultureNeutralName() == Editor.ProjectItem.InternalProjectItem.Name) {
-                            childExists = true;
-                            break;
-                        }
-                    profferKeysButton.Enabled = selectedString && !item.IsEditing && !readOnly && childExists;
+                    profferKeysButton.Visible = false;
+                    updateKeysButton.Visible = false;
                 }
-
-                profferKeysButton.Visible = !specific;
-                updateKeysButton.Visible = specific;
-            } else {
-                profferKeysButton.Visible = false;                
-                updateKeysButton.Visible = false;
-            }            
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
-        private void notifyNewTranslatePairAdded(TRANSLATE_PROVIDER provider) {
+        private void NotifyNewTranslatePairAdded(TRANSLATE_PROVIDER provider) {
             if (NewTranslatePairAdded != null) NewTranslatePairAdded(provider);
         }
 
-        private void notifyTranslateRequested(TRANSLATE_PROVIDER provider, string fromLanguage, string toLanguage) {
+        private void NotifyTranslateRequested(TRANSLATE_PROVIDER provider, string fromLanguage, string toLanguage) {
             if (TranslateRequested != null) TranslateRequested(provider, fromLanguage, toLanguage);
         }
 
-        private void notifyInlineRequested(INLINEKIND inlineKind) {
+        private void NotifyInlineRequested(INLINEKIND inlineKind) {
             if (InlineRequested != null) InlineRequested(inlineKind);
         }
     }

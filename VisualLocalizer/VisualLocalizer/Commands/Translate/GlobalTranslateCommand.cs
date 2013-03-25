@@ -36,10 +36,10 @@ namespace VisualLocalizer.Commands {
                 foreach (UIHierarchyItem o in array) {
                     if (o.Object is ProjectItem) {
                         ProjectItem item = (ProjectItem)o.Object;
-                        searchForResxFiles(item, resxFiles);
+                        SearchForResxFiles(item, resxFiles);
                     } else if (o.Object is Project) {
                         Project proj = (Project)o.Object;
-                        searchForResxFiles(proj.ProjectItems, resxFiles);
+                        SearchForResxFiles(proj.ProjectItems, resxFiles);
                     } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
                 }
 
@@ -52,7 +52,7 @@ namespace VisualLocalizer.Commands {
                         ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
                         foreach (GlobalTranslateProjectItem item in resxFiles)
                             if (item.Checked) {
-                                addDataForTranslation(item, data);
+                                AddDataForTranslation(item, data);
                             }
                         ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
@@ -81,7 +81,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Add string data from given ResX file to the list of data for translation
         /// </summary>        
-        private void addDataForTranslation(GlobalTranslateProjectItem item, List<AbstractTranslateInfoItem> data) {
+        private void AddDataForTranslation(GlobalTranslateProjectItem item, List<AbstractTranslateInfoItem> data) {
             string path = item.ProjectItem.GetFullPath();
             if (RDTManager.IsFileOpen(path)) { // file is open
                 object docData = VLDocumentViewsManager.GetDocData(path); // get document buffer
@@ -137,9 +137,9 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void searchForResxFiles(ProjectItem item, List<GlobalTranslateProjectItem> resxFiles) {
+        private void SearchForResxFiles(ProjectItem item, List<GlobalTranslateProjectItem> resxFiles) {
             if (searchedProjectItems.Contains(item)) return;
-            searchForResxFiles(item.ProjectItems, resxFiles);
+            SearchForResxFiles(item.ProjectItems, resxFiles);
 
             if (item.IsItemResX()) {
                 GlobalTranslateProjectItem r = new GlobalTranslateProjectItem(item);                
@@ -150,10 +150,10 @@ namespace VisualLocalizer.Commands {
             }
         }
 
-        private void searchForResxFiles(ProjectItems items, List<GlobalTranslateProjectItem> resxFiles) {
+        private void SearchForResxFiles(ProjectItems items, List<GlobalTranslateProjectItem> resxFiles) {
             if (items == null) return;
             foreach (ProjectItem item in items)
-                searchForResxFiles(item, resxFiles);
+                SearchForResxFiles(item, resxFiles);
         }
     }
 
@@ -216,6 +216,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         public string ValueColumnName { get; set; }
 
+        /// <summary>
+        /// Change the text in the source file
+        /// </summary>
         public override void ApplyTranslation() {
             ResXStringGrid grid = (ResXStringGrid)Row.DataGridView; // get the grid
             string oldValue = (string)Row.Cells[ValueColumnName].Value; // get current value from the Value column
@@ -255,6 +258,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         public ResXProjectItem ResXItem { get; set; }
 
+        /// <summary>
+        /// Change the text in the source file
+        /// </summary>
         public override void ApplyTranslation() {
             ResXItem.Data[ResourceKey] = new System.Resources.ResXDataNode(DataKey, Value);
         }       
@@ -296,6 +302,9 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         public GlobalTranslateProjectItem GlobalTranslateItem { get; set; }
 
+        /// <summary>
+        /// Change the text in the source file
+        /// </summary>
         public override void ApplyTranslation() {
             if (!Applied) {                
                 ResXResourceWriter writer = null;

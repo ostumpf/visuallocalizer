@@ -9,31 +9,42 @@ using VisualLocalizer.Library;
 using System.Media;
 
 namespace VisualLocalizer.Editor {
+
+    /// <summary>
+    /// Represents Sounds tab in ResX editor. Any MemoryStream contained in ResX node is considered to be a sound.
+    /// </summary>
     internal sealed class ResXSoundsList : AbstractListView {
         public ResXSoundsList(ResXEditorControl editorControl)
             : base(editorControl) {
         }
 
+
+        /// <summary>
+        /// Returns true if given node's type matches the type of items this control holds
+        /// </summary>
         public override bool CanContainItem(ResXDataNode node) {
+            if (node == null) throw new ArgumentNullException("node");
+
+            // memory streams are considered to be sounds
             return node.HasValue<MemoryStream>() && (node.FileRef == null || node.FileRef.FileName.ToLower().EndsWith(".wav"));
         }
 
-        public override IKeyValueSource Add(string key, ResXDataNode value, bool showThumbnails) { 
-            ListViewKeyItem item = base.Add(key, value, showThumbnails) as ListViewKeyItem;
-            if (referenceExistingOnAdd) return item;
+        /// <summary>
+        /// Adds the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public override IKeyValueSource Add(string key, ResXDataNode value) { 
+            ListViewKeyItem item = base.Add(key, value) as ListViewKeyItem;
+            if (referenceExistingOnAdd) {
+                item.FileRefOk = true;
+                return item;
+            }
 
             LargeImageList.Images.Add(item.Name, Editor.play);
             SmallImageList.Images.Add(item.Name, Editor.play);
 
-            item.ImageKey = item.Name; // update icon
-
-            FileInfo info = null;
-            if (value.FileRef != null && File.Exists(value.FileRef.FileName)) {
-                info = new FileInfo(value.FileRef.FileName);
-            }
-
-            if (value.FileRef != null && !File.Exists(value.FileRef.FileName) && showThumbnails)
-                item.FileRefOk = false;
+            item.ImageKey = item.Name; // update icon            
 
             ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
             subSize.Name = "Size";            
@@ -43,20 +54,30 @@ namespace VisualLocalizer.Editor {
             subLength.Name = "Length";            
             item.SubItems.Insert(3, subLength);
 
+            FileInfo info = null;
+            if (value.FileRef != null && File.Exists(value.FileRef.FileName)) {
+                info = new FileInfo(value.FileRef.FileName);
+            }    
+
             if (info != null) {
                 subSize.Text = GetFileSize(info.Length);
-                subLength.Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName));
+                subLength.Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName)); // display sound length
             } else {
                 var stream = value.GetValue<MemoryStream>();
                 if (stream != null) {
                     subSize.Text = GetFileSize(stream.Length);
                     subLength.Text = null;
+                } else {
+                    item.FileRefOk = false;
                 }
             }
 
             return item;
         }
 
+        /// <summary>
+        /// Reloads displayed data from underlaying ResX node
+        /// </summary>
         public override ListViewKeyItem UpdateDataOf(string name) {
             ListViewKeyItem item = base.UpdateDataOf(name);
             if (item == null) return null;
@@ -69,17 +90,25 @@ namespace VisualLocalizer.Editor {
             if (info != null) {
                 item.SubItems["Size"].Text = GetFileSize(info.Length);
                 item.SubItems["Length"].Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName));
+                item.FileRefOk = true;
             } else {
                 var stream = item.DataNode.GetValue<MemoryStream>();
                 if (stream != null) {
                     item.SubItems["Size"].Text = GetFileSize(stream.Length);
                     item.SubItems["Length"].Text = null;
+                    item.FileRefOk = true;
+                } else {
+                    item.FileRefOk = false;
                 }
             }
+            item.UpdateErrorSetDisplay();
 
             return item;
         }
 
+        /// <summary>
+        /// Converts given milisecond time to human-readable format of time span
+        /// </summary>        
         private string GetSoundDigits(int milis) {
             if (milis < 1000) {
                 return string.Format("{0} ms", milis);
@@ -95,6 +124,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Create the GUI
+        /// </summary>
         protected override void InitializeColumns() {
             base.InitializeColumns();
 
@@ -111,7 +143,10 @@ namespace VisualLocalizer.Editor {
             this.Columns.Insert(3, lengthHeader);            
         }
 
-        protected override string saveIntoTmpFile(ResXDataNode node, string directory) {
+        /// <summary>
+        /// Saves given node's content into random file in specified directory and returns the file path
+        /// </summary>
+        protected override string SaveIntoTmpFile(ResXDataNode node, string directory) {
             MemoryStream ms = node.GetValue<MemoryStream>();
             string filename = node.Name + ".wav";
             string path = Path.Combine(directory, filename);

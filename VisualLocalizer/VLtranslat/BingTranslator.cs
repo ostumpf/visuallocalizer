@@ -36,8 +36,14 @@ namespace VisualLocalizer.Translate {
         public string AppId {
             get;
             set;
-        }    
+        }
 
+        /// <summary>
+        /// Translates the specified from language.
+        /// </summary>
+        /// <param name="fromLanguage">From language.</param>
+        /// <param name="toLanguage">To language.</param>
+        /// <param name="untranslatedText">The untranslated text.</param>  
         public string Translate(string fromLanguage, string toLanguage, string untranslatedText) {
             if (string.IsNullOrEmpty(AppId)) throw new InvalidOperationException("Cannot perform this operations with AppId being empty.");
             if (string.IsNullOrEmpty(untranslatedText)) return untranslatedText;

@@ -124,6 +124,9 @@ namespace VisualLocalizer.Components {
 
         public bool StopRequested { get { return false;  } }
 
+        /// <summary>
+        /// Called after code block &lt;% %&gt;
+        /// </summary> 
         public void OnCodeBlock(CodeBlockContext context) {
             context.InnerBlockSpan.Move(1, 1); // fix numbering
 
@@ -148,6 +151,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Called after page directive &lt;%@ %&gt;
+        /// </summary> 
         public void OnPageDirective(DirectiveContext context) {
             // add new imported namespace
             if (context.DirectiveName == "Import" && context.Attributes.Exists((info) => { return info.Name == "Namespace"; })) {
@@ -195,7 +201,7 @@ namespace VisualLocalizer.Components {
 
             if (parentCommand is BatchMoveCommand) { // no resource references can be directly in the attributes, safe to look only for string literals
                 foreach (AttributeInfo info in context.Attributes) {
-                    if (info.ContainsAspTags) continue; // attribute's value contains <%= - like tags - localization is not desirable
+                    if (info.ContainsAspTags) continue; // attribute's value contains &lt;%= - like tags - localization is not desirable
 
                     AspNetStringResultItem item = AddResult(info, null, context.DirectiveName, context.WithinClientSideComment, false, false, true);
                     if (item != null) item.ComesFromDirective = true;
@@ -203,11 +209,14 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Called after beginnnig tag is read
+        /// </summary>    
         public void OnElementBegin(ElementContext context) {
             if (parentCommand is BatchMoveCommand) { // no resource references can be directly in the attributes, safe to look only for string literals
                 foreach (var info in context.Attributes) {
-                    if (info.ContainsAspTags) continue; // attribute's value contains <%= - like tags - localization is not desirable
-                    if (shouldIgnoreThisAttribute(context.ElementName, info.Name)) continue; // attribute is not localizable
+                    if (info.ContainsAspTags) continue; // attribute's value contains &lt;%= - like tags - localization is not desirable
+                    if (ShouldIgnoreThisAttribute(context.ElementName, info.Name)) continue; // attribute is not localizable
 
                     if (Settings.SettingsObject.Instance.UseReflectionInAsp) { // attempt to resolve type
                         PropertyInfo propInfo;                        
@@ -228,7 +237,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns true if given attribute of given element should be overlooked (ID, Name...)
         /// </summary>        
-        private bool shouldIgnoreThisAttribute(string elementName, string attributeName) {
+        private bool ShouldIgnoreThisAttribute(string elementName, string attributeName) {
             bool ignore = false;
             foreach (string token in StringConstants.AspNetIgnoredAttributes) {
                 string[] t = token.Split(':');
@@ -242,6 +251,9 @@ namespace VisualLocalizer.Components {
             return ignore;
         }
 
+        /// <summary>
+        /// Called after output element &lt;%= %&gt;, &lt;%$ %&gt; or &lt;%: %&gt;
+        /// </summary> 
         public void OnOutputElement(OutputElementContext context) {
             IList list = null;
 
@@ -274,6 +286,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Called after plain text (between elements) is read
+        /// </summary>
         public void OnPlainText(PlainTextContext context) {
             if (parentCommand is BatchMoveCommand) { // no resource references can be directly in the attributes, safe to look only for string literals
                 // add whole text to results
@@ -286,6 +301,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Called after end tag is read
+        /// </summary>
         public void OnElementEnd(EndElementContext context) { }
 
         /// <summary>

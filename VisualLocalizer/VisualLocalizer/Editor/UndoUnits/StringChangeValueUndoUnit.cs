@@ -9,6 +9,9 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Undo unit for modifying value of a string resource
+    /// </summary>
     [Guid("9F4FDA14-9B4C-4151-9FC9-194FF0A90705")]
     internal sealed class StringChangeValueUndoUnit : AbstractUndoUnit {
 
@@ -20,6 +23,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public ResXStringGrid Grid { get; private set; }
 
         public StringChangeValueUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldValue,string newValue, string comment) {
+            if (sourceRow == null) throw new ArgumentNullException("sourceRow");
+            if (grid == null) throw new ArgumentNullException("grid");
+
             this.SourceRow = sourceRow;
             this.Grid = grid;
             this.Key = key;
@@ -37,23 +43,28 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeColumnValue(string from, string to) {
-            string newKey;
-            if (!string.IsNullOrEmpty(Key)) {
-                newKey = Key;
-                SourceRow.Status = ResXStringGridRow.STATUS.OK;
-            } else {
-                newKey = "A";
-                SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
-            }
-            SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
-            SourceRow.DataSourceItem.Comment = Comment;
-            SourceRow.Cells[Grid.ValueColumnName].Tag = from;
-            SourceRow.Cells[Grid.ValueColumnName].Value = to;
-            Grid.ValidateRow(SourceRow);
-            Grid.NotifyDataChanged();
-            Grid.SetContainingTabPageSelected();
+            try {
+                string newKey;
+                if (!string.IsNullOrEmpty(Key)) {
+                    newKey = Key;
+                    SourceRow.Status = ResXStringGridRow.STATUS.OK;
+                } else {
+                    newKey = "A";
+                    SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                }
+                SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
+                SourceRow.DataSourceItem.Comment = Comment;
+                SourceRow.Cells[Grid.ValueColumnName].Tag = from;
+                SourceRow.Cells[Grid.ValueColumnName].Value = to;
+                Grid.ValidateRow(SourceRow);
+                Grid.NotifyDataChanged();
+                Grid.SetContainingTabPageSelected();
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited value of \"{0}\"", Key);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Edited value of \"{0}\"", Key);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string GetUndoDescription() {

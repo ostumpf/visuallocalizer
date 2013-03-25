@@ -31,6 +31,9 @@ namespace VisualLocalizer.Settings {
 
         #region IProfileManager
 
+        /// <summary>
+        /// Loads settings from registry storage (on package load)
+        /// </summary>
         public override void LoadSettingsFromStorage() {
             VisualLocalizerPackage package = VisualLocalizerPackage.Instance;
             RegistryKey rootKey = package.UserRegistryRoot;
@@ -78,6 +81,9 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Loads settings from XML (on import settings)
+        /// </summary>        
         public override void LoadSettingsFromXml(IVsSettingsReader reader) {
             SettingsObject.Instance.IgnorePropertyChanges = true;
 
@@ -119,7 +125,10 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifySettingsLoaded();
         }
-        
+
+        /// <summary>
+        /// Never called (bug?)
+        /// </summary>
         public override void ResetSettings() {
             SettingsObject.Instance.IgnorePropertyChanges = true;
 
@@ -136,6 +145,9 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.NotifySettingsLoaded();
         }
 
+        /// <summary>
+        /// Saves settings to registry storage
+        /// </summary>
         public override void SaveSettingsToStorage() {
             VisualLocalizerPackage package = VisualLocalizerPackage.Instance;
             RegistryKey rootKey = package.UserRegistryRoot;
@@ -168,6 +180,9 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Saves settings to XML (on settings export)
+        /// </summary>
         public override void SaveSettingsToXml(IVsSettingsWriter writer) {
             WriteBoolToXml(writer, "ShowFilterContext", SettingsObject.Instance.ShowContextColumn);
             WriteBoolToXml(writer, "UseReflectionInAsp", SettingsObject.Instance.UseReflectionInAsp);
@@ -271,7 +286,7 @@ namespace VisualLocalizer.Settings {
                 commonCriteriaGrid.BorderStyle = BorderStyle.None;
                 commonCriteriaGrid.AllowUserToAddRows = false;
                 commonCriteriaGrid.AllowUserToDeleteRows = false;
-                commonCriteriaGrid.CellValueChanged += new DataGridViewCellEventHandler(commonCriteriaGrid_CellValueChanged);
+                commonCriteriaGrid.CellValueChanged += new DataGridViewCellEventHandler(CommonCriteriaGrid_CellValueChanged);
 
                 var descrColumn = new DataGridViewTextBoxColumn();
                 descrColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -318,7 +333,7 @@ namespace VisualLocalizer.Settings {
                 customCriteriaTable.RowCount = 1;
 
                 addCustomCriteriaButton = new Button();
-                addCustomCriteriaButton.Click += new EventHandler(addCustomCriteriaButton_Click);
+                addCustomCriteriaButton.Click += new EventHandler(AddCustomCriteriaButton_Click);
                 addCustomCriteriaButton.Text = "Add criterion";
                 customCriteriaTable.Controls.Add(addCustomCriteriaButton, 0, 0);
 
@@ -336,7 +351,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Adds new custom criterion controls
         /// </summary>        
-        private void addCustomCriteriaButton_Click(object sender, EventArgs e) {
+        private void AddCustomCriteriaButton_Click(object sender, EventArgs e) {
             try {
                 customCriteriaTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
                 customCriteriaTable.RowCount++;
@@ -409,7 +424,7 @@ namespace VisualLocalizer.Settings {
 
                 Button removeButton = new Button();
                 removeButton.Tag = customCriteriaTable.RowCount - 2;
-                removeButton.Click += new EventHandler(removeButton_Click);
+                removeButton.Click += new EventHandler(RemoveButton_Click);
                 removeButton.Width = 60;
                 removeButton.Text = "Remove";
 
@@ -434,7 +449,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Removes the custom criterion
         /// </summary>        
-        private void removeButton_Click(object sender, EventArgs e) {
+        private void RemoveButton_Click(object sender, EventArgs e) {
             try {
                 int rowIndex = (int)(sender as Button).Tag;
 
@@ -470,7 +485,7 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Enables/disables "values" column of the common criteria grid based on currently selected action
         /// </summary>        
-        private void commonCriteriaGrid_CellValueChanged(object sender, DataGridViewCellEventArgs e) {
+        private void CommonCriteriaGrid_CellValueChanged(object sender, DataGridViewCellEventArgs e) {
             try {
                 if (e.ColumnIndex == 1) {
                     commonCriteriaGrid.Rows[e.RowIndex].Cells[2].ReadOnly = commonCriteriaGrid.Rows[e.RowIndex].Cells[1].Value.ToString() != actionColumn.Items[(int)LocalizationCriterionAction.VALUE].ToString();
@@ -505,7 +520,7 @@ namespace VisualLocalizer.Settings {
 
                 // add new custom criteria
                 foreach (LocalizationCustomCriterion crit in SettingsObject.Instance.CustomLocalizabilityCriteria) {
-                    addCustomCriteriaButton_Click(null, null); // prepares the GUI
+                    AddCustomCriteriaButton_Click(null, null); // prepares the GUI
 
                     // fill the GUI with data
                     TableLayoutPanel t = (TableLayoutPanel)customCriteriaTable.GetControlFromPosition(0, customCriteriaTable.RowCount - 2);

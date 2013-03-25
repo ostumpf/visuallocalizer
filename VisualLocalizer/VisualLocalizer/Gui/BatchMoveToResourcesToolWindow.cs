@@ -76,43 +76,43 @@ namespace VisualLocalizer.Gui {
 
             // add "Show/Hide filter" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarShowFilterID,
-                new EventHandler(showFilterClick), null, menuService);
+                new EventHandler(ShowFilterClick), null, menuService);
 
             // add "Run" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRunID,
-                new EventHandler(runClick), null, menuService);                   
+                new EventHandler(RunClick), null, menuService);                   
 
             // add "Namespace policy" combobox
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarModeID,
-                new EventHandler(handleNamespacePolicyCommand), null, menuService);
+                new EventHandler(HandleNamespacePolicyCommand), null, menuService);
 
             // necessary for the "Namespace policy" combobox to be working
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarModesListID,
-                new EventHandler(getNamespacePolicyItems), null, menuService);
+                new EventHandler(GetNamespacePolicyItems), null, menuService);
 
             // add "Remember unlocalized strings" combobox
             OleMenuCommand cmd = MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRememberUncheckedID,
-                new EventHandler(handleRememberOptionCommand), null, menuService);
+                new EventHandler(HandleRememberOptionCommand), null, menuService);
 
             // necessary for the "Remember unlocalized strings" combobox to be working
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRememberUncheckedListID,
-                new EventHandler(getRememberOptionsItems), null, menuService);
+                new EventHandler(GetRememberOptionsItems), null, menuService);
 
             // add "Restore unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRestoreUncheckedID,
-                new EventHandler(restoreUnchecked), null, menuService);
+                new EventHandler(RestoreUnchecked), null, menuService);
 
             // add "Remove unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchMoveToolbarCommandSet).GUID, PackageCommandIDs.BatchMoveToolbarRemoveUncheckedID,
-                new EventHandler(removeUnchecked), null, menuService);            
+                new EventHandler(RemoveUnchecked), null, menuService);            
           
-            panel.ToolGrid.HasErrorChanged += new EventHandler(panel_HasErrorChanged);
+            panel.ToolGrid.HasErrorChanged += new EventHandler(Panel_HasErrorChanged);
         }     
 
         /// <summary>
         /// Updates "Run" buttons state according to number of error rows in the grid
         /// </summary>        
-        private void panel_HasErrorChanged(object sender, EventArgs e) {
+        private void Panel_HasErrorChanged(object sender, EventArgs e) {
             try {
                 menuService.FindCommand(runCommandID).Supported = !panel.ToolGrid.HasError;
             } catch (Exception ex) {
@@ -124,7 +124,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Displayes/Hides the filter
         /// </summary>        
-        private void showFilterClick(object sender, EventArgs e) {
+        private void ShowFilterClick(object sender, EventArgs e) {
             OleMenuCommand cmd = sender as OleMenuCommand;
             panel.FilterVisible = !panel.FilterVisible;            
             cmd.Text = panel.FilterVisible ? "Hide filter" : "Show filter";            
@@ -133,7 +133,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Removes unchecked rows from the grid
         /// </summary>        
-        private void removeUnchecked(object sender, EventArgs e) {
+        private void RemoveUnchecked(object sender, EventArgs e) {
             try {
                 panel.ToolGrid.RemoveUncheckedRows(true);
             } catch (Exception ex) {
@@ -145,7 +145,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Restores unchecked rows to the grid
         /// </summary>
-        private void restoreUnchecked(object sender, EventArgs e) {
+        private void RestoreUnchecked(object sender, EventArgs e) {
             try {
                 panel.ToolGrid.RestoreRemovedRows();
             } catch (Exception ex) {
@@ -180,7 +180,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Process the change in "Namespace policy" combobox
         /// </summary>        
-        private void handleNamespacePolicyCommand(object sender, EventArgs e) {
+        private void HandleNamespacePolicyCommand(object sender, EventArgs e) {
             if (e == EventArgs.Empty) throw new ArgumentException();
             
             OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;
@@ -217,7 +217,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Required by VS - fills the "Namespace policy" combobox with options
         /// </summary>        
-        private void getNamespacePolicyItems(object sender, EventArgs e) {
+        private void GetNamespacePolicyItems(object sender, EventArgs e) {
             if ((e == null) || (e == EventArgs.Empty)) throw new ArgumentNullException("e");
             
             OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;            
@@ -237,7 +237,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Required by VS - fills the "Remember unchecked strings" combobox with options
         /// </summary>        
-        private void getRememberOptionsItems(object sender, EventArgs e) {
+        private void GetRememberOptionsItems(object sender, EventArgs e) {
             if ((e == null) || (e == EventArgs.Empty)) throw new ArgumentNullException("e");
 
             OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;
@@ -256,10 +256,8 @@ namespace VisualLocalizer.Gui {
 
         /// <summary>
         /// Process the change in "Remember unchecked strings" combobox
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void handleRememberOptionCommand(object sender, EventArgs e) {
+        /// </summary>        
+        private void HandleRememberOptionCommand(object sender, EventArgs e) {
             if (e == EventArgs.Empty) throw new ArgumentException();
 
             OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;
@@ -296,7 +294,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// "Run" button was clicked
         /// </summary>        
-        private void runClick(object sender, EventArgs args) {
+        private void RunClick(object sender, EventArgs args) {
             int checkedRows = panel.ToolGrid.CheckedRowsCount;
             int rowCount = panel.ToolGrid.Rows.Count;
             int rowErrors = 0;

@@ -101,7 +101,7 @@
             this.keyBox.Name = "keyBox";
             this.keyBox.Size = new System.Drawing.Size(211, 21);
             this.keyBox.TabIndex = 0;
-            this.keyBox.TextChanged += new System.EventHandler(this.keyBox_TextChanged);
+            this.keyBox.TextChanged += new System.EventHandler(this.KeyBox_TextChanged);
             // 
             // errorLabel
             // 
@@ -137,7 +137,7 @@
             this.inlineButton.TabIndex = 8;
             this.inlineButton.Text = "Reference current value";
             this.inlineButton.UseVisualStyleBackColor = true;
-            this.inlineButton.Click += new System.EventHandler(this.inlineButton_Click);
+            this.inlineButton.Click += new System.EventHandler(this.InlineButton_Click);
             // 
             // overwriteButton
             // 
@@ -148,7 +148,7 @@
             this.overwriteButton.TabIndex = 7;
             this.overwriteButton.Text = "Ovewrite current value";
             this.overwriteButton.UseVisualStyleBackColor = true;
-            this.overwriteButton.Click += new System.EventHandler(this.overwriteButton_Click);
+            this.overwriteButton.Click += new System.EventHandler(this.OverwriteButton_Click);
             // 
             // fileLabel
             // 
@@ -173,7 +173,7 @@
             this.comboBox.Name = "comboBox";
             this.comboBox.Size = new System.Drawing.Size(247, 21);
             this.comboBox.TabIndex = 1;
-            this.comboBox.SelectedIndexChanged += new System.EventHandler(this.comboBox_SelectedIndexChanged);
+            this.comboBox.SelectedIndexChanged += new System.EventHandler(this.ComboBox_SelectedIndexChanged);
             // 
             // valueLabel
             // 
@@ -198,7 +198,7 @@
             this.valueBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.valueBox.Size = new System.Drawing.Size(552, 40);
             this.valueBox.TabIndex = 2;
-            this.valueBox.TextChanged += new System.EventHandler(this.valueBox_TextChanged);
+            this.valueBox.TextChanged += new System.EventHandler(this.ValueBox_TextChanged);
             // 
             // flowLayoutPanel1
             // 
@@ -220,7 +220,7 @@
             this.okButton.TabIndex = 5;
             this.okButton.Text = "OK";
             this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.okButton_Click);
+            this.okButton.Click += new System.EventHandler(this.OkButton_Click);
             // 
             // cancelButton
             // 
@@ -270,7 +270,7 @@
             this.usingBox.TabStop = true;
             this.usingBox.Text = "Add using block if necessary";
             this.usingBox.UseVisualStyleBackColor = true;
-            this.usingBox.CheckedChanged += new System.EventHandler(this.usingBox_CheckedChanged);
+            this.usingBox.CheckedChanged += new System.EventHandler(this.UsingBox_CheckedChanged);
             // 
             // referenceLabel
             // 
@@ -308,7 +308,7 @@
             this.existingValueBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.existingValueBox.Size = new System.Drawing.Size(215, 20);
             this.existingValueBox.TabIndex = 1024;
-            this.existingValueBox.TextChanged += new System.EventHandler(this.existingValueBox_TextChanged);
+            this.existingValueBox.TextChanged += new System.EventHandler(this.ExistingValueBox_TextChanged);
             // 
             // SelectResourceFileForm
             // 

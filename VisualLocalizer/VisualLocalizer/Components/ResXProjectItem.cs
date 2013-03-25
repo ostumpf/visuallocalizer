@@ -472,7 +472,7 @@ namespace VisualLocalizer.Components {
             Namespace = null;
 
             // if this file is culture-specific it's designer file is empty - we need to find designer item if corresponding culture-neutral file
-            if (IsCultureSpecific()) DesignerItem = getNeutralDesignerItem(neutralItems);
+            if (IsCultureSpecific()) DesignerItem = GetNeutralDesignerItem(neutralItems);
 
             if (DesignerItem != null) {  // designer file is set
                 if (!File.Exists(DesignerItem.GetFullPath())) RunCustomTool(); 
@@ -520,7 +520,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Selects designer file for this (culture-specific) item from the list of culture-neutral ResX files
         /// </summary>        
-        private ProjectItem getNeutralDesignerItem(List<ResXProjectItem> neutralItems) {            
+        private ProjectItem GetNeutralDesignerItem(List<ResXProjectItem> neutralItems) {            
             string cultureNeutralName = GetCultureNeutralName(); // get name of culture-neutral ResX
             string thisDir = Path.GetFullPath(Path.GetDirectoryName(InternalProjectItem.GetFullPath())); // get full path of this item's directory
 

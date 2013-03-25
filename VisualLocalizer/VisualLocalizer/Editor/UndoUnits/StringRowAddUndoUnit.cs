@@ -8,6 +8,9 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents undo unit for adding new string resources
+    /// </summary>
     [Guid("A7F756F0-2926-4103-A4EA-0C5D3E8522C7")]
     internal sealed class StringRowAddUndoUnit : AbstractUndoUnit {
 
@@ -17,6 +20,11 @@ namespace VisualLocalizer.Editor.UndoUnits {
         private ResXEditorControl Control { get; set; }
 
         public StringRowAddUndoUnit(ResXEditorControl control, List<ResXStringGridRow> rows, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
+            if (control == null) throw new ArgumentNullException("control");
+            if (grid == null) throw new ArgumentNullException("grid");
+            if (rows == null) throw new ArgumentNullException("rows");
+            if (conflictResolver == null) throw new ArgumentNullException("conflictResolver");
+
             this.Rows = rows;
             this.Grid = grid;
             this.ConflictResolver = conflictResolver;
@@ -24,26 +32,39 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
-            Grid.SuspendLayout();
-            foreach (var Row in Rows) {
-                ConflictResolver.TryAdd(Row.Key, null, Row, Control.Editor.ProjectItem, null);
-                Row.Cells[Grid.KeyColumnName].Tag = null;
-                Grid.Rows.Remove(Row);
+            try {
+                Grid.SuspendLayout();
+                
+                // remove the rows
+                foreach (var Row in Rows) {
+                    ConflictResolver.TryAdd(Row.Key, null, Row, Control.Editor.ProjectItem, null);
+                    Row.Cells[Grid.KeyColumnName].Tag = null;
+                    Grid.Rows.Remove(Row);
+                }
+                Grid.ResumeLayout();
+                Grid.NotifyDataChanged();
+                Grid.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-            Grid.ResumeLayout();
-            Grid.NotifyDataChanged();
-            Grid.SetContainingTabPageSelected();
         }
 
         public override void Redo() {
-            Grid.SuspendLayout();
-            foreach (var Row in Rows) {
-                Grid.Rows.Add(Row);
-                Grid.ValidateRow(Row);
+            try {
+                Grid.SuspendLayout();
+                // re-add the rows
+                foreach (var Row in Rows) {
+                    Grid.Rows.Add(Row);
+                    Grid.ValidateRow(Row);
+                }
+                Grid.ResumeLayout();
+                Grid.NotifyDataChanged();
+                Grid.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-            Grid.ResumeLayout();
-            Grid.NotifyDataChanged();
-            Grid.SetContainingTabPageSelected();
         }
 
         public override string GetUndoDescription() {

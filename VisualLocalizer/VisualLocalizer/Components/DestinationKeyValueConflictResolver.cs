@@ -17,6 +17,11 @@ namespace VisualLocalizer.Components {
             : base(ignoreCase, enableSameKeys) {            
         }
 
+        /// <summary>
+        /// Sets the conflicted items.
+        /// </summary>
+        /// <param name="row1">The row1.</param>
+        /// <param name="row2">The row2.</param>
         protected override void SetConflictedItems(IKeyValueSource row1, IKeyValueSource row2, bool p) {
             BatchMoveToResourcesToolGrid grid = (row1 as DataGridViewRow).DataGridView as BatchMoveToResourcesToolGrid;
 

@@ -64,7 +64,7 @@ namespace VisualLocalizer.Library {
 
             ErrorTimer = new Timer();
             ErrorTimer.Interval = 1000;
-            ErrorTimer.Tick += new EventHandler(errorTimer_Tick);
+            ErrorTimer.Tick += new EventHandler(ErrorTimer_Tick);
 
             CheckHeader = new DataGridViewCheckBoxHeaderCell();
             CheckHeader.ThreeStates = true;
@@ -274,14 +274,14 @@ namespace VisualLocalizer.Library {
                 bool newValue = (bool)cell.Value;
                 bool oldValue = (bool)cell.Tag;
 
-                changeRowCheckState(row, oldValue, newValue);
+                ChangeRowCheckState(row, oldValue, newValue);
             }           
         }
 
         /// <summary>
         /// Changes check state of a row from an old value to a new value
         /// </summary>        
-        protected void changeRowCheckState(DataGridViewRow row, bool oldValue, bool newValue) {
+        protected void ChangeRowCheckState(DataGridViewRow row, bool oldValue, bool newValue) {
             if (oldValue != newValue) {
                 CheckedRowsCount += newValue ? 1 : -1;
                 if (!newValue && !string.IsNullOrEmpty(row.ErrorText)) {
@@ -339,7 +339,7 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Sets check state of all selected rows to specified value
         /// </summary>
-        protected void setCheckStateOfSelected(bool check) {
+        protected void SetCheckStateOfSelected(bool check) {
             if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column
 
             foreach (DataGridViewRow row in SelectedRows) {
@@ -374,7 +374,7 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         protected abstract ItemType GetResultItemFromRow(DataGridViewRow row);
 
-        private void errorTimer_Tick(object sender, EventArgs e) {
+        private void ErrorTimer_Tick(object sender, EventArgs e) {
             ErrorToolTipVisible = false;
             ErrorTimer.Stop();
         }

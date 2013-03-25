@@ -44,8 +44,8 @@ namespace VisualLocalizer.Components {
             uint evCookie;
             // register file open and close events
             RDTEvents rdtEvents = new RDTEvents();
-            rdtEvents.FileOpened += new Action<string>(rdtEvents_FileOpened);
-            rdtEvents.FileClosed += new Action<string>(rdtEvents_FileClosed);
+            rdtEvents.FileOpened += new Action<string>(RdtEvents_FileOpened);
+            rdtEvents.FileClosed += new Action<string>(RdtEvents_FileClosed);
           
             int hr = IVsRunningDocumentTable.AdviseRunningDocTableEvents(rdtEvents, out evCookie);
             Marshal.ThrowExceptionForHR(hr);
@@ -54,7 +54,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Called when file is closed; if it was locked, it is added to the set of documents waiting to be locked again on next open
         /// </summary>        
-        private static void rdtEvents_FileClosed(string path) {
+        private static void RdtEvents_FileClosed(string path) {
             if (path == null) throw new ArgumentNullException("path");
 
             if (lockedDocuments.Contains(path)) {
@@ -66,7 +66,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Called when file is opened; set of documents waiting to be locked is checked and document locked if appropriate
         /// </summary>        
-        private static void rdtEvents_FileOpened(string path) {
+        private static void RdtEvents_FileOpened(string path) {
             if (path == null) throw new ArgumentNullException("path");
 
             if (lockedDocumentsWaiting.Contains(path)) {

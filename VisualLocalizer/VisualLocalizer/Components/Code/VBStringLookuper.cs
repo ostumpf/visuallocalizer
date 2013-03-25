@@ -65,6 +65,16 @@ namespace VisualLocalizer.Components {
             return LookForStrings(projectItem, isGenerated, text, startPoint, isWithinLocFalse);
         }
 
+        /// <summary>
+        /// Adds string literal to the list of results
+        /// </summary>
+        /// <param name="list">List of results in which it gets added</param>
+        /// <param name="originalValue">String literal, including quotes</param>
+        /// <param name="isVerbatimString">True if string was verbatim</param>
+        /// <param name="isUnlocalizableCommented">True if there was "no-localization" comment</param>
+        /// <returns>
+        /// New result item
+        /// </returns>
         protected override VBStringResultItem AddStringResult(List<VBStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
             if (GetCharBack(-1) != 'c') { // it's not char
                 VBStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);

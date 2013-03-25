@@ -14,6 +14,9 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class AspNetInlineCommand : InlineCommand<AspNetCodeReferenceResultItem> {
 
+        /// <summary>
+        /// Should return result item located in current selection point. Returns null in any case of errors and exceptions.
+        /// </summary>        
         public override AspNetCodeReferenceResultItem GetCodeReferenceResultItem() {
             TextSpan[] spans = new TextSpan[1];
             int hr = textView.GetSelectionSpan(spans);

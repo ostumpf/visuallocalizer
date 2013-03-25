@@ -337,23 +337,38 @@ namespace VisualLocalizer.Components {
         /// </summary>
         public CodeNamespace NamespaceElement { get; set; }
 
+        /// <summary>
+        /// Returns composed reference text
+        /// </summary>   
         public override string GetReferenceText(ReferenceString referenceText) {
             return (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart;
         }
 
+        /// <summary>
+        /// Returns list of suggestions for a key name
+        /// </summary>   
         public override List<string> GetKeyNameSuggestions() {
             return InternalGetKeyNameSuggestions(Value, NamespaceElement == null ? null : (NamespaceElement as CodeNamespace).FullName,
                         ClassOrStructElementName, MethodElementName == null ? VariableElementName : MethodElementName);
         }
 
+        /// <summary>
+        /// Get namespaces affecting this result item
+        /// </summary>  
         public override NamespacesList GetUsedNamespaces() {
             return NamespaceElement.GetUsedNamespaces(SourceItem);
-        }        
+        }
 
+        /// <summary>
+        /// Returns true if full reference must be used, because omitting namespace would cause compiler error
+        /// </summary>
         public override bool MustUseFullName {
             get { return false; }
         }
 
+        /// <summary>
+        /// Adds result item's namespace (if any) in a import block
+        /// </summary>  
         public override void AddUsingBlock(IVsTextLines textLines) {
             SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);
         }
@@ -367,8 +382,14 @@ namespace VisualLocalizer.Components {
     /// Represents C# string literal result item
     /// </summary>
     internal sealed class CSharpStringResultItem : NetStringResultItem {
+        /// <summary>
+        /// Returns "no-localization" commnent used to mark string literals for future reference
+        /// </summary>
         public override string NoLocalizationComment { get { return StringConstants.CSharpLocalizationComment; } }
 
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return LANGUAGE.CSHARP; }
             set { }
@@ -384,6 +405,9 @@ namespace VisualLocalizer.Components {
         /// </summary>
         public override string NoLocalizationComment { get { return string.Empty; } }
 
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return LANGUAGE.VB; }
             set { }
@@ -405,7 +429,7 @@ namespace VisualLocalizer.Components {
         public bool ComesFromElement { get; set; }      
 
         /// <summary>
-        /// True if result item comes from <%$ expression
+        /// True if result item comes from &lt;%$ expression
         /// </summary>
         public bool ComesFromInlineExpression { get; set; }      
 
@@ -420,16 +444,19 @@ namespace VisualLocalizer.Components {
         public bool ComesFromPlainText { get; set; } 
       
         /// <summary>
-        /// True if result item comes from <%@ directive
+        /// True if result item comes from &lt;%@ directive
         /// </summary>
         public bool ComesFromDirective { get; set; }    
    
         /// <summary>
-        /// True if result item comes from <% code block
+        /// True if result item comes from &lt;% code block
         /// </summary>
         public bool ComesFromCodeBlock { get; set; }
 
         private LANGUAGE _Language;
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return _Language; }
             set { _Language = value; }
@@ -443,8 +470,11 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Name of the element where this result item comes from
         /// </summary>
-        public string ElementName { get; set; }  
-        
+        public string ElementName { get; set; }
+
+        /// <summary>
+        /// Returns composed reference text
+        /// </summary>   
         public override string GetReferenceText(ReferenceString referenceText) {
             if (!ComesFromCodeBlock && !ComesFromInlineExpression) {
                 string reference;
@@ -464,14 +494,23 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Returns list of suggestions for a key name
+        /// </summary>   
         public override List<string> GetKeyNameSuggestions() {
             return InternalGetKeyNameSuggestions(Value, null, ClassOrStructElementName, null);
         }
 
+        /// <summary>
+        /// Get namespaces affecting this result item
+        /// </summary>
         public override NamespacesList GetUsedNamespaces() {
             return DeclaredNamespaces;
         }
 
+        /// <summary>
+        /// Returns "no-localization" commnent used to mark string literals for future reference
+        /// </summary>
         public override string NoLocalizationComment {
             get {
                 if (!ComesFromCodeBlock) {
@@ -483,7 +522,7 @@ namespace VisualLocalizer.Components {
         }
 
         /// <summary>
-        /// Returns true if result item comes from WebSite project and <%$ expression is used
+        /// Returns true if result item comes from WebSite project and &lt;%$ expression is used
         /// </summary>
         public override bool MustUseFullName {
             get {
@@ -494,6 +533,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Adds result item's namespace (if any) in a import block
+        /// </summary>  
         public override void AddUsingBlock(IVsTextLines textLines) {            
             string text = string.Format(StringConstants.AspImportDirectiveFormat, DestinationItem.Namespace);
 
@@ -578,7 +620,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns position of the reference which can be used to replace with actual string literal
         /// </summary>
-        /// <param name="strictText">Used in ASP .NET. True if <%= Resources.key %> should be replaced whole</param>
+        /// <param name="strictText">Used in ASP .NET. True if &lt;%= Resources.key %> should be replaced whole</param>
         /// <param name="absoluteStartIndex">Start position of the reference</param>
         /// <param name="absoluteLength">Length of the reference</param>        
         public abstract TextSpan GetInlineReplaceSpan(bool strictText, out int absoluteStartIndex, out int absoluteLength);
@@ -593,12 +635,22 @@ namespace VisualLocalizer.Components {
     /// Represents found reference to a resource key in a C# or VB code
     /// </summary>
     internal abstract class NetCodeReferenceResultItem : CodeReferenceResultItem {
+
+        /// <summary>
+        /// Returns position of the reference which can be used to replace with actual string literal
+        /// </summary>
+        /// <param name="strictText">Used in ASP .NET. True if &lt;%= Resources.key %&gt; should be replaced whole</param>
+        /// <param name="absoluteStartIndex">Start position of the reference</param>
+        /// <param name="absoluteLength">Length of the reference</param>  
         public override TextSpan GetInlineReplaceSpan(bool strictText, out int absoluteStartIndex, out int absoluteLength) {
             absoluteStartIndex = AbsoluteCharOffset;
             absoluteLength = AbsoluteCharLength;
             return ReplaceSpan;
         }
 
+        /// <summary>
+        /// Returns reference built from KeyAfterRename
+        /// </summary>  
         public override string GetReferenceAfterRename(string newKey) {
             string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf('.'));
             return prefix + "." + newKey;
@@ -609,10 +661,16 @@ namespace VisualLocalizer.Components {
     /// Represents found reference to a resource key in a C# code
     /// </summary>
     internal sealed class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
+        /// <summary>
+        /// Returns value in the format in which it can be inserted in the code (escaped sequences)
+        /// </summary>
         public override string GetInlineValue() {
             return "\"" + Value.ConvertCSharpUnescapeSequences() + "\"";
         }
 
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return LANGUAGE.CSHARP; }
             set { }
@@ -623,10 +681,16 @@ namespace VisualLocalizer.Components {
     /// Represents found reference to a resource key in a VB code
     /// </summary>
     internal sealed class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
+        /// <summary>
+        /// Returns value in the format in which it can be inserted in the code (escaped sequences)
+        /// </summary>
         public override string GetInlineValue() {
             return "\"" + Value.ConvertVBEscapeSequences() + "\"";
         }
 
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return LANGUAGE.VB; }
             set { }
@@ -638,12 +702,12 @@ namespace VisualLocalizer.Components {
     /// </summary>
     internal sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
         /// <summary>
-        /// True if result item comes from <%= expression
+        /// True if result item comes from &lt;%= expression
         /// </summary>
         public bool ComesFromInlineExpression { get; set; }
 
         /// <summary>
-        /// True if result item comes from <%$ expression
+        /// True if result item comes from &lt;%$ expression
         /// </summary>
         public bool ComesFromWebSiteResourceReference { get; set; }
 
@@ -653,11 +717,17 @@ namespace VisualLocalizer.Components {
         public BlockSpan InlineReplaceSpan { get; set; }
 
         private LANGUAGE _Language;
+        /// <summary>
+        /// Language of the result item context
+        /// </summary>
         public override LANGUAGE Language {
             get { return _Language; }
             set { _Language = value; }
         }
 
+        /// <summary>
+        /// Returns value in the format in which it can be inserted in the code (escaped sequences)
+        /// </summary>  
         public override string GetInlineValue() {
             if (ComesFromInlineExpression) {
                 return Value.ConvertAspNetUnescapeSequences(); // escape entities like &nbsp;
@@ -667,6 +737,14 @@ namespace VisualLocalizer.Components {
             }
         }
 
+
+        /// <summary>
+        /// Returns position of the reference which can be used to replace with actual string literal
+        /// </summary>
+        /// <param name="strictText">Used in ASP .NET. True if &lt;%= Resources.key %&gt; should be replaced whole</param>
+        /// <param name="absoluteStartIndex">Start position of the reference</param>
+        /// <param name="absoluteLength">Length of the reference</param>
+        /// <returns></returns>
         public override TextSpan GetInlineReplaceSpan(bool strictText, out int absoluteStartIndex, out int absoluteLength) {
             if (strictText) {
                 absoluteStartIndex = AbsoluteCharOffset;
@@ -685,6 +763,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Returns reference built from KeyAfterRename
+        /// </summary>
         public override string GetReferenceAfterRename(string newKey) {
             char splitChar;
             if (ComesFromWebSiteResourceReference) {

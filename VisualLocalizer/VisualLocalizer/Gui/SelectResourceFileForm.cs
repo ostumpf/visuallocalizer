@@ -116,31 +116,31 @@ namespace VisualLocalizer.Gui {
                 item.Unload();
         }
 
-        private void keyBox_TextChanged(object sender, EventArgs e) {
-            validate();
+        private void KeyBox_TextChanged(object sender, EventArgs e) {
+            ValidateData();
         }
 
-        private void comboBox_SelectedIndexChanged(object sender, EventArgs e) {            
-            validate();
+        private void ComboBox_SelectedIndexChanged(object sender, EventArgs e) {            
+            ValidateData();
         }
 
-        private void valueBox_TextChanged(object sender, EventArgs e) {
-            validate();
+        private void ValueBox_TextChanged(object sender, EventArgs e) {
+            ValidateData();
         }
 
         private void SelectResourceFileForm_Load(object sender, EventArgs e) {
-            validate();
+            ValidateData();
         }
 
-        private void usingBox_CheckedChanged(object sender, EventArgs e) {
+        private void UsingBox_CheckedChanged(object sender, EventArgs e) {
             fullBox.Checked = !usingBox.Checked;
-            validate();
+            ValidateData();
         }
 
         /// <summary>
         /// Executed on every change in window form
         /// </summary>
-        private void validate() {
+        private void ValidateData() {
             bool existsFile = comboBox.Items.Count > 0; // there's at least one possible destination file
             string errorText = null;
             bool ok = true;
@@ -257,7 +257,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Closes the form with Overwrite result
         /// </summary>        
-        private void overwriteButton_Click(object sender, EventArgs e) {            
+        private void OverwriteButton_Click(object sender, EventArgs e) {            
             Result = SELECT_RESOURCE_FILE_RESULT.OVERWRITE;
             DialogResult = DialogResult.OK;
             Close();
@@ -266,7 +266,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Closes the form with Inline result
         /// </summary>
-        private void inlineButton_Click(object sender, EventArgs e) {            
+        private void InlineButton_Click(object sender, EventArgs e) {            
             Result = SELECT_RESOURCE_FILE_RESULT.INLINE;
             DialogResult = DialogResult.OK;
             Close();
@@ -275,7 +275,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Closes the form with Ok or Inline result, based on key name conflicts
         /// </summary>
-        private void okButton_Click(object sender, EventArgs e) {
+        private void OkButton_Click(object sender, EventArgs e) {
             if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE) {
                 Result = SELECT_RESOURCE_FILE_RESULT.INLINE;
             } else {
@@ -356,7 +356,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Resize the text box vertically
         /// </summary>        
-        private void existingValueBox_TextChanged(object sender, EventArgs e) {
+        private void ExistingValueBox_TextChanged(object sender, EventArgs e) {
             Size sz = new Size(existingValueBox.ClientSize.Width, int.MaxValue);
             TextFormatFlags flags = TextFormatFlags.WordBreak;
             int padding = 3;

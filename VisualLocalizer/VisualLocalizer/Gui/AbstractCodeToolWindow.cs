@@ -82,14 +82,14 @@ namespace VisualLocalizer.Gui {
 
         public AbstractCodeToolWindow():base(null) {
             this.panel = new T(); // creates new toolwindow content
-            this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(panel_HighlightRequired);
+            this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(Panel_HighlightRequired);
 
             windowEvents = new ToolWindowEvents();
             windowEvents.WindowHidden += new EventHandler(OnWindowHidden);
 
             AddEventsListener();
         }
-        
+
         protected override void Initialize() {
             base.Initialize();
 
@@ -126,7 +126,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Highlights given block of text in the code window
         /// </summary>        
-        protected void panel_HighlightRequired(object sender, CodeResultItemEventArgs e) {
+        protected void Panel_HighlightRequired(object sender, CodeResultItemEventArgs e) {
             try {
                 // obtains IVsTextView instance, opening the file if necessary
                 IVsTextView view = DocumentViewsManager.GetTextViewForFile(e.Item.SourceItem.GetFullPath(), true, true);

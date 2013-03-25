@@ -15,7 +15,10 @@ namespace VisualLocalizer.Commands {
     /// Represents "inline" command on a VB source code
     /// </summary>
     internal sealed class VBInlineCommand : InlineCommand<VBCodeReferenceResultItem> {
-        
+
+        /// <summary>
+        /// Should return result item located in current selection point. Returns null in any case of errors and exceptions.
+        /// </summary> 
         public override VBCodeReferenceResultItem GetCodeReferenceResultItem() {
             if (currentCodeModel == null) throw new Exception("Current document has no CodeModel.");
 

@@ -8,6 +8,9 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Undo unit for comment change in editor's list view
+    /// </summary>
     [Guid("2CB8F2A1-BD3D-4d9f-BD21-FB3B06047F2F")]
     internal sealed class ListViewChangeCommentUndoUnit : AbstractUndoUnit {
 
@@ -24,19 +27,29 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
-            Item.DataNode.Comment = OldComment;
-            Item.SubItems["Comment"].Text = OldComment;
+            try {
+                Item.DataNode.Comment = OldComment;
+                Item.SubItems["Comment"].Text = OldComment;
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
-            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+                if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override void Redo() {
-            Item.DataNode.Comment = NewComment;
-            Item.SubItems["Comment"].Text = NewComment;
+            try {
+                Item.DataNode.Comment = NewComment;
+                Item.SubItems["Comment"].Text = NewComment;
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
-            if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+                if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string GetUndoDescription() {

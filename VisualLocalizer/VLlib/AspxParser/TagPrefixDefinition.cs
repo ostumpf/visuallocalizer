@@ -68,6 +68,9 @@ namespace VisualLocalizer.Library.AspxParser {
             this.Namespace = Namespace;
         }
 
+        /// <summary>
+        /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
+        /// </summary>
         public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
             propInfo = null;
             string fullname = Namespace + "." + elementName; // expected type name
@@ -135,6 +138,9 @@ namespace VisualLocalizer.Library.AspxParser {
             codeType = Project.CodeModel.CodeTypeFromFullName(handler.ControlInfo.Inherits);
         }
 
+        /// <summary>
+        /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
+        /// </summary>
         public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
             if (attributeName == null) throw new ArgumentNullException("attributeName");
 
@@ -177,9 +183,17 @@ namespace VisualLocalizer.Library.AspxParser {
         
         public bool StopRequested { get; private set;  }
 
+
+        /// <summary>
+        /// Called after code block &lt;% %&gt;
+        /// </summary>
+        /// <param name="context"></param>
         public void OnCodeBlock(CodeBlockContext context) {            
         }
 
+        /// <summary>
+        /// Called after page directive &lt;%@ %&gt;
+        /// </summary>  
         public void OnPageDirective(DirectiveContext context) {
             if (context.DirectiveName == "Control") {
                 ControlInfo = new ControlDirectiveInfo();
@@ -195,15 +209,27 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Called after output element &lt;%= %&gt;, &lt;%$ %&gt; or &lt;%: %&gt;
+        /// </summary> 
         public void OnOutputElement(OutputElementContext context) {            
         }
 
+        /// <summary>
+        /// Called after beginnnig tag is read
+        /// </summary>   
         public void OnElementBegin(ElementContext context) {            
         }
 
+        /// <summary>
+        /// Called after end tag is read
+        /// </summary>
         public void OnElementEnd(EndElementContext context) {            
         }
 
+        /// <summary>
+        /// Called after plain text (between elements) is read
+        /// </summary>
         public void OnPlainText(PlainTextContext context) {            
         }
     }

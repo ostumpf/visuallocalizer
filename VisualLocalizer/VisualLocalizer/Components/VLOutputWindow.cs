@@ -13,7 +13,7 @@ namespace VisualLocalizer.Components {
     internal sealed class VLOutputWindow : OutputWindow {
 
         static VLOutputWindow() {
-            cache.Add(typeof(Guids.VisualLocalizerWindowPane).GUID, getStandardPane(typeof(Guids.VisualLocalizerWindowPane).GUID));            
+            cache.Add(typeof(Guids.VisualLocalizerWindowPane).GUID, GetStandardPane(typeof(Guids.VisualLocalizerWindowPane).GUID));            
         }
 
         public static OutputWindowPane VisualLocalizerPane {

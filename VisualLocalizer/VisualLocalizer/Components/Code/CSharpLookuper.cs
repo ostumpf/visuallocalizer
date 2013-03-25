@@ -14,7 +14,14 @@ namespace VisualLocalizer.Components {
     /// </summary>
     /// <typeparam name="T">Type of result item</typeparam>
     internal class CSharpLookuper<T> : AbstractCodeLookuper<T> where T:AbstractResultItem,new() {
-        
+
+        /// <summary>
+        /// Language-specific implementation, handles beginnings and ends of strings, comments etc.
+        /// </summary>
+        /// <param name="insideComment">IN/OUT - true if lookuper's position is within comment</param>
+        /// <param name="insideString">IN/OUT - true if lookuper's position is within string literal</param>
+        /// <param name="isVerbatimString">IN/OUT - true string literal is verbatim (C# only)</param>
+        /// <param name="skipLine">OUT - true if lookuper should skip current line entirely</param>
         protected override void PreProcessChar(ref bool insideComment, ref bool insideString, ref bool isVerbatimString, out bool skipLine) {           
             skipLine = false;
 

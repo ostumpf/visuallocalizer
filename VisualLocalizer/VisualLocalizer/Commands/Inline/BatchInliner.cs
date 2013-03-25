@@ -30,6 +30,9 @@ namespace VisualLocalizer.Commands {
             : base(list) {
         }
 
+        /// <summary>
+        /// Returns result item with specified index
+        /// </summary>
         public override CodeReferenceResultItem GetItemFromList(IList list, int index) {
             if (list[index] is DataGridViewCheckedRow<CodeReferenceResultItem>) {
                 return (list[index] as DataGridViewCheckedRow<CodeReferenceResultItem>).DataSourceItem;
@@ -38,14 +41,23 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        /// <summary>
+        /// Returns text that replaces current reference
+        /// </summary>      
         public override string GetReplaceString(CodeReferenceResultItem item) {
             return item.GetInlineValue(); // this includes escaping sequences ( " -> \" )
         }
 
+        /// <summary>
+        /// Returns replace span of the reference (what should be replaced)
+        /// </summary>  
         public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {
             return item.GetInlineReplaceSpan(false, out absoluteStartIndex, out absoluteLength);
         }
 
+        /// <summary>
+        /// Returns new undo unit for the item
+        /// </summary>     
         public override AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange) {
             return new InlineUndoUnit(item.FullReferenceText, externalChange);
         }

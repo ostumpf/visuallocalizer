@@ -20,6 +20,15 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Adds reference to a resource result item to the list
+        /// </summary>
+        /// <param name="list">Result list</param>
+        /// <param name="referenceText">Full text of the reference</param>
+        /// <param name="trieElementInfos">Info about reference, taken from terminal state of the trie</param>
+        /// <returns>
+        /// New result item
+        /// </returns>
         protected override AspNetCodeReferenceResultItem AddReferenceResult(List<AspNetCodeReferenceResultItem> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
             var result = base.AddReferenceResult(list, referenceText, trieElementInfos);
             result.Language = VisualLocalizer.Library.LANGUAGE.VB;

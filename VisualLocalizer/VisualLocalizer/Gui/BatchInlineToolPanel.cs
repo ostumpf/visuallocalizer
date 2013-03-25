@@ -31,7 +31,7 @@ namespace VisualLocalizer.Gui {
             MenuItem stateMenu = new MenuItem("State");
             stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => {
                 try {
-                    setCheckStateOfSelected(true);
+                    SetCheckStateOfSelected(true);
                 } catch (Exception ex) {
                     VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                     VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -39,7 +39,7 @@ namespace VisualLocalizer.Gui {
             }));
             stateMenu.MenuItems.Add("Unchecked", new EventHandler((o, e) => {
                 try {
-                    setCheckStateOfSelected(false);
+                    SetCheckStateOfSelected(false);
                 } catch (Exception ex) {
                     VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                     VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -50,6 +50,9 @@ namespace VisualLocalizer.Gui {
             this.ContextMenu = contextMenu;
         }
 
+        /// <summary>
+        /// Initializes grid columns
+        /// </summary>
         protected override void InitializeColumns() {
             base.InitializeColumns();
             this.CellDoubleClick += new DataGridViewCellEventHandler(OnRowDoubleClick);
@@ -175,6 +178,9 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        /// <summary>
+        /// Returns item initialized with values from provided row
+        /// </summary>
         protected override CodeReferenceResultItem GetResultItemFromRow(DataGridViewRow row) {
             var typedRow = row as DataGridViewCheckedRow<CodeReferenceResultItem>;
             CodeReferenceResultItem item = typedRow.DataSourceItem;
@@ -184,6 +190,9 @@ namespace VisualLocalizer.Gui {
             return item;
         }
 
+        /// <summary>
+        /// Returns name of the column with checkbox
+        /// </summary>
         public override string CheckBoxColumnName {
             get { return "InlineThisItem"; }
         }

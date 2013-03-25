@@ -9,6 +9,9 @@ using VisualLocalizer.Components;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Represents undo unit for changing comment of a string resource
+    /// </summary>
     [Guid("E00A8D51-409A-453b-83AB-B63B5B79AC76")]
     internal sealed class StringChangeCommentUndoUnit : AbstractUndoUnit {
 
@@ -19,6 +22,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
         public ResXStringGrid Grid { get; private set; }
 
         public StringChangeCommentUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldComment, string newComment) {
+            if (sourceRow == null) throw new ArgumentNullException("sourceRow");
+            if (grid == null) throw new ArgumentNullException("grid");
+            
             this.SourceRow = sourceRow;
             this.Grid = grid;
             this.Key = key;
@@ -35,14 +41,19 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeComment(string from, string to) {
-            SourceRow.DataSourceItem.Comment = to;
-            SourceRow.Cells[Grid.CommentColumnName].Tag = from;
-            SourceRow.Cells[Grid.CommentColumnName].Value = to;
-            Grid.ValidateRow(SourceRow);
-            Grid.NotifyDataChanged();
-            Grid.SetContainingTabPageSelected();
+            try {
+                SourceRow.DataSourceItem.Comment = to;
+                SourceRow.Cells[Grid.CommentColumnName].Tag = from;
+                SourceRow.Cells[Grid.CommentColumnName].Value = to;
+                Grid.ValidateRow(SourceRow);
+                Grid.NotifyDataChanged();
+                Grid.SetContainingTabPageSelected();
 
-            VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("Edited comment of \"{0}\"", Key);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
         }
 
         public override string GetUndoDescription() {

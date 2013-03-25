@@ -80,7 +80,7 @@ namespace VisualLocalizer.Gui {
             this.resxListBox.ScrollAlwaysVisible = true;
             this.resxListBox.Size = new System.Drawing.Size(281, 109);
             this.resxListBox.TabIndex = 0;
-            this.resxListBox.SelectedValueChanged += new System.EventHandler(this.resxListBox_SelectedValueChanged);
+            this.resxListBox.SelectedValueChanged += new System.EventHandler(this.ResxListBox_SelectedValueChanged);
             // 
             // languageInfoPanel
             // 
@@ -153,7 +153,7 @@ namespace VisualLocalizer.Gui {
             this.languagePairsBox.Name = "languagePairsBox";
             this.languagePairsBox.Size = new System.Drawing.Size(122, 21);
             this.languagePairsBox.TabIndex = 10;
-            this.languagePairsBox.SelectedIndexChanged += new System.EventHandler(this.languagePairsBox_SelectedIndexChanged);
+            this.languagePairsBox.SelectedIndexChanged += new System.EventHandler(this.LanguagePairsBox_SelectedIndexChanged);
             // 
             // useSavedPairBox
             // 
@@ -164,7 +164,7 @@ namespace VisualLocalizer.Gui {
             this.useSavedPairBox.TabIndex = 11;
             this.useSavedPairBox.TabStop = true;
             this.useSavedPairBox.UseVisualStyleBackColor = true;
-            this.useSavedPairBox.CheckedChanged += new System.EventHandler(this.useSavedPairBox_CheckedChanged);
+            this.useSavedPairBox.CheckedChanged += new System.EventHandler(this.UseSavedPairBox_CheckedChanged);
             // 
             // groupBox2
             // 
@@ -253,7 +253,7 @@ namespace VisualLocalizer.Gui {
             this.useNewPairBox.TabIndex = 6;
             this.useNewPairBox.TabStop = true;
             this.useNewPairBox.UseVisualStyleBackColor = true;
-            this.useNewPairBox.CheckedChanged += new System.EventHandler(this.useNewPairBox_CheckedChanged);
+            this.useNewPairBox.CheckedChanged += new System.EventHandler(this.UseNewPairBox_CheckedChanged);
             // 
             // addLanguagePairBox
             // 
@@ -279,7 +279,7 @@ namespace VisualLocalizer.Gui {
             this.providerBox.Name = "providerBox";
             this.providerBox.Size = new System.Drawing.Size(124, 21);
             this.providerBox.TabIndex = 3;
-            this.providerBox.SelectedIndexChanged += new System.EventHandler(this.providerBox_SelectedIndexChanged);
+            this.providerBox.SelectedIndexChanged += new System.EventHandler(this.ProviderBox_SelectedIndexChanged);
             // 
             // label1
             // 

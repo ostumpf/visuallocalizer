@@ -83,7 +83,7 @@ namespace VisualLocalizer.Gui {
         }
 
        
-        private void resxListBox_SelectedValueChanged(object sender, EventArgs e) {
+        private void ResxListBox_SelectedValueChanged(object sender, EventArgs e) {
             GlobalTranslateProjectItem item = (GlobalTranslateProjectItem)resxListBox.SelectedItem;
             item.Checked = resxListBox.CheckedIndices.Contains(resxListBox.SelectedIndex);
 
@@ -94,7 +94,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Called when "use new language pair" checkbox is checked. Enables/disables respective controls.
         /// </summary>        
-        private void useNewPairBox_CheckedChanged(object sender, EventArgs e) {
+        private void UseNewPairBox_CheckedChanged(object sender, EventArgs e) {
             label2.Enabled = useNewPairBox.Checked;
             label3.Enabled = useNewPairBox.Checked;
             souceLanguageBox.Enabled = useNewPairBox.Checked;
@@ -110,7 +110,7 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Called when "use existing language pair" checkbox is checked. Enables/disables respective controls.
         /// </summary>        
-        private void useSavedPairBox_CheckedChanged(object sender, EventArgs e) {
+        private void UseSavedPairBox_CheckedChanged(object sender, EventArgs e) {
             label4.Enabled = useSavedPairBox.Checked;
             languagePairsBox.Enabled = useSavedPairBox.Checked;
 
@@ -123,14 +123,14 @@ namespace VisualLocalizer.Gui {
         /// <summary>
         /// Provider combobox value changed
         /// </summary>        
-        private void providerBox_SelectedIndexChanged(object sender, EventArgs e) {
+        private void ProviderBox_SelectedIndexChanged(object sender, EventArgs e) {
             Provider = (TRANSLATE_PROVIDER)providerBox.SelectedIndex;
         }
 
         /// <summary>
         /// Selected language pair changed
         /// </summary>        
-        private void languagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
+        private void LanguagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
             LanguagePair = (SettingsObject.LanguagePair)languagePairsBox.SelectedItem;
         }
 

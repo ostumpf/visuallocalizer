@@ -7,6 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
+    /// <summary>
+    /// Base class for undo units handling renaming keys in string grid and list views
+    /// </summary>
     [Guid("D9DE0AA3-A608-4f2a-945F-1A0E5E8F7A12")]
     internal abstract class RenameKeyUndoUnit : AbstractUndoUnit {
 

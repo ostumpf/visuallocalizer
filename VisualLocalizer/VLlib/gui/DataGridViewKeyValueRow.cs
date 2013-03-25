@@ -27,10 +27,11 @@ namespace VisualLocalizer.Library {
             _ItemsWithSameKey = new List<IKeyValueSource>();
             _ConflictRows = new HashSet<IKeyValueSource>();
             _ErrorSet = new HashSet<string>();
-        }        
+        }
+
 
         /// <summary>
-        /// Reloads error message
+        /// Updates display of errors for this item (called after change in ErrorMessages)
         /// </summary>
         public void UpdateErrorSetDisplay() {
             if (ErrorMessages.Count == 0) {
@@ -39,7 +40,7 @@ namespace VisualLocalizer.Library {
                 ErrorText = ErrorMessages.First();
             }
         }
-        
+  
         public string Key {
             get {
                 var grid = this.DataGridView as AbstractKeyValueGridView<ItemType>;
@@ -63,6 +64,10 @@ namespace VisualLocalizer.Library {
         }
     
         private List<IKeyValueSource> _ItemsWithSameKey;
+
+        /// <summary>
+        /// Items with the same key
+        /// </summary>
         public List<IKeyValueSource> ItemsWithSameKey {
             get {
                 return _ItemsWithSameKey;
@@ -73,6 +78,9 @@ namespace VisualLocalizer.Library {
         }
 
         private HashSet<IKeyValueSource> _ConflictRows;
+        /// <summary>
+        /// Items that are in conflict with this item (have the same key and possibly different values)
+        /// </summary>
         public HashSet<IKeyValueSource> ConflictItems {
             get {
                 return _ConflictRows;
@@ -80,6 +88,9 @@ namespace VisualLocalizer.Library {
         }
 
         private HashSet<string> _ErrorSet;
+        /// <summary>
+        /// Returns error messages associated with this item
+        /// </summary>
         public HashSet<string> ErrorMessages {
             get {
                 return _ErrorSet;

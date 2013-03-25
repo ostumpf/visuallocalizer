@@ -16,17 +16,17 @@ namespace VisualLocalizer.Library.AspxParser {
         bool StopRequested { get; } 
 
         /// <summary>
-        /// Called after code block <% %>
+        /// Called after code block &lt;% %>
         /// </summary>        
         void OnCodeBlock(CodeBlockContext context);
 
         /// <summary>
-        /// Called after page directive <%@ %>
+        /// Called after page directive &lt;%@ %>
         /// </summary>        
         void OnPageDirective(DirectiveContext context);        
 
         /// <summary>
-        /// Called after output element <%= %>, <%$ %> or <%: %>
+        /// Called after output element &lt;%= %>, &lt;%$ %> or &lt;%: %>
         /// </summary>        
         void OnOutputElement(OutputElementContext context);
 

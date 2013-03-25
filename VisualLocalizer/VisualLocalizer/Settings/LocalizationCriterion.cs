@@ -212,7 +212,7 @@ namespace VisualLocalizer.Settings {
             Weight = int.Parse(a[1]);            
         }
 
-        protected void internalDeepCopy(AbstractLocalizationCriterion crit) {
+        protected void InternalDeepCopy(AbstractLocalizationCriterion crit) {
             crit.Action = Action;
             crit.Description = Description;
             crit.Name = Name;
@@ -240,12 +240,21 @@ namespace VisualLocalizer.Settings {
             this.Predicate = predicate;
         }
 
+        /// <summary>
+        /// Evaluates given result item
+        /// </summary>        
+        /// <returns>
+        /// Null if the criterion is not relevant for the result item (testing element prefix for C# string literal...), true if it is relevant and the result item satisfies the condition, false otherwise
+        /// </returns>        
         public override bool? Eval(CodeStringResultItem resultItem) {
             if (resultItem == null) throw new ArgumentNullException("resultItem");
             return Predicate(resultItem);
         }
        
         private string _Description;
+        /// <summary>
+        /// Returns human-readeble description of this criterion
+        /// </summary>
         public override string Description {
             get {
                 return _Description;
@@ -255,9 +264,12 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Creates deep copy
+        /// </summary>
         public override AbstractLocalizationCriterion DeepCopy() {
             LocalizationCommonCriterion crit = new LocalizationCommonCriterion();
-            internalDeepCopy(crit);
+            InternalDeepCopy(crit);
             crit.Predicate = Predicate;
             return crit;
         }
@@ -284,18 +296,24 @@ namespace VisualLocalizer.Settings {
         public LocalizationCriterionPredicate Predicate { get; set; }
         private static Random rnd = new Random();
 
-        protected LocalizationCustomCriterion() {                         
+        private LocalizationCustomCriterion() {                         
         }
 
         public LocalizationCustomCriterion(LocalizationCriterionAction action, int weight)
             : base("x" + rnd.Next().ToString(), action, weight) {            
         }
 
+        /// <summary>
+        /// Evaluates given result item
+        /// </summary>        
+        /// <returns>
+        /// Null if the criterion is not relevant for the result item (testing element prefix for C# string literal...), true if it is relevant and the result item satisfies the condition, false otherwise
+        /// </returns>        
         public override bool? Eval(CodeStringResultItem resultItem) {
             if (resultItem == null) throw new ArgumentNullException("resultItem");
 
             bool relevant;
-            string testString = getTarget(resultItem, out relevant);
+            string testString = GetTarget(resultItem, out relevant);
             if (!relevant) return null;
 
             switch (Predicate) {
@@ -340,7 +358,7 @@ namespace VisualLocalizer.Settings {
         /// </summary>
         /// <param name="resultItem">Result item from which the value is taken</param>
         /// <param name="relevant">OUT - true if the target is relevant for the result item</param>        
-        private string getTarget(CodeStringResultItem resultItem, out bool relevant) {
+        private string GetTarget(CodeStringResultItem resultItem, out bool relevant) {
             string testString = null;
             NetStringResultItem cResItem = resultItem as NetStringResultItem;
             AspNetStringResultItem aResItem = resultItem as AspNetStringResultItem;
@@ -386,12 +404,18 @@ namespace VisualLocalizer.Settings {
             return testString;
         }
 
+        /// <summary>
+        /// Returns string that is used to save this criterion in the registry
+        /// </summary>
         public override string ToRegData() {
             string orig = base.ToRegData();
             orig += string.Format("/{0}/{1}/{2}/{3}/{4}",(int)Action, (int)Target, (int)Predicate, Name, Regex);
             return orig;
         }
 
+        /// <summary>
+        /// Treats given string as a result of ToRegData() method; parses it and sets values accordingly
+        /// </summary>
         public override void FromRegData(string data) {
             base.FromRegData(data);
             string[] a = data.Split('/');
@@ -404,6 +428,9 @@ namespace VisualLocalizer.Settings {
             Regex = string.Join("/", a, 6, a.Length - 6);
         }
 
+        /// <summary>
+        /// Returns human-readeble description of this criterion
+        /// </summary>
         public override string Description {
             get {
                 string target = Target.ToHumanForm();
@@ -416,11 +443,14 @@ namespace VisualLocalizer.Settings {
                 }
             }
             protected set { }
-        }        
+        }
 
+        /// <summary>
+        /// Creates deep copy
+        /// </summary>
         public override AbstractLocalizationCriterion DeepCopy() {
             LocalizationCustomCriterion crit = new LocalizationCustomCriterion();
-            internalDeepCopy(crit);
+            InternalDeepCopy(crit);
             crit.Predicate = Predicate;
             crit.Regex = (string)Regex.Clone();
             crit.Target = Target;
@@ -499,8 +529,7 @@ namespace VisualLocalizer.Settings {
                     return "remove rows";
                 default:
                     throw new Exception("Unknown LocalizationCriterionAction2: " + act);
-            }
-            return null;
+            }            
         }
     }
 }

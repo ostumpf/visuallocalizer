@@ -22,18 +22,30 @@ namespace VisualLocalizer.Commands {
             : base(list) {            
         }
 
+        /// <summary>
+        /// Returns result item with specified index
+        /// </summary>  
         public override CodeReferenceResultItem GetItemFromList(IList list, int index) {
             return (CodeReferenceResultItem)list[index];
         }
 
+        /// <summary>
+        /// Returns text that replaces current reference
+        /// </summary> 
         public override string GetReplaceString(CodeReferenceResultItem item) {
             return item.GetReferenceAfterRename(item.KeyAfterRename);
         }
 
+        /// <summary>
+        /// Returns replace span of the reference (what should be replaced)
+        /// </summary>
         public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {
             return item.GetInlineReplaceSpan(true, out absoluteStartIndex, out absoluteLength);
         }
 
+        /// <summary>
+        /// Returns new undo unit for the item
+        /// </summary>  
         public override AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange) {
             return new StringRenameKeyInCodeUndoUnit(item.Key, item.KeyAfterRename);
         }

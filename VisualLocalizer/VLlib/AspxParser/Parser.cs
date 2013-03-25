@@ -265,7 +265,7 @@ namespace VisualLocalizer.Library.AspxParser {
         }
 
         /// <summary>
-        /// Called after "<%" has been read to determine what kind of content it is 
+        /// Called after "&lt;%" has been read to determine what kind of content it is 
         /// </summary>
         private void ReactToBeginningOfAspTags() {
             if (currentChar == '=') {

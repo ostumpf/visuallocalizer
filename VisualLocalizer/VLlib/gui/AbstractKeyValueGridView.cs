@@ -82,6 +82,9 @@ namespace VisualLocalizer.Library {
             Validate(Rows[rowIndex] as DataGridViewKeyValueRow<ItemType>);
         }
 
+        /// <summary>
+        /// Initializes the grid with provided list of items
+        /// </summary>
         public override void SetData(List<ItemType> list) {
             ConflictResolver.Clear();
             errorRows.Clear();

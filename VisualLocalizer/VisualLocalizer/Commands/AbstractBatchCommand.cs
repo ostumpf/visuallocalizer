@@ -106,7 +106,7 @@ namespace VisualLocalizer.Commands {
             searchedProjectItems.Clear();
             generatedProjectItems.Clear();
             
-            checkActiveDocument();
+            CheckActiveDocument();
 
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             currentlyProcessedItem = currentDocument.ProjectItem;
@@ -142,7 +142,7 @@ namespace VisualLocalizer.Commands {
             searchedProjectItems.Clear();
             generatedProjectItems.Clear();
 
-            checkActiveDocument();
+            CheckActiveDocument();
 
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;          
             currentlyProcessedItem = currentDocument.ProjectItem;
@@ -286,7 +286,7 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Checks active document whether it can be searched
         /// </summary>
-        protected void checkActiveDocument() {
+        protected void CheckActiveDocument() {
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
