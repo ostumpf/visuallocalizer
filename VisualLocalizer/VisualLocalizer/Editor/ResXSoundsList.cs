@@ -38,52 +38,32 @@ namespace VisualLocalizer.Editor {
             ListViewKeyItem item = base.Add(key, value) as ListViewKeyItem;
             if (referenceExistingOnAdd) {
                 item.FileRefOk = true;
-                return item;
-            }
-
-            LargeImageList.Images.Add(item.Name, Editor.play);
-            SmallImageList.Images.Add(item.Name, Editor.play);
-
-            item.ImageKey = item.Name; // update icon            
-
-            ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
-            subSize.Name = "Size";            
-            item.SubItems.Insert(2, subSize);
-
-            ListViewItem.ListViewSubItem subLength = new ListViewItem.ListViewSubItem();
-            subLength.Name = "Length";            
-            item.SubItems.Insert(3, subLength);
-
-            FileInfo info = null;
-            if (value.FileRef != null && File.Exists(value.FileRef.FileName)) {
-                info = new FileInfo(value.FileRef.FileName);
-            }    
-
-            if (info != null) {
-                subSize.Text = GetFileSize(info.Length);
-                subLength.Text = GetSoundDigits(SoundInfo.GetSoundLength(info.FullName)); // display sound length
             } else {
-                var stream = value.GetValue<MemoryStream>();
-                if (stream != null) {
-                    subSize.Text = GetFileSize(stream.Length);
-                    subLength.Text = null;
-                } else {
-                    item.FileRefOk = false;
-                }
+                ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
+                subSize.Name = "Size";
+                item.SubItems.Insert(2, subSize);
+
+                ListViewItem.ListViewSubItem subLength = new ListViewItem.ListViewSubItem();
+                subLength.Name = "Length";
+                item.SubItems.Insert(3, subLength);
             }
 
+            UpdateDataOf(item, false);
+            
             return item;
         }
 
         /// <summary>
         /// Reloads displayed data from underlaying ResX node
         /// </summary>
-        public override ListViewKeyItem UpdateDataOf(string name) {
-            ListViewKeyItem item = base.UpdateDataOf(name);
-            if (item == null) return null;
+        public override void UpdateDataOf(ListViewKeyItem item, bool reloadImages) {
+            base.UpdateDataOf(item, reloadImages);
+            
+            LargeImageList.Images.Add(item.ImageKey, Editor.play);
+            SmallImageList.Images.Add(item.ImageKey, Editor.play);            
 
             FileInfo info = null;
-            if (File.Exists(item.DataNode.FileRef.FileName)) {
+            if (item.DataNode.FileRef != null && File.Exists(item.DataNode.FileRef.FileName)) {
                 info = new FileInfo(item.DataNode.FileRef.FileName);
             }
 
@@ -101,9 +81,15 @@ namespace VisualLocalizer.Editor {
                     item.FileRefOk = false;
                 }
             }
-            item.UpdateErrorSetDisplay();
 
-            return item;
+            item.UpdateErrorSetDisplay();            
+
+            Validate(item);
+            NotifyItemsStateChanged();
+
+            string p = item.ImageKey;
+            item.ImageKey = null;
+            item.ImageKey = p;
         }
 
         /// <summary>
@@ -146,9 +132,9 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Saves given node's content into random file in specified directory and returns the file path
         /// </summary>
-        protected override string SaveIntoTmpFile(ResXDataNode node, string directory) {
+        protected override string SaveIntoTmpFile(ResXDataNode node, string name, string directory) {
             MemoryStream ms = node.GetValue<MemoryStream>();
-            string filename = node.Name + ".wav";
+            string filename = name + ".wav";
             string path = Path.Combine(directory, filename);
             
             FileStream fs = null;

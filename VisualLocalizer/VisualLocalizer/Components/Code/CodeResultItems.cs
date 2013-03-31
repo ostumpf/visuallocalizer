@@ -17,7 +17,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Base class for all result items - found string literals or references to resources
     /// </summary>
-    internal abstract class AbstractResultItem {
+    public abstract class AbstractResultItem {
         public AbstractResultItem() {
             MoveThisItem = true;
         }
@@ -135,7 +135,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found string literal
     /// </summary>
-    internal abstract class CodeStringResultItem : AbstractResultItem {
+    public abstract class CodeStringResultItem : AbstractResultItem {
         /// <summary>
         /// True if the literal was verbatim (@) string
         /// </summary>
@@ -320,7 +320,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents C# or VB string literal result item
     /// </summary>
-    internal abstract class NetStringResultItem : CodeStringResultItem {
+    public abstract class NetStringResultItem : CodeStringResultItem {
 
         /// <summary>
         /// Name of the method in which the result item is located
@@ -381,7 +381,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents C# string literal result item
     /// </summary>
-    internal sealed class CSharpStringResultItem : NetStringResultItem {
+    public class CSharpStringResultItem : NetStringResultItem {
         /// <summary>
         /// Returns "no-localization" commnent used to mark string literals for future reference
         /// </summary>
@@ -399,7 +399,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents VB string literal result item
     /// </summary>
-    internal sealed class VBStringResultItem : NetStringResultItem {
+    public class VBStringResultItem : NetStringResultItem {
         /// <summary>
         /// This feature is not available in VB
         /// </summary>
@@ -417,7 +417,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents ASP .NET string literal result item
     /// </summary>
-    internal sealed class AspNetStringResultItem : CodeStringResultItem {
+    public class AspNetStringResultItem : CodeStringResultItem {
         /// <summary>
         /// Namespaces imported in the document
         /// </summary>
@@ -596,7 +596,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key
     /// </summary>
-    internal abstract class CodeReferenceResultItem : AbstractResultItem {
+    public abstract class CodeReferenceResultItem : AbstractResultItem {
         /// <summary>
         /// Returns full text of the reference (including namespace)
         /// </summary>
@@ -634,7 +634,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a C# or VB code
     /// </summary>
-    internal abstract class NetCodeReferenceResultItem : CodeReferenceResultItem {
+    public abstract class NetCodeReferenceResultItem : CodeReferenceResultItem {
 
         /// <summary>
         /// Returns position of the reference which can be used to replace with actual string literal
@@ -660,7 +660,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a C# code
     /// </summary>
-    internal sealed class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
+    public sealed class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
         /// <summary>
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
         /// </summary>
@@ -680,7 +680,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a VB code
     /// </summary>
-    internal sealed class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
+    public sealed class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
         /// <summary>
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
         /// </summary>
@@ -700,7 +700,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a ASP .NET code
     /// </summary>
-    internal sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
+    public sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
         /// <summary>
         /// True if result item comes from &lt;%= expression
         /// </summary>

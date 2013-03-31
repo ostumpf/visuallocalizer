@@ -144,7 +144,9 @@ namespace VisualLocalizer.Components {
                     if (aitem != null) {
                         aitem.ComesFromClientComment = context.WithinClientSideComment;
                         aitem.ComesFromCodeBlock = true;
+                        aitem.ClassOrStructElementName = ClassFileName;
                     }
+                    
                 }
 
                 AddContextToItems((IEnumerable)list);
@@ -159,7 +161,7 @@ namespace VisualLocalizer.Components {
             if (context.DirectiveName == "Import" && context.Attributes.Exists((info) => { return info.Name == "Namespace"; })) {
                 declaredNamespaces.Add(new UsedNamespaceItem(context.Attributes.Find((info) => { return info.Name == "Namespace"; }).Value, null));
             }
-            if (context.DirectiveName == "Page") {
+            if (context.DirectiveName == "Page" || context.DirectiveName == "Control") {
                 string lang = null; // value of Language attribute
                 string ext = null; // extension of the code-behind file
                 foreach (var info in context.Attributes) {
@@ -193,7 +195,7 @@ namespace VisualLocalizer.Components {
                     if (!string.IsNullOrEmpty(assembly) && !string.IsNullOrEmpty(nmspc)) {
                         webConfig.AddTagPrefixDefinition(new TagPrefixAssemblyDefinition(assembly, nmspc, tagPrefix));
                     } else if (!string.IsNullOrEmpty(tagName) && !string.IsNullOrEmpty(src)) {
-                        webConfig.AddTagPrefixDefinition(new TagPrefixSourceDefinition(projectItem.ContainingProject, 
+                        webConfig.AddTagPrefixDefinition(new TagPrefixSourceDefinition(projectItem, 
                             VisualLocalizerPackage.Instance.DTE.Solution, tagName, src, tagPrefix));
                     }
                 }
@@ -219,14 +221,15 @@ namespace VisualLocalizer.Components {
                     if (ShouldIgnoreThisAttribute(context.ElementName, info.Name)) continue; // attribute is not localizable
 
                     if (Settings.SettingsObject.Instance.UseReflectionInAsp) { // attempt to resolve type
-                        PropertyInfo propInfo;                        
-                        bool? isString = webConfig.IsTypeof(context.Prefix, context.ElementName, info.Name, typeof(string), out propInfo);
+                        bool isLocalizableFalse;
+                        bool? isString = webConfig.IsTypeof(context.Prefix, context.ElementName, info.Name, typeof(string), out isLocalizableFalse);
 
                         AspNetStringResultItem newItem = null;
-                        if (isString == null || (isString.Value && !HasLocalizableFalse(propInfo))) { // add to results if resolution returned true or was not conclusive
-                            newItem = AddResult(info, context, false);                            
-                        }
-                        if (newItem != null) newItem.LocalizabilityProved = isString.HasValue && isString.Value;
+                        if (isString == null || isString.Value) { // add to results if resolution returned true or was not conclusive
+                            newItem = AddResult(info, context, false);
+                            newItem.IsWithinLocalizableFalse = isLocalizableFalse;
+                            newItem.LocalizabilityProved = isString.HasValue && isString.Value;
+                        }                        
                     } else { // type resolution not enabled
                         AddResult(info, context, false);
                     }                    
@@ -276,6 +279,7 @@ namespace VisualLocalizer.Components {
                     item.ComesFromClientComment = context.WithinClientSideComment;
                     if (item is AspNetStringResultItem) {
                         ((AspNetStringResultItem)item).ComesFromInlineExpression = true;
+                        ((AspNetStringResultItem)item).ClassOrStructElementName = ClassFileName;
                     }
                     if (item is AspNetCodeReferenceResultItem) {
                         ((AspNetCodeReferenceResultItem)item).ComesFromInlineExpression = true;
@@ -304,23 +308,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Called after end tag is read
         /// </summary>
-        public void OnElementEnd(EndElementContext context) { }
-
-        /// <summary>
-        /// Returns true if given property is decorated with Localizable(false)
-        /// </summary>        
-        private bool HasLocalizableFalse(PropertyInfo propInfo) {
-            if (propInfo == null) return false;
-
-            object[] objects = propInfo.GetCustomAttributes(typeof(LocalizableAttribute), true);
-            if (objects != null && objects.Length > 0) {
-                bool hasFalse = false;
-                foreach (LocalizableAttribute attr in objects)
-                    if (!attr.IsLocalizable) hasFalse = true;
-
-                return hasFalse;
-            } else return false;
-        }
+        public void OnElementEnd(EndElementContext context) { }        
 
         /// <summary>
         /// Adds new result item
@@ -352,6 +340,7 @@ namespace VisualLocalizer.Components {
             resultItem.ComesFromClientComment = comesFromClientComment;
             resultItem.ElementPrefix = elementPrefix;
             resultItem.ElementName = elementName;
+            resultItem.Language = fileLanguage == FILETYPE.CSHARP ? LANGUAGE.CSHARP : LANGUAGE.VB;
 
             AddContextToItem(resultItem);
 

@@ -40,22 +40,13 @@ namespace VisualLocalizer.Editor {
             ListViewKeyItem item = base.Add(key, value) as ListViewKeyItem;
             if (referenceExistingOnAdd) {
                 item.FileRefOk = true;
-                return item;
-            }
-
-            Bitmap bmp = value.GetValue<Bitmap>();
-            if (bmp != null) {
-                LargeImageList.Images.Add(item.Name, bmp);
-                SmallImageList.Images.Add(item.Name, bmp);
-                item.ImageKey = item.Name; // update image
             } else {
-                item.FileRefOk = false;
-            }            
-
-            ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
-            subSize.Name = "Size";
-            if (bmp != null) subSize.Text = string.Format("{0} x {1}", bmp.Width, bmp.Height);
-            item.SubItems.Insert(2, subSize);
+                ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
+                subSize.Name = "Size";
+                item.SubItems.Insert(2, subSize);
+            }
+            
+            UpdateDataOf(item, false);            
 
             return item;
         }
@@ -63,22 +54,20 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Reloads displayed data from underlaying ResX node
         /// </summary>      
-        public override ListViewKeyItem UpdateDataOf(string name) {
-            ListViewKeyItem item = base.UpdateDataOf(name);
-            if (item == null) return null;
-
+        public override void UpdateDataOf(ListViewKeyItem item, bool reloadImages) {
+            base.UpdateDataOf(item, reloadImages);
+            
             Bitmap bmp = item.DataNode.GetValue<Bitmap>();
 
-            // remove the old image
-            if (!string.IsNullOrEmpty(item.ImageKey) && LargeImageList.Images.ContainsKey(item.ImageKey)) {
+            if (LargeImageList.Images.ContainsKey(item.ImageKey) && reloadImages) {
                 LargeImageList.Images.RemoveByKey(item.ImageKey);
-                SmallImageList.Images.RemoveByKey(item.ImageKey);
+                SmallImageList.Images.RemoveByKey(item.ImageKey);                
             }
 
             // add the new image, if exists
-            if (bmp != null) {                
+            if (bmp != null) {                     
                 LargeImageList.Images.Add(item.ImageKey, bmp);
-                SmallImageList.Images.Add(item.ImageKey, bmp);
+                SmallImageList.Images.Add(item.ImageKey, bmp);                
 
                 item.SubItems["Size"].Text = string.Format("{0} x {1}", bmp.Width, bmp.Height);
                 item.FileRefOk = true;
@@ -87,14 +76,15 @@ namespace VisualLocalizer.Editor {
                 item.FileRefOk = false;
             }
 
-            item.UpdateErrorSetDisplay();
+            item.UpdateErrorSetDisplay();            
+
+            Validate(item);
+            NotifyItemsStateChanged();
 
             // update image display
             string p = item.ImageKey;
             item.ImageKey = null;
             item.ImageKey = p;
-
-            return item;
         }
 
         /// <summary>
@@ -113,9 +103,9 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Saves given node's content into random file in specified directory and returns the file path
         /// </summary>      
-        protected override string SaveIntoTmpFile(ResXDataNode node, string directory) {            
+        protected override string SaveIntoTmpFile(ResXDataNode node, string name, string directory) {            
             Bitmap value = node.GetValue<Bitmap>();
-            string filename = node.Name + ".png";
+            string filename = name + ".png";
             string path = Path.Combine(directory, filename);
 
             value.Save(path, ImageFormat.Png);

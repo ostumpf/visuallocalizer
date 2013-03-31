@@ -70,6 +70,31 @@ namespace VisualLocalizer.Editor {
     }
 
     /// <summary>
+    /// Used to determine origin of the added files
+    /// </summary>
+    internal enum FILES_ORIGIN { 
+        /// <summary>
+        /// File list in clipboard
+        /// </summary>
+        CLIPBOARD_REF, 
+
+        /// <summary>
+        /// Objects in clipboard
+        /// </summary>
+        CLIPBOARD_EMB, 
+
+        /// <summary>
+        /// Drag'n'drop from Solution Explorer
+        /// </summary>
+        SOLUTION_EXPLORER, 
+
+        /// <summary>
+        /// "Make external" command
+        /// </summary>
+        MAKE_EXTERNAL 
+    }
+
+    /// <summary>
     /// Represents GUI of the ResX editor
     /// </summary>
     internal sealed class ResXEditorControl : TableLayoutPanel,IEditorControl {
@@ -317,6 +342,8 @@ namespace VisualLocalizer.Editor {
         public void SetData(Dictionary<string, ResXDataNode> data) {
             if (data == null) throw new ArgumentNullException("data");
 
+            conflictResolver.Clear(); // clear cached conflict items info
+
             // disable "Access modifier" checkbox if file is not a part of solution
             if (Editor.ProjectItem ==null || (Editor.ProjectItem.InternalProjectItem.ContainingProject != null && Editor.ProjectItem.InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject))
                 codeGenerationBox.Enabled = false;
@@ -480,7 +507,7 @@ namespace VisualLocalizer.Editor {
 
                 if (iData.GetDataPresent(StringConstants.FILE_LIST)) { // contains Windows Explorer-like file list
                     string[] files = (string[])iData.GetData(StringConstants.FILE_LIST);                    
-                    AddExistingFiles(files);
+                    AddExistingFiles(files, FILES_ORIGIN.CLIPBOARD_REF);
                     return true;
                 } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
                     // contains plain text
@@ -662,7 +689,7 @@ namespace VisualLocalizer.Editor {
                     string.Format("Image files({0})\0{0}\0Icon files({1})\0{1}\0Sound files({2})\0{2}\0", imageFilter, iconFilter, soundFilter), selectedFilter, OPENFILENAME.OFN_ALLOWMULTISELECT);
                 if (files == null) return;
 
-                AddExistingFiles(files);                
+                AddExistingFiles(files, FILES_ORIGIN.CLIPBOARD_REF);                
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -673,7 +700,7 @@ namespace VisualLocalizer.Editor {
         /// Adds given list of files as resources, creating folder structure Resources/Images, Resources/Icons etc.
         /// </summary>
         /// <param name="files">List of full paths to the files</param>
-        internal void AddExistingFiles(IEnumerable<string> files) {
+        internal void AddExistingFiles(IEnumerable<string> files, FILES_ORIGIN origin) {
             if (files == null) throw new ArgumentNullException("files");
 
             Project project = null;
@@ -691,22 +718,27 @@ namespace VisualLocalizer.Editor {
 
                 if (StringConstants.IMAGE_FILE_EXT.Contains(extension)) {
                     if (imagesFolder == null && project != null) imagesFolder = project.AddResourceDir("Images"); // create Resources/Images folder
-                    newItems.Add(AddExistingItem(imagesListView, imagesFolder, file, typeof(Bitmap))); // add the file
+                    var newItem = AddExistingItem(imagesListView, imagesFolder, file, typeof(Bitmap), origin);
+                    if (newItem != null) newItems.Add(newItem); // add the file
                     tabs.SelectedTab = imagesTab;
                 } else if (StringConstants.ICON_FILE_EXT.Contains(extension)) {
                     if (iconsFolder == null && project != null) iconsFolder = project.AddResourceDir("Icons"); // create Resources/Icons folder
-                    newItems.Add(AddExistingItem(iconsListView, iconsFolder, file, typeof(Icon)));
+                    var newItem = AddExistingItem(imagesListView, iconsFolder, file, typeof(Icon), origin);
+                    if (newItem != null) newItems.Add(newItem); // add the file                    
                     tabs.SelectedTab = iconsTab;
                 } else if (StringConstants.SOUND_FILE_EXT.Contains(extension)) {
                     if (soundFolder == null && project != null) soundFolder = project.AddResourceDir("Sounds"); // create Resources/Sounds folder
-                    newItems.Add(AddExistingItem(soundsListView, soundFolder, file, typeof(MemoryStream)));
+                    var newItem = AddExistingItem(imagesListView, soundFolder, file, typeof(MemoryStream), origin);
+                    if (newItem != null) newItems.Add(newItem); // add the file
                     tabs.SelectedTab = soundsTab;
                 } else {
                     if (filesFolder == null && project != null) filesFolder = project.AddResourceDir("Others"); // create Resources/Others folder
                     if (StringConstants.TEXT_FILE_EXT.Contains(extension)) { // is text file
-                        newItems.Add(AddExistingItem(filesListView, filesFolder, file, typeof(string)));
+                        var newItem = AddExistingItem(imagesListView, filesFolder, file, typeof(string), origin);
+                        if (newItem != null) newItems.Add(newItem); // add the file
                     } else { // is binary file
-                        newItems.Add(AddExistingItem(filesListView, filesFolder, file, typeof(byte[])));
+                        var newItem = AddExistingItem(imagesListView, filesFolder, file, typeof(byte[]), origin);
+                        if (newItem != null) newItems.Add(newItem); // add the file
                     }
                     tabs.SelectedTab = filesTab;
                 }
@@ -725,7 +757,7 @@ namespace VisualLocalizer.Editor {
         /// Adds given file resource to the given tab and folder
         /// </summary>        
         /// <returns>The new item</returns>
-        private ListViewKeyItem AddExistingItem(AbstractListView list, ProjectItem folder, string file, Type type) {
+        private ListViewKeyItem AddExistingItem(AbstractListView list, ProjectItem folder, string file, Type type, FILES_ORIGIN origin) {
             if (list == null) throw new ArgumentNullException("list");
             if (type == null) throw new ArgumentNullException("type");
             if (file == null) throw new ArgumentNullException("file");
@@ -746,18 +778,17 @@ namespace VisualLocalizer.Editor {
 
             if (localFileExists) { // file with same name already exists in the project
                 if (fileSameAsLocalFile) { // it's the same file that is being added
-                    // get existing item
-                    ListViewKeyItem existingListItem = list.ItemFromName(Path.GetFileNameWithoutExtension(file));
-                    if (existingListItem == null) { // item does not exist - add it
-                        addedListItem = AddExistingItem(list, file, type);
+                    // get existing item                                      
+                    if (origin == FILES_ORIGIN.SOLUTION_EXPLORER || !list.ExistsReference(localFile)) { // item does not exist or it was dragged from Sol. Explorer - add it
+                        addedListItem = AddExistingItem(list, file, type, false);
                     } else { // item exists - add copy with different name
-                        string copyFileName = GenerateCopyFileName(file);
+                        string copyFileName = GenerateCopyFileName(localFile);
                         File.Copy(file, copyFileName);
 
                         ProjectItem newItem = folder.ProjectItems.AddFromFile(copyFileName);
                         SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
 
-                        addedListItem = AddExistingItem(list, copyFileName, type);    
+                        addedListItem = AddExistingItem(list, copyFileName, type, false);
                     }
                 } else { // local file is different from the added
                     // create conflictResolveAction - what should be done if user chooses to overwrite the files
@@ -767,7 +798,7 @@ namespace VisualLocalizer.Editor {
                         conflictResolveAction = new Action(() => { existingItem.Delete(); });
                     } else {
                         conflictResolveAction = new Action(() => { File.Delete(localFile); });
-                    }     
+                    }
 
                     // display dialog asking user if overwrite
                     DialogResult result = VisualLocalizer.Library.MessageBox.Show(string.Format("Item \"{0}\" already exists. Do you want to overwrite the file?", fileName), null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_QUERY);
@@ -792,42 +823,81 @@ namespace VisualLocalizer.Editor {
                         }
                     }
 
-                    if (list.Items.ContainsKey(fullPath)) { // item already exists in the list
-                        addedListItem = list.UpdateDataOf(fullPath); // update its data
-                    } else { // add new item
-                        addedListItem = AddExistingItem(list, fullPath, type);
+                    if (origin == FILES_ORIGIN.MAKE_EXTERNAL) {
+                        addedListItem = AddExistingItem(list, fullPath, type, false);
+                    } else {
+                        if (list.ExistsReference(fullPath)) { // items referencing this files already exist
+                            UpdateExistingItemsData(list, fullPath, type); // update their data                            
+                            addedListItem = null;
+                        } else {
+                            addedListItem = AddExistingItem(list, fullPath, type, false);// add new item
+                        }                         
                     }
-
+                    
                     list.Refresh();
-                    list.NotifyDataChanged();                    
+                    list.NotifyDataChanged();
                 }
             } else { // local file does not exist - add it
                 if (folder == null) {
-                    addedListItem = AddExistingItem(list, file, type);
+                    addedListItem = AddExistingItem(list, file, type, true);
                 } else {
                     ProjectItem newItem = folder.ProjectItems.AddFromFileCopy(file);
                     SetBuildAction(newItem, prjBuildAction.prjBuildActionNone);
                     string fullPath = newItem.GetFullPath();
 
-                    addedListItem = AddExistingItem(list, fullPath, type);
+                    addedListItem = AddExistingItem(list, fullPath, type, false);
                 }
             }
             return addedListItem;
+        }
+
+        /// <summary>
+        /// Updates data of list view item
+        /// </summary>        
+        private void UpdateExistingItemsData(AbstractListView list, string fullPath, Type type) {
+            if (list == null) throw new ArgumentNullException("list");
+            if (fullPath == null) throw new ArgumentNullException("fullPath");
+            if (type == null) throw new ArgumentNullException("type");
+
+            string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier(Editor.ProjectItem.DesignerLanguage);
+            
+            foreach (ListViewKeyItem item in list.Items) {
+                if (string.Compare(Path.GetFullPath(item.ImageKey), Path.GetFullPath(fullPath), true) == 0) {
+                    ResXDataNode node = new ResXDataNode(name, new ResXFileRef(fullPath, type.AssemblyQualifiedName));                    
+                    node.Comment = item.SubItems[list.CommentColumnName].Text;
+                    
+                    item.BeforeEditKey = item.Text;
+                    item.DataNode = node;
+
+                    list.UpdateDataOf(item, true);
+                }
+            }            
+            
+            list.NotifyDataChanged();
+            list.NotifyItemsStateChanged();
         }
 
        /// <summary>
        /// Adds specified file to given list view
        /// </summary>       
        /// <returns>Newly created list view item</returns>
-        private ListViewKeyItem AddExistingItem(AbstractListView list, string fullPath, Type type) {
+        private ListViewKeyItem AddExistingItem(AbstractListView list, string fullPath, Type type, bool embedded) {
             if (list == null) throw new ArgumentNullException("list");
             if (fullPath == null) throw new ArgumentNullException("fullPath");
             if (type == null) throw new ArgumentNullException("type");
-
+            
             string name = Path.GetFileNameWithoutExtension(fullPath).CreateIdentifier(Editor.ProjectItem.DesignerLanguage);
 
             ResXDataNode node = new ResXDataNode(name, new ResXFileRef(fullPath, type.AssemblyQualifiedName));
-            ListViewKeyItem newItem = list.Add(name, node) as ListViewKeyItem;
+            
+            ListViewKeyItem newItem;
+            if (embedded) {
+                object value = node.GetValue((ITypeResolutionService)null);
+                node = new ResXDataNode(name, value);
+            } 
+
+            newItem = list.Add(name, node) as ListViewKeyItem;
+            
             list.NotifyDataChanged();
             list.NotifyItemsStateChanged();
 
@@ -943,7 +1013,7 @@ namespace VisualLocalizer.Editor {
                 Window newImageWindow = newImageItem.Open(null); // open the image
                 if (newImageWindow != null) newImageWindow.Activate();
 
-                return AddExistingItem(listView, newImagePath, resourceType);
+                return AddExistingItem(listView, newImagePath, resourceType, false);
             }
         }
 
@@ -964,7 +1034,7 @@ namespace VisualLocalizer.Editor {
             Window newWindow = VisualLocalizerPackage.Instance.DTE.OpenFile(null, newImagePath);
             if (newWindow != null) newWindow.Activate();
 
-            return AddExistingItem(listView, newImagePath, resourceType);
+            return AddExistingItem(listView, newImagePath, resourceType, false);
         }
 
         /// <summary>
@@ -1037,7 +1107,7 @@ namespace VisualLocalizer.Editor {
             }
             
             // add the files
-            AddExistingFiles(paths);
+            AddExistingFiles(paths, FILES_ORIGIN.SOLUTION_EXPLORER);
         }
 
         /// <summary>

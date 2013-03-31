@@ -66,7 +66,12 @@ namespace VisualLocalizer.Editor.UndoUnits {
                     usedLists.Add(ListView);
 
                     // add the item back to the list view
-                    ListView.Items.Insert(item.IndexAtDeleteTime, item);
+                    if (item.IndexAtDeleteTime >= 0 && item.IndexAtDeleteTime < ListView.Items.Count) {
+                        ListView.Items.Insert(item.IndexAtDeleteTime, item);
+                    } else {
+                        ListView.Items.Add(item);
+                    }
+
                     item.BeforeEditKey = null;
                     item.AfterEditKey = item.Text;
 

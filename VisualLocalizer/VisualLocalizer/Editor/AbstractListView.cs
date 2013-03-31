@@ -40,7 +40,8 @@ namespace VisualLocalizer.Editor {
         protected MenuItem renameContextMenuItem, editCommentContextMenuItem, openContextMenuItem, cutContextMenuItem,
             copyContextMenuItem, pasteContextMenuItem, deleteContextMenu, deleteContextMenuItem, deleteExcludeContextMenuItem, 
             deleteRemoveContextMenuItem, makeEmbeddedMenuItem, makeExternalMenuItem;
-        
+        Dictionary<string, ListViewKeyItem> externalizedResourcesMap = new Dictionary<string, ListViewKeyItem>();
+
         /// <summary>
         /// True if existing items should be searched first and referenced on Add event; used in MakeResourcesExternal
         /// </summary>
@@ -160,13 +161,19 @@ namespace VisualLocalizer.Editor {
 
                 ResXDataNode node;
                 if (item.DataNode.FileRef == null) { // resource value is embedded
-                    node = new ResXDataNode(item.Key, item.DataNode.GetValue((ITypeResolutionService)null));
+                    try {
+                        node = new ResXDataNode(item.Key, item.DataNode.GetValue((ITypeResolutionService)null));
+                    } catch (NullReferenceException ex) {
+                        if (throwExceptions) throw new Exception("Value of '" + item.Key + "' is empty.", ex);
+                        node = null;
+                    }
                 } else { // resource value is external
                     node = new ResXDataNode(item.Key, item.DataNode.FileRef);
                 }
-                
-                node.Comment = item.SubItems[CommentColumnName].Text;
-                data.Add(item.Key.ToLower(), node);
+                if (node != null) {
+                    node.Comment = item.SubItems[CommentColumnName].Text;
+                    data.Add(item.Key.ToLower(), node);
+                }
             }
 
             return data;
@@ -200,36 +207,24 @@ namespace VisualLocalizer.Editor {
             if (value == null) throw new ArgumentNullException("value");
 
             if (referenceExistingOnAdd) {
-                ListViewKeyItem existingItem = ItemFromName(key); // get existing item
-                if (existingItem == null) throw new InvalidOperationException("Cannot find item with key '" + key + "'");
-
+                ListViewKeyItem existingItem = externalizedResourcesMap[key]; // get existing item
+                
                 value.Comment = existingItem.DataNode.Comment;
                 existingItem.DataNode = value; // set new data node as its value
-
-                // update its Path
-                existingItem.SubItems["Path"].Text = Uri.UnescapeDataString(editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString());
+                existingItem.AfterEditKey = existingItem.BeforeEditKey;
 
                 return existingItem;
-            }
+            } 
 
-            ListViewKeyItem item = new ListViewKeyItem(this);
-            item.Text = key;            
-            item.DataNode = value;
-            item.Name = value.FileRef != null ? Path.GetFullPath(value.FileRef.FileName) : Path.GetRandomFileName();
-            item.ImageKey = item.Name;            
+            ListViewKeyItem item = new ListViewKeyItem(this);                    
+            item.DataNode = value;                        
 
             ListViewItem.ListViewSubItem subKey = new ListViewItem.ListViewSubItem();
-            subKey.Name = "Path";
-            if (value.FileRef != null) { // resource is external
-                subKey.Text = Uri.UnescapeDataString(editorControl.Editor.FileUri.MakeRelativeUri(new Uri(value.FileRef.FileName)).ToString());
-            } else {
-                subKey.Text = "(embedded)";
-            }
+            subKey.Name = "Path";            
             item.SubItems.Add(subKey);
 
             ListViewItem.ListViewSubItem subComment = new ListViewItem.ListViewSubItem();
-            subComment.Name = CommentColumnName;
-            subComment.Text = value.Comment;            
+            subComment.Name = CommentColumnName;                    
             item.SubItems.Add(subComment);
 
             ListViewItem.ListViewSubItem subReferences = new ListViewItem.ListViewSubItem();
@@ -238,10 +233,7 @@ namespace VisualLocalizer.Editor {
             item.SubItems.Add(subReferences);
 
             Items.Add(item);
-            item.AfterEditKey = item.Text;
-            
-            Validate(item);
-            NotifyItemsStateChanged();
+            item.Text = key;
 
             return item;
         }
@@ -304,7 +296,9 @@ namespace VisualLocalizer.Editor {
                     Clipboard.SetFileDropList(list);
                 } else { // add objects themselves to clipboard
                     List<object> list = new List<object>();
-                    foreach (ListViewKeyItem item in this.SelectedItems) {
+                    foreach (ListViewKeyItem item in this.SelectedItems) {                        
+                        item.DataNode = new ResXDataNode(string.IsNullOrEmpty(item.Text) ? item.DataNode.Name : item.Text, item.DataNode.GetValue((ITypeResolutionService)null));
+                        item.DataNode.Comment = item.SubItems[CommentColumnName].Text;
                         list.Add(item.DataNode);
                     }
                     Clipboard.SetDataObject(list, false);
@@ -450,7 +444,7 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Saves given node's content into random file in specified directory and returns the file path
         /// </summary>        
-        protected abstract string SaveIntoTmpFile(ResXDataNode node, string directory);
+        protected abstract string SaveIntoTmpFile(ResXDataNode node, string filename, string directory);
 
         #endregion
 
@@ -478,6 +472,16 @@ namespace VisualLocalizer.Editor {
             return existingItem;
         }
 
+        public bool ExistsReference(string path) {
+            bool exists = false;
+            foreach (ListViewKeyItem listViewItem in Items)
+                if (string.Compare(Path.GetFullPath(listViewItem.ImageKey), Path.GetFullPath(path), true) == 0) {
+                    exists = true;
+                    break;
+                }
+            return exists;
+        }
+
         /// <summary>
         /// Validates given item and sets according error messages
         /// </summary>        
@@ -491,15 +495,19 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Reloads displayed data from underlaying ResX node
         /// </summary>     
-        public virtual ListViewKeyItem UpdateDataOf(string name) {
-            if (name == null) throw new ArgumentNullException("name");
+        public virtual void UpdateDataOf(ListViewKeyItem item, bool reloadImages) {
+            if (item == null) throw new ArgumentNullException("item");
 
-            if (!Items.ContainsKey(name)) return null;
+            item.SubItems["Comment"].Text = item.DataNode.Comment;            
+            item.Name = Path.GetRandomFileName();
+            item.ImageKey = item.DataNode.FileRef == null ? item.Name : item.DataNode.FileRef.FileName;
+            item.AfterEditKey = item.Text;            
 
-            ListViewKeyItem item = Items[name] as ListViewKeyItem;
-            item.SubItems["Comment"].Text = null;
-
-            return item;
+            if (item.DataNode.FileRef != null) { // resource is external
+                item.SubItems["Path"].Text = Uri.UnescapeDataString(editorControl.Editor.FileUri.MakeRelativeUri(new Uri(item.DataNode.FileRef.FileName)).ToString());
+            } else {
+                item.SubItems["Path"].Text = "(embedded)";
+            }
         }       
 
         /// <summary>
@@ -539,18 +547,19 @@ namespace VisualLocalizer.Editor {
             ListViewMakeEmbeddedUndoUnit undoUnit = null;
             try {
                 if (list == null) throw new ArgumentNullException("list");
+                CheckListItemsForErrors(list);
 
                 List<ListViewKeyItem> undoList = new List<ListViewKeyItem>();
                 undoUnit = new ListViewMakeEmbeddedUndoUnit(this, undoList, delete);
-
+                    
                 foreach (ListViewKeyItem item in list) {
                     // get value of the node
                     object value = item.DataNode.GetValue((ITypeResolutionService)null);
 
                     // get current node info
                     string path = item.DataNode.FileRef.FileName;
-                    string name = item.DataNode.Name;
-                    string cmt = item.DataNode.Comment;
+                    string name = item.Key;
+                    string cmt = item.SubItems[CommentColumnName].Text;
 
                     // create new, embedded node
                     item.DataNode = new ResXDataNode(name, value);
@@ -590,26 +599,30 @@ namespace VisualLocalizer.Editor {
         /// <param name="addUndoUnit">True if undo unit should be added for the operation</param>
         public void MakeResourcesExternal(IEnumerable list, bool referenceExisting, bool addUndoUnit) {
             ListViewMakeExternalUndoUnit undoUnit = null;
-            try {
+            try {                
                 if (list == null) throw new ArgumentNullException("list");
+                CheckListItemsForErrors(list);
 
                 List<ListViewKeyItem> undoList = new List<ListViewKeyItem>();
                 undoUnit = new ListViewMakeExternalUndoUnit(this, undoList, referenceExisting);
-
+                
+                externalizedResourcesMap.Clear();
                 List<string> paths = new List<string>();
                 string dir = Path.Combine(Path.GetTempPath(), "VisualLocalizer");
                 Directory.CreateDirectory(dir); // create temporary directory
 
                 foreach (ListViewKeyItem item in list) {
-                    string path = SaveIntoTmpFile(item.DataNode, dir); // move the content to temporary file
-                    paths.Add(path);
+                    externalizedResourcesMap.Add(item.Key, item);
 
+                    string path = SaveIntoTmpFile(item.DataNode, item.Key, dir); // move the content to temporary file
+                    paths.Add(path);
+                    
                     undoList.Add(item);
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Moved resource \"{0}\" to external file", item.Key);
                 }
 
                 referenceExistingOnAdd = true;
-                editorControl.AddExistingFiles(paths); // add the temporary files to the list, matching them to existing items
+                editorControl.AddExistingFiles(paths, FILES_ORIGIN.MAKE_EXTERNAL); // add the temporary files to the list, matching them to existing items
                 referenceExistingOnAdd = false;
 
                 editorControl.Editor.UndoManager.RemoveTopFromUndoStack(1); // previous operation (adding existing files) created an undo unit - remove it               
@@ -626,7 +639,7 @@ namespace VisualLocalizer.Editor {
                 NotifyDataChanged();
             }
         }
-
+       
         #endregion
 
         #region protected non-virtual members
@@ -692,7 +705,7 @@ namespace VisualLocalizer.Editor {
                 if (SelectedItems.Count == 0) throw new IndexOutOfRangeException("No selected item.");
 
                 ListViewKeyItem item = SelectedItems[0] as ListViewKeyItem;
-                CommentWindow win = new CommentWindow(item.DataNode.Comment); // display dialog
+                CommentWindow win = new CommentWindow(item.SubItems[CommentColumnName].Text); // display dialog
 
                 if (win.ShowDialog() == DialogResult.OK) {
                     // create undo unit
@@ -898,7 +911,16 @@ namespace VisualLocalizer.Editor {
 
         protected void ViewKindChanged(View view) {
             this.View = view;
-        }      
+        }
+
+        /// <summary>
+        /// Checks given list of list view items for error messages and throws an exception if some is found
+        /// </summary>        
+        protected void CheckListItemsForErrors(IEnumerable list) {
+            foreach (ListViewKeyItem item in list) {
+                if (item.ErrorMessages.Count > 0) throw new InvalidOperationException("Cannot execute this operation, because some of the selected items have errors.");
+            }
+        }
 
         #endregion
 

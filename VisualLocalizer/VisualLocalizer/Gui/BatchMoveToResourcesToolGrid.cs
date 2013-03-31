@@ -141,6 +141,13 @@ namespace VisualLocalizer.Gui {
         }
 
         /// <summary>
+        /// Called on tool window closed - clears conflict items info
+        /// </summary>
+        public void ResetConflictResolver() {
+            ConflictResolver.Clear();
+        }
+
+        /// <summary>
         /// Sets content of the grid
         /// </summary>        
         public override void SetData(List<CodeStringResultItem> value) {

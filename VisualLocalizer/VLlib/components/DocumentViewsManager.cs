@@ -42,6 +42,9 @@ namespace VisualLocalizer.Library {
             
             if (frame != null) {
                 if (forceOpen || activate) frame.Show();
+                if (activate) {
+                    VsShellUtilities.GetWindowObject(frame).Activate();
+                }
                 return VsShellUtilities.GetTextView(frame);
             } else throw new Exception("Cannot get window frame for " + file); 
         }

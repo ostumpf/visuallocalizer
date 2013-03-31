@@ -89,6 +89,7 @@ namespace VisualLocalizer {
         public static readonly string[] CsExtensions = { ".cs" };
         public static readonly string[] VBExtensions = { ".vb" };
         public static readonly string[] AspxExtensions = { ".aspx", ".master", ".ascx" };
+        public static readonly string[] CodeExtensions = { ".vb", ".cs" };
 
         public static readonly string[] IMAGE_FILE_EXT = { ".png", ".gif", ".bmp", ".jpg", ".jpeg", ".tif", ".tiff" };
         public static readonly string[] ICON_FILE_EXT = { ".ico" };

@@ -17,7 +17,7 @@ namespace VisualLocalizer.Commands {
     /// Represents "Batch move to resources" command, invokeable either from code context menu or Solution Explorer's context menu. It scans
     /// given set of files, looking for string literals available for localization.
     /// </summary>
-    internal sealed class BatchMoveCommand : AbstractBatchCommand {
+    public sealed class BatchMoveCommand : AbstractBatchCommand {
 
         /// <summary>
         /// After processing this command, returns list of found result items (string literals)

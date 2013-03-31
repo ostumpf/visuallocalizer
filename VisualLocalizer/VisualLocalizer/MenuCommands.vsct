@@ -33,11 +33,15 @@
         <CommandFlag>IconAndText</CommandFlag>
         <Strings></Strings>
       </Menu>
-    </Menus>   
+    </Menus>
 
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\execute.png" resID="execute"/>      
+    </Bitmaps>
+    
     <Buttons>
       
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="2" type="Button">
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="3" type="Button">
         <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
@@ -47,8 +51,8 @@
         </Strings>
       </Button>
 
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="1" type="Button">
-        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>        
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
           <CommandName>BatchInlineRemoveUnchecked</CommandName>
@@ -57,12 +61,13 @@
         </Strings>
       </Button>    
 
-      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="3" type="Button">
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="1" type="Button">
         <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
-        <CommandFlag>TextOnly</CommandFlag>
+        <Icon guid="guidImages" id="execute"/>
+        <CommandFlag>IconAndText</CommandFlag>
         <Strings>
           <CommandName>BatchInlineRun</CommandName>
-          <ButtonText>Run</ButtonText>
+          <ButtonText>Execute</ButtonText>
           <ToolTipText>Inlines all checked rows from tables</ToolTipText>
         </Strings>
       </Button>
@@ -88,8 +93,8 @@
           <CommandName>Batch Move Tool Window Toolbar</CommandName>
         </Strings>
       </Menu>
-      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID" type="MenuController" priority="2">
-        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID" type="MenuController" priority="2">        
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>        
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>TextIsAnchorCommand</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
@@ -98,7 +103,7 @@
     </Menus>
 
     <Combos>
-      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="4" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="5" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
         <CommandFlag>CaseSensitive</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
@@ -107,7 +112,7 @@
         </Strings>
       </Combo>
 
-      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRememberUncheckedID" priority="5" type="DropDownCombo" idCommandList="BatchMoveToolbarRememberUncheckedListID" defaultWidth="325">
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRememberUncheckedID" priority="6" type="DropDownCombo" idCommandList="BatchMoveToolbarRememberUncheckedListID" defaultWidth="325">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
         <CommandFlag>CaseSensitive</CommandFlag>
         <CommandFlag>IconAndText</CommandFlag>
@@ -116,9 +121,13 @@
         </Strings>
       </Combo>
     </Combos>
-    
+
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\execute.png" resID="execute"/>      
+    </Bitmaps>
+
     <Buttons>      
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="2" type="Button">
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="3" type="Button">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
@@ -128,7 +137,7 @@
         </Strings>
       </Button>
 
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="1" type="Button">
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="2" type="Button">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
         <CommandFlag>TextOnly</CommandFlag>
         <Strings>
@@ -138,7 +147,7 @@
         </Strings>
       </Button>
 
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="3" type="Button">
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="4" type="Button">
         <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>                
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>TextOnly</CommandFlag>        
@@ -148,20 +157,18 @@
         </Strings>
       </Button>
 
-      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="10" type="Button">                
-        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
-        <CommandFlag>CommandWellOnly</CommandFlag>
-        <CommandFlag>TextOnly</CommandFlag>
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="1" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>        
+        <Icon guid="guidImages" id="execute"/>
+        
+        <CommandFlag>IconAndText</CommandFlag>        
         <Strings>
           <CommandName>BatchMoveToResourcesRun</CommandName>
-          <ButtonText>Run</ButtonText>          
-        </Strings>           
+          <ButtonText>Execute</ButtonText>          
+        </Strings>                   
       </Button>      
 
-    </Buttons>
-    <Bitmaps>
-      <Bitmap guid="guidImages" href="Resources\run.png"/>
-    </Bitmaps>
+    </Buttons>    
   </Commands>
 
   <Commands package="VLPackageGuid">
@@ -181,14 +188,9 @@
       <Group guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup" priority="0x001">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
       </Group>
-    </Groups>
-    
-    <Bitmaps>
-      <Bitmap guid="guidImages" href="Resources/icon.ico" resID="VLIcon"/>             
-    </Bitmaps>
+    </Groups>   
     
     <Buttons>
-
       <Button guid="VLCommandSetGuid" id="batchMoveMenuItem" type="Button">
         <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>        
         <Strings>
@@ -262,9 +264,9 @@
           <CommandName>BatchInline</CommandName>
           <ButtonText>Batch inline (selection)...</ButtonText>
         </Strings>
-      </Button>
+      </Button>        
     </Buttons>
-
+    
     <Menus>
       <Menu guid="VLCommandSetGuid" id="visualLocalizerTopMenu" type="Menu">        
         <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup"></Parent>
@@ -285,7 +287,7 @@
           <ButtonText>Visual Localizer</ButtonText>
         </Strings>
       </Menu>          
-    </Menus>    
+    </Menus>           
   </Commands>
 
   <CommandPlacements>
@@ -319,11 +321,18 @@
     <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
       <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
     </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x100">
+      <Parent guid="solutionExplorerContext" id="IDM_VS_CTXT_CROSS_PROJECT_ITEM"/>
+    </CommandPlacement>
   </CommandPlacements>
   
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="VLPackageGuid" value="{68c95c48-9295-49a0-a2ed-81da6e651374}" />
+    
+    <GuidSymbol name="solutionExplorerContext" value="{D309F791-903F-11D0-9EFC-00A0C911004F}">
+      <IDSymbol name="IDM_VS_CTXT_CROSS_PROJECT_ITEM" value="1047"/>
+    </GuidSymbol>
     
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="VLCommandSetGuid" value="{42b49eb8-7690-46f2-8267-52939c5e642f}">
@@ -377,15 +386,14 @@
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >
-      <IDSymbol name="runPng" value="1" />
-      <IDSymbol name="VLIcon" value="400" />
+      <IDSymbol name="execute" value="1" />      
     </GuidSymbol>
 
     <GuidSymbol name="guidAspEditorMenu" value="{D7E8C5E1-BDB8-11D0-9C88-0000F8040A53}">
       <IDSymbol name="IDM_ASP_SOURCE" value ="0x0035"/>
       <IDSymbol name="IDM_ASP_CSHARP_CODEBLOCK" value ="0x036"/>
       <IDSymbol name="IDM_ASP_VB_CODEBLOCK" value ="0x037"/>
-    </GuidSymbol>
+    </GuidSymbol>    
   </Symbols>
 
 </CommandTable>

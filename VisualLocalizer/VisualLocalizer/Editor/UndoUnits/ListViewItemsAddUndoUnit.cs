@@ -30,8 +30,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         public override void Undo() {
             try {
-                foreach (var item in Items)
+                foreach (var item in Items) {
                     item.RemoveKind = REMOVEKIND.REMOVE;
+                    item.IndexAtDeleteTime = item.Index;
+                }
 
                 RemoveUnit.Redo();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Removed {0} added files", Items.Count);
@@ -45,8 +47,10 @@ namespace VisualLocalizer.Editor.UndoUnits {
 
         public override void Redo() {
             try {
-                foreach (var item in Items)
+                foreach (var item in Items) {
                     item.RemoveKind = REMOVEKIND.REMOVE;
+                    item.IndexAtDeleteTime = item.Index;
+                }
 
                 RemoveUnit.Undo();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Re-added {0} files", Items.Count);

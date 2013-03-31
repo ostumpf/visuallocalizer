@@ -43,10 +43,14 @@ namespace VisualLocalizer.Components {
                             if (CountBack('\\', globalIndex) % 2 == 0)
                                 insideString = false;
                         } else {
-                            int q = CountBack('"', globalIndex);
-                            if (GetCharBack(-1) != '"' && ((q % 2 == 0 && text[globalIndex - q - 1] != '@') || (q % 2 != 0 && text[globalIndex - q - 1] == '@'))) {
-                                insideString = false;
+                            int quotesCount = 0;
+                            for (int i = globalIndex - 1; i + OriginalAbsoluteOffset >= StringStartAbsoluteOffset; i--) {
+                                if (text[i] == '"') quotesCount++;
                             }
+                            quotesCount--; // starting quotes
+                            if (GetCharBack(-1) != '"' && quotesCount % 2 == 0) {
+                                insideString = false;
+                            }                            
                         }
                     }
                 } else {

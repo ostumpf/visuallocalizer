@@ -103,8 +103,8 @@ namespace VisualLocalizer.Components {
         /// </summary>
         public LANGUAGE DesignerLanguage {
             get {
-                if (DesignerItem != null && DesignerItem.FileCodeModel != null) {
-                    string lang = DesignerItem.FileCodeModel.Language;
+                if (DesignerItem != null && DesignerItem.GetCodeModel() != null) {
+                    string lang = DesignerItem.GetCodeModel().Language;
                     return lang == CodeModelLanguageConstants.vsCMLanguageCSharp ? LANGUAGE.CSHARP : LANGUAGE.VB;
                 } else return LANGUAGE.CSHARP;
             }
@@ -442,24 +442,27 @@ namespace VisualLocalizer.Components {
             if (relationProject == null) throw new ArgumentNullException("relationProject");
             
             string projectPath = item.ContainingProject.FullName;
-           
-            // create relative path from the project to the item
-            Uri projectUri = new Uri(projectPath, UriKind.Absolute);
-            Uri itemUri = new Uri(item.GetFullPath());
-          
-            string path;
-            if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
-                path = Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());
+            if (string.IsNullOrEmpty(projectPath)) {
+                return new ResXProjectItem(item, item.Name, false);
             } else {
-                path = item.ContainingProject.Name + "/" + Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());          
+                // create relative path from the project to the item
+                Uri projectUri = new Uri(projectPath, UriKind.Absolute);
+                Uri itemUri = new Uri(item.GetFullPath());
+
+                string displayName;
+                if (item.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) {
+                    displayName = Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());
+                } else {
+                    displayName = item.ContainingProject.Name + "/" + Uri.UnescapeDataString(projectUri.MakeRelativeUri(itemUri).ToString());
+                }
+
+                bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;
+                bool inter = item.GetCustomTool() != StringConstants.PublicResXTool;
+
+                bool internalInReferenced = inter && referenced;
+
+                return new ResXProjectItem(item, displayName, internalInReferenced);
             }
-           
-            bool referenced = relationProject.UniqueName != item.ContainingProject.UniqueName;          
-            bool inter = item.GetCustomTool() != StringConstants.PublicResXTool;
-          
-            bool internalInReferenced = inter && referenced;
-            
-            return new ResXProjectItem(item, path,internalInReferenced);;
         }
 
         /// <summary>
@@ -479,7 +482,7 @@ namespace VisualLocalizer.Components {
 
                 // select first namespace in the designer file
                 CodeElement nmspcElemet = null;
-                foreach (CodeElement element in DesignerItem.FileCodeModel.CodeElements) {
+                foreach (CodeElement element in DesignerItem.GetCodeModel().CodeElements) {
                     if (element.Kind == vsCMElement.vsCMElementNamespace) {
                         Namespace = element.FullName;
                         nmspcElemet = element;

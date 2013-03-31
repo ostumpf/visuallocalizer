@@ -56,7 +56,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     string source = result.Current.GetAttribute("src", "");
 
                     if (!string.IsNullOrEmpty(source)) { // source definition - specified tag name, tag prefix and source file with the definition of the type
-                        definitions.Add(new TagPrefixSourceDefinition(projectItem.ContainingProject, solution,
+                        definitions.Add(new TagPrefixSourceDefinition(projectItem, solution,
                             tagName, source, tagPrefix));
                     } else { // assembly definition - specified assembly fullname, type's namespace and tag prefix
                         definitions.Add(new TagPrefixAssemblyDefinition(assembly, namespaceName, tagPrefix));
@@ -74,10 +74,10 @@ namespace VisualLocalizer.Library.AspxParser {
         /// <param name="element">Element name</param>
         /// <param name="attribute">Attribute name</param>
         /// <param name="targetType">Type to check</param>
-        /// <param name="propInfo">Output - reflection info about the property</param>
+        /// <param name="propInfo">Output - true, if given property has [Localizable(false)] set</param>
         /// <returns>True, if attribute has specified type, null in case of inconclusive results, false otherwise</returns>
-        public bool? IsTypeof(string prefix, string element, string attribute, Type targetType, out PropertyInfo propInfo) {
-            propInfo = null;
+        public bool? IsTypeof(string prefix, string element, string attribute, Type targetType, out bool isLocalizableFalse) {
+            isLocalizableFalse = false;
             
             // looking for exact match in source definitions
             TagPrefixDefinition exclusiveDefinition = null;
@@ -89,11 +89,11 @@ namespace VisualLocalizer.Library.AspxParser {
             }            
            
             if (exclusiveDefinition != null) { // found -> resolve the type
-                return exclusiveDefinition.Resolve(element, attribute, targetType, out propInfo);
+                return exclusiveDefinition.Resolve(element, attribute, targetType, out isLocalizableFalse);
             } else { // not found -> try all definitions and return first conclusive (true or false) result
                 foreach (TagPrefixDefinition definition in definitions) {
                     if (definition.TagPrefix == prefix) {
-                        bool? result = definition.Resolve(element, attribute, targetType, out propInfo);
+                        bool? result = definition.Resolve(element, attribute, targetType, out isLocalizableFalse);
                         if (result != null) return result;
                     }
                 }

@@ -26,25 +26,28 @@ namespace VisualLocalizer.Commands {
         protected FileCodeModel2 currentCodeModel;
      
         /// <summary>
-        /// Called on click - overriden in derived class to provide desired functionality.
-        /// Initializes basic variables, common for all derived commands.
+        /// Called on click - when overriden, finds object in current selection and displayes dialog offering to move it.
         /// </summary>
         public virtual void Process() {
+            InitializeVariables();
+        }
+
+        protected void InitializeVariables() {
             currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
                 throw new Exception("No selected document");
             if (currentDocument.ReadOnly)
                 throw new Exception("Cannot perform this operation - active document is readonly");
 
-            currentCodeModel = currentDocument.ProjectItem.FileCodeModel as FileCodeModel2;
-            
+            currentCodeModel = currentDocument.ProjectItem.GetCodeModel();
+
             textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
             if (textManager == null)
                 throw new Exception("Cannot consume IVsTextManager service");
 
             int hr = textManager.GetActiveView(1, null, out textView);
             Marshal.ThrowExceptionForHR(hr);
-            
+
             hr = textView.GetBuffer(out textLines);
             Marshal.ThrowExceptionForHR(hr);
 
@@ -107,10 +110,7 @@ namespace VisualLocalizer.Commands {
                     codeFunctionName = codeProperty.Name;
                     codeClass = codeProperty.GetClass();
 
-                    CodeFunction2 getter = (CodeFunction2)codeProperty.Getter;
-                    CodeFunction2 setter = (CodeFunction2)codeProperty.Setter;
-
-                    text = (getter == null ? "" : getter.GetText()) + (setter == null ? "" : setter.GetText());
+                    text = codeProperty.GetText();
                     
                     if (!string.IsNullOrEmpty(text)) {
                         startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);

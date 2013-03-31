@@ -51,13 +51,13 @@ namespace VLUnitTests {
         #endregion
 
 
-        [TestMethod()]
+        [TestMethod()]        
         public void ProcessTest() {
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VLUnitTests.Resources.AspxTest.aspx");
             string text = stream.readAll();
             TestAspxHandler handler = new TestAspxHandler();
             Parser parser = new Parser(text, handler);
-
+            
             parser.Process();
         }
     }
@@ -94,6 +94,11 @@ namespace VLUnitTests {
                 matched = true;
                 Assert.IsFalse(context.WithinClientSideComment);
                 Assert.AreEqual(context.BlockText.Trim(), "string s=\"<%\";");
+            }
+            if (index == 39) {
+                matched = true;
+                Assert.IsFalse(context.WithinClientSideComment);
+                Assert.AreEqual(context.BlockText.Trim(), "string s = \"baf\";");
             }
             Assert.IsTrue(matched);
             index++;
@@ -403,13 +408,13 @@ namespace VLUnitTests {
                 Assert.IsFalse(context.WithinClientSideComment);
                 Assert.AreEqual("FormView", context.ElementName);
             }
-            if (index == 39) {
+            if (index == 40) {
                 matched = true;
                 Assert.IsFalse(context.WithinClientSideComment);
                 Assert.IsTrue(string.IsNullOrEmpty(context.Prefix));
                 Assert.AreEqual("body", context.ElementName);
             }
-            if (index == 40) {
+            if (index == 41) {
                 matched = true;
                 Assert.IsFalse(context.WithinClientSideComment);
                 Assert.IsTrue(string.IsNullOrEmpty(context.Prefix));

@@ -35,38 +35,14 @@ namespace VisualLocalizer.Editor {
         public override IKeyValueSource Add(string key, ResXDataNode value) {
             ListViewKeyItem item = base.Add(key, value) as ListViewKeyItem;
             if (referenceExistingOnAdd) {
-                item.FileRefOk = true;                
-                return item;
-            }
-
-            LargeImageList.Images.Add(item.Name, Editor.doc);
-            SmallImageList.Images.Add(item.Name, Editor.doc);
-            item.ImageKey = item.Name; // update icon            
-
-            ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
-            subSize.Name = "Size";
-
-            FileInfo info = null;
-            if (value.FileRef != null && File.Exists(value.FileRef.FileName)) {
-                info = new FileInfo(value.FileRef.FileName);
-            }   
-
-            if (info != null) {
-                subSize.Text = GetFileSize(info.Length);
+                item.FileRefOk = true;
             } else {
-                if (value.HasValue<string>()) {
-                    var val = value.GetValue<string>();
-                    if (val != null) {
-                        subSize.Text = GetFileSize(Encoding.UTF8.GetBytes(val).Length);
-                    } else item.FileRefOk = false;
-                } else {
-                    var val = value.GetValue<byte[]>();
-                    if (val != null) {
-                        subSize.Text = GetFileSize(val.Length);
-                    } else item.FileRefOk = false;
-                }
+                ListViewItem.ListViewSubItem subSize = new ListViewItem.ListViewSubItem();
+                subSize.Name = "Size";
+                item.SubItems.Insert(2, subSize);
             }
-            item.SubItems.Insert(2, subSize);
+
+            UpdateDataOf(item, false);            
 
             return item;
         }
@@ -74,12 +50,14 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Reloads displayed data from underlaying ResX node
         /// </summary>
-        public override ListViewKeyItem UpdateDataOf(string name) {
-            ListViewKeyItem item = base.UpdateDataOf(name);
-            if (item == null) return null;
+        public override void UpdateDataOf(ListViewKeyItem item, bool reloadImages) {
+            base.UpdateDataOf(item, reloadImages);
+            
+            LargeImageList.Images.Add(item.ImageKey, Editor.doc);
+            SmallImageList.Images.Add(item.ImageKey, Editor.doc);
 
             FileInfo info = null;
-            if (File.Exists(item.DataNode.FileRef.FileName)) {
+            if (item.DataNode.FileRef != null && File.Exists(item.DataNode.FileRef.FileName)) {
                 info = new FileInfo(item.DataNode.FileRef.FileName);
             }
 
@@ -101,10 +79,16 @@ namespace VisualLocalizer.Editor {
                     } else item.FileRefOk = false;
                 }        
             }
+            
+            item.UpdateErrorSetDisplay();            
 
-            item.UpdateErrorSetDisplay();
+            Validate(item);
+            NotifyItemsStateChanged();
 
-            return item;
+            // update image display
+            string p = item.ImageKey;
+            item.ImageKey = null;
+            item.ImageKey = p;
         }
 
         /// <summary>
@@ -123,13 +107,13 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Saves given node's content into random file in specified directory and returns the file path
         /// </summary>   
-        protected override string SaveIntoTmpFile(ResXDataNode node, string directory) {
+        protected override string SaveIntoTmpFile(ResXDataNode node, string name, string directory) {
             byte[] bytes;
             string path;
 
             if (node.HasValue<string>()) { // contains text file
                 string value = node.GetValue<string>();
-                string filename = node.Name + ".txt";
+                string filename = name + ".txt";
                 
                 path = Path.Combine(directory, filename);
                 bytes = Encoding.UTF8.GetBytes(value);

@@ -785,7 +785,21 @@
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_381FD90A6A004BA2BE72E0D3235C8EDE"
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_2E257E3E8A7A46B4B64B8D748422C1B7"
+            {
+            "Name" = "8:run devenv.exe /setup"
+            "Condition" = "8:"
+            "Object" = "8:_E73C4CB1366A49D3AA035D4CF7B0874D"
+            "FileType" = "3:1"
+            "InstallAction" = "3:3"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_E31E77F0_63B9_4EDA_A4DD_3838CA45AA23"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:/checkbox2008=\"[VS2008]\" /checkbox2010=\"[VS2010]\" /checkbox2012=\"[VS2012]\""
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_536FE8BDFB9F44F48CCE4005B9B3D810"
             {
             "Name" = "8:run devenv.exe /setup"
             "Condition" = "8:"
@@ -1396,7 +1410,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Visual Localizer"
         "ProductCode" = "8:{60B82522-0064-47DD-90FC-F598E32234D6}"
-        "PackageCode" = "8:{014ACB02-3CD2-490B-AE16-E75B613D3EBD}"
+        "PackageCode" = "8:{218AFCEE-6B37-4A9B-81E6-CAF288340487}"
         "UpgradeCode" = "8:{5B9F28D9-AB2E-4877-8D44-E5C9237FE906}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"

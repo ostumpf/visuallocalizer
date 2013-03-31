@@ -35,10 +35,10 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         protected abstract T GetReplaceStringItem();
 
+
         /// <summary>
-        /// Called on click - overriden in derived class to provide desired functionality.
-        /// Initializes basic variables, common for all derived commands.
-        /// </summary>
+        /// Called on click - when overriden, finds object in current selection and displayes dialog offering to move it.
+        /// </summary>        
         public override void Process() {
             base.Process(); // initialize basic variables
             

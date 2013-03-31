@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Collections;
+using System.Media;
 
 namespace VisualLocalizer.Library {
 
@@ -73,6 +74,10 @@ namespace VisualLocalizer.Library {
                 this.Height = this.MinimumSize.Height;
             }
             ResumeLayout();
+        }
+
+        private void ErrorDialog_Load(object sender, EventArgs e) {
+            SystemSounds.Hand.Play();
         }
     }
 }

@@ -20,7 +20,7 @@ namespace VisualLocalizer.Library.AspxParser {
         private char currentChar, quotesChar;
         private bool withinAspElement, withinAspDirective, withinCodeBlock, withinOutputElement, withinAspTags, attributeValueContainsOutput,
             withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText,
-            hardStop, softStop;
+            hardStop, softStop, withinScriptBlock, scriptBeginTagContainedRunatServer;
         private OutputElementKind outputElementKind;
         private StringBuilder codeBuilder, backupBuilder, plainTextBuilder, attributeNameBuilder, attributeValueBuilder;
         private List<AttributeInfo> attributes;
@@ -147,28 +147,33 @@ namespace VisualLocalizer.Library.AspxParser {
         /// Handles beginnings and ends of elements
         /// </summary>
         private void HandleAspElements() {
-            if (withinAspElement && currentChar == '>' && !withinAttributeValue) { // end of tag
-                HitEnd(ref externalSpan, 0);
-                StartPlainText(1, 0);                
-
+            if (currentChar == '>' && ((withinAspElement && !withinAttributeValue) || withinScriptBlock)) { // end of tag
+                if (!withinScriptBlock) {
+                    HitEnd(ref externalSpan, 0);
+                    StartPlainText(1, 0);
+                }
                 // get element name
                 if (string.IsNullOrEmpty(elementName) && attributeNameBuilder.Length > 0) {
                     elementName = attributeNameBuilder.ToString();
                     attributeNameBuilder.Length = 0;
-                }               
-
+                }
+                
                 if (withinEndAspElement) {        
                     // content of <script> tags report as code
-                    if (elementName.ToLower() == "script") {
+                    if (elementName.ToLower() == "script" && withinScriptBlock) {
                         withinCodeBlock = false;
-                        HitEnd(ref externalSpan, -8);
-                        HitEnd(ref internalSpan, -8);
-                        handler.OnCodeBlock(new CodeBlockContext() {
-                            BlockText = codeBuilder.ToString(0, codeBuilder.Length-8),
-                            InnerBlockSpan = internalSpan,
-                            OuterBlockSpan = externalSpan,
-                            WithinClientSideComment = withinClientComment
-                        });
+                        withinScriptBlock = false;
+                        HitEnd(ref externalSpan, -9);
+                        HitEnd(ref internalSpan, -9);
+                        if (scriptBeginTagContainedRunatServer) {
+                            handler.OnCodeBlock(new CodeBlockContext() {
+                                BlockText = codeBuilder.ToString(0, codeBuilder.Length - 9),
+                                InnerBlockSpan = internalSpan,
+                                OuterBlockSpan = externalSpan,
+                                WithinClientSideComment = withinClientComment
+                            });
+                        }
+                        scriptBeginTagContainedRunatServer = false;
                         externalSpan = null;
                         internalSpan = null;
                         codeBuilder.Length = 0;
@@ -188,9 +193,11 @@ namespace VisualLocalizer.Library.AspxParser {
                     // begin code block       
                     if (elementName.ToLower() == "script") {
                         withinCodeBlock = true;
+                        withinScriptBlock = true;
+                        scriptBeginTagContainedRunatServer = ContainRunatServer(attributes);
                         externalSpan = null;
-                        HitStart(ref externalSpan, 0);
-                        HitStart(ref internalSpan, 0);
+                        HitStart(ref externalSpan, 1);
+                        HitStart(ref internalSpan, 1);
                     } else { // begin standard element
                         handler.OnElementBegin(new ElementContext() {
                             Attributes = attributes,
@@ -227,6 +234,13 @@ namespace VisualLocalizer.Library.AspxParser {
                     attributes = new List<AttributeInfo>();
                 }
             }        
+        }
+
+        private bool ContainRunatServer(List<AttributeInfo> list) {
+            foreach (AttributeInfo info in list) {
+                if (info.Name.ToLower() == "runat" && info.Value == "server") return true;
+            }
+            return false;
         }
 
         private void StartPlainText(int blockCorrection, int textCorrection) {
@@ -390,7 +404,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     withinAttributeValue = true;
                     quotesChar = currentChar;
                     currentAttributeBlockSpan = new BlockSpan();
-                    currentAttributeBlockSpan.AbsoluteCharOffset = currentOffset;
+                    currentAttributeBlockSpan.AbsoluteCharOffset = currentOffset - 1;
                     currentAttributeBlockSpan.StartIndex = currentIndex - 1;
                     currentAttributeBlockSpan.StartLine = currentLine;
                 } else if (currentChar == ':') { // tag prefix

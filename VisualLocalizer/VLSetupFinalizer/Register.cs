@@ -17,7 +17,26 @@ namespace VLSetupFinalizer {
     /// gets executed, with "devenv" being located in Common7/IDE folder of respective VS installation.
     /// </summary>
     [RunInstaller(true)]
-    public partial class Register : Installer {
+    public partial class Register : Installer {        
+
+        public override void Rollback(IDictionary savedState) {
+            string[] tokens = null;
+            if (savedState.Contains("uninstPaths")) {
+                // get paths of "devenv" files, where VL is registered
+                string paths = (string)savedState["uninstPaths"];
+
+                if (paths != null)
+                    tokens = paths.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+
+            base.Rollback(savedState);
+
+            if (tokens != null) {
+                // execute command on each devenv
+                foreach (string path in tokens)
+                    Process.Start(path, "/setup /nosetupvstemplates").WaitForExit();
+            }
+        }
 
         public override void Install(IDictionary stateSaver) {
             base.Install(stateSaver);

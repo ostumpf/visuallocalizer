@@ -161,6 +161,7 @@ namespace VisualLocalizer.Gui {
             try {
                 VLDocumentViewsManager.ReleaseLocks(); // unlocks all locked files
                 panel.ToolGrid.UnloadResXItems();// release all ResX files loaded in the grid           
+                panel.ToolGrid.ResetConflictResolver();
                 MenuManager.OperationInProgress = false; // permits other operations
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);

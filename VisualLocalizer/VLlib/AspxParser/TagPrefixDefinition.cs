@@ -6,13 +6,19 @@ using System.Reflection;
 using EnvDTE;
 using System.Web;
 using System.IO;
+using Microsoft.VisualStudio.Shell;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Library.AspxParser {
 
+    /// <summary>
+    /// Caches information about elements, attributes and their types, obtained from web.config files and code-behind definitions.
+    /// </summary>
     public sealed class ReflectionCache {
         private ReflectionCache() {
             Assemblies = new Dictionary<string, Assembly>();
             Types = new Dictionary<string, Type>();
+            Localizables = new Dictionary<string, bool>();
         }
 
         private static ReflectionCache instance;
@@ -23,19 +29,107 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Cache for loaded assemblies
+        /// </summary>
         public Dictionary<string, Assembly> Assemblies {
             get;
             private set;
         }
 
-        public Dictionary<string, Type> Types {
+        /// <summary>
+        /// Cache for determined types (may return null)
+        /// </summary>
+        private Dictionary<string, Type> Types {
             get;
-            private set;
+            set;
+        }
+
+        /// <summary>
+        /// Cache for [Localizable(false)] values
+        /// </summary>
+        private Dictionary<string, bool> Localizables {
+            get;
+            set;
+        }
+
+        public bool IsDefined(string typeName, string propertyName) {
+            if (typeName == null) throw new ArgumentNullException("typeName");
+            if (propertyName == null) throw new ArgumentNullException("propertyName");
+
+            return Types.ContainsKey(typeName + "." + propertyName);
+        }
+
+        public Type GetType(string typeName, string propertyName) {
+            if (typeName == null) throw new ArgumentNullException("typeName");
+            if (propertyName == null) throw new ArgumentNullException("propertyName");
+
+            return Types[typeName + "." + propertyName];
+        }
+
+        public bool HasLocalizableFalse(string typeName, string propertyName) {
+            if (typeName == null) throw new ArgumentNullException("typeName");
+            if (propertyName == null) throw new ArgumentNullException("propertyName");
+
+            return Localizables.ContainsKey(typeName + "." + propertyName) && Localizables[typeName + "." + propertyName];
+        }
+
+        public void AddType(string typeName, string propertyName, CodeProperty property) {
+            if (typeName == null) throw new ArgumentNullException("typeName");
+            if (propertyName == null) throw new ArgumentNullException("propertyName");
+
+            bool hasLocalizableFalseSet = false;
+            
+            Type propertyType = null;
+            try {
+                propertyType = Type.GetType(property.Type.AsFullName, false, false); // get its name and save it in cache
+                hasLocalizableFalseSet = (property as CodeElement).HasLocalizableFalseAttribute();
+            } catch (Exception) {  }
+
+            Types.Add(typeName + "." + propertyName, propertyType);
+            Localizables.Add(typeName + "." + propertyName, hasLocalizableFalseSet);
+        }
+
+        public void AddType(string typeName, string propertyName, PropertyInfo info) {
+            if (typeName == null) throw new ArgumentNullException("typeName");
+            if (propertyName == null) throw new ArgumentNullException("propertyName");
+
+            Type propertyType;
+            bool loc;
+
+            if (info == null) {
+                propertyType = null;
+                loc = false;
+            } else {
+                propertyType = info.PropertyType;
+                loc = HasLocalizableFalse(info);
+            }
+            
+            Types.Add(typeName + "." + propertyName, propertyType);
+            Localizables.Add(typeName + "." + propertyName, loc);
         }
 
         public void Clear() {
             Assemblies.Clear();
             Types.Clear();
+            Localizables.Clear();
+        }
+
+
+        /// <summary>
+        /// Returns true if given property is decorated with Localizable(false)
+        /// </summary>        
+        private bool HasLocalizableFalse(PropertyInfo propInfo) {
+            if (propInfo == null) return false;
+
+            object[] objects = propInfo.GetCustomAttributes(typeof(LocalizableAttribute), true);
+            if (objects != null && objects.Length > 0) {
+                bool hasFalse = false;
+                foreach (LocalizableAttribute attr in objects)
+                    if (!attr.IsLocalizable) hasFalse = true;
+
+                return hasFalse;
+            } else return false;
         }
     }
 
@@ -52,7 +146,7 @@ namespace VisualLocalizer.Library.AspxParser {
         /// <summary>
         /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
         /// </summary>        
-        public abstract bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo);
+        public abstract bool? Resolve(string elementName, string attributeName, Type type, out bool hasLocalizableFalseSet);
     }
 
     /// <summary>
@@ -71,13 +165,14 @@ namespace VisualLocalizer.Library.AspxParser {
         /// <summary>
         /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
         /// </summary>
-        public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
-            propInfo = null;
+        public override bool? Resolve(string elementName, string attributeName, Type type, out bool hasLocalizableFalseSet) {            
             string fullname = Namespace + "." + elementName; // expected type name
-            Type elementType = null; 
+            Type propertyType = null;
+            hasLocalizableFalseSet = false;
 
-            if (ReflectionCache.Instance.Types.ContainsKey(fullname)) {
-                elementType = ReflectionCache.Instance.Types[fullname];
+            if (ReflectionCache.Instance.IsDefined(fullname, attributeName)) {
+                propertyType = ReflectionCache.Instance.GetType(fullname, attributeName);
+                hasLocalizableFalseSet = ReflectionCache.Instance.HasLocalizableFalse(fullname, attributeName);
             } else {
                 if (!ReflectionCache.Instance.Assemblies.ContainsKey(AssemblyName)) {
                     // load given assembly and add it to cache
@@ -86,22 +181,22 @@ namespace VisualLocalizer.Library.AspxParser {
                 Assembly a = ReflectionCache.Instance.Assemblies[AssemblyName];
                 
                 // attempt to get type from assembly
-                elementType = a.GetType(fullname);
-            }
-                        
-            if (elementType != null) {
-                // attempt to get property with the name of the attribute
-                propInfo = elementType.GetProperty(attributeName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);
-                
-                // if it exists, we have conclusive result
-                if (propInfo != null) {
-                    return propInfo.PropertyType == type;
-                }                
-            }
+                Type elementType = a.GetType(fullname);
 
-            // either element or property definition was not found
-            return null;
+                if (elementType != null) {
+                    // attempt to get property with the name of the attribute
+                    PropertyInfo propInfo = elementType.GetProperty(attributeName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public);                    
+                    ReflectionCache.Instance.AddType(fullname, attributeName, propInfo);
+
+                    propertyType = ReflectionCache.Instance.GetType(fullname, attributeName);
+                    hasLocalizableFalseSet = ReflectionCache.Instance.HasLocalizableFalse(fullname, attributeName);
+                }
+            }
+            
+            
+            return propertyType == null ? null : (bool?)(propertyType == type);
         }
+
     }
 
     /// <summary>
@@ -111,18 +206,17 @@ namespace VisualLocalizer.Library.AspxParser {
         public string TagName { get; private set; }
         public string Source { get; private set; }
 
-        private CodeType codeType;
-
-        public TagPrefixSourceDefinition(Project Project, Solution solution, string TagName, string Source, string TagPrefix)
+        public TagPrefixSourceDefinition(ProjectItem projectItem, Solution solution, string TagName, string Source, string TagPrefix)
             : base(TagPrefix) {
             if (TagName == null) throw new ArgumentNullException("TagName");
-            if (Source == null) throw new ArgumentNullException("Source");
+            if (projectItem == null) throw new ArgumentNullException("Source");
+            if (Source == null) throw new ArgumentNullException("projectItem");
 
             this.TagName = TagName;
             this.Source = Source;
 
             // get full path of the definition file
-            string projPath = Project.FullName;
+            string projPath = projectItem.ContainingProject.FullName;
             if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1); 
             string sourcePath = Source.Replace("~", projPath);
             
@@ -135,41 +229,54 @@ namespace VisualLocalizer.Library.AspxParser {
             if (handler.ControlInfo == null || handler.ControlInfo.Inherits == null) return;
 
             // get definition class type
-            codeType = Project.CodeModel.CodeTypeFromFullName(handler.ControlInfo.Inherits);
+            string codeFile = handler.ControlInfo.CodeFile == null ? handler.ControlInfo.CodeBehind : handler.ControlInfo.CodeFile;
+            if (codeFile == null) return;
+
+            
+            Uri codeItemUri;
+            Uri.TryCreate(new Uri(sourcePath, UriKind.Absolute), new Uri(codeFile, UriKind.Relative), out codeItemUri);
+            ProjectItem codeItem = solution.FindProjectItem(Uri.UnescapeDataString(codeItemUri.ToString()));
+            if (codeItem == null) throw new InvalidOperationException("Cannot find declared code behind file " + codeItem.GetFullPath());
+
+            // ensure the window is open to get the code model            
+            if (codeItem.GetCodeModel() == null) {                
+                return;
+            }
+
+            CodeClass classElement = null;
+            foreach (CodeElement el in codeItem.GetCodeModel().CodeElements) {
+                if (el.Kind == vsCMElement.vsCMElementClass && el.Name == handler.ControlInfo.Inherits) {
+                    classElement = (CodeClass)el;
+                    break;
+                }
+            }
+            if (classElement != null) {
+                foreach (CodeElement el in classElement.Children) {
+                    if (el.Kind == vsCMElement.vsCMElementProperty) {
+                        CodeProperty property = (CodeProperty)el;
+                        ReflectionCache.Instance.AddType(classElement.FullName, property.Name, property);
+                        ReflectionCache.Instance.AddType(TagName, property.Name, property);
+                    }
+                }
+            }
+            
+            //if (!wasOpen) window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         /// <summary>
         /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
         /// </summary>
-        public override bool? Resolve(string elementName, string attributeName, Type type, out PropertyInfo propInfo) {
+        public override bool? Resolve(string elementName, string attributeName, Type type, out bool hasLocalizableFalseSet) {
             if (attributeName == null) throw new ArgumentNullException("attributeName");
-
-            propInfo = null;
-            if (codeType == null) return null; // no code type was found - inconclusive
-           
-            if (!ReflectionCache.Instance.Types.ContainsKey(attributeName)) {
-                CodeProperty property = null;
-                // look for property with attribute's name
-                foreach (CodeElement codeElement in codeType.Members) {
-                    if (codeElement.Kind == vsCMElement.vsCMElementProperty && codeElement.Name==attributeName) {
-                        property = (CodeProperty)codeElement;
-                        break;
-                    }
-                }
-
-                if (property != null) { // property found
-                    try {
-                        Type t = Type.GetType(property.Type.AsFullName, false, false); // get its name and save it in cache
-                        ReflectionCache.Instance.Types.Add(attributeName, t);
-                    } catch (Exception) {
-                        ReflectionCache.Instance.Types.Add(attributeName, null);
-                    }
-                } else {
-                    ReflectionCache.Instance.Types.Add(attributeName, null);
-                }
+            hasLocalizableFalseSet = false;
+            
+            Type propertyType;
+            if (ReflectionCache.Instance.IsDefined(elementName, attributeName)) {
+                propertyType = ReflectionCache.Instance.GetType(elementName, attributeName);
+                hasLocalizableFalseSet = ReflectionCache.Instance.HasLocalizableFalse(elementName, attributeName);
+            } else {
+                propertyType = null;
             }
-
-            Type propertyType = ReflectionCache.Instance.Types[attributeName];
 
             return propertyType == null ? null : (bool?)(propertyType == type);
         }
@@ -204,6 +311,9 @@ namespace VisualLocalizer.Library.AspxParser {
                     if (attr.Name == "Inherits") {
                         ControlInfo.Inherits = attr.Value;
                     }
+                    if (attr.Name == "CodeFile") {
+                        ControlInfo.CodeFile = attr.Value;
+                    }
                 }
                 StopRequested = true;
             }
@@ -237,5 +347,6 @@ namespace VisualLocalizer.Library.AspxParser {
     public sealed class ControlDirectiveInfo {
         public string CodeBehind { get; set; }
         public string Inherits { get; set; }
+        public string CodeFile { get; set; }
     }
 }

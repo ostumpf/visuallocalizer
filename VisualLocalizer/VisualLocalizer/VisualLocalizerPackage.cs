@@ -107,7 +107,7 @@ namespace VisualLocalizer
             }
         }
 
-        private void InitBaseServices() {           
+        private void InitBaseServices() {                       
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
             UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));

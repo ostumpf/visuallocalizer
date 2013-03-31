@@ -17,7 +17,7 @@ namespace VisualLocalizer.Commands {
     /// Base class for batch commands that process given set of source data and use toolwindows to display it to the user, like BatchMove or BatchInline commands.
     /// These commands are invoked either from code context menu or Solution Explorer's context menu.
     /// </summary>
-    internal abstract class AbstractBatchCommand {
+    public abstract class AbstractBatchCommand {
 
         /// <summary>
         /// ProjectItem currently being parsed
@@ -144,13 +144,17 @@ namespace VisualLocalizer.Commands {
 
             CheckActiveDocument();
 
-            Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;          
+            InitializeSelection();
+        }
+
+        protected void InitializeSelection() {
+            Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             currentlyProcessedItem = currentDocument.ProjectItem;
 
             TextSelection currentSelection = currentDocument.Selection as TextSelection;
             if (currentSelection == null || currentSelection.IsEmpty)
                 throw new Exception("Cannot perform this operation on an empty selection.");
-                       
+
             selectionTopPoint = currentSelection.BottomPoint;
             selectionBotPoint = currentSelection.TopPoint;            
         }       
@@ -172,9 +176,19 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         protected virtual void Process(ProjectItem projectItem, bool verbose) {
             if (projectItem.CanShowCodeContextMenu()) Process(projectItem, (e) => { return true; }, verbose);
+            
             if (projectItem.ProjectItems != null) {
                 foreach (ProjectItem item in projectItem.ProjectItems)
                     Process(item, verbose);
+            }
+
+            // in ASP .NET projects, ProjectItems returns null even though there are child items
+            if (projectItem.GetFileType() == FILETYPE.ASPX) {
+                foreach (string ext in StringConstants.CodeExtensions) { // try adding .vb and .cs extensions and search for the file
+                    string path = projectItem.GetFullPath() + ext;
+                    ProjectItem item = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(path);
+                    if (item != null && item != projectItem) Process(item, verbose);
+                }
             }
         }
 
@@ -205,7 +219,7 @@ namespace VisualLocalizer.Commands {
         /// given plain methods text.
         /// </summary>        
         protected void ProcessCSharp(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
-            FileCodeModel2 codeModel = projectItem.FileCodeModel as FileCodeModel2;
+            FileCodeModel2 codeModel = projectItem.GetCodeModel();
             if (codeModel == null) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
                 return;
@@ -224,7 +238,7 @@ namespace VisualLocalizer.Commands {
         /// given plain methods text.
         /// </summary>    
         protected void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
-            FileCodeModel2 codeModel = projectItem.FileCodeModel as FileCodeModel2;
+            FileCodeModel2 codeModel = projectItem.GetCodeModel();
             if (codeModel == null) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
                 return;

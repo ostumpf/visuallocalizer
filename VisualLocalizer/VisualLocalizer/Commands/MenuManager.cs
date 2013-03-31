@@ -285,8 +285,9 @@ namespace VisualLocalizer.Commands {
             try {
                 if (OperationInProgress) throw new Exception("Cannot start operation 'Batch move to resources', because another operation is in progress.");
                 OperationInProgress = true;
-
+                
                 batchMoveCommand.Process(true);
+                
                 BatchMoveToResourcesToolWindow win = ShowToolWindow<BatchMoveToResourcesToolWindow>();
                 if (win != null) {
                     win.SetData(batchMoveCommand.Results);
@@ -295,6 +296,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             }
         }
 
@@ -315,6 +317,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             } 
         }
 
@@ -336,6 +339,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             }
         }
 
@@ -356,6 +360,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             } 
         }
 
@@ -378,6 +383,7 @@ namespace VisualLocalizer.Commands {
 
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex, add);
                 MessageBox.ShowException(ex, add);
+                OperationInProgress = false;
             } 
         }
 
@@ -398,6 +404,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             } 
         }
 
@@ -418,6 +425,7 @@ namespace VisualLocalizer.Commands {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
+                OperationInProgress = false;
             }
         }
     }

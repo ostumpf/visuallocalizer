@@ -12,7 +12,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Set of actions assignable to criteria in the Tools/Options
     /// </summary>
-    internal enum LocalizationCriterionAction { 
+    public enum LocalizationCriterionAction { 
         /// <summary>
         /// Force localize
         /// </summary>
@@ -37,7 +37,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Set of actions assignable to criteria in the filter panel
     /// </summary>
-    internal enum LocalizationCriterionAction2 { 
+    public enum LocalizationCriterionAction2 { 
         /// <summary>
         /// Check rows satisfying the criterion
         /// </summary>
@@ -62,7 +62,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Represents target of evaluation - which part of the result item should be tested
     /// </summary>
-    internal enum LocalizationCriterionTarget { 
+    public enum LocalizationCriterionTarget { 
         /// <summary>
         /// Value of the string literal
         /// </summary>
@@ -102,7 +102,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Predicate for custom criteria
     /// </summary>
-    internal enum LocalizationCriterionPredicate { 
+    public enum LocalizationCriterionPredicate { 
         /// <summary>
         /// Target matches given regular expression
         /// </summary>
@@ -137,7 +137,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Base class for localization criteria
     /// </summary>
-    internal abstract class AbstractLocalizationCriterion {
+    public abstract class AbstractLocalizationCriterion {
         /// <summary>
         /// Maximal reachable localization probability
         /// </summary>
@@ -223,7 +223,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Represents common criterion - these are hard-coded and user can edit only their actions
     /// </summary>
-    internal sealed class LocalizationCommonCriterion : AbstractLocalizationCriterion {        
+    public sealed class LocalizationCommonCriterion : AbstractLocalizationCriterion {        
         /// <summary>
         /// Predicate evaluating given result item
         /// </summary>
@@ -278,7 +278,7 @@ namespace VisualLocalizer.Settings {
     /// <summary>
     /// Represents custom criterion - these are created by the user in the Tools/Options settings
     /// </summary>
-    internal sealed class LocalizationCustomCriterion : AbstractLocalizationCriterion {
+    public sealed class LocalizationCustomCriterion : AbstractLocalizationCriterion {
 
         /// <summary>
         /// Regular expression to test (if relevant)

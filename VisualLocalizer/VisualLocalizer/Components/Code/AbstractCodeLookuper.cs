@@ -43,6 +43,21 @@ namespace VisualLocalizer.Components {
         protected int CurrentAbsoluteOffset { get; set; }
 
         /// <summary>
+        /// Starting lookuper position - line
+        /// </summary>
+        protected int OriginalLine { get; set; }
+
+        /// <summary>
+        /// Starting lookuper position - column
+        /// </summary>
+        protected int OriginalIndex { get; set; }
+
+        /// <summary>
+        /// Starting lookuper position - number of characters from the beginning of the text
+        /// </summary>
+        protected int OriginalAbsoluteOffset { get; set; }
+
+        /// <summary>
         /// Last string position - line
         /// </summary>
         protected int StringStartLine { get; set; }
@@ -145,6 +160,9 @@ namespace VisualLocalizer.Components {
                 this.CurrentLine = startPoint.Line;
                 this.CurrentAbsoluteOffset = startPoint.AbsoluteCharOffset + startPoint.Line - 2;
                 this.IsWithinLocFalse = isWithinLocFalse;
+                this.OriginalAbsoluteOffset = this.CurrentAbsoluteOffset;
+                this.OriginalLine = this.CurrentLine;
+                this.OriginalIndex = this.CurrentIndex;
 
                 return LookForStrings();
             }
@@ -170,6 +188,9 @@ namespace VisualLocalizer.Components {
                 this.CurrentLine = blockSpan.StartLine;
                 this.CurrentAbsoluteOffset = blockSpan.AbsoluteCharOffset;
                 this.IsWithinLocFalse = false;
+                this.OriginalAbsoluteOffset = this.CurrentAbsoluteOffset;
+                this.OriginalLine = this.CurrentLine;
+                this.OriginalIndex = this.CurrentIndex;
 
                 return LookForStrings();
             }
@@ -232,6 +253,9 @@ namespace VisualLocalizer.Components {
                 this.IsWithinLocFalse = isWithinLocFalse;
                 this.Project = project;
                 this.prefferedResXItem = prefferedResXItem;
+                this.OriginalAbsoluteOffset = this.CurrentAbsoluteOffset;
+                this.OriginalLine = this.CurrentLine;
+                this.OriginalIndex = this.CurrentIndex;
 
                 return LookForReferences();
             }

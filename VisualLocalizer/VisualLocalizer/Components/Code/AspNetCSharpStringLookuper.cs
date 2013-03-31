@@ -59,6 +59,7 @@ namespace VisualLocalizer.Components {
             resultItem.DeclaredNamespaces = declaredNamespaces;            
             resultItem.Language = LANGUAGE.CSHARP;
             resultItem.Value = resultItem.Value.ConvertCSharpEscapeSequences(isVerbatimString);
+            resultItem.WasVerbatim = isVerbatimString;
 
             return resultItem;
         }

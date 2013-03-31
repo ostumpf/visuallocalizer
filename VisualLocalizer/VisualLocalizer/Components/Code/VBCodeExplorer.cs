@@ -37,7 +37,7 @@ namespace VisualLocalizer.Components {
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
 
             // is method decorated with Localizable(false)
-            bool functionLocalizableFalse = HasLocalizableFalseAttribute(codeFunction as CodeElement);
+            bool functionLocalizableFalse = (codeFunction as CodeElement).HasLocalizableFalseAttribute();
 
             var list = parentCommand.LookupInVB(functionText, startPoint, parentNamespace, codeClassOrStruct, codeFunction.Name, null, isLocalizableFalse || functionLocalizableFalse);
 
@@ -63,7 +63,7 @@ namespace VisualLocalizer.Components {
             TextPoint startPoint = codeVariable.StartPoint;
 
             // is variable decorated with Localizable(false)
-            bool variableLocalizableFalse = HasLocalizableFalseAttribute(codeVariable as CodeElement);
+            bool variableLocalizableFalse = (codeVariable as CodeElement).HasLocalizableFalseAttribute();
 
             // run lookuper using parent command
             var list = parentCommand.LookupInVB(initExpression, startPoint, parentNamespace, codeClassOrStruct, null, codeVariable.Name, isLocalizableFalse || variableLocalizableFalse);

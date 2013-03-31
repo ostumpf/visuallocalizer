@@ -7,6 +7,7 @@ using VSLangProj;
 using System.Reflection;
 using System.IO;
 using System.Diagnostics;
+using EnvDTE80;
 
 namespace VisualLocalizer.Library {
 
@@ -277,5 +278,17 @@ namespace VisualLocalizer.Library {
             return ext.ToLower() == ".resx";
         }
 
+        /// <summary>
+        /// Returns code model for given item
+        /// </summary>        
+        public static FileCodeModel2 GetCodeModel(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            if (item.FileCodeModel == null) {
+                item.Open(EnvDTE.Constants.vsViewKindCode);
+            }
+
+            return (FileCodeModel2)item.FileCodeModel;
+        }
     }
 }

@@ -38,5 +38,11 @@
     <% string s="come code"; %>    
     <% string s="<!--"; %>
     <% string s="<%"; %>
+    <script runat="server">
+        string s = "baf";
+    </script>
+    <script language="javascript" type="text/javascript">
+        window.alert("ahoj");
+    </script>
 </body>
 </html>

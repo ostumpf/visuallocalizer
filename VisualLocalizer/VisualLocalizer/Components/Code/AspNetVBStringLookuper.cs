@@ -49,13 +49,16 @@ namespace VisualLocalizer.Components {
         /// New result item
         /// </returns>
         protected override AspNetStringResultItem AddStringResult(List<AspNetStringResultItem> list, string originalValue, bool isVerbatimString, bool isUnlocalizableCommented) {
-            AspNetStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
+            if (GetCharBack(-1) != 'c') { // it's not char
+                AspNetStringResultItem resultItem = base.AddStringResult(list, originalValue, isVerbatimString, isUnlocalizableCommented);
 
-            resultItem.DeclaredNamespaces = declaredNamespaces;            
-            resultItem.Language = LANGUAGE.VB;
-            resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
+                resultItem.DeclaredNamespaces = declaredNamespaces;
+                resultItem.Language = LANGUAGE.VB;
+                resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
 
-            return resultItem;
+                return resultItem;
+            }
+            return null;
         }
     }
 }

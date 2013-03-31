@@ -270,8 +270,8 @@
   <ItemGroup>
     <None Include="Resources\doc.png" />
     <None Include="Resources\play.png" />
+    <Content Include="Resources\execute.png" />
     <Content Include="Resources\icon.ico" />
-    <Content Include="Resources\run.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vlkey.snk" />
