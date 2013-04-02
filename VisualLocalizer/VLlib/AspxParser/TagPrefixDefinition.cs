@@ -86,8 +86,14 @@ namespace VisualLocalizer.Library.AspxParser {
                 hasLocalizableFalseSet = (property as CodeElement).HasLocalizableFalseAttribute();
             } catch (Exception) {  }
 
-            Types.Add(typeName + "." + propertyName, propertyType);
-            Localizables.Add(typeName + "." + propertyName, hasLocalizableFalseSet);
+            string fullName = typeName + "." + propertyName;
+            if (!Types.ContainsKey(fullName)) {
+                Types.Add(fullName, propertyType);
+                Localizables.Add(fullName, hasLocalizableFalseSet);
+            } else {
+                Types[fullName] = propertyType;
+                Localizables[fullName] = hasLocalizableFalseSet;
+            }
         }
 
         public void AddType(string typeName, string propertyName, PropertyInfo info) {
@@ -104,9 +110,15 @@ namespace VisualLocalizer.Library.AspxParser {
                 propertyType = info.PropertyType;
                 loc = HasLocalizableFalse(info);
             }
-            
-            Types.Add(typeName + "." + propertyName, propertyType);
-            Localizables.Add(typeName + "." + propertyName, loc);
+
+            string fullName = typeName + "." + propertyName;
+            if (!Types.ContainsKey(fullName)) {
+                Types.Add(fullName, propertyType);
+                Localizables.Add(fullName, loc);
+            } else {
+                Types[fullName] = propertyType;
+                Localizables[fullName] = loc;
+            }
         }
 
         public void Clear() {
@@ -147,6 +159,12 @@ namespace VisualLocalizer.Library.AspxParser {
         /// Attempts to resolve attribute's type, returns true/false in case of conclusive result, null otherwise
         /// </summary>        
         public abstract bool? Resolve(string elementName, string attributeName, Type type, out bool hasLocalizableFalseSet);
+
+        /// <summary>
+        /// Loads types specified for this definition into types cache
+        /// </summary>
+        public virtual void Load() {
+        }
     }
 
     /// <summary>
@@ -205,6 +223,8 @@ namespace VisualLocalizer.Library.AspxParser {
     public sealed class TagPrefixSourceDefinition : TagPrefixDefinition {
         public string TagName { get; private set; }
         public string Source { get; private set; }
+        private ProjectItem projectItem;
+        private Solution solution;
 
         public TagPrefixSourceDefinition(ProjectItem projectItem, Solution solution, string TagName, string Source, string TagPrefix)
             : base(TagPrefix) {
@@ -214,12 +234,19 @@ namespace VisualLocalizer.Library.AspxParser {
 
             this.TagName = TagName;
             this.Source = Source;
+            this.projectItem = projectItem;
+            this.solution = solution;
+        }
 
+        /// <summary>
+        /// Loads types specified for this definition into types cache
+        /// </summary>        
+        public override void Load() {
             // get full path of the definition file
             string projPath = projectItem.ContainingProject.FullName;
-            if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1); 
+            if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1);
             string sourcePath = Source.Replace("~", projPath);
-            
+
             // read the source file and stop after first Control directive (code behind class name)
             ControlDirectiveHandler handler = new ControlDirectiveHandler();
             Parser parser = new Parser(File.ReadAllText(sourcePath), handler);
@@ -232,14 +259,14 @@ namespace VisualLocalizer.Library.AspxParser {
             string codeFile = handler.ControlInfo.CodeFile == null ? handler.ControlInfo.CodeBehind : handler.ControlInfo.CodeFile;
             if (codeFile == null) return;
 
-            
+
             Uri codeItemUri;
             Uri.TryCreate(new Uri(sourcePath, UriKind.Absolute), new Uri(codeFile, UriKind.Relative), out codeItemUri);
             ProjectItem codeItem = solution.FindProjectItem(Uri.UnescapeDataString(codeItemUri.ToString()));
             if (codeItem == null) throw new InvalidOperationException("Cannot find declared code behind file " + codeItem.GetFullPath());
 
             // ensure the window is open to get the code model            
-            if (codeItem.GetCodeModel() == null) {                
+            if (codeItem.GetCodeModel() == null) {
                 return;
             }
 
@@ -260,7 +287,6 @@ namespace VisualLocalizer.Library.AspxParser {
                 }
             }
             
-            //if (!wasOpen) window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         /// <summary>

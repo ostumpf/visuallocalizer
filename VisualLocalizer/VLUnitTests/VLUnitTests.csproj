@@ -67,15 +67,20 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\TrieTest.txt" />
-    <Compile Include="VLTests\AspNetBatchMoveTests.cs" />
-    <Compile Include="VLTests\BatchTestsBase.cs" />
-    <Compile Include="VLTests\CSharpBatchMoveTest.cs" />
+    <Compile Include="VLTests\Commands\AspNetBatchInlineTests.cs" />
+    <Compile Include="VLTests\Commands\AspNetBatchMoveTests.cs" />
+    <Compile Include="VLTests\Commands\BatchTestsBase.cs" />
+    <Compile Include="VLTests\Commands\CSharpBatchInlineTest.cs" />
+    <Compile Include="VLTests\Commands\CSharpBatchMoveTest.cs" />
     <Compile Include="VLLibTests\ParserTest.cs" />
     <Compile Include="VLLibTests\TrieTest.cs" />
     <Compile Include="VLLibTests\TextExTest.cs" />
     <Compile Include="VLTests\Agent.cs" />
-    <Compile Include="VLTests\MoveTest.cs" />
-    <Compile Include="VLTests\VBBatchMoveTest.cs" />
+    <Compile Include="VLTests\Commands\InlineTest.cs" />
+    <Compile Include="VLTests\Commands\MoveTest.cs" />
+    <Compile Include="VLTests\Commands\VBBatchInlineTest.cs" />
+    <Compile Include="VLTests\Commands\VBBatchMoveTest.cs" />
+    <Compile Include="VLTests\GUI\BatchMoveGridTest.cs" />
     <Compile Include="VLtranslatTests\BingTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\GoogleTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\MyMemoryTranslatorTest.cs" />

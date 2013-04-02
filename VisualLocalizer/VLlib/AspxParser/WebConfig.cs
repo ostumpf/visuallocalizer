@@ -16,37 +16,72 @@ namespace VisualLocalizer.Library.AspxParser {
     public class WebConfig {
         public const string WebConfigFilename = "web.config";
         public const string WebConfigDefaultLocFormat = @"{0}\Microsoft.NET\Framework\{1}\CONFIG\" + WebConfigFilename;
-        private List<TagPrefixDefinition> definitions = new List<TagPrefixDefinition>();
+        private HashSet<TagPrefixDefinition> definitions;
+        private ProjectItem projectItem;
+        private Solution solution;        
+
+        private static Dictionary<ProjectItem, WebConfig> cache;
+
+        static WebConfig() {
+            cache = new Dictionary<ProjectItem, WebConfig>();
+        }
+
+        public static WebConfig Get(ProjectItem projectItem, Solution solution) {
+            if (projectItem == null) throw new ArgumentNullException("projectItem");
+            if (solution == null) throw new ArgumentNullException("solution");
+            
+            if (!cache.ContainsKey(projectItem)) {
+                cache.Add(projectItem, new WebConfig(projectItem, solution));
+            }
+            cache[projectItem].Update();           
+
+            return cache[projectItem];
+        }
+
+        private WebConfig(ProjectItem projectItem, Solution solution) {
+            if (projectItem == null) throw new ArgumentNullException("projectItem");
+            if (solution == null) throw new ArgumentNullException("solution");
+
+            this.projectItem = projectItem;
+            this.solution = solution;
+            this.definitions = new HashSet<TagPrefixDefinition>();
+        }
 
         /// <summary>
         /// Creates new WebConfig object
         /// </summary>
         /// <param name="projectItem">Project item currently processed (used to determine, which web.config files apply)</param>
         /// <param name="solution">Parent solution</param>
-        public WebConfig(ProjectItem projectItem, Solution solution) {
-            if (projectItem == null) throw new ArgumentNullException("projectItem");
-            if (solution == null) throw new ArgumentNullException("solution");
-
+        private void Update() {
             // get list of all web.config files
             List<string> configs = GetOrderedConfigFiles(projectItem);
+            HashSet<TagPrefixDefinition> newDefinitions = new HashSet<TagPrefixDefinition>();
+            HashSet<TagPrefixDefinition> refoundDefinitions = new HashSet<TagPrefixDefinition>();
 
             // add standard definitions
-            definitions.Add(new TagPrefixAssemblyDefinition(
-                "System.Web, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", 
-                "System.Web.UI.WebControls", 
-                "asp"));
+            var webControls = new TagPrefixAssemblyDefinition(
+                "System.Web, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
+                "System.Web.UI.WebControls",
+                "asp");
+            if (!definitions.Contains(webControls)) newDefinitions.Add(webControls); else refoundDefinitions.Add(webControls);
 
-            definitions.Add(new TagPrefixAssemblyDefinition(
+            var ui = new TagPrefixAssemblyDefinition(
                 "System.Web, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
                 "System.Web.UI",
-                "asp"));
+                "asp");
+            if (!definitions.Contains(ui)) newDefinitions.Add(ui); else refoundDefinitions.Add(ui);
            
             // add element definitions from web.config files
             XPathExpression expr = XPathExpression.Compile("/configuration/system.web/pages/controls/add");
             foreach (string file in configs) {
                 XPathDocument doc = new XPathDocument(file);
+                if (doc == null) continue;
+
                 XPathNavigator navigator = doc.CreateNavigator();
+                if (navigator == null) continue;
+
                 XPathNodeIterator result = (XPathNodeIterator)navigator.Evaluate(expr);
+                if (result == null) continue;
 
                 while (result.MoveNext()) {            
                     string tagPrefix = result.Current.GetAttribute("tagPrefix", "");
@@ -55,16 +90,24 @@ namespace VisualLocalizer.Library.AspxParser {
                     string assembly = result.Current.GetAttribute("assembly", "");
                     string source = result.Current.GetAttribute("src", "");
 
+                    TagPrefixDefinition def;
                     if (!string.IsNullOrEmpty(source)) { // source definition - specified tag name, tag prefix and source file with the definition of the type
-                        definitions.Add(new TagPrefixSourceDefinition(projectItem, solution,
-                            tagName, source, tagPrefix));
+                        def = new TagPrefixSourceDefinition(projectItem, solution, tagName, source, tagPrefix);                        
                     } else { // assembly definition - specified assembly fullname, type's namespace and tag prefix
-                        definitions.Add(new TagPrefixAssemblyDefinition(assembly, namespaceName, tagPrefix));
+                        def = new TagPrefixAssemblyDefinition(assembly, namespaceName, tagPrefix);                        
                     }
-                    
+                    if (!definitions.Contains(def)) newDefinitions.Add(def); else refoundDefinitions.Add(def);
                 }
+            }           
+
+            foreach (var def in definitions.Except(refoundDefinitions).ToList()) {
+                definitions.Remove(def);
             }
-            
+
+            foreach (TagPrefixDefinition newDef in newDefinitions) {
+                newDef.Load();
+                definitions.Add(newDef);
+            }
         }
 
         /// <summary>
@@ -110,14 +153,7 @@ namespace VisualLocalizer.Library.AspxParser {
 
             definitions.Add(def);
         }
-
-        /// <summary>
-        /// Clear cached type info
-        /// </summary>
-        public void ClearCache() {
-            ReflectionCache.Instance.Clear();
-        }
-
+       
         /// <summary>
         /// Returns list of web.config paths that apply to the given project item, ordered from the least significant (top directory)
         /// to the most significant (same directory)

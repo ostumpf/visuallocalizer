@@ -70,7 +70,7 @@ namespace VLUnitTests.VLTests {
             RunTest(target, view, lines, expected);
         }
 
-        protected void RunTest<T>(MoveToResourcesCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : CodeStringResultItem,new() {
+        protected void RunTest<T>(MoveToResourcesCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : AbstractResultItem,new() {
             Random rnd = new Random();
             target.InitializeVariables();
 

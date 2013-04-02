@@ -164,6 +164,8 @@ namespace VisualLocalizer.Editor {
                     }
                 } else if (row.DataSourceItem != null) {
                     data.Add(row.DataSourceItem.Name.ToLower(), row.DataSourceItem);
+                    if (!CanContainItem(row.DataSourceItem) && throwExceptions) 
+                        throw new Exception("Error saving '" + row.DataSourceItem.Name + "' - cannot preserve type."); 
                 }
             }
 
@@ -535,6 +537,8 @@ namespace VisualLocalizer.Editor {
                         }                     
                     } else if (Columns[e.ColumnIndex].Name == ValueColumnName) { // value was edited
                         string newValue = (string)row.Cells[ValueColumnName].Value;
+                        if (newValue == null) newValue = string.Empty;
+
                         if (isNewRow) {
                             row.Status = ResXStringGridRow.STATUS.KEY_NULL;
                             row.Cells[ReferencesColumnName].Value = "?";

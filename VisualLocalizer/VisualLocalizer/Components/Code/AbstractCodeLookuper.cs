@@ -307,7 +307,40 @@ namespace VisualLocalizer.Components {
 
             return resultItem; // and return it
         }
-       
+
+        /// <summary>
+        /// Attempts to determine which resource key the reference points to
+        /// </summary>        
+        protected abstract CodeReferenceInfo ResolveReference(string prefix, string className, List<CodeReferenceInfo> trieElementInfos);
+        
+        protected CodeReferenceInfo TryResolve(string prefix, string className, List<CodeReferenceInfo> trieElementInfos) {
+            CodeReferenceInfo info = null;
+
+            if (string.IsNullOrEmpty(prefix)) { // no namespace
+                // get namespace where this class belongs
+                UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(className, Project);
+
+                if (item != null) { // namespace found
+                    info = GetInfoWithNamespace(trieElementInfos, item.Namespace);
+                }
+            } else {
+                string aliasNamespace = UsedNamespaces.GetNamespace(prefix); // suppose prefix is alias - try get actual namespace
+                if (!string.IsNullOrEmpty(aliasNamespace)) { // really, it was just alias
+                    info = GetInfoWithNamespace(trieElementInfos, aliasNamespace);
+                } else { // no, it was full name of namespace
+                    info = GetInfoWithNamespace(trieElementInfos, prefix);
+
+                    if (info == null) { // try adding prefix to the class name - in case prefix is just part of namespace
+                        UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(prefix + "." + className, Project);
+                        if (item != null) {
+                            info = GetInfoWithNamespace(trieElementInfos, item.Namespace + "." + prefix);
+                        }
+                    }
+                }
+            }
+            return info;
+        }
+
         /// <summary>
         /// Adds reference to a resource result item to the list
         /// </summary>
@@ -315,8 +348,7 @@ namespace VisualLocalizer.Components {
         /// <param name="referenceText">Full text of the reference</param>
         /// <param name="trieElementInfos">Info about reference, taken from terminal state of the trie</param>
         /// <returns>New result item</returns>
-        protected virtual T AddReferenceResult(List<T> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {
-            CodeReferenceInfo info = null;
+        protected virtual T AddReferenceResult(List<T> list, string referenceText, List<CodeReferenceInfo> trieElementInfos) {            
             string[] t = referenceText.Split('.');
             if (t.Length < 2) throw new Exception("Code parse error - invalid token " + referenceText);
             string referenceClass;
@@ -333,31 +365,7 @@ namespace VisualLocalizer.Components {
                 prefix = string.Join(".", t, 0, t.Length - 2); // the rest is namespace
             }
 
-            if (string.IsNullOrEmpty(prefix)) { // no namespace
-                // get namespace where this class belongs
-                UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(referenceClass, Project);
-
-                if (item != null) { // namespace found
-                    info = GetInfoWithNamespace(trieElementInfos, item.Namespace);
-                    if (info == null) return null;
-                }
-            } else {
-                string aliasNamespace = UsedNamespaces.GetNamespace(prefix); // suppose prefix is alias - try get actual namespace
-                if (!string.IsNullOrEmpty(aliasNamespace)) { // really, it was just alias
-                    info = GetInfoWithNamespace(trieElementInfos, aliasNamespace);
-                    if (info == null) return null;
-                } else { // no, it was full name of namespace
-                    info = GetInfoWithNamespace(trieElementInfos, prefix);
-
-                    if (info == null) { // try adding prefix to the class name - in case prefix is just part of namespace
-                        UsedNamespaceItem item = UsedNamespaces.ResolveNewReference(prefix + "." + referenceClass, Project);
-                        if (item == null) return null;
-
-                        info = GetInfoWithNamespace(trieElementInfos, item.Namespace + "." + prefix);
-                        if (info == null) return null;
-                    }
-                }
-            }
+            CodeReferenceInfo info = ResolveReference(prefix, referenceClass, trieElementInfos);
 
             if (info != null) {
                 // calculate position of the reference
@@ -373,8 +381,8 @@ namespace VisualLocalizer.Components {
                 resultItem.SourceItem = this.SourceItem;
                 resultItem.ReplaceSpan = span;
                 resultItem.AbsoluteCharOffset = ReferenceStartOffset;
-                resultItem.AbsoluteCharLength = CurrentAbsoluteOffset - ReferenceStartOffset;
-                resultItem.DestinationItem = info.Origin;                
+                resultItem.AbsoluteCharLength = CurrentAbsoluteOffset - ReferenceStartOffset + 1;
+                resultItem.DestinationItem = info.Origin;
                 resultItem.IsWithinLocalizableFalse = IsWithinLocFalse;
                 resultItem.Key = info.Key;
 
@@ -389,7 +397,13 @@ namespace VisualLocalizer.Components {
                 list.Add(resultItem);
 
                 return resultItem;
-            } else throw new Exception("Cannot determine reference target.");
+            } else return null;
+        }
+
+        protected virtual bool UnderscoreIsLineJoiningChar {
+            get {
+                return false;
+            }
         }
 
         /// <summary>
@@ -455,59 +469,101 @@ namespace VisualLocalizer.Components {
             }
 
             return list;
-        }
-
+        }        
+        
         /// <summary>
         /// Returns list of references in given block of code
         /// </summary>        
         protected List<T> LookForReferences() {
             bool insideComment = false, insideString = false, isVerbatimString = false;
-            bool skipLine = false;
+            bool skipLine = false, toRestore = false;
+            CodeReferenceTrieElement previousState = null, prevPrevState = null, cachedState = null;
             currentChar = '?';
             stringStartChar = '?';            
             List<T> list = new List<T>();
             CodeReferenceTrieElement currentElement = Trie.Root;
             StringBuilder prefixBuilder = new StringBuilder();
+            StringBuilder previousBuilder = new StringBuilder();
+            StringBuilder prevPrevBuilder = new StringBuilder();
+            StringBuilder cachedBuilder = new StringBuilder();
             bool prefixContinue = false;
+            bool continueLine = false;
 
             for (globalIndex = 0; globalIndex < text.Length; globalIndex++) {
                 currentChar = text[globalIndex];
 
                 if (skipLine) { // read until end of line
                     if (currentChar == '\n') {
-                        skipLine = false;
+                        skipLine = false;                        
+                        cachedState = Trie.Root;
                     }
                 } else {
+                    bool oldInsideComment = insideComment;
                     PreProcessChar(ref insideComment, ref insideString, ref isVerbatimString, out skipLine);
 
                     if (!insideString && !insideComment) {
+                        if (toRestore) {
+                            currentElement = cachedState;
+                            prefixBuilder = cachedBuilder;
+                            toRestore = false;
+                        }
+                        if (oldInsideComment && cachedState != null && cachedState != Trie.Root) {
+                            toRestore = true;
+                        }
+
+                        prevPrevBuilder.Length = 0;
+                        prevPrevBuilder.Append(previousBuilder);
+
+                        previousBuilder.Length = 0;
+                        previousBuilder.Append(prefixBuilder);
+                        
                         if (prefixBuilder.Length > 0) {
                             if (currentChar == '.') {
+                                prefixContinue = true;
+                            } else if (UnderscoreIsLineJoiningChar && currentChar == '_' && char.IsWhiteSpace(GetCharBack(1)) && GetCharBack(-1) == '\r') {
+                                continueLine = true;
                                 prefixContinue = true;
                             } else if (!currentChar.CanBePartOfIdentifier() && !char.IsWhiteSpace(currentChar)) {
                                 prefixBuilder.Length = 0;
                             }
                         }
+
                         if (currentChar.CanBePartOfIdentifier() && !GetCharBack(1).CanBePartOfIdentifier()) {
-                            if (!prefixContinue) {
+                            if (!prefixContinue && !continueLine) {
                                 ReferenceStartIndex = CurrentIndex;
                                 ReferenceStartLine = CurrentLine;
                                 ReferenceStartOffset = CurrentAbsoluteOffset;
-                                prefixBuilder.Length = 0;
+                                prefixBuilder.Length = 0;                                
                             }
                             prefixContinue = false;
                         }
-                        if (currentChar.CanBePartOfIdentifier() || currentChar == '.') {
-                            prefixBuilder.Append(currentChar);
-                        }
-                        // use trie to get next state
-                        bool wasAtRoot = currentElement == Trie.Root;
-                        currentElement = Trie.Step(currentElement, currentChar);
 
-                        if (currentElement.IsTerminal && !GetCharBack(-1).CanBePartOfIdentifier()) {
-                            AddReferenceResult(list, prefixBuilder.ToString(), currentElement.Infos);
+                        if (GetCharBack(1) == '\n' && GetCharBack(2) == '\r') {
+                            if (continueLine) prefixContinue = true;
+                            continueLine = false;
+                        }
+
+                        if (!continueLine) {
+                            if (currentChar.CanBePartOfIdentifier() || currentChar == '.') {
+                                prefixBuilder.Append(currentChar);
+                            }
+
+                            prevPrevState = previousState;
+                            previousState = currentElement;
+
+                            // use trie to get next state                            
+                            currentElement = Trie.Step(currentElement, currentChar);
+
+                            if (currentElement.IsTerminal && !GetCharBack(-1).CanBePartOfIdentifier()) {
+                                AddReferenceResult(list, prefixBuilder.ToString(), currentElement.Infos);
+                            }
                         }
                     } else {
+                        if (!oldInsideComment && insideComment) {
+                            cachedState = prevPrevState;
+                            cachedBuilder.Length = 0;
+                            cachedBuilder.Append(prevPrevBuilder);
+                        }
                         currentElement = Trie.Root;
                     }
                     if (!insideString || insideComment) {

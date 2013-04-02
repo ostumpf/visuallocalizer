@@ -66,7 +66,13 @@ namespace VisualLocalizer.Components {
                 }
             } 
         }
-        
+
+        /// <summary>
+        /// Attempts to determine which resource key the reference points to
+        /// </summary>        
+        protected override CodeReferenceInfo ResolveReference(string prefix, string className, List<CodeReferenceInfo> trieElementInfos) {
+            return TryResolve(prefix, className, trieElementInfos);
+        }
        
     }
 }

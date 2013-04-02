@@ -106,23 +106,33 @@ namespace VisualLocalizer.Library {
         /// Returns first namespace in which given class could belong (such combination exists)
         /// </summary>        
         public UsedNamespaceItem ResolveNewReference(string referenceClass, Project project) {
+            UsedNamespaceItem result = null;
             foreach (UsedNamespaceItem item in this) {
                 if (item.Namespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
                     return item;
                 } else {
                     string fullName = item.Namespace + "." + referenceClass;
-                    CodeType codeType = null;
-                    try {
-                        codeType = project.CodeModel.CodeTypeFromFullName(fullName);
-                    } catch {
-                        codeType = null;
-                    }
+                    CodeType codeType = TryGetType(fullName, project);
+                    
                     if (codeType != null) {
-                        return item;
+                        result = item;
+                        break;
                     }
+
                 }
             }
-            return null;
+
+            return result;
+        }
+
+        private CodeType TryGetType(string fullName, Project project) {
+            CodeType codeType = null;
+            try {
+                codeType = project.CodeModel.CodeTypeFromFullName(fullName);
+            } catch (Exception ex) {
+                codeType = null;
+            }
+            return codeType;
         }
     }
 

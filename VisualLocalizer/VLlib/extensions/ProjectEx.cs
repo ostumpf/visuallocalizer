@@ -267,6 +267,26 @@ namespace VisualLocalizer.Library {
         }
 
         /// <summary>
+        /// Returns value of "RootNamespace" property, if present, otherwise value of "DefaultNamespace"
+        /// </summary> 
+        public static string GetRootNamespace(this Project item) {
+            if (item == null) throw new ArgumentNullException("item");
+            string result = null;
+
+            try {
+                result = (string)item.Properties.Item("RootNamespace").Value;
+            } catch (Exception) { }
+
+            if (result == null) {
+                try {
+                    result = (string)item.Properties.Item("DefaultNamespace").Value;
+                } catch (Exception) { }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Returns true if given item has ".resx" extension (either set in project item properties or in a file name)
         /// </summary>        
         public static bool IsItemResX(this ProjectItem item) {

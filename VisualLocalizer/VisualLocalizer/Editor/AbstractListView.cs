@@ -173,6 +173,9 @@ namespace VisualLocalizer.Editor {
                 if (node != null) {
                     node.Comment = item.SubItems[CommentColumnName].Text;
                     data.Add(item.Key.ToLower(), node);
+
+                    if (!CanContainItem(node) && throwExceptions)
+                        throw new Exception("Error saving '" + node.Name + "' - cannot preserve type."); 
                 }
             }
 

@@ -43,10 +43,41 @@ namespace VisualLocalizer.Components {
                         }
                     }
                 } 
-            }
-
-           
+            }           
         }
-        
+
+
+        /// <summary>
+        /// Attempts to determine which resource key the reference points to
+        /// </summary>        
+        protected override CodeReferenceInfo ResolveReference(string prefix, string className, List<CodeReferenceInfo> trieElementInfos) {
+            CodeReferenceInfo info = null;
+
+            // prepend "My" with root namespace
+            string newPrefix = null;
+            if (prefix != null) {
+                int myIndex = prefix.IndexOf("My");
+                if (myIndex != -1 && (myIndex + 2 == prefix.Length || prefix[myIndex + 2] == '.')) {
+                    newPrefix = prefix.Replace("My", Project.GetRootNamespace() + ".My");
+                }
+            }
+       
+            // try various combinations to lookup the reference
+
+            info = TryResolve(prefix, className, trieElementInfos);
+            if (info == null && !string.IsNullOrEmpty(prefix)) info = TryResolve(prefix + "." + className, className, trieElementInfos);
+            if (info == null && string.IsNullOrEmpty(prefix)) info = TryResolve(className, className, trieElementInfos);
+            if (info == null && newPrefix != null) info = TryResolve(newPrefix, className, trieElementInfos);
+            if (info == null && newPrefix != null) info = TryResolve(newPrefix + "." + className, className, trieElementInfos);
+            
+            return info;
+        }
+
+        protected override bool UnderscoreIsLineJoiningChar {
+            get {
+                return true;
+            }
+        }
+
     }
 }

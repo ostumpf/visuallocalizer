@@ -26,17 +26,15 @@ namespace VLUnitTests.VLTests {
                     GenerateValidResultsForStrings3();
                 } else if (file == Agent.CSharpStringsTestFormDesignerFile1) {
                     GenerateValidResultsForForm1();
-                } else if (file == Agent.CSharpStringsTestResourcesDesignerFile) {
-                    GenerateValidResultsForResourcesDesignerFile();
-                } else throw new Exception("Cannot resolve test file name.");
+                }  else throw new Exception("Cannot resolve test file name.");
             }
             return validResults[file];
         }
 
         [TestMethod()]
         public void ProcessSelectedItemsTest4() {
-            string[] itemsToSelect = { Agent.CSharpStringsTestProject, Agent.CSharpStringsTestFolder2, Agent.CSharpStringsTestFile3 };
-            string[] expectedFiles = { Agent.CSharpStringsTestFile3, Agent.CSharpStringsTestFile2, Agent.CSharpStringsTestFormDesignerFile1, Agent.CSharpStringsTestResourcesDesignerFile, Agent.CSharpStringsTestFile1 };
+            string[] itemsToSelect = { Agent.CSharpStringsTestFolder1, Agent.CSharpStringsTestFolder2, Agent.CSharpStringsTestFormFile1 };
+            string[] expectedFiles = { Agent.CSharpStringsTestFile3, Agent.CSharpStringsTestFile2, Agent.CSharpStringsTestFormDesignerFile1 };
 
             GenericTest(Agent.BatchMoveCommand, itemsToSelect, expectedFiles, GetExpectedResultsFor);            
         }
@@ -67,8 +65,8 @@ namespace VLUnitTests.VLTests {
 
         [TestMethod()]
         public void ProcessDesignerItemsTest() {
-            string[] itemsToSelect = { Agent.CSharpStringsTestResourcesDesignerFile };
-            string[] expectedFiles = { Agent.CSharpStringsTestResourcesDesignerFile };
+            string[] itemsToSelect = { Agent.CSharpStringsTestFormFile1 };
+            string[] expectedFiles = { Agent.CSharpStringsTestFormDesignerFile1 };
             GenericTest(Agent.BatchMoveCommand, itemsToSelect, expectedFiles, GetExpectedResultsFor);
         }
 
@@ -93,7 +91,6 @@ namespace VLUnitTests.VLTests {
 
             VLDocumentViewsManager.SetFileReadonly(Agent.CSharpStringsTestFile1, false);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.CSharpStringsTestFile1));
-
         }
 
         [TestMethod()]
@@ -1008,26 +1005,6 @@ g
 
             foreach (var item in ValidResultsForForm1) CalculateAbsolutePosition(item);
             validResults.Add(Agent.CSharpStringsTestFormDesignerFile1, ValidResultsForForm1);            
-        }
-
-        private static void GenerateValidResultsForResourcesDesignerFile() {
-            List<AbstractResultItem> list = new List<AbstractResultItem>();
-            list.Add(new TestCSharpStringResultItem() {
-                Value = "CSharpTests.Properties.Resources",
-                WasVerbatim = false,
-                SourceItem = Agent.GetDTE().Solution.FindProjectItem(Agent.CSharpStringsTestResourcesDesignerFile),
-                VariableElementName = null,
-                ClassOrStructElementName = "Resources",
-                MethodElementName = "ResourceManager",
-                IsWithinLocalizableFalse = false,
-                IsMarkedWithUnlocalizableComment = false,
-                ComesFromDesignerFile = true,
-                NamespaceElementName = "CSharpTests.Properties",
-                ReplaceSpan = CreateTextSpan(42,113,42,147)                
-            });
-
-            foreach (var item in list) CalculateAbsolutePosition(item);
-            validResults.Add(Agent.CSharpStringsTestResourcesDesignerFile, list);
         }
 
     }

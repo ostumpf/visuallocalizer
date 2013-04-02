@@ -257,19 +257,14 @@ namespace VisualLocalizer.Commands {
             List<AspNetCodeReferenceResultItem> list = new List<AspNetCodeReferenceResultItem>();
 
             // test if is valid resource expression
-            if (!Regex.IsMatch(text, @"\s*Resources\s*:\s*\w+\s*,\s*\w+\s*")) return list;
-            
-            int whitespaceLeft;
-            int whitespaceRight;
-            GetLeftRightWhitespace(text, out whitespaceLeft, out whitespaceRight);
+            string regex = @"\s*(" + StringConstants.GlobalWebSiteResourcesNamespace + @")\s*:\s*(\w+)\s*,\s*(\w+)\s*";
+            Match match = Regex.Match(text, regex);
+            if (!match.Success || match.Groups.Count != 4) return list;
 
-            // get class name and key
-            string expr = text.Trim();
-            int colonIndex = expr.IndexOf(':');
-            int commaIndex = expr.IndexOf(',');
-            string prefix = expr.Substring(0, colonIndex).Trim();
-            string className = expr.Substring(colonIndex + 1, commaIndex - colonIndex - 1).Trim();
-            string key = expr.Substring(commaIndex + 1).Trim();
+
+            string prefix = StringConstants.GlobalWebSiteResourcesNamespace;
+            string className = match.Groups[2].Value;
+            string key = match.Groups[3].Value;
 
             // create standard reference from the class name and key
             string reference = string.Format("{0}.{1}", className, key);
@@ -292,19 +287,24 @@ namespace VisualLocalizer.Commands {
             }
             if (info == null) return list;// no result was found, return empty list
 
+            int startLineOffset, startIndex;
+            GetLineOffset(text, match.Groups[1].Index, out startLineOffset, out startIndex);            
+            int endLineOffset, endIndex;
+            GetLineOffset(text, match.Groups[3].Index + match.Groups[3].Length, out endLineOffset, out endIndex);
+
             // build result item
             AspNetCodeReferenceResultItem resultItem = new AspNetCodeReferenceResultItem();
             TextSpan span = new TextSpan();
-            span.iStartLine = blockSpan.StartLine;
-            span.iStartIndex = blockSpan.StartIndex + whitespaceLeft;
-            span.iEndLine = blockSpan.EndLine;
-            span.iEndIndex = blockSpan.EndIndex - whitespaceRight + 1;
+            span.iStartLine = blockSpan.StartLine+startLineOffset;
+            span.iStartIndex = startLineOffset == 0 ? blockSpan.StartIndex + startIndex : startIndex;
+            span.iEndLine = blockSpan.StartLine + endLineOffset;
+            span.iEndIndex = endLineOffset == 0 ? blockSpan.StartIndex + endIndex : endIndex;
 
             resultItem.Value = info.Value;
             resultItem.SourceItem = currentlyProcessedItem;
             resultItem.ReplaceSpan = span;
-            resultItem.AbsoluteCharOffset = blockSpan.AbsoluteCharOffset + whitespaceLeft;
-            resultItem.AbsoluteCharLength = blockSpan.AbsoluteCharLength - whitespaceLeft - whitespaceRight + 1;
+            resultItem.AbsoluteCharOffset = blockSpan.AbsoluteCharOffset + match.Groups[1].Index;
+            resultItem.AbsoluteCharLength = match.Groups[3].Index + match.Groups[3].Length - match.Groups[1].Index;
             resultItem.DestinationItem = info.Origin;
             resultItem.FullReferenceText = string.Format("{0}.{1}.{2}", info.Origin.Namespace, info.Origin.Class, key);
             resultItem.IsWithinLocalizableFalse = false;
@@ -319,23 +319,18 @@ namespace VisualLocalizer.Commands {
             return list;
         }
 
-        /// <summary>
-        /// Gets whitespace length on the left and right side of the text
-        /// </summary>        
-        private void GetLeftRightWhitespace(string text, out int whitespaceLeft, out int whitespaceRight) {
-            whitespaceRight = 0;
-            whitespaceLeft = 0;
-            int index = 0;
-            while (index < text.Length && char.IsWhiteSpace(text[index])) {
-                index++;
-                whitespaceLeft++;
-            }
-
-            index = text.Length - 1;
-            while (index >= 0 && char.IsWhiteSpace(text[index])) {
-                index--;
-                whitespaceRight++;
+        private void GetLineOffset(string text, int index, out int lineOffset, out int indexOffset) {
+            lineOffset = 0;
+            indexOffset = 0;
+            for (int i = 0; i < index; i++) {
+                indexOffset++;
+                if (text[i] == '\n') {
+                    lineOffset++;
+                    indexOffset = 0;
+                }                
             }
         }
+
+
     }
 }

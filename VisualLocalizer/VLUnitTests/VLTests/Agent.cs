@@ -43,6 +43,22 @@ namespace VLUnitTests {
             }
         }
 
+        private static BatchInlineCommand _BatchInlineCommand;
+        public static BatchInlineCommand BatchInlineCommand {
+            get {
+                if (_BatchInlineCommand == null) _BatchInlineCommand = new BatchInlineCommand();
+                return _BatchInlineCommand;
+            }
+        }
+
+        private static BatchInlineCommand_Accessor _BatchInlineCommand_Accessor;
+        public static BatchInlineCommand_Accessor BatchInlineCommand_Accessor {
+            get {
+                if (_BatchInlineCommand_Accessor == null) _BatchInlineCommand_Accessor = new BatchInlineCommand_Accessor();
+                return _BatchInlineCommand_Accessor;
+            }
+        }
+
         public static UIHierarchyItem FindUIHierarchyItem(UIHierarchyItems list, string path) {
             if (list == null) return null;
             if (!list.Expanded) list.Expanded = true;
@@ -83,8 +99,6 @@ namespace VLUnitTests {
             }
         }
 
-
-
         public static string CSharpStringsTestFile1 {
             get {
                 return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\strings1.cs";
@@ -115,6 +129,12 @@ namespace VLUnitTests {
             }
         }
 
+        public static string CSharpStringsTestFolder1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\Data\Inner\";
+            }
+        }
+
         public static string CSharpStringsTestFolder2 {
             get {
                 return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\Data\";
@@ -126,12 +146,6 @@ namespace VLUnitTests {
                 return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\Data\Inner\strings3.cs";
             }
         }        
-
-        public static string CSharpStringsTestResourcesDesignerFile {
-            get {
-                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\Properties\Resources.Designer.cs";
-            }
-        }
 
 
 
@@ -229,6 +243,36 @@ namespace VLUnitTests {
         public static string AspNetStringsTestProject {
             get {
                 return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\WebSite\";
+            }
+        }
+
+        public static string CSharpReferencesTestFile1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\references1.cs";
+            }
+        }
+
+        public static string CSharpReferencesTestFile2 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\references2.cs";
+            }
+        }
+
+        public static string VBReferencesTestFile1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\VBTests\references1.vb";
+            }
+        }
+
+        public static string AspNetReferencesTestFile1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\WebSite\referencesCS.aspx";
+            }
+        }
+
+        public static string AspNetReferencesTestFile2 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\WebSite\referencesVB.aspx";
             }
         }
     }

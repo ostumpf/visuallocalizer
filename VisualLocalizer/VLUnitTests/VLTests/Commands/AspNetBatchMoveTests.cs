@@ -817,7 +817,7 @@ namespace VLUnitTests.VLTests {
                 LocalizabilityProved = false,
                 ReplaceSpan = CreateTextSpan(33, 23, 33, 28)
             });            
-            
+
 
             foreach (var item in list) {
                 CalculateAbsolutePosition(item);                

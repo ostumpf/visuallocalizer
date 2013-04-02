@@ -88,6 +88,7 @@ namespace VisualLocalizer.Library {
             // go from root, create new elements for undefined transitions
             for (int i = 0; i < text.Length; i++) {
                 char c = text[i];
+                
                 if (e.Successors.ContainsKey(c)) { // transition exists
                     if (c == '.') e.CanBeFollowedByWhitespace = true; // after a . in a reference can be whitespace character
                     e = (ElementType)e.Successors[c];

@@ -62,6 +62,8 @@ namespace VisualLocalizer.Components {
         /// </summary>
         private FILETYPE fileLanguage;
 
+        private object syncObject = new object();
+
         private AspNetCodeExplorer() { }
 
         private static AspNetCodeExplorer instance;
@@ -83,36 +85,36 @@ namespace VisualLocalizer.Components {
             if (parentCommand == null) throw new ArgumentNullException("parentCommand");
             if (projectItem == null) throw new ArgumentNullException("projectItem");
 
-            fullPath = projectItem.GetFullPath();
-            if (string.IsNullOrEmpty(fullPath)) throw new Exception("Cannot process item " + projectItem.Name);
+            lock (syncObject) {
+                fullPath = projectItem.GetFullPath();
+                if (string.IsNullOrEmpty(fullPath)) throw new Exception("Cannot process item " + projectItem.Name);
 
-            this.parentCommand = parentCommand;
-            this.declaredNamespaces.Clear();
-            this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
-            this.projectItem = projectItem;
-            
-            // initialize type resolver
-            webConfig = new WebConfig(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
-            fileText = null;
+                this.parentCommand = parentCommand;
+                this.declaredNamespaces.Clear();
+                this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
+                this.projectItem = projectItem;
 
-            if (RDTManager.IsFileOpen(fullPath)) { // file is open
-                var textLines = VLDocumentViewsManager.GetTextLinesForFile(fullPath, false); // get text buffer
-                if (textLines == null) return;
+                // initialize type resolver
+                webConfig = WebConfig.Get(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
+                fileText = null;
 
-                int lastLine, lastLineIndex;
-                int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
-                Marshal.ThrowExceptionForHR(hr);
+                if (RDTManager.IsFileOpen(fullPath)) { // file is open
+                    var textLines = VLDocumentViewsManager.GetTextLinesForFile(fullPath, false); // get text buffer
+                    if (textLines == null) return;
 
-                hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out fileText); // get plain text
-                Marshal.ThrowExceptionForHR(hr);
-            } else { // file is closed - read it from disk
-                fileText = File.ReadAllText(fullPath);
+                    int lastLine, lastLineIndex;
+                    int hr = textLines.GetLastLineIndex(out lastLine, out lastLineIndex);
+                    Marshal.ThrowExceptionForHR(hr);
+
+                    hr = textLines.GetLineText(0, 0, lastLine, lastLineIndex, out fileText); // get plain text
+                    Marshal.ThrowExceptionForHR(hr);
+                } else { // file is closed - read it from disk
+                    fileText = File.ReadAllText(fullPath);
+                }
+
+                Parser parser = new Parser(fileText, this, maxLine, maxIndex); // run ASP .NET parser
+                parser.Process();
             }
-
-            Parser parser = new Parser(fileText, this, maxLine, maxIndex); // run ASP .NET parser
-            parser.Process();
-
-            webConfig.ClearCache();
         }
 
         /// <summary>
