@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using EnvDTE;
 using VisualLocalizer.Library;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
 
@@ -29,7 +30,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Name of the class/struct/module where current code block belongs
         /// </summary>
-        private string ClassOrStructElement { get; set; }
+        private string ClassOrStructElement { get; set; }        
 
         private static VBStringLookuper instance;
 
@@ -84,6 +85,9 @@ namespace VisualLocalizer.Components {
                 resultItem.VariableElementName = variableElement;
                 resultItem.ClassOrStructElementName = ClassOrStructElement;
                 resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
+
+                if (list.Count >= 2) ConcatenateWithPreviousResult((IList)list, list[list.Count - 2], list[list.Count - 1]);            
+
                 return resultItem;
             } else return null;            
         }

@@ -35,25 +35,12 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         private Dictionary<string, StringBuilder> filesCache;
 
-        /// <summary>
-        /// Rows containing result items
-        /// </summary>
-        private IList rows;
-        
-        public AbstractBatchReferenceProcessor(IList rows) {
-            if (rows == null) throw new ArgumentNullException("rows");
-
+        public AbstractBatchReferenceProcessor() {
             buffersCache = new Dictionary<string, IVsTextLines>();
             undoManagersCache = new Dictionary<string, IOleUndoManager>();
-            filesCache = new Dictionary<string, StringBuilder>();
-            this.rows = rows;            
+            filesCache = new Dictionary<string, StringBuilder>();                 
         }
-
-        /// <summary>
-        /// Returns result item with specified index
-        /// </summary>        
-        public abstract CodeReferenceResultItem GetItemFromList(IList list, int index);
-        
+       
         /// <summary>
         /// Returns text that replaces current reference
         /// </summary>        
@@ -69,10 +56,12 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         public abstract AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange);
       
-        public void Inline(List<CodeReferenceResultItem> dataList, bool externalChange, ref int errorRows) {                        
+        public void Inline(List<CodeReferenceResultItem> dataList, bool externalChange, ref int errorRows) {
+            // sort according to position
+            dataList.Sort(new ResultItemsPositionCompararer<CodeReferenceResultItem>());
+
             // start with the last items - not necessary to adjust position of many items after replace
             for (int i = dataList.Count - 1; i >= 0; i--) {
-                int newItemLength = -1;
                 try {
                     CodeReferenceResultItem resultItem = dataList[i];
 
@@ -84,8 +73,7 @@ namespace VisualLocalizer.Commands {
                         
                         // get text that replaces the result item
                         string text = GetReplaceString(resultItem); 
-                        newItemLength = text.Length;
-
+                        
                         string path = resultItem.SourceItem.GetFullPath();
                         if (RDTManager.IsFileOpen(path)) { // file is open
                             if (!buffersCache.ContainsKey(path)) { // file's buffer is not yet loaded
@@ -102,7 +90,7 @@ namespace VisualLocalizer.Commands {
 
                             // replace the result item with the new text
                             int h = buffersCache[path].ReplaceLines(inlineSpan.iStartLine, inlineSpan.iStartIndex, inlineSpan.iEndLine, inlineSpan.iEndIndex,
-                                Marshal.StringToBSTR(text), text.Length, null);
+                                Marshal.StringToBSTR(text), text.Length, new TextSpan[] { inlineSpan });
                             Marshal.ThrowExceptionForHR(h);
 
                             // previous step caused undo unit to be added - remove it
@@ -127,17 +115,14 @@ namespace VisualLocalizer.Commands {
                     }
                 } catch (Exception ex) {                    
                     errorRows++;
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(ex.Message);
-                } finally {
-                    // adjust position of all following result items
-                    if (newItemLength != -1)
-                        AbstractCheckedGridViewEx.SetItemFinished<CodeReferenceResultItem>(rows, GetItemFromList, i, newItemLength);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 }
             }
 
             foreach (var pair in filesCache) {
                 File.WriteAllText(pair.Key, pair.Value.ToString());
             }
+            if (errorRows > 0) throw new Exception("Error occured while processing some rows - see Output window for details."); 
         }
 
     }

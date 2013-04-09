@@ -111,7 +111,7 @@ namespace VisualLocalizer {
 
         public const string AspImportDirectiveFormat = "<%@ Import Namespace=\"{0}\" %>\r\n";
         public const string CSharpUsingBlockFormat = "using {0};\r\n";
-        public const string VBUsingBlockFormat = "Imports {0};\r\n";
+        public const string VBUsingBlockFormat = "Imports {0}\r\n";
 
         /// <summary>
         /// Attributes ignored by ASP .NET code explorer, in the format [elementName]:[attributeName]. Symbol * is metacharacter, meaning "any string"

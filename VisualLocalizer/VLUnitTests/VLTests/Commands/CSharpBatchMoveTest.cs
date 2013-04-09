@@ -944,6 +944,58 @@ g
                 NamespaceElementName = "CSharpTests.Data",
                 ReplaceSpan = CreateTextSpan(10, 31, 10, 38)
             });
+            ValidResultsForStrings2.Add(new TestCSharpStringResultItem() {
+                Value = "Hello, World!",
+                WasVerbatim = false,
+                SourceItem = projectItem,
+                VariableElementName = "test5",
+                ClassOrStructElementName = "B",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                IsMarkedWithUnlocalizableComment = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "CSharpTests.Data",
+                ReplaceSpan = CreateTextSpan(11, 31, 11, 52)
+            });
+            ValidResultsForStrings2.Add(new TestCSharpStringResultItem() {
+                Value = "firstsecond",
+                WasVerbatim = true,
+                SourceItem = projectItem,
+                VariableElementName = "test6",
+                ClassOrStructElementName = "B",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                IsMarkedWithUnlocalizableComment = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "CSharpTests.Data",
+                ReplaceSpan = CreateTextSpan(12, 31, 14, 29)
+            });
+            ValidResultsForStrings2.Add(new TestCSharpStringResultItem() {
+                Value = "first",
+                WasVerbatim = false,
+                SourceItem = projectItem,
+                VariableElementName = "test7",
+                ClassOrStructElementName = "B",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                IsMarkedWithUnlocalizableComment = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "CSharpTests.Data",
+                ReplaceSpan = CreateTextSpan(15, 31, 15, 38)
+            });
+            ValidResultsForStrings2.Add(new TestCSharpStringResultItem() {
+                Value = "second",
+                WasVerbatim = false,
+                SourceItem = projectItem,
+                VariableElementName = "test7",
+                ClassOrStructElementName = "B",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                IsMarkedWithUnlocalizableComment = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "CSharpTests.Data",
+                ReplaceSpan = CreateTextSpan(17, 20, 17, 28)
+            });
 
             foreach (var item in ValidResultsForStrings2) CalculateAbsolutePosition(item);
             validResults.Add(Agent.CSharpStringsTestFile2, ValidResultsForStrings2);                                    

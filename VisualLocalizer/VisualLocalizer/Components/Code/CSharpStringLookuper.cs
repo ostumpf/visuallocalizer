@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using EnvDTE;
 using VisualLocalizer.Library;
+using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TextManager.Interop;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
 
@@ -30,7 +33,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Name of the class/struct/module where current code block belongs
         /// </summary>
-        private string ClassOrStructElement { get; set; }
+        private string ClassOrStructElement { get; set; }        
 
         private static CSharpStringLookuper instance;
 
@@ -63,7 +66,7 @@ namespace VisualLocalizer.Components {
             this.variableElement = variableElement;
 
             return LookForStrings(projectItem, isGenerated, text, startPoint, isWithinLocFalse);
-        }
+        }        
 
         /// <summary>
         /// Adds string literal to the list of results
@@ -86,7 +89,11 @@ namespace VisualLocalizer.Components {
             resultItem.WasVerbatim = isVerbatimString;
             resultItem.Value=resultItem.Value.ConvertCSharpEscapeSequences(isVerbatimString);
 
+            if (list.Count >= 2) ConcatenateWithPreviousResult((IList)list, list[list.Count - 2], list[list.Count - 1]);            
+
             return resultItem;
         }
+
+       
     }
 }

@@ -54,46 +54,36 @@ namespace VisualLocalizer.Commands {
         /// <summary>
         /// Cache for adding using blocks to closed files - key is full path of the file, value list of new using blocks
         /// </summary>
-        private Dictionary<string, List<string>> externalUsingsPlan;
+        private Dictionary<string, List<string>> newUsingsPlan;
         
         /// <summary>
         /// List of ResX items that were loaded to memory
         /// </summary>
         private HashSet<ResXProjectItem> loadedResxItems;
-
-        /// <summary>
-        /// Rows containing result items
-        /// </summary>
-        private IList rows;
-
-        public BatchMover(IList rows, bool useFullName, bool markUncheckedStringsWithComment) {
-            if (rows == null) throw new ArgumentNullException("rows");
-
+        
+        public BatchMover(bool useFullName, bool markUncheckedStringsWithComment) {
             this.MarkUncheckedStringsWithComment = markUncheckedStringsWithComment;
             this.UseFullName = useFullName;
-            this.rows = rows;
-
+            
             usedNamespacesCache = new Dictionary<object, NamespacesList>();
             buffersCache = new Dictionary<string, IVsTextLines>();
             undoManagersCache = new Dictionary<string, IOleUndoManager>();
             filesCache = new Dictionary<string, StringBuilder>();
-            externalUsingsPlan = new Dictionary<string, List<string>>();            
+            newUsingsPlan = new Dictionary<string, List<string>>();            
             loadedResxItems = new HashSet<ResXProjectItem>();
         }        
 
         public void Move(List<CodeStringResultItem> dataList, ref int errorRows) {
-            Func<IList, int, CodeStringResultItem> getter = new Func<IList, int, CodeStringResultItem>((list, index) => {
-                return (list[index] as DataGridViewCheckedRow<CodeStringResultItem>).DataSourceItem;
-            });            
+            // sort according to position
+            dataList.Sort(new ResultItemsPositionCompararer<CodeStringResultItem>());
 
             for (int i = dataList.Count - 1; i >= 0; i--) {
-                int newItemLength = -1;
                 try {
                     // initialization of data
                     CodeStringResultItem resultItem = dataList[i]; 
                     string path = resultItem.SourceItem.GetFullPath();
                     ReferenceString referenceText = null;
-                    bool addUsingBlock = false;
+                    bool addUsingBlock = false;                    
                     CONTAINS_KEY_RESULT keyConflict = CONTAINS_KEY_RESULT.DOESNT_EXIST;
 
                     if (resultItem.MoveThisItem) { // row was checked in the toolwindow                        
@@ -112,7 +102,7 @@ namespace VisualLocalizer.Commands {
                         resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key); // if key already exists, return its name (solves case-sensitivity problems)
 
                         NamespacesList usedNamespaces = GetUsedNamespacesFor(resultItem);
-
+                        
                         if (UseFullName || resultItem.MustUseFullName) { // reference will contain namespace
                             referenceText = new ReferenceString(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key);
                             addUsingBlock = false; // no using block will be added
@@ -121,17 +111,17 @@ namespace VisualLocalizer.Commands {
                             addUsingBlock = usedNamespaces.ResolveNewElement(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key,
                                     resultItem.SourceItem.ContainingProject, out referenceText);
                         }
-                        if (addUsingBlock) { // new using block will be added
-                            NetStringResultItem nitem = resultItem as NetStringResultItem;
-                            if (nitem==null || nitem.NamespaceElement == null) {
-                                usedNamespacesCache[resultItem.SourceItem].Add(resultItem.DestinationItem.Namespace, null);
-                            } else {
-                                usedNamespacesCache[nitem.NamespaceElement].Add(resultItem.DestinationItem.Namespace, null);
+                        if (addUsingBlock) { // new using block will be added                                                        
+                            if (!usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
+                                usedNamespacesCache.Add(resultItem.SourceItem, new NamespacesList());
+                            }                            
+                            foreach (var pair in usedNamespacesCache) {
+                                if (!pair.Value.ContainsNamespace(resultItem.DestinationItem.Namespace)) 
+                                    pair.Value.Add(resultItem.DestinationItem.Namespace, null, true);
                             }
                         }
                     }
 
-                    newItemLength = -1;
                     if (RDTManager.IsFileOpen(path)) { // file is open
                         if (resultItem.MoveThisItem || (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment)) { // string literal in text will be modified (referenced or marked with comment)                            
                             if (!buffersCache.ContainsKey(path)) {
@@ -149,21 +139,27 @@ namespace VisualLocalizer.Commands {
 
                         if (resultItem.MoveThisItem) {
                             // perform the text replacement
-                            newItemLength = MoveToResource(buffersCache[path], resultItem, referenceText);
-
+                            MoveToResource(buffersCache[path], resultItem, referenceText);
+                            
                             if (addUsingBlock) {
                                 // add using block to the source file
-                                resultItem.AddUsingBlock(buffersCache[resultItem.SourceItem.GetFullPath()]);                            
-                                
+                                int beforeLines, afterLines;
+                                buffersCache[path].GetLineCount(out beforeLines);
+                                resultItem.AddUsingBlock(null);
+                                buffersCache[path].GetLineCount(out afterLines);
+                                int diff = afterLines - beforeLines;
+
                                 // because of the previous step, it is necessary to adjust position of all not-yet referenced result items 
                                 for (int j = i; j >= 0; j--) {
                                     var item = dataList[j];
-                                    TextSpan ts = new TextSpan();
-                                    ts.iEndIndex = item.ReplaceSpan.iEndIndex;
-                                    ts.iEndLine = item.ReplaceSpan.iEndLine + 1;
-                                    ts.iStartIndex = item.ReplaceSpan.iStartIndex;
-                                    ts.iStartLine = item.ReplaceSpan.iStartLine + 1;
-                                    item.ReplaceSpan = ts;
+                                    if (item.SourceItem == resultItem.SourceItem) {
+                                        TextSpan ts = new TextSpan();
+                                        ts.iEndIndex = item.ReplaceSpan.iEndIndex;
+                                        ts.iEndLine = item.ReplaceSpan.iEndLine + diff;
+                                        ts.iStartIndex = item.ReplaceSpan.iStartIndex;
+                                        ts.iStartLine = item.ReplaceSpan.iStartLine + diff;
+                                        item.ReplaceSpan = ts;
+                                    }
                                 }
                             }
 
@@ -187,8 +183,7 @@ namespace VisualLocalizer.Commands {
                             if (resultItem is CSharpStringResultItem || (aitem != null && aitem.ComesFromCodeBlock && aitem.Language == LANGUAGE.CSHARP)) {
                                 // add the comment
                                 int c = MarkAsNoLoc(buffersCache[path], resultItem);
-                                newItemLength = resultItem.AbsoluteCharLength + c;
-
+                              
                                 // add undo unit
                                 List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(1);
                                 MarkAsNotLocalizedStringUndoUnit newUnit = new MarkAsNotLocalizedStringUndoUnit(resultItem.Value);
@@ -213,21 +208,19 @@ namespace VisualLocalizer.Commands {
                             string insertText=resultItem.GetReferenceText(referenceText);
                             b.Remove(resultItem.AbsoluteCharOffset, resultItem.AbsoluteCharLength);
                             b.Insert(resultItem.AbsoluteCharOffset, insertText);
-                            newItemLength = insertText.Length;
-                            
+                          
                             if (addUsingBlock) {
                                 // add using block
-                                if (!externalUsingsPlan.ContainsKey(path))
-                                    externalUsingsPlan.Add(path, new List<string>());
-                                externalUsingsPlan[path].Add(resultItem.DestinationItem.Namespace);
+                                if (!newUsingsPlan.ContainsKey(path))
+                                    newUsingsPlan.Add(path, new List<string>());
+                                newUsingsPlan[path].Add(resultItem.DestinationItem.Namespace);
                             }
                         } else if (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment) {
                              AspNetStringResultItem aitem = resultItem as AspNetStringResultItem;
                              
                              if (resultItem is CSharpStringResultItem || (aitem != null && aitem.ComesFromCodeBlock && aitem.Language == LANGUAGE.CSHARP)) {
                                  StringBuilder b = filesCache[path];
-                                 b.Insert(resultItem.AbsoluteCharOffset, resultItem.NoLocalizationComment);
-                                 newItemLength = resultItem.AbsoluteCharLength + resultItem.NoLocalizationComment.Length;
+                                 b.Insert(resultItem.AbsoluteCharOffset, resultItem.NoLocalizationComment);                                 
                              }
                         }
                     }
@@ -242,16 +235,12 @@ namespace VisualLocalizer.Commands {
 
                 } catch (Exception ex) {
                     errorRows++;
-                    VLOutputWindow.VisualLocalizerPane.WriteLine(ex.Message);
-                } finally {
-                    // adjust position of all unfinished result items
-                    if (newItemLength != -1)
-                        AbstractCheckedGridViewEx.SetItemFinished(rows, getter, i, newItemLength);
-                }
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                } 
             }
             
             // add using blocks to closed files texts
-            foreach (var pair in externalUsingsPlan)
+            foreach (var pair in newUsingsPlan)
                 foreach (string nmspc in pair.Value) {
                     AddUsingBlockTo(pair.Key, nmspc);
                 }
@@ -284,7 +273,11 @@ namespace VisualLocalizer.Commands {
                 } else { // has parent namespace - used namespaces can differ, use the parent namespace as a key
                     if (!usedNamespacesCache.ContainsKey(namespaceElement)) {
                         usedNamespacesCache.Add(namespaceElement, namespaceElement.GetUsedNamespaces(resultItem.SourceItem));
+                        if (usedNamespacesCache.ContainsKey(resultItem.SourceItem)) {
+                            usedNamespacesCache[namespaceElement].AddRange(usedNamespacesCache[resultItem.SourceItem]);
+                        }
                     }
+                    
                     return usedNamespacesCache[namespaceElement];
                 }
             } else if (resultItem is AspNetStringResultItem) {

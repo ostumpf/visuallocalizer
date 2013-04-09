@@ -68,14 +68,12 @@ namespace VisualLocalizer.Library {
                     hr = fileChange.IgnoreFile(0, path, 1);
                     Marshal.ThrowExceptionForHR(hr);
 
-                    hr = changeControl.IgnoreFileChanges(1);
-                    Marshal.ThrowExceptionForHR(hr);
+                    hr = changeControl.IgnoreFileChanges(1);                    
                 } else {
                     hr = fileChange.IgnoreFile(0, path, 0);
                     Marshal.ThrowExceptionForHR(hr);
 
-                    hr = changeControl.IgnoreFileChanges(0);
-                    Marshal.ThrowExceptionForHR(hr);
+                    hr = changeControl.IgnoreFileChanges(0);                    
                 }
             }             
         }          

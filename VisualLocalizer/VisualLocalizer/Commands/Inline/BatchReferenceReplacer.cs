@@ -15,19 +15,7 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class BatchReferenceReplacer : AbstractBatchReferenceProcessor {
 
-        /// <summary>
-        /// Initialize with list of result items for specified resource key
-        /// </summary>        
-        public BatchReferenceReplacer(List<CodeReferenceResultItem> list)
-            : base(list) {            
-        }
-
-        /// <summary>
-        /// Returns result item with specified index
-        /// </summary>  
-        public override CodeReferenceResultItem GetItemFromList(IList list, int index) {
-            return (CodeReferenceResultItem)list[index];
-        }
+        public BatchReferenceReplacer() { }
 
         /// <summary>
         /// Returns text that replaces current reference

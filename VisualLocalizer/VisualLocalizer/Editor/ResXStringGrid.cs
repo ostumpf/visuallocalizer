@@ -651,10 +651,10 @@ namespace VisualLocalizer.Editor {
                     int count = row.CodeReferences.Count;
                     
                     // set new key
-                    row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey; });
-
+                    row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey.CreateIdentifier(resxItem.DesignerLanguage); });
+                    
                     // run the replacer
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(row.CodeReferences);
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
                     replacer.Inline(row.CodeReferences, true, ref errors);
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code, {1} errors", count, errors);
@@ -1070,7 +1070,7 @@ namespace VisualLocalizer.Editor {
                                 totalList.AddRange(row.CodeReferences);
                             }
                         }
-                        BatchInliner inliner = new BatchInliner(totalList);
+                        BatchInliner inliner = new BatchInliner();
                         
                         // run inliner
                         int errors = 0;

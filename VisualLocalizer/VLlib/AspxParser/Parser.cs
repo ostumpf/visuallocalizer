@@ -79,14 +79,14 @@ namespace VisualLocalizer.Library.AspxParser {
                 if (!withinServerComment) {
                     if (withinOutputElement || withinCodeBlock) {
                         codeBuilder.Append(currentChar);
-                    } else if (!withinAspElement && !withinAspDirective) {
+                    } else if (!withinAspElement) {
                         if (withinPlainText) {
                             plainTextBuilder.Append(currentChar);
                         }
                     }
                 }
 
-                if (!withinServerComment && (withinAspDirective || withinAspElement)) {
+                if (!withinServerComment && withinAspElement) {
                     ReactToWithinElementChar(); // read attribute name, value or element prefix
                 }
 
@@ -94,7 +94,11 @@ namespace VisualLocalizer.Library.AspxParser {
                     ReactToBeginningOfAspTags(); // determine what kind of content it is - output element, code block...
                     justEnteredAspTags = false;
                 }
-                
+
+                if (withinAspDirective && !withinOutputElement && currentChar == '>' && GetCodeBack(1) == '%') {
+                    withinAspTags = true;
+                }
+
                 if (!withinAspTags) {                    
                     if (currentChar == '%' && GetCodeBack(1) == '<') {
                         EndPlainText(-1,2); // report plain text
@@ -299,11 +303,21 @@ namespace VisualLocalizer.Library.AspxParser {
                 withinOutputElement = true;
             }
             if (currentChar == '@') {
+                EndPlainText(-1, 2);
+
                 withinAspDirective = true;
+                withinAspElement = true;
+                withinAspTags = false;
+                withinAttributeName = true;
                 attributes = new List<AttributeInfo>();
                 elementName = null;
+                elementPrefix = null;
+                codeBuilder.Length = 0;
+                withinCodeBlock = false;
+                                
+                HitStart(ref externalSpan, -1);
             }
-            if (withinAspDirective || withinOutputElement) {
+            if (withinOutputElement) {
                 if (withinAttributeValue) {
                     backupSpan = new BlockSpan(externalSpan);
                     backupBuilder.Length = 0;
@@ -355,6 +369,7 @@ namespace VisualLocalizer.Library.AspxParser {
                 elementName = null;
                 attributes = null;
                 withinAspDirective = false;
+                withinAspElement = false;
                 codeBuilder.Length = 0;
             }
             if (withinCodeBlock) {

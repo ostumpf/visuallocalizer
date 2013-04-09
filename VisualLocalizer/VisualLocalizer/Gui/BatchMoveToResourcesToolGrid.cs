@@ -186,8 +186,7 @@ namespace VisualLocalizer.Gui {
                     keyCell.Items.Add(key);
                     if (keyCell.Value == null) // add first suggestion as default value
                         keyCell.Value = key;
-                }
-
+                }               
                 row.Cells.Add(keyCell);
 
                 DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
@@ -224,6 +223,7 @@ namespace VisualLocalizer.Gui {
                 contextCell.ReadOnly = true;
                 
                 Validate(row);
+                keyCell.Tag = keyCell.Value;
             }            
             
             this.ClearSelection();            

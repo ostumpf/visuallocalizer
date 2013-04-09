@@ -18,7 +18,7 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         public static string GetText(this CodeFunction2 codeFunction) {
             if (codeFunction == null) throw new ArgumentNullException("codeFunction");
-        
+            
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
             TextPoint endPoint = codeFunction.GetEndPoint(vsCMPart.vsCMPartBody);
 
@@ -27,7 +27,7 @@ namespace VisualLocalizer.Library {
                 return null;
             } else {
                 return ep.GetText(endPoint);
-            }                       
+            }            
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace VisualLocalizer.Library {
 
         private static void GetUsedNamespacesInternal(CodeNamespace codeNamespace, ProjectItem item, NamespacesList list) {
             if (codeNamespace != null) { // add itself, its children and its parents
-                list.Add(codeNamespace.FullName, null);
+                list.Add(codeNamespace.FullName, null, false);
 
                 AddUsedNamespacesToList(codeNamespace.Children, list);
 
@@ -243,7 +243,7 @@ namespace VisualLocalizer.Library {
             foreach (CodeElement2 element in elements) {
                 if (element.Kind == vsCMElement.vsCMElementImportStmt) {
                     CodeImport codeImport = (CodeImport)element;
-                    list.Add(codeImport.Namespace, codeImport.Alias);
+                    list.Add(codeImport.Namespace, codeImport.Alias, true);
                 }
             }
         }

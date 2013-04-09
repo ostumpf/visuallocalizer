@@ -88,10 +88,16 @@ namespace VisualLocalizer.Extensions {
             foreach (ResXProjectItem item in resxItems) {
                 bool wasLoaded = item.IsLoaded;
                 if (!wasLoaded) item.Load(); // load data from the file or buffer               
-
+                
                 foreach (var pair in item.GetAllStringReferences(true)) { // get string resources, adding class name
-                    var element = trie.Add(pair.Key); // add to trie
-                    element.Infos.Add(new CodeReferenceInfo() { Origin = item, Value = pair.Value, Key = pair.Key });
+                    string className, keyName;
+                    string[] s = pair.Key.Split('.');
+                    className = s[0];
+                    keyName = s[1];
+
+                    string k = className + "."+ keyName.CreateIdentifier(item.DesignerLanguage); 
+                    var element = trie.Add(k); // add to trie
+                    element.Infos.Add(new CodeReferenceInfo() { Origin = item, Value = pair.Value, Key = k });
                 }
                 
                 if (!wasLoaded) item.Unload(); // unload the data

@@ -529,10 +529,10 @@ namespace VisualLocalizer.Editor {
                 if (item.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
                     int errors = 0;
                     int count = item.CodeReferences.Count;
-                    item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditKey; });
+                    item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditKey.CreateIdentifier(resxItem.DesignerLanguage); });
 
                     // run replacer
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(item.CodeReferences);
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
                     replacer.Inline(item.CodeReferences, true, ref errors);
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code, {1} errors occured", count, errors);

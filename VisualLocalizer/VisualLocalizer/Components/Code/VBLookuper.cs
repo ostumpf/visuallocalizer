@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using EnvDTE;
 using VisualLocalizer.Library;
+using System.Text.RegularExpressions;
+using System.Collections;
+using System.Reflection;
 
 namespace VisualLocalizer.Components {
 
@@ -12,6 +15,31 @@ namespace VisualLocalizer.Components {
     /// </summary>
     /// <typeparam name="T">Type of result item</typeparam>
     internal class VBLookuper<T> : AbstractCodeLookuper<T> where T : AbstractResultItem, new() {
+
+        private static Regex VBConcateningRegexp;
+        private static List<AbstractConcatenatingChar> concatenatingList;
+
+        static VBLookuper() {
+            VBConcateningRegexp = new Regex(@"^(\s*_?\s*[&\+]\s*_?\s*([^&\+]+)\s*_?\s*)*\s*_?\s*[&\+]\s*_?\s*$");                        
+            concatenatingList = new List<VBLookuper<T>.AbstractConcatenatingChar>();
+
+            string nmspc = @"Microsoft\s*_?\s*\.\s*_?\s*VisualBasic\s*_?\s*\.\s*_?\s*";
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbCrLf", "\r\n"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbCr", "\r"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbLf", "\n"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbNewLine", Environment.NewLine));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbNullString", string.Empty));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbTab", "\t"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbBack", "\b"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbFormFeed", "\f"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbVerticalTab", "\v"));
+
+            foreach (var info in typeof(Microsoft.VisualBasic.ControlChars).GetFields(BindingFlags.Static | BindingFlags.Public)) {
+                concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace(@"(" + nmspc + @")?ControlChars\s*_?\s*\.\s*_?\s*" + info.Name, info.GetValue(null).ToString()));
+            }
+
+            concatenatingList.Add(new ChrConcatenatingChar(@"("+nmspc+@")?Chr\s*_?\s*\(\s*_?\s*(\d+)\s*_?\s*\)"));
+        }
 
         /// <summary>
         /// Language-specific implementation, handles beginnings and ends of strings, comments etc.
@@ -66,18 +94,88 @@ namespace VisualLocalizer.Components {
 
             info = TryResolve(prefix, className, trieElementInfos);
             if (info == null && !string.IsNullOrEmpty(prefix)) info = TryResolve(prefix + "." + className, className, trieElementInfos);
-            if (info == null && string.IsNullOrEmpty(prefix)) info = TryResolve(className, className, trieElementInfos);
             if (info == null && newPrefix != null) info = TryResolve(newPrefix, className, trieElementInfos);
+            if (info == null && string.IsNullOrEmpty(prefix)) info = TryResolve(className, className, trieElementInfos);            
             if (info == null && newPrefix != null) info = TryResolve(newPrefix + "." + className, className, trieElementInfos);
             
             return info;
         }
 
+        /// <summary>
+        /// Returns true if underscore (_) has a role of line-joining character
+        /// </summary>
         protected override bool UnderscoreIsLineJoiningChar {
             get {
                 return true;
             }
         }
 
+        protected override void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
+            string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);            
+            Match match = VBConcateningRegexp.Match(textBetween);
+            
+            if (match.Success) {
+                bool ok = match.Groups.Count == 3;
+                if (!ok) return;
+
+                StringBuilder addedValues = new StringBuilder();
+                for (int i = 0; i < match.Groups[2].Captures.Count; i++) {
+                    bool matched = false;
+                    foreach (AbstractConcatenatingChar m in concatenatingList) {
+                        if (m.Matches(match.Groups[2].Captures[i].Value.Trim())) {
+                            addedValues.Append(m.ReplaceChar);
+                            matched = true;
+                            break;
+                        }
+                    }
+                    ok = ok && matched;
+                }
+
+                if (ok) {
+                    previouslyAddedItem.Value += addedValues.ToString();
+                    results.RemoveAt(results.Count - 1);
+
+                    base.ConcatenateWithPreviousResult(results, previouslyAddedItem, resultItem);
+                }
+            }
+        }
+
+
+        private abstract class AbstractConcatenatingChar {
+            public abstract bool Matches(string input);
+            public string ReplaceChar { get; protected set; }
+        }   
+
+        private class ExplicitConcatenatingCharWithOptionalNamespace : AbstractConcatenatingChar {
+            private Regex regex;
+
+            public ExplicitConcatenatingCharWithOptionalNamespace(string regex, string c) {
+                this.regex = new Regex(regex);
+                this.ReplaceChar = c;
+            }
+
+            public override bool Matches(string input) {
+                return regex.IsMatch(input);
+            }
+        }
+
+        private class ChrConcatenatingChar : AbstractConcatenatingChar {
+            private Regex regex;
+
+            public ChrConcatenatingChar(string regex) {
+                this.regex = new Regex(regex);                
+            }
+
+            public override bool Matches(string input) {
+                Match m = regex.Match(input);
+                if (!m.Success) return false;
+                if (m.Groups.Count != 2 && m.Groups.Count != 3) return false;
+
+                int val = int.Parse(m.Groups[m.Groups.Count - 1].Value);
+                ReplaceChar = ((char)val).ToString();
+
+                return true;
+            }
+        }
     }
 }

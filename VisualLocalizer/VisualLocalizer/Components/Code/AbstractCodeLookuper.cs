@@ -6,6 +6,8 @@ using EnvDTE;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.AspxParser;
 using Microsoft.VisualStudio.TextManager.Interop;
+using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
 
@@ -313,6 +315,13 @@ namespace VisualLocalizer.Components {
         /// </summary>        
         protected abstract CodeReferenceInfo ResolveReference(string prefix, string className, List<CodeReferenceInfo> trieElementInfos);
         
+        /// <summary>
+        /// Resolves given reference to a resource to a qualified name
+        /// </summary>
+        /// <param name="prefix">Namespace in the reference</param>
+        /// <param name="className">Class in the reference</param>
+        /// <param name="trieElementInfos">List of resource files entries - possible targets of this reference</param>
+        /// <returns>Resolved reference</returns>
         protected CodeReferenceInfo TryResolve(string prefix, string className, List<CodeReferenceInfo> trieElementInfos) {
             CodeReferenceInfo info = null;
 
@@ -400,6 +409,9 @@ namespace VisualLocalizer.Components {
             } else return null;
         }
 
+        /// <summary>
+        /// Returns true if underscore (_) has a role of line-joining character
+        /// </summary>
         protected virtual bool UnderscoreIsLineJoiningChar {
             get {
                 return false;
@@ -462,7 +474,7 @@ namespace VisualLocalizer.Components {
                         builder = null;
                     }
 
-                    if (!unlocalizableJustSet && !char.IsWhiteSpace(currentChar)) lastCommentUnlocalizable = false;
+                    if (!unlocalizableJustSet && !char.IsWhiteSpace(currentChar) && currentChar!='@') lastCommentUnlocalizable = false;
                 }
 
                 Move();
@@ -622,5 +634,21 @@ namespace VisualLocalizer.Components {
             return nfo;
         }
 
+        protected virtual void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
+            string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);
+
+            previouslyAddedItem.Value += resultItem.Value;
+            previouslyAddedItem.WasVerbatim = previouslyAddedItem.WasVerbatim || resultItem.WasVerbatim;
+            previouslyAddedItem.AbsoluteCharLength += textBetween.Length + resultItem.AbsoluteCharLength;
+            previouslyAddedItem.IsMarkedWithUnlocalizableComment = previouslyAddedItem.IsMarkedWithUnlocalizableComment || resultItem.IsMarkedWithUnlocalizableComment;
+
+            TextSpan newSpan = new TextSpan();
+            newSpan.iStartLine = previouslyAddedItem.ReplaceSpan.iStartLine;
+            newSpan.iStartIndex = previouslyAddedItem.ReplaceSpan.iStartIndex;
+            newSpan.iEndLine = resultItem.ReplaceSpan.iEndLine;
+            newSpan.iEndIndex = resultItem.ReplaceSpan.iEndIndex;
+            previouslyAddedItem.ReplaceSpan = newSpan;
+
+        }
     }
 }

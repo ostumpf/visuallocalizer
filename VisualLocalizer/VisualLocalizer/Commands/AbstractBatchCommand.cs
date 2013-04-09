@@ -314,4 +314,11 @@ namespace VisualLocalizer.Commands {
                 throw new Exception("Selected document is not a part of an open Solution.");
         }
     }
+
+    public class ResultItemsPositionCompararer<T> : IComparer<T> where T:AbstractResultItem {
+        
+        public int Compare(T x, T y) {
+            return x.AbsoluteCharOffset.CompareTo(y.AbsoluteCharOffset);
+        }
+    }
 }

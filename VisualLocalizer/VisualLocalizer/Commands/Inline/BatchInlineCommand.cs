@@ -295,7 +295,7 @@ namespace VisualLocalizer.Commands {
             // build result item
             AspNetCodeReferenceResultItem resultItem = new AspNetCodeReferenceResultItem();
             TextSpan span = new TextSpan();
-            span.iStartLine = blockSpan.StartLine+startLineOffset;
+            span.iStartLine = blockSpan.StartLine + startLineOffset;
             span.iStartIndex = startLineOffset == 0 ? blockSpan.StartIndex + startIndex : startIndex;
             span.iEndLine = blockSpan.StartLine + endLineOffset;
             span.iEndIndex = endLineOffset == 0 ? blockSpan.StartIndex + endIndex : endIndex;
@@ -312,7 +312,7 @@ namespace VisualLocalizer.Commands {
             resultItem.OriginalReferenceText = string.Format("{0}:{1},{2}", info.Origin.Namespace, info.Origin.Class, key);
             resultItem.ComesFromWebSiteResourceReference = true;
             resultItem.Language = language;
-
+            
             list.Add(resultItem);
             Results.Add(resultItem);
 

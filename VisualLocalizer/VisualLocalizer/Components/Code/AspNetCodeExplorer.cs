@@ -161,7 +161,7 @@ namespace VisualLocalizer.Components {
         public void OnPageDirective(DirectiveContext context) {
             // add new imported namespace
             if (context.DirectiveName == "Import" && context.Attributes.Exists((info) => { return info.Name == "Namespace"; })) {
-                declaredNamespaces.Add(new UsedNamespaceItem(context.Attributes.Find((info) => { return info.Name == "Namespace"; }).Value, null));
+                declaredNamespaces.Add(new UsedNamespaceItem(context.Attributes.Find((info) => { return info.Name == "Namespace"; }).Value, null, true));
             }
             if (context.DirectiveName == "Page" || context.DirectiveName == "Control") {
                 string lang = null; // value of Language attribute
@@ -206,6 +206,7 @@ namespace VisualLocalizer.Components {
             if (parentCommand is BatchMoveCommand) { // no resource references can be directly in the attributes, safe to look only for string literals
                 foreach (AttributeInfo info in context.Attributes) {
                     if (info.ContainsAspTags) continue; // attribute's value contains &lt;%= - like tags - localization is not desirable
+                    if (info.Name.ToLower() == "language") continue;
 
                     AspNetStringResultItem item = AddResult(info, null, context.DirectiveName, context.WithinClientSideComment, false, false, true);
                     if (item != null) item.ComesFromDirective = true;

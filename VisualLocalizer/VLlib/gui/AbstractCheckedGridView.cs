@@ -93,9 +93,13 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         public virtual List<ItemType> GetData() {
             List<ItemType> list = new List<ItemType>(Rows.Count);
-
-            foreach (DataGridViewRow row in Rows)
+            
+            CheckedRowsCount = 0;
+            foreach (DataGridViewRow row in Rows) {
                 list.Add(GetResultItemFromRow(row));
+                if (!string.IsNullOrEmpty(CheckBoxColumnName) && Columns.Contains(CheckBoxColumnName) && (bool)row.Cells[CheckBoxColumnName].Value) 
+                    CheckedRowsCount++;
+            }
 
             return list;
         }

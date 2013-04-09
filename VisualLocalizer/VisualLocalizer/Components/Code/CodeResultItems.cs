@@ -242,8 +242,13 @@ namespace VisualLocalizer.Components {
             }
 
             for (int i = 0; i < suggestions.Count; i++)
-                if (!suggestions[i].IsValidIdentifier(Language))
-                    suggestions[i] = "_" + suggestions[i];
+                if (!suggestions[i].IsValidIdentifier(Language)) {
+                    if (Language == LANGUAGE.VB) {
+                        suggestions[i] = "x" + suggestions[i];
+                    } else {
+                        suggestions[i] = "_" + suggestions[i];
+                    }
+                }
 
             return suggestions;
         }
@@ -685,7 +690,35 @@ namespace VisualLocalizer.Components {
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
         /// </summary>
         public override string GetInlineValue() {
-            return "\"" + Value.ConvertVBEscapeSequences() + "\"";
+            StringBuilder b = new StringBuilder();
+
+            bool first = true;
+            bool firstEscaped = false;
+            bool previousEscaped = false;
+            foreach (char c in Value.ConvertVBUnescapeSequences()) {
+                if (!char.IsControl(c) || c == '"' || c == '\'') {
+                    if (previousEscaped) {
+                        b.Append(" & \"");    
+                    } 
+                    b.Append(c);
+                    
+                    if (first) firstEscaped = false;
+                    previousEscaped = false;
+                } else {
+                    if (previousEscaped) {
+                        b.Append(" & ");
+                    } else if(!first) {
+                        b.Append("\" & ");
+                    }
+                    b.AppendFormat("Chr({0})", (int)c);
+                    
+                    if (first) firstEscaped = true;
+                    previousEscaped = true;
+                }
+                first = false;
+            }
+
+            return (firstEscaped ? "" : "\"") + b.ToString() + (previousEscaped ? "" : "\"");
         }
 
         /// <summary>

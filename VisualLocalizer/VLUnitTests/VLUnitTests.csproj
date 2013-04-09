@@ -76,11 +76,14 @@
     <Compile Include="VLLibTests\TrieTest.cs" />
     <Compile Include="VLLibTests\TextExTest.cs" />
     <Compile Include="VLTests\Agent.cs" />
+    <Compile Include="VLTests\Commands\InlinerTest.cs" />
     <Compile Include="VLTests\Commands\InlineTest.cs" />
+    <Compile Include="VLTests\Commands\MoverTest.cs" />
     <Compile Include="VLTests\Commands\MoveTest.cs" />
+    <Compile Include="VLTests\Commands\RenamerTest.cs" />
+    <Compile Include="VLTests\Commands\RunCommandsTestsBase.cs" />
     <Compile Include="VLTests\Commands\VBBatchInlineTest.cs" />
     <Compile Include="VLTests\Commands\VBBatchMoveTest.cs" />
-    <Compile Include="VLTests\GUI\BatchMoveGridTest.cs" />
     <Compile Include="VLtranslatTests\BingTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\GoogleTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\MyMemoryTranslatorTest.cs" />

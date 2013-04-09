@@ -15,31 +15,9 @@ namespace VisualLocalizer.Commands {
     /// Used to perform actual Batch inline command.
     /// </summary>
     internal sealed class BatchInliner : AbstractBatchReferenceProcessor {
-
-        /// <summary>
-        /// Initialize with rows from toolwindow's grid
-        /// </summary>        
-        public BatchInliner(DataGridViewRowCollection rows)
-            : base(rows) {
-        }
-
-        /// <summary>
-        /// Initialize directly with list of result items
-        /// </summary>        
-        public BatchInliner(List<CodeReferenceResultItem> list)
-            : base(list) {
-        }
-
-        /// <summary>
-        /// Returns result item with specified index
-        /// </summary>
-        public override CodeReferenceResultItem GetItemFromList(IList list, int index) {
-            if (list[index] is DataGridViewCheckedRow<CodeReferenceResultItem>) {
-                return (list[index] as DataGridViewCheckedRow<CodeReferenceResultItem>).DataSourceItem;
-            } else {
-                return (CodeReferenceResultItem)list[index];
-            }
-        }
+   
+        public BatchInliner() {
+        }      
 
         /// <summary>
         /// Returns text that replaces current reference

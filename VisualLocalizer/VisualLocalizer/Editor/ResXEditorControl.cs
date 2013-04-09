@@ -442,16 +442,13 @@ namespace VisualLocalizer.Editor {
                 } else {
                     // build trie
                     Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
-                    foreach (IReferencableKeyValueSource item in items) {                        
-                        string referenceKey;
-                        if (item.ErrorMessages.Count == 0) {
-                            referenceKey = item.Key;
-                        } else {
-                            referenceKey = "";
-                            //referenceKey = item.LastValidKey;
+                    foreach (IReferencableKeyValueSource item in items) {                                                
+                        if (!string.IsNullOrEmpty(item.Key)) {
+                            string referenceKey = item.Key.CreateIdentifier(resxItem.DesignerLanguage);
+
+                            var element = trie.Add(resxItem.Class + "." + referenceKey);
+                            element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = item.Key });
                         }
-                        var element = trie.Add(resxItem.Class + "." + referenceKey);
-                        element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = referenceKey });
                     }
                     trie.CreatePredecessorsAndShortcuts();
 
@@ -459,10 +456,7 @@ namespace VisualLocalizer.Editor {
 
                     // display results
                     foreach (IReferencableKeyValueSource item in items) {
-                        item.CodeReferences.Clear();
-                        /*item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
-                            return i.Key == item.Key || (item.ErrorSet.Count > 0 && i.Key == item.LastValidKey);
-                        }));*/
+                        item.CodeReferences.Clear();                        
                         item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
                             return i.Key == item.Key;
                         }));

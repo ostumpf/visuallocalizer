@@ -275,5 +275,35 @@ namespace VLUnitTests {
                 return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\WebSite\referencesVB.aspx";
             }
         }
+
+        public static string CSharpResourceFile1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpTests\blank.resx";
+            }
+        }
+
+        public static string CSharpResourceFileLib {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\CSharpLib\blank.resx";
+            }
+        }
+
+        public static string VBResourceFile1 {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\VBTests\blank.resx";
+            }
+        }
+
+        public static string VBResourceFileLib {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\VBLib\blank.resx";
+            }
+        }
+
+        public static string AspNetResourceFile {
+            get {
+                return @"C:\Users\Ondra\Documents\Visual Studio 2008\Projects\VLUnitTestsContextSolution\WebSite\App_GlobalResources\blank.resx";
+            }
+        }
     }
 }

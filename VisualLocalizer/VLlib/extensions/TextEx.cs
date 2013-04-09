@@ -202,7 +202,7 @@ namespace VisualLocalizer.Library {
         /// </summary>  
         public static string ConvertVBEscapeSequences(this string text) {
             if (text == null) throw new ArgumentNullException("text");
-            return text.Replace("\"\"", "\""); 
+            return text.Replace("\"\"", "\"");
         }
 
         /// <summary>
@@ -245,7 +245,12 @@ namespace VisualLocalizer.Library {
             }
 
             string ident = b.ToString();
-            if (!ident.IsValidIdentifier(lang)) ident = "_" + ident;
+            int counter = 0;
+            while (!ident.IsValidIdentifier(lang)) {
+                ident = "_" + ident;
+                counter++;
+                if (counter == 5) break;
+            }
 
             return ident;
         }

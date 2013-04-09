@@ -50,7 +50,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
                     int count = SourceRow.CodeReferences.Count;
                     SourceRow.CodeReferences.ForEach((item) => { item.KeyAfterRename = to; });
 
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer(SourceRow.CodeReferences);
+                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
                     replacer.Inline(SourceRow.CodeReferences, true, ref errors);
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);

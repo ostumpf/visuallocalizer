@@ -90,7 +90,7 @@ namespace VisualLocalizer.Gui {
             try {
                 VLDocumentViewsManager.ReleaseLocks(); // unlock locked documents
                 MenuManager.OperationInProgress = false; // permit other operations
-                BatchInliner inliner = new BatchInliner(panel.Rows); 
+                BatchInliner inliner = new BatchInliner(); 
 
                 inliner.Inline(panel.GetData(), false, ref rowErrors); // run inliner
                
@@ -98,7 +98,8 @@ namespace VisualLocalizer.Gui {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
             } finally {
-                ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
+                if (this.Frame != null)
+                    ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
 
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);

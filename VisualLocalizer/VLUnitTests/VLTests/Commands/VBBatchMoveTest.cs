@@ -435,7 +435,7 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(71, 33, 71, 39)
             });
             list.Add(new TestVBStringResultItem() {
-                Value = "a_34",
+                Value = "a_34"+Environment.NewLine+"\"@baf",
                 SourceItem = projectItem,
                 VariableElementName = "a_34",
                 ClassOrStructElementName = "C_inner_2",
@@ -443,7 +443,106 @@ namespace VLUnitTests.VLTests {
                 IsWithinLocalizableFalse = false,
                 ComesFromDesignerFile = false,
                 NamespaceElementName = "VBTests.N1.N1_inner",
-                ReplaceSpan = CreateTextSpan(75, 33, 75, 39)
+                ReplaceSpan = CreateTextSpan(75, 33, 75, 90)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_35baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_35",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(76, 33, 76, 47)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_36baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_36",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(77, 33, 77, 45)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_37baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_37",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(78, 33, 80, 17)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_38"+Environment.NewLine+"baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_38",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(81, 33, 81, 59)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_39\"baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_39",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(82, 33, 82, 66)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_40@baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_40",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(83, 33, 83, 54)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_41"+Environment.NewLine+"baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_41",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(84, 33, 86, 17)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_42\"baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_42",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(87, 33, 88, 50)
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_43@baf",
+                SourceItem = projectItem,
+                VariableElementName = "a_43",
+                ClassOrStructElementName = "C_inner_2",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "VBTests.N1.N1_inner",
+                ReplaceSpan = CreateTextSpan(89, 33, 90, 38)
             });
 
             foreach (var item in list) CalculateAbsolutePosition(item);

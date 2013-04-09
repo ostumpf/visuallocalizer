@@ -307,7 +307,7 @@ namespace VisualLocalizer.Gui {
                 bool usingFullName = currentNamespacePolicy == NAMESPACE_POLICY_ITEMS[1]; // whether full references will be used
                 bool markUncheckedStringsWithComment = currentRememberOption == REMEMBER_OPTIONS[1]; // whether unchecked strings will be marked with "no-localization" comment
 
-                BatchMover mover = new BatchMover(panel.ToolGrid.Rows, usingFullName, markUncheckedStringsWithComment);
+                BatchMover mover = new BatchMover(usingFullName, markUncheckedStringsWithComment);
 
                 mover.Move(panel.ToolGrid.GetData(), ref rowErrors); // run the mover
       
@@ -315,7 +315,8 @@ namespace VisualLocalizer.Gui {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
             } finally {
-                ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
+                IVsWindowFrame frame = ((IVsWindowFrame)this.Frame);
+                if (frame != null) frame.CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
 
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);

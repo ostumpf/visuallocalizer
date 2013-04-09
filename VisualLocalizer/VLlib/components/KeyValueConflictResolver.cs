@@ -60,35 +60,25 @@ namespace VisualLocalizer.Library {
                 newKey = newKey == null ? null : newKey.ToLower();
             }
 
-            if (string.Compare(oldKey,newKey)==0) { // new key and old key are the same
-                if (!string.IsNullOrEmpty(newKey)) {
-                    // update conflict state between given item and all items with the same key
-                    // conflict will occur either if values are different or same keys are not allowed at all
-                    foreach (IKeyValueSource c in this[newKey].ItemsWithSameKey) {
-                        if (c != item) {                            
-                            SetConflictedItems(c, item, string.Compare(c.Value, item.Value) != 0 || !EnableSameKeys);
-                        }
-                    }
-                    if (this[newKey] != item) {
-                        SetConflictedItems(this[newKey], item, string.Compare(this[newKey].Value, item.Value) != 0 || !EnableSameKeys);                        
-                    }
-                }
+            if (string.Compare(oldKey, newKey) == 0) { // new key and old key are the same                
+                // update conflict state between given item and all items with the same key
+                // conflict will occur either if values are different or same keys are not allowed at all
+                foreach (IKeyValueSource c in item.ItemsWithSameKey) {
+                    SetConflictedItems(c, item, (string.Compare(c.Value, item.Value) != 0 || !EnableSameKeys));
+                }                
             } else { // new key and old key are different
                 if (!string.IsNullOrEmpty(oldKey) && ContainsKey(oldKey)) { // old key is non-empty and in the dictionary
-                    if (this[oldKey].ItemsWithSameKey.Count > 0) { // old key was in a conflict
-                        foreach (IKeyValueSource c in this[oldKey].ItemsWithSameKey) {
-                            SetConflictedItems(c, item, false); // break the conflict
+                    if (item.ItemsWithSameKey.Count > 0) { // old key was in a conflict
+                        foreach (IKeyValueSource c in item.ItemsWithSameKey) {
+                            SetConflictedItems(c, item, false); // break the conflict    
+                            c.ItemsWithSameKey.Remove(item);
                         }
 
                         if (this[oldKey] == item) { // given row was present in the dictionary - find another row
-                            IKeyValueSource replaceRow = this[oldKey].ItemsWithSameKey[this[oldKey].ItemsWithSameKey.Count - 1];
-                            this[oldKey].ItemsWithSameKey.RemoveAt(this[oldKey].ItemsWithSameKey.Count - 1);
-                            replaceRow.ItemsWithSameKey = this[oldKey].ItemsWithSameKey;
+                            IKeyValueSource replaceRow = item.ItemsWithSameKey.First();                                                        
                             this[oldKey] = replaceRow;
-                        } else {
-                            this[oldKey].ItemsWithSameKey.Remove(item);
-                            SetConflictedItems(this[oldKey], item, false);
                         }
+                        item.ItemsWithSameKey.Clear();
                     } else {
                         Remove(oldKey);
                     }
@@ -96,18 +86,23 @@ namespace VisualLocalizer.Library {
 
                 if (!string.IsNullOrEmpty(newKey)) { // new key is non-empty
                     if (ContainsKey(newKey)) { // new key will be in conflict
-                        if (this[newKey] != item && (string.Compare(this[newKey].Value, item.Value) != 0 || !EnableSameKeys)) {
-                            SetConflictedItems(this[newKey], item, true);
-                        }
                         foreach (IKeyValueSource c in this[newKey].ItemsWithSameKey) {
                             SetConflictedItems(c, item, string.Compare(c.Value, item.Value) != 0 || !EnableSameKeys);
+                            if (!item.ItemsWithSameKey.Contains(c)) item.ItemsWithSameKey.Add(c);
+                            if (!c.ItemsWithSameKey.Contains(item)) c.ItemsWithSameKey.Add(item);
                         }
-                        if (!this[newKey].ItemsWithSameKey.Contains(item)) this[newKey].ItemsWithSameKey.Add(item);
+
+                        if (this[newKey] != item) {
+                            SetConflictedItems(this[newKey], item, (string.Compare(this[newKey].Value, item.Value) != 0 || !EnableSameKeys));
+                            if (!item.ItemsWithSameKey.Contains(this[newKey])) item.ItemsWithSameKey.Add(this[newKey]);
+                            if (!this[newKey].ItemsWithSameKey.Contains(item)) this[newKey].ItemsWithSameKey.Add(item);
+                        }                        
                     } else { // new key is not in conflict
                         Add(newKey, item);
                     }
                 }
             }
+
         }
 
         /// <summary>

@@ -6,6 +6,8 @@ using EnvDTE;
 using Microsoft.VisualStudio.TextManager.Interop;
 using EnvDTE80;
 using VisualLocalizer.Library;
+using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
 
@@ -14,6 +16,8 @@ namespace VisualLocalizer.Components {
     /// </summary>
     /// <typeparam name="T">Type of result item</typeparam>
     internal class CSharpLookuper<T> : AbstractCodeLookuper<T> where T:AbstractResultItem,new() {
+
+        private const string CSharpConcateningRegexp = @"^\s*\+\s*$";
 
         /// <summary>
         /// Language-specific implementation, handles beginnings and ends of strings, comments etc.
@@ -73,6 +77,15 @@ namespace VisualLocalizer.Components {
         protected override CodeReferenceInfo ResolveReference(string prefix, string className, List<CodeReferenceInfo> trieElementInfos) {
             return TryResolve(prefix, className, trieElementInfos);
         }
-       
+
+        protected override void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
+            string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);
+
+            if (Regex.IsMatch(textBetween, CSharpConcateningRegexp)) {
+                results.RemoveAt(results.Count - 1);
+
+                base.ConcatenateWithPreviousResult(results, previouslyAddedItem, resultItem);
+            }
+        }
     }
 }

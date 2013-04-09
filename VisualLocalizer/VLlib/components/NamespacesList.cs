@@ -13,10 +13,10 @@ namespace VisualLocalizer.Library {
         private const string WebSiteProjectGuid = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
         private const string GlobalWebSiteResourcesNamespace = "Resources";
         
-        public void Add(string namespaceName, string alias) {
+        public void Add(string namespaceName, string alias, bool isImport) {
             if (string.IsNullOrEmpty(namespaceName)) throw new ArgumentNullException("namespaceName");
 
-            Add(new UsedNamespaceItem(namespaceName, alias));
+            Add(new UsedNamespaceItem(namespaceName, alias, isImport));
         }
 
         public bool ContainsNamespace(string namespaceName) {
@@ -59,15 +59,19 @@ namespace VisualLocalizer.Library {
         /// <param name="referenceText">Output - instance of ReferenceText info</param>
         /// <returns>True, of new import should be added to the document</returns>
         public bool ResolveNewElement(string designerNamespace, string designerClass, string newKey, Project project, out ReferenceString referenceText) {
-            if (project == null || project.CodeModel == null) throw new ArgumentNullException("project");
+            if (project == null) throw new ArgumentNullException("project");
 
             referenceText = new ReferenceString(designerClass, newKey);
             bool addUsing = true;
+            bool matchedOnImported = false;
 
-           /* if (designerNamespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+            if (designerNamespace == GlobalWebSiteResourcesNamespace && project.Kind.ToUpperInvariant() == WebSiteProjectGuid) {
+                // website projects may lack codeModel - must use safe method
                 referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
                 return false;
-            } else {*/
+            } else {
+                if (project.CodeModel == null) throw new ArgumentNullException("project code model");
+
                 foreach (UsedNamespaceItem item in this) {
                     // try obtain the class
                     string fullName = item.Namespace + "." + designerClass;
@@ -81,6 +85,7 @@ namespace VisualLocalizer.Library {
                     if (codeType != null) { // class with given name exists
                         if (addUsing) { // we haven't yet found a match
                             addUsing = false;
+                            matchedOnImported = item.IsImported;
                             if (item.Namespace == designerNamespace) { // it's the right class
                                 if (!string.IsNullOrEmpty(item.Alias)) referenceText.NamespacePart = item.Alias;
                             } else { // it's a wrong class and referencing it without prefix would cause error
@@ -91,13 +96,13 @@ namespace VisualLocalizer.Library {
                                     referenceText.NamespacePart = designerNamespace;
                                 }
                             }
-                        } else { // such class already exists - must use full name
+                        } else if (item.IsImported && matchedOnImported) { // such class already exists - must use full name
                             addUsing = false;
                             referenceText.NamespacePart = designerNamespace;
                         }
                     }
 
-               // }
+                }
             }
             return addUsing;
         }
@@ -140,13 +145,15 @@ namespace VisualLocalizer.Library {
     /// Represents one "used" (imported or declared) namespace
     /// </summary>
     public class UsedNamespaceItem {
-        public UsedNamespaceItem(string namespaceName, string alias) {
+        public UsedNamespaceItem(string namespaceName, string alias, bool isImported) {
             this.Namespace = namespaceName;
             this.Alias = alias;
+            this.IsImported = isImported;
         }
 
         public string Namespace { get; set; }
         public string Alias { get; set; }
+        public bool IsImported { get; set; }
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using System.Text;
 using VisualLocalizer.Library.AspxParser;
 using VisualLocalizer.Library;
 using EnvDTE;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
 
@@ -60,6 +61,8 @@ namespace VisualLocalizer.Components {
             resultItem.Language = LANGUAGE.CSHARP;
             resultItem.Value = resultItem.Value.ConvertCSharpEscapeSequences(isVerbatimString);
             resultItem.WasVerbatim = isVerbatimString;
+
+            if (list.Count >= 2) ConcatenateWithPreviousResult((IList)list, list[list.Count - 2], list[list.Count - 1]);            
 
             return resultItem;
         }

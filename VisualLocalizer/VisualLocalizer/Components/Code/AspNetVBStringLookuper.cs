@@ -5,6 +5,7 @@ using System.Text;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.AspxParser;
 using EnvDTE;
+using System.Collections;
 
 namespace VisualLocalizer.Components {
     internal sealed class AspNetVBStringLookuper : VBLookuper<AspNetStringResultItem> {
@@ -55,6 +56,8 @@ namespace VisualLocalizer.Components {
                 resultItem.DeclaredNamespaces = declaredNamespaces;
                 resultItem.Language = LANGUAGE.VB;
                 resultItem.Value = resultItem.Value.ConvertVBEscapeSequences();
+
+                if (list.Count >= 2) ConcatenateWithPreviousResult((IList)list, list[list.Count - 2], list[list.Count - 1]);            
 
                 return resultItem;
             }

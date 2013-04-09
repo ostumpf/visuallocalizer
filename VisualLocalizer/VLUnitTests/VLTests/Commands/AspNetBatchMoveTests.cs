@@ -118,26 +118,7 @@ namespace VLUnitTests.VLTests {
             
             ProjectItem projectItem = Agent.GetDTE().Solution.FindProjectItem(Agent.AspNetStringsTestFile1);
             string className = Path.GetFileNameWithoutExtension(projectItem.Name);
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "C#",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = true,
-                ComesFromElement = false,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Page",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(0, 19, 0, 21)
-            });
+    
             list.Add(new TestAspNetStringResultItem() {
                 Value = "True",
                 WasVerbatim = false,
@@ -833,25 +814,6 @@ namespace VLUnitTests.VLTests {
             string className = Path.GetFileNameWithoutExtension(projectItem.Name);
 
             list.Add(new TestAspNetStringResultItem() {
-                Value = "VB",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = true,
-                ComesFromElement = false,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Page",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.VB,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(0, 19, 0, 21)
-            });
-            list.Add(new TestAspNetStringResultItem() {
                 Value = "false",
                 WasVerbatim = false,
                 SourceItem = projectItem,
@@ -1175,26 +1137,7 @@ namespace VLUnitTests.VLTests {
 
             ProjectItem projectItem = Agent.GetDTE().Solution.FindProjectItem(Agent.AspNetStringsCustomAspxFile1);
             string className = Path.GetFileNameWithoutExtension(projectItem.Name);
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "C#",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = true,
-                ComesFromElement = false,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Control",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(0, 22, 0, 24)
-            });
+            
             list.Add(new TestAspNetStringResultItem() {
                 Value = "true",
                 WasVerbatim = false,
@@ -1305,25 +1248,6 @@ namespace VLUnitTests.VLTests {
             ProjectItem projectItem = Agent.GetDTE().Solution.FindProjectItem(Agent.AspNetStringsCustomAspxFile2);
             string className = Path.GetFileNameWithoutExtension(projectItem.Name);
 
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "VB",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = true,
-                ComesFromElement = false,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Control",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.VB,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(0, 22, 0, 24)
-            });
             list.Add(new TestAspNetStringResultItem() {
                 Value = "false",
                 WasVerbatim = false,
