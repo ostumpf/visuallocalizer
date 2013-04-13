@@ -6,6 +6,7 @@ using VisualLocalizer.Components;
 using System.Reflection;
 using EnvDTE;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace VisualLocalizer.Settings {
 
@@ -96,7 +97,12 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Name of the variable the string literal initializes
         /// </summary>
-        VARIABLE_NAME 
+        VARIABLE_NAME,
+ 
+        /// <summary>
+        /// Name of the attribute, if the result item comes from ASP .NET element
+        /// </summary>
+        ATTRIBUTE_NAME
     }
     
     /// <summary>
@@ -314,7 +320,7 @@ namespace VisualLocalizer.Settings {
 
             bool relevant;
             string testString = GetTarget(resultItem, out relevant);
-            if (!relevant) return null;
+            if (!relevant && Predicate != LocalizationCriterionPredicate.IS_NULL) return null;
 
             switch (Predicate) {
                 case LocalizationCriterionPredicate.MATCHES:
@@ -370,10 +376,12 @@ namespace VisualLocalizer.Settings {
                     testString = resultItem.Value;
                     break;
                 case LocalizationCriterionTarget.NAMESPACE_NAME:
-                    if (cResItem == null) return null; // ASP .NET result items don't have namespaces
-                    relevant = true;
-                    CodeNamespace nmspc = cResItem.NamespaceElement;
-                    if (nmspc != null) testString = nmspc.FullName;
+                    if (cResItem == null) return null; // ASP .NET result items don't have namespaces                    
+                    try {
+                        CodeNamespace nmspc = cResItem.NamespaceElement;
+                        if (nmspc != null) testString = nmspc.FullName;
+                        relevant = true;
+                    } catch (COMException) { }
                     break;
                 case LocalizationCriterionTarget.METHOD_NAME:
                     if (cResItem == null) return null; // ASP .NET result items don't have methods
@@ -399,6 +407,11 @@ namespace VisualLocalizer.Settings {
                     if (cResItem == null) return null; ; // ASP .NET result items don't initialize variables
                     relevant = true;
                     testString = cResItem.VariableElementName;
+                    break;
+                case LocalizationCriterionTarget.ATTRIBUTE_NAME:
+                    if (aResItem == null) return null;  // C# or VB result items don't originate from elements
+                    relevant = true;
+                    testString = aResItem.AttributeName;
                     break;
             }
             return testString;
@@ -512,6 +525,8 @@ namespace VisualLocalizer.Settings {
                     return "element name";
                 case LocalizationCriterionTarget.VARIABLE_NAME:
                     return "variable name";
+                case LocalizationCriterionTarget.ATTRIBUTE_NAME:
+                    return "attribute name";
                 default:
                     throw new Exception("Unknown LocalizationCriterionTarget: " + target);
             }            
@@ -522,7 +537,7 @@ namespace VisualLocalizer.Settings {
                 case LocalizationCriterionAction2.CHECK:
                     return "check rows";
                 case LocalizationCriterionAction2.CHECK_REMOVE:
-                    return "check rows & remove rest";
+                    return "check rows & remove the rest";
                 case LocalizationCriterionAction2.UNCHECK:
                     return "uncheck rows";
                 case LocalizationCriterionAction2.REMOVE:

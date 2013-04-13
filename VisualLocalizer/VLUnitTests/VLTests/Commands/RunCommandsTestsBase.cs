@@ -83,22 +83,17 @@ namespace VLUnitTests.VLTests {
             foreach (string sourcePath in testFiles) {
                 if (!shouldBeOpened && RDTManager.IsFileOpen(sourcePath)) {
                     var win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, false));
-                    win.Visible = false;
-                    win.Document.Close(vsSaveChanges.vsSaveChangesNo);
-                    win.Close(vsSaveChanges.vsSaveChangesNo);
+                    win.Visible = false;                                        
                 }
                 if (shouldBeOpened) {
                     Window win = null;
                     if (!RDTManager.IsFileOpen(sourcePath)) {
-                        win = Agent.GetDTE().ItemOperations.OpenFile(sourcePath, null);
+                        win = Agent.GetDTE().OpenFile(null, sourcePath);
                     } else {
                         win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, true));
                     }
                     Assert.IsNotNull(win, "Window cannot be opened " + sourcePath);
-                    win.Visible = true;
-                    win.Activate();
-                    win.SetFocus();
-                    win.Document.Activate();                       
+                    win.Visible = true;                    
                 }
                 System.Threading.Thread.Sleep(100);
             }

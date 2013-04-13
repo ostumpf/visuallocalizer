@@ -40,6 +40,9 @@ namespace VisualLocalizer.Commands {
                     } else if (o.Object is Project) {
                         Project proj = (Project)o.Object;
                         SearchForResxFiles(proj.ProjectItems, resxFiles);
+                    } else if (o.Object is Solution) {
+                        Solution s = (Solution)o.Object;
+                        SearchForResxFiles(s.Projects, resxFiles);
                     } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
                 }
 
@@ -155,6 +158,13 @@ namespace VisualLocalizer.Commands {
             foreach (ProjectItem item in items)
                 SearchForResxFiles(item, resxFiles);
         }
+
+        private void SearchForResxFiles(Projects projects, List<GlobalTranslateProjectItem> resxFiles) {
+            if (projects == null) return;
+            foreach (Project item in projects) {                
+                SearchForResxFiles(item.ProjectItems, resxFiles);
+            }
+        }
     }
 
     /// <summary>
@@ -168,9 +178,8 @@ namespace VisualLocalizer.Commands {
             NonStringData = new List<ResXDataNode>();
             string filePath = item.GetFullPath();
 
-            if (item.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(item)) {
-                string projPath = item.ContainingProject.FullName;
-                this.path = Uri.UnescapeDataString(new Uri(projPath).MakeRelativeUri(new Uri(filePath)).ToString());
+            if (item.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(item)) {                
+                this.path = Uri.UnescapeDataString(new Uri(VisualLocalizerPackage.Instance.DTE.Solution.FullName).MakeRelativeUri(new Uri(filePath)).ToString());
             } else {
                 this.path = filePath;
             }            

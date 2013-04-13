@@ -171,7 +171,7 @@ namespace VLUnitTests.VLTests {
             List<CodeStringResultItem> items = BatchMoveLookup(testFiles);
             
             SetFilesOpened(testFiles, true);
-            
+          
             Dictionary<string, ResXProjectItem> resxItems = InitResxItems(targetFiles, Agent.GetDTE().Solution.FindProjectItem(testFiles[0]).ContainingProject);
             
             Dictionary<ResXProjectItem, int> resxCounts;
@@ -256,7 +256,7 @@ namespace VLUnitTests.VLTests {
 
                 int checkedCount = resxCounts.Sum((pair) => { return pair.Value; });
                 List<CodeReferenceResultItem> inlineResults = BatchInlineLookup(testFiles);
-                if (checkedCount != inlineResults.Count) File.Copy(testFiles[0], @"C:\Users\Ondra\Desktop\out.txt", true);
+               
                 Assert.AreEqual(checkedCount, inlineResults.Count);
 
                 if (mark) {

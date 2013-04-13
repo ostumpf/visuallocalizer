@@ -478,6 +478,11 @@ namespace VisualLocalizer.Components {
         public string ElementName { get; set; }
 
         /// <summary>
+        /// Name of the attribute where this result item comes from
+        /// </summary>
+        public string AttributeName { get; set; }
+
+        /// <summary>
         /// Returns composed reference text
         /// </summary>   
         public override string GetReferenceText(ReferenceString referenceText) {
@@ -665,7 +670,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a C# code
     /// </summary>
-    public sealed class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
+    public class CSharpCodeReferenceResultItem : NetCodeReferenceResultItem {
         /// <summary>
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
         /// </summary>
@@ -685,7 +690,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a VB code
     /// </summary>
-    public sealed class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
+    public class VBCodeReferenceResultItem : NetCodeReferenceResultItem {
         /// <summary>
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
         /// </summary>
@@ -733,7 +738,7 @@ namespace VisualLocalizer.Components {
     /// <summary>
     /// Represents found reference to a resource key in a ASP .NET code
     /// </summary>
-    public sealed class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
+    public class AspNetCodeReferenceResultItem : CodeReferenceResultItem {
         /// <summary>
         /// True if result item comes from &lt;%= expression
         /// </summary>

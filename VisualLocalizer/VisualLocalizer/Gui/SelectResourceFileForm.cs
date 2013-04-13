@@ -157,7 +157,7 @@ namespace VisualLocalizer.Gui {
 
                 bool isKeyEmpty = string.IsNullOrEmpty(keyBox.Text);
                 bool isValidIdentifier = keyBox.Text.IsValidIdentifier(resultItem.Language);
-                bool hasOwnDesigner = item.DesignerItem != null && !item.IsCultureSpecific();
+                bool hasOwnDesigner = (item.DesignerItem != null || item.HasImplicitDesignerFile) && !item.IsCultureSpecific();
                 bool identifierErrorExists = false;
 
                 // determine whether current key name is valid

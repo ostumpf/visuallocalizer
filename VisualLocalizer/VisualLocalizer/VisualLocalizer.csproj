@@ -152,7 +152,7 @@
     <Compile Include="Editor\VsColorTable.cs" />
     <Compile Include="Extensions\ResXItemsEx.cs" />
     <Compile Include="Gui\AbstractCodeToolWindow.cs" />
-    <Compile Include="Gui\BatchInlineToolPanel.cs">
+    <Compile Include="Gui\BatchInlineToolGrid.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Gui\BatchInlineToolWindow.cs" />
@@ -269,10 +269,29 @@
   <ItemGroup>
     <None Include="Resources\doc.png" />
     <None Include="Resources\play.png" />
+    <None Include="Resources\add.png" />
+    <None Include="Resources\copy.PNG" />
+    <None Include="Resources\cut.png" />
+    <None Include="Resources\embedded.png" />
     <Content Include="Resources\execute.png" />
+    <None Include="Resources\external.png" />
     <Content Include="Resources\icon.ico" />
+    <None Include="Resources\view.png" />
+    <None Include="Resources\remove.png" />
+    <None Include="Resources\sync.png" />
+    <None Include="Resources\open.png" />
+    <None Include="Resources\translate.png" />
+    <None Include="Resources\search.png" />
+    <None Include="Resources\paste.PNG" />
+    <None Include="Resources\merge.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Class Diagrams\ToolWindows.cd" />
+    <None Include="Class Diagrams\CodeLookupers.cd" />
+    <None Include="Class Diagrams\ResultItems.cd" />
+    <None Include="Class Diagrams\ToolGrids.cd" />
+    <None Include="Class Diagrams\Commands.cd" />
+    <None Include="Class Diagrams\Editor.cd" />
     <None Include="vlkey.snk" />
   </ItemGroup>
   <ItemGroup>

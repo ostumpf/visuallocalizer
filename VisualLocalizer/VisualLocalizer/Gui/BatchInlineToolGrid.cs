@@ -14,14 +14,14 @@ namespace VisualLocalizer.Gui {
     /// <summary>
     /// Content of the "Batch inline" toolwindow.
     /// </summary>
-    internal sealed class BatchInlineToolPanel : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
+    internal sealed class BatchInlineToolGrid : AbstractCheckedGridView<CodeReferenceResultItem>,IHighlightRequestSource {
         
         /// <summary>
         /// Issued when row is double-clicked - causes corresponding block of code in the code window to be selected
         /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
 
-        public BatchInlineToolPanel() : base(SettingsObject.Instance.ShowContextColumn) {
+        public BatchInlineToolGrid() : base(SettingsObject.Instance.ShowContextColumn) {
             this.MultiSelect = true;
             this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
@@ -176,6 +176,32 @@ namespace VisualLocalizer.Gui {
             if (SortedColumn != null) {
                 Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
             }
+        }
+
+        /// <summary>
+        /// Restores the removed rows
+        /// </summary>
+        public override List<DataGridViewRow> RestoreRemovedRows() {
+            ClearSelection();
+            previouslySelectedRow = null;
+
+            List<DataGridViewRow> list = base.RestoreRemovedRows();
+
+            if (!string.IsNullOrEmpty(ContextColumnName) && Columns.Contains(ContextColumnName) && list != null) {
+                foreach (DataGridViewCheckedRow<CodeReferenceResultItem> row in list) {
+                    if (row.Index == -1) continue;
+
+                    DataGridViewDynamicWrapCell c = (DataGridViewDynamicWrapCell)row.Cells[ContextColumnName];
+                    c.SetWrapContents(false);
+                }
+            }
+
+            // perform sorting
+            if (SortedColumn != null) {
+                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            }
+
+            return list;
         }
 
         /// <summary>

@@ -15,7 +15,9 @@ namespace VisualLocalizer.Library.AspxParser {
     /// </summary>
     public class WebConfig {
         public const string WebConfigFilename = "web.config";
+        public const string MachineConfigFilename = "machine.config";
         public const string WebConfigDefaultLocFormat = @"{0}\Microsoft.NET\Framework\{1}\CONFIG\" + WebConfigFilename;
+        public const string MachineConfigDefaultLocFormat = @"{0}\Microsoft.NET\Framework\{1}\CONFIG\" + MachineConfigFilename;
         private HashSet<TagPrefixDefinition> definitions;
         private ProjectItem projectItem;
         private Solution solution;        
@@ -172,12 +174,17 @@ namespace VisualLocalizer.Library.AspxParser {
                 if (!(currentProjectItem.Collection.Parent is ProjectItem)) break;
                 
                 currentProjectItem = (ProjectItem)currentProjectItem.Collection.Parent;
-            }
+            }         
+            
+            // add .NET default machine.config file, located in %SYSTEMROOT%\Microsoft.NET\Framework\v1.2.3\CONFIG\
+            string machineDefault = string.Format(MachineConfigDefaultLocFormat, Environment.GetEnvironmentVariable("systemroot"),
+                string.Format("v{0}.{1}.{2}", Environment.Version.Major, Environment.Version.Minor, Environment.Version.Build));
+            if (File.Exists(machineDefault)) list.Add(machineDefault);  
 
             // add .NET default web.config file, located in %SYSTEMROOT%\Microsoft.NET\Framework\v1.2.3\CONFIG\
             string netDefault = string.Format(WebConfigDefaultLocFormat, Environment.GetEnvironmentVariable("systemroot"), 
                 string.Format("v{0}.{1}.{2}", Environment.Version.Major, Environment.Version.Minor, Environment.Version.Build));
-            if (File.Exists(netDefault)) list.Add(netDefault);      
+            if (File.Exists(netDefault)) list.Add(netDefault);
 
             // put least significant configuration first and thus enable to override settings
             list.Reverse();

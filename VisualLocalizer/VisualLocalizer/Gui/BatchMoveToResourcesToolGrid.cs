@@ -205,7 +205,7 @@ namespace VisualLocalizer.Gui {
                     destinationCell.Value = destinationCell.Items[0].ToString();
                 row.Cells.Add(destinationCell);
                 
-                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
+                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();                
                 contextCell.Value = item.Context;
                 contextCell.RelativeLine = item.ContextRelativeLine;
                 contextCell.FullText = item.Context;
@@ -221,7 +221,9 @@ namespace VisualLocalizer.Gui {
                 sourceCell.ReadOnly = true;
                 lineCell.ReadOnly = true;
                 contextCell.ReadOnly = true;
-                
+
+                var x = row.Cells[ContextColumnName];
+
                 Validate(row);
                 keyCell.Tag = keyCell.Value;
             }            
@@ -280,7 +282,7 @@ namespace VisualLocalizer.Gui {
                         toBeDeletedRows.Add(row); // add row to the list of rows to be deleted
                         newCheckValue = false;
                     }                    
-                } else if (evalResult == false && act == LocalizationCriterionAction2.CHECK_REMOVE) { 
+                } else if (!oldCheckValue && evalResult == false && act == LocalizationCriterionAction2.CHECK_REMOVE) { 
                     toBeDeletedRows.Add(row); 
                     newCheckValue = false;
                 }
@@ -405,6 +407,32 @@ namespace VisualLocalizer.Gui {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
+        }
+
+        /// <summary>
+        /// Restores the removed rows
+        /// </summary>
+        public override List<DataGridViewRow> RestoreRemovedRows() {
+            ClearSelection();
+            previouslySelectedRow = null;
+
+            List<DataGridViewRow> list = base.RestoreRemovedRows();
+
+            if (!string.IsNullOrEmpty(ContextColumnName) && Columns.Contains(ContextColumnName) && list != null) {
+                foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in list) {
+                    if (row.Index == -1) continue;
+
+                    DataGridViewDynamicWrapCell c = (DataGridViewDynamicWrapCell)row.Cells[ContextColumnName];
+                    c.SetWrapContents(false);
+                }
+            }
+
+            // perform sorting
+            if (SortedColumn != null) {
+                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            }            
+
+            return list;
         }
 
         /// <summary>

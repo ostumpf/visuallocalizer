@@ -39,7 +39,7 @@ namespace VisualLocalizer.Components {
 
                 bool empty = string.IsNullOrEmpty(newKey); // new key is empty
                 bool validIdentifier = newKey.IsValidIdentifier(language.Value); // new key is valid identifier of the language
-                bool hasOwnDesigner = resxItem.DesignerItem != null && !resxItem.IsCultureSpecific(); // ResX file has own designer file
+                bool hasOwnDesigner = (resxItem.DesignerItem != null || resxItem.HasImplicitDesignerFile) && !resxItem.IsCultureSpecific(); // ResX file has own designer file
                 bool identifierError = false;
 
                 switch (SettingsObject.Instance.BadKeyNamePolicy) {

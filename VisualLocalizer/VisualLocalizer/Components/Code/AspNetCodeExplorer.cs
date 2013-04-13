@@ -209,7 +209,10 @@ namespace VisualLocalizer.Components {
                     if (info.Name.ToLower() == "language") continue;
 
                     AspNetStringResultItem item = AddResult(info, null, context.DirectiveName, context.WithinClientSideComment, false, false, true);
-                    if (item != null) item.ComesFromDirective = true;
+                    if (item != null) {
+                        item.ComesFromDirective = true;
+                        item.AttributeName = info.Name;
+                    }
                 }
             }
         }
@@ -344,6 +347,7 @@ namespace VisualLocalizer.Components {
             resultItem.ElementPrefix = elementPrefix;
             resultItem.ElementName = elementName;
             resultItem.Language = fileLanguage == FILETYPE.CSHARP ? LANGUAGE.CSHARP : LANGUAGE.VB;
+            resultItem.AttributeName = info.Name;
 
             AddContextToItem(resultItem);
 
@@ -374,18 +378,18 @@ namespace VisualLocalizer.Components {
             currentLine = currentLine.Substring(0, item.ReplaceSpan.iStartIndex) + StringConstants.ContextSubstituteText;
 
             StringBuilder context = new StringBuilder();
-            context.Append(currentLine.Trim());
+            context.Append(currentLine);
 
             int topLines = 0;
             int botLines = 0;
 
             while ((currentLine = GetLine(ref currentPos, -1)) != null && topLines < NumericConstants.ContextLineRadius) {
-                string lineText = currentLine.ToString().Trim();
+                string lineText = currentLine.ToString();
 
-                if (lineText.Length > 0) {
+                if (lineText.Trim().Length > 0) {
                     context.Insert(0, lineText + Environment.NewLine);
                     item.ContextRelativeLine++;
-                    if (lineText.Length > 1) topLines++;
+                    if (lineText.Trim().Length > 1) topLines++;
                 }
             }
 
@@ -394,11 +398,11 @@ namespace VisualLocalizer.Components {
             context.Append(currentLine.Substring(item.ReplaceSpan.iEndIndex));
 
             while ((currentLine = GetLine(ref currentPos, +1)) != null && botLines < NumericConstants.ContextLineRadius) {
-                string lineText = currentLine.ToString().Trim();
+                string lineText = currentLine.ToString();
 
-                if (lineText.Length > 0) {
+                if (lineText.Trim().Length > 0) {
                     context.Append(Environment.NewLine + lineText);
-                    if (lineText.Length > 1) botLines++;
+                    if (lineText.Trim().Length > 1) botLines++;
                 }
             }
 
@@ -430,18 +434,18 @@ namespace VisualLocalizer.Components {
             int endIndex = -1;
             int i = currentPos;
 
-            while (i < fileText.Length && fileText[i] != '\r') {
+            while (i >= 0 && i < fileText.Length && fileText[i] != '\r') {
                 i++;
             }
-            endIndex = Math.Min(i, fileText.Length);
+            endIndex = Math.Max(0, Math.Min(i, fileText.Length));
 
             i = currentPos;
-            while (i >= 0 && fileText[i] != '\n') {
+            while (i < fileText.Length && i >= 0 && fileText[i] != '\n') {
                 i--;
             }
             i++;
 
-            startIndex = Math.Max(i, 0);
+            startIndex = Math.Min(fileText.Length, Math.Max(i, 0));
 
             return fileText.Substring(startIndex, endIndex - startIndex);
         }

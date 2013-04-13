@@ -8,6 +8,7 @@ using System.Reflection;
 using System.IO;
 using System.Diagnostics;
 using EnvDTE80;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VisualLocalizer.Library {
 
@@ -136,7 +137,7 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         public static bool ContainsItem(this ProjectItems items, string name) {
             if (name == null) throw new ArgumentNullException("item");
-            if (items == null) throw new ArgumentNullException("items");
+            if (items == null) return false;
 
             foreach (ProjectItem i in items)
                 if (i.Name == name) return true;
@@ -267,6 +268,22 @@ namespace VisualLocalizer.Library {
         }
 
         /// <summary>
+        /// Returns value of "CurrentWebsiteLanguage" property, if present, false otherwise
+        /// </summary> 
+        public static LANGUAGE? GetCurrentWebsiteLanguage(this Project item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            try {
+                object o = item.Properties.Item("CurrentWebsiteLanguage").Value;
+                if (o == null) return null;
+
+                return o.ToString() == "Visual C#" ? LANGUAGE.CSHARP : LANGUAGE.VB;
+            } catch (Exception) {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Returns value of "RootNamespace" property, if present, otherwise value of "DefaultNamespace"
         /// </summary> 
         public static string GetRootNamespace(this Project item) {
@@ -303,12 +320,53 @@ namespace VisualLocalizer.Library {
         /// </summary>        
         public static FileCodeModel2 GetCodeModel(this ProjectItem item) {
             if (item == null) throw new ArgumentNullException("item");
-
+            
             if (item.FileCodeModel == null) {
                 item.Open(EnvDTE.Constants.vsViewKindCode);
             }
+            if (item.FileCodeModel == null) {
+                item.Open(null);
+            }
 
+            if (item.FileCodeModel != null && (item.FileCodeModel as FileCodeModel2).ParseStatus == vsCMParseStatus.vsCMParseStatusError) {               
+                throw new InvalidOperationException("FileCodeModel for " + item.Name + " returned error status.");
+            }
             return (FileCodeModel2)item.FileCodeModel;
         }
+
+        /// <summary>
+        /// Returns value of project's Target Framework property
+        /// </summary>        
+        public static Version GetProjectTargetFramework(this Project project) {
+            if (project == null) throw new ArgumentNullException("project");
+
+            try {
+                string versionString = int.Parse(project.Properties.Item("TargetFramework").Value.ToString()).ToString("X");
+                string majorString = versionString.Substring(0, 1);
+                string minorString = versionString.Substring(1);
+
+                return new Version(int.Parse(majorString),int.Parse(minorString));
+            } catch { }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns item with specified name from given collection, if found
+        /// </summary>        
+        public static ProjectItem GetItem(this ProjectItems items, string name) {
+            if (items == null) return null;
+
+            if (string.IsNullOrEmpty(name)) {
+                return null;
+            } else {
+                if (items.ContainsItem(name)) {
+                    return items.Item(name);
+                } else {
+                    return null;
+                }
+            }
+        }
     }
+
 }

@@ -107,8 +107,6 @@ namespace VLUnitTests.VLTests {
             target.ProcessSelection(true);
             ValidateResults(emptyList, target.Results);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.AspNetStringsTestFile1));
-
-            VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(Agent.CSharpStringsTestFile1, false)).Close(vsSaveChanges.vsSaveChangesNo);
         }
 
 
@@ -235,26 +233,7 @@ namespace VLUnitTests.VLTests {
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
                 ReplaceSpan = CreateTextSpan(4, 13, 4, 41)
-            });
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "head",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(5, 13, 5, 19)
-            });
+            });          
 
             list.Add(new TestAspNetStringResultItem() {
                 Value = "Untitled Page",
@@ -274,46 +253,7 @@ namespace VLUnitTests.VLTests {
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
                 ReplaceSpan = CreateTextSpan(6, 11, 6, 24)
-            });
-            
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "form",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(9, 28, 9, 34)
-            });
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "MyElement1",
-                ElementPrefix = "my",
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(10, 30, 10, 36)
-            });
+            });                              
             
             list.Add(new TestAspNetStringResultItem() {
                 Value = "test1value",
@@ -353,28 +293,6 @@ namespace VLUnitTests.VLTests {
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = true,
                 ReplaceSpan = CreateTextSpan(10, 86, 10, 96)
-            });
-
-
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "MyElement2",
-                ElementPrefix = "my",
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(11, 30, 11, 36)
             });
             
             list.Add(new TestAspNetStringResultItem() {
@@ -416,27 +334,6 @@ namespace VLUnitTests.VLTests {
                 LocalizabilityProved = true,
                 ReplaceSpan = CreateTextSpan(11, 86, 11, 96)
             });
-
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Button",
-                ElementPrefix = "asp",
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(13, 27, 13, 33)
-            });
         
             list.Add(new TestAspNetStringResultItem() {
                 Value = "button1_text",
@@ -475,27 +372,6 @@ namespace VLUnitTests.VLTests {
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
                 ReplaceSpan = CreateTextSpan(13, 111, 13, 113)
-            });
-
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Button",
-                ElementPrefix = "asp",
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(14, 27, 14, 33)
             });
         
             list.Add(new TestAspNetStringResultItem() {
@@ -929,26 +805,7 @@ namespace VLUnitTests.VLTests {
                 Language = VisualLocalizer.Library.LANGUAGE.VB,
                 LocalizabilityProved = false,
                 ReplaceSpan = CreateTextSpan(4, 13, 4, 41)
-            });
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "head",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.VB,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(5, 13, 5, 19)
-            });
+            });          
 
             list.Add(new TestAspNetStringResultItem() {
                 Value = "Untitled Page",
@@ -970,25 +827,6 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(6, 11, 6, 24)
             });
 
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "form",
-                ElementPrefix = null,
-                Language = VisualLocalizer.Library.LANGUAGE.VB,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(9, 28, 9, 34)
-            });
             list.Add(new TestAspNetStringResultItem() {
                 Value = @"some""string""",
                 WasVerbatim = false,
@@ -1198,25 +1036,6 @@ namespace VLUnitTests.VLTests {
 
 
             list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Button",
-                ElementPrefix = "asp",
-                Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(1, 19, 1, 25)
-            });
-            list.Add(new TestAspNetStringResultItem() {
                 Value = "buttontext",
                 WasVerbatim = false,
                 SourceItem = projectItem,
@@ -1306,26 +1125,6 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(0, 87, 0, 103)
             });
 
-
-            list.Add(new TestAspNetStringResultItem() {
-                Value = "server",
-                WasVerbatim = false,
-                SourceItem = projectItem,
-                ClassOrStructElementName = className,
-                IsWithinLocalizableFalse = false,
-                ComesFromDesignerFile = false,
-                ComesFromClientComment = false,
-                ComesFromCodeBlock = false,
-                ComesFromDirective = false,
-                ComesFromElement = true,
-                ComesFromInlineExpression = false,
-                ComesFromPlainText = false,
-                ElementName = "Button",
-                ElementPrefix = "asp",
-                Language = VisualLocalizer.Library.LANGUAGE.VB,
-                LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(1, 19, 1, 25)
-            });
             list.Add(new TestAspNetStringResultItem() {
                 Value = "VB .NET",
                 WasVerbatim = false,

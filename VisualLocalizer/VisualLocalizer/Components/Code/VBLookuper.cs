@@ -24,21 +24,24 @@ namespace VisualLocalizer.Components {
             concatenatingList = new List<VBLookuper<T>.AbstractConcatenatingChar>();
 
             string nmspc = @"Microsoft\s*_?\s*\.\s*_?\s*VisualBasic\s*_?\s*\.\s*_?\s*";
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbCrLf", "\r\n"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbCr", "\r"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbLf", "\n"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbNewLine", Environment.NewLine));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbNullString", string.Empty));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbTab", "\t"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbBack", "\b"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbFormFeed", "\f"));
-            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?vbVerticalTab", "\v"));
+            string constants = @"Constants\s*_?\s*\.\s*_?\s*";
+
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbCrLf", "\r\n"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbCr", "\r"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbLf", "\n"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbNewLine", Environment.NewLine));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbNullString", string.Empty));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbTab", "\t"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbBack", "\b"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbFormFeed", "\f"));
+            concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace("(" + nmspc + @")?(" + constants + ")?vbVerticalTab", "\v"));
 
             foreach (var info in typeof(Microsoft.VisualBasic.ControlChars).GetFields(BindingFlags.Static | BindingFlags.Public)) {
                 concatenatingList.Add(new ExplicitConcatenatingCharWithOptionalNamespace(@"(" + nmspc + @")?ControlChars\s*_?\s*\.\s*_?\s*" + info.Name, info.GetValue(null).ToString()));
             }
 
-            concatenatingList.Add(new ChrConcatenatingChar(@"("+nmspc+@")?Chr\s*_?\s*\(\s*_?\s*(\d+)\s*_?\s*\)"));
+            concatenatingList.Add(new ChrConcatenatingChar(@"(" + nmspc + @")?Chr\s*_?\s*\(\s*_?\s*(\d+)\s*_?\s*\)")); 
+            concatenatingList.Add(new ChrConcatenatingChar(@"(" + nmspc + @")?ChrW\s*_?\s*\(\s*_?\s*(\d+)\s*_?\s*\)"));
         }
 
         /// <summary>

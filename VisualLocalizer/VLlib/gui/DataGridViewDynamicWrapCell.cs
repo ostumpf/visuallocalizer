@@ -42,7 +42,7 @@ namespace VisualLocalizer.Library {
                 throw new InvalidOperationException("Insufficiently initialized DataGridViewDynamicWrapCell.");
 
             if (!wrap) {                                
-                Value = FullTextLines[RelativeLine];
+                Value = FullTextLines[RelativeLine].Trim();
                 Style.WrapMode = DataGridViewTriState.False;
             } else {
                 Value = FullText;

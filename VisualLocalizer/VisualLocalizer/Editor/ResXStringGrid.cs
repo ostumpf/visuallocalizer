@@ -42,8 +42,8 @@ namespace VisualLocalizer.Editor {
 
         private TextBox CurrentlyEditedTextBox;
         private ResXEditorControl editorControl;
-        private MenuItem editContextMenuItem, cutContextMenuItem, copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem,
-            inlineContextMenu, translateMenu, inlineContextMenuItem, inlineRemoveContextMenuItem;
+        private ImageMenuItem editContextMenuItem, cutContextMenuItem, copyContextMenuItem, pasteContextMenuItem, deleteContextMenuItem,
+            inlineContextMenu, translateMenu, inlineContextMenuItem, inlineRemoveContextMenuItem, showResultItemsMenuItem;
         
         public ResXStringGrid(ResXEditorControl editorControl) : base(false, editorControl.conflictResolver) {
             this.editorControl = editorControl;
@@ -76,47 +76,57 @@ namespace VisualLocalizer.Editor {
             this.RowTemplate = rowTemplate;
 
             // create context menu
-            editContextMenuItem = new MenuItem("Edit cell");
+            editContextMenuItem = new ImageMenuItem("Edit cell");
             editContextMenuItem.Shortcut = Shortcut.F2;
             editContextMenuItem.Click += new EventHandler((o, e) => { this.BeginEdit(true); });
 
-            cutContextMenuItem = new MenuItem("Cut");
+            cutContextMenuItem = new ImageMenuItem("Cut");
+            cutContextMenuItem.Image = Editor.cut;
             cutContextMenuItem.Shortcut = Shortcut.CtrlX;
             cutContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCut(); });
 
-            copyContextMenuItem = new MenuItem("Copy");
+            copyContextMenuItem = new ImageMenuItem("Copy");
+            copyContextMenuItem.Image = Editor.copy;
             copyContextMenuItem.Shortcut = Shortcut.CtrlC;
             copyContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecuteCopy(); });
 
-            pasteContextMenuItem = new MenuItem("Paste");
+            pasteContextMenuItem = new ImageMenuItem("Paste");
+            pasteContextMenuItem.Image = Editor.paste;
             pasteContextMenuItem.Shortcut = Shortcut.CtrlV;
             pasteContextMenuItem.Click += new EventHandler((o, e) => { editorControl.ExecutePaste(); });
 
-            
-            deleteContextMenuItem = new MenuItem("Remove");
-            deleteContextMenuItem.Shortcut = Shortcut.Del;            
-            deleteContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_RemoveRequested(REMOVEKIND.REMOVE); }); 
-            
-            inlineContextMenu = new MenuItem("Inline");
 
-            inlineContextMenuItem = new MenuItem("Inline");
+            deleteContextMenuItem = new ImageMenuItem("Remove");
+            deleteContextMenuItem.Image = Editor.remove;
+            deleteContextMenuItem.Shortcut = Shortcut.Del;            
+            deleteContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_RemoveRequested(REMOVEKIND.REMOVE); });
+
+            inlineContextMenu = new ImageMenuItem("Inline");
+
+            inlineContextMenuItem = new ImageMenuItem("Inline");
             inlineContextMenuItem.Shortcut = Shortcut.CtrlI;
-            inlineContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_InlineRequested(INLINEKIND.INLINE); }); 
-            
-            inlineRemoveContextMenuItem = new MenuItem("Inline && remove");
+            inlineContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_InlineRequested(INLINEKIND.INLINE); });
+
+            inlineRemoveContextMenuItem = new ImageMenuItem("Inline & remove");
             inlineRemoveContextMenuItem.Shortcut = Shortcut.CtrlShiftI;            
             inlineRemoveContextMenuItem.Click += new EventHandler((o, e) => { EditorControl_InlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE); });
 
             inlineContextMenu.MenuItems.Add(inlineContextMenuItem);
             inlineContextMenu.MenuItems.Add(inlineRemoveContextMenuItem);
 
-            translateMenu = new MenuItem("Translate");
+            translateMenu = new ImageMenuItem("Translate");
+            translateMenu.Image = Editor.translate;
             foreach (ToolStripMenuItem item in editorControl.translateButton.DropDownItems) {
                 MenuItem mItem = new MenuItem();
                 mItem.Tag = item.Tag;
                 mItem.Text = item.Text;
                 translateMenu.MenuItems.Add(mItem);
             }
+
+            showResultItemsMenuItem = new ImageMenuItem("Show references");
+            showResultItemsMenuItem.Image = Editor.search;
+            showResultItemsMenuItem.Shortcut = Shortcut.CtrlF;
+            showResultItemsMenuItem.Click += new EventHandler(showResultItemsMenuItem_Click);
 
             ContextMenu contextMenu = new ContextMenu();
             contextMenu.MenuItems.Add(editContextMenuItem);
@@ -125,6 +135,7 @@ namespace VisualLocalizer.Editor {
             contextMenu.MenuItems.Add(copyContextMenuItem);
             contextMenu.MenuItems.Add(pasteContextMenuItem);
             contextMenu.MenuItems.Add("-");
+            contextMenu.MenuItems.Add(showResultItemsMenuItem);
             contextMenu.MenuItems.Add(inlineContextMenu);
             contextMenu.MenuItems.Add("-");
             contextMenu.MenuItems.Add(translateMenu);
@@ -136,7 +147,7 @@ namespace VisualLocalizer.Editor {
             this.ColumnHeadersHeight = 24;            
 
             UpdateContextItemsEnabled();
-        }      
+        }        
 
         #region IDataTabItem members
 
@@ -163,6 +174,11 @@ namespace VisualLocalizer.Editor {
                         }
                     }
                 } else if (row.DataSourceItem != null) {
+                    if (row.DataSourceItem.GetValue<string>() == null) {
+                        string cmt = row.DataSourceItem.Comment;
+                        row.DataSourceItem = new ResXDataNode(row.DataSourceItem.Name, "");
+                        row.DataSourceItem.Comment = cmt;
+                    }
                     data.Add(row.DataSourceItem.Name.ToLower(), row.DataSourceItem);
                     if (!CanContainItem(row.DataSourceItem) && throwExceptions) 
                         throw new Exception("Error saving '" + row.DataSourceItem.Name + "' - cannot preserve type."); 
@@ -756,6 +772,23 @@ namespace VisualLocalizer.Editor {
         #region private members        
 
         /// <summary>
+        /// Collects code references to all selected rows and displays them in the tool window
+        /// </summary>       
+        private void showResultItemsMenuItem_Click(object sender, EventArgs e) {
+            try {
+                List<CodeReferenceResultItem> selected = new List<CodeReferenceResultItem>();
+                foreach (ResXStringGridRow row in SelectedRows) {
+                    if (row.IsNewRow) continue;
+                    if (string.IsNullOrEmpty(row.ErrorText)) selected.AddRange(row.CodeReferences);
+                }
+                editorControl.ShowReferences(selected);
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }      
+
+        /// <summary>
         /// Serializes resource data to a string
         /// </summary>        
         private string CreateMangledComment(ResXStringGridRow row) {
@@ -907,13 +940,15 @@ namespace VisualLocalizer.Editor {
                     if (info != null && info.ColumnIndex >= 0 && info.RowIndex >= 0 && info.RowIndex != Rows.Count - 1) {
                         if (SelectedRows.Count == 0) { // set current row as selected
                             Rows[info.RowIndex].Selected = true;
+                            CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
                         } else {
                             if (!Rows[info.RowIndex].Selected) { // if unselected row was clicked
                                 ClearSelection();
                                 Rows[info.RowIndex].Selected = true; // set it as the only selected one
+                                CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
                             }
                         }
-                        CurrentCell = Rows[info.RowIndex].Cells[info.ColumnIndex];
+                        
                         this.ContextMenu.Show(this, e.Location);
                     }
                 }
@@ -934,6 +969,7 @@ namespace VisualLocalizer.Editor {
             inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && AreReferencesKnownOnSelected;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
             translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
+            showResultItemsMenuItem.Enabled = SelectedRows.Count >= 1 && !IsEditing && AreReferencesKnownOnSelected && !MenuManager.OperationInProgress;   
         }
 
         /// <summary>

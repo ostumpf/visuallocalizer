@@ -9,6 +9,8 @@ using VisualLocalizer.Library;
 using System.Windows.Forms;
 using System.IO;
 using Microsoft.VisualStudio.OLE.Interop;
+using EnvDTE80;
+using EnvDTE;
 
 namespace VLUnitTests.VLTests {
     
@@ -20,7 +22,7 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             string[] files = { Agent.CSharpReferencesTestFile1 };
-
+            
             InternalFileTest(true, files, 2);
             InternalFileTest(false, files, 2);
         }
@@ -51,8 +53,8 @@ namespace VLUnitTests.VLTests {
 
             string[] files = { Agent.AspNetReferencesTestFile1 };
             
-            InternalFileTest(true, files, 18);
-            InternalFileTest(false, files, 18);
+            InternalFileTest(true, files, 8);
+            InternalFileTest(false, files, 8);
         }
 
         [TestMethod()]
@@ -61,8 +63,8 @@ namespace VLUnitTests.VLTests {
 
             string[] files = { Agent.AspNetReferencesTestFile1, Agent.AspNetReferencesTestFile2 };
 
-            InternalFileTest(true, files, 18 + 13);
-            InternalFileTest(false, files, 18 + 13);
+            InternalFileTest(true, files, 8 + 9);
+            InternalFileTest(false, files, 8 + 9);
         }
 
         [TestMethod()]
@@ -78,15 +80,16 @@ namespace VLUnitTests.VLTests {
         private void InternalFileTest(bool fileOpened, string[] referenceFiles, int correction) {
             Dictionary<string, string> backups = CreateBackupsOf(referenceFiles);
             SetFilesOpened(referenceFiles, fileOpened);
-
+           
             List<CodeReferenceResultItem> inlineList = BatchInlineLookup(referenceFiles);
 
             int checkedCount;
-            BatchInlineToolWindow_Accessor window = InitBatchWindow(inlineList, out checkedCount);
+            Dictionary<ProjectItem, int> sourceItemsCounts;
+            BatchInlineToolWindow_Accessor window = InitBatchWindow(inlineList, out sourceItemsCounts, out checkedCount);
 
             try {
                 window.RunClick(null, null);
-                File.Copy(referenceFiles[0], @"C:\Users\Ondra\Desktop\out.txt", true);
+                
                 List<CodeStringResultItem> moveList = BatchMoveLookup(referenceFiles);
 
                 Assert.AreEqual(checkedCount, moveList.Count - correction);
@@ -105,9 +108,8 @@ namespace VLUnitTests.VLTests {
                     foreach (string file in referenceFiles) {
                         IOleUndoManager undoManager;
                         VLDocumentViewsManager.GetTextLinesForFile(file, false).GetUndoManager(out undoManager);
-                        
-                        List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(checkedCount);
-                        foreach (AbstractUndoUnit unit in units)
+
+                        foreach (AbstractUndoUnit unit in undoManager.RemoveTopFromUndoStack(sourceItemsCounts[Agent.GetDTE().Solution.FindProjectItem(file)]))
                             unit.Undo();
 
                         Assert.AreEqual(File.ReadAllText(backups[file]), File.ReadAllText(file));
@@ -116,22 +118,27 @@ namespace VLUnitTests.VLTests {
             } finally {
                 if (fileOpened) SetFilesOpened(referenceFiles, false);
                 RestoreBackups(backups);
+     
             }
         }
 
-        private BatchInlineToolWindow_Accessor InitBatchWindow(List<CodeReferenceResultItem> inlineList, out int checkedCount) {
+        private BatchInlineToolWindow_Accessor InitBatchWindow(List<CodeReferenceResultItem> inlineList, out Dictionary<ProjectItem, int> sourceItemCounts, out int checkedCount) {
             BatchInlineToolWindow_Accessor window = new BatchInlineToolWindow_Accessor(new PrivateObject(new BatchInlineToolWindow()));
             window.SetData(inlineList);
 
-            BatchInlineToolPanel grid = ((BatchInlineToolPanel)window.panel.Target);
+            BatchInlineToolGrid grid = ((BatchInlineToolGrid)window.panel.Target);
             Random rnd = new Random();
             checkedCount = 0;
+            sourceItemCounts = new Dictionary<ProjectItem, int>();
 
-            foreach (DataGridViewRow row in grid.Rows) {
+            foreach (DataGridViewCheckedRow<CodeReferenceResultItem> row in grid.Rows) {
                 bool check = rnd.Next(2) == 0;
                 
                 row.Cells[grid.CheckBoxColumnName].Value = check;
                 if (check) checkedCount++;
+
+                if (!sourceItemCounts.ContainsKey(row.DataSourceItem.SourceItem)) sourceItemCounts.Add(row.DataSourceItem.SourceItem, 0);
+                if (check) sourceItemCounts[row.DataSourceItem.SourceItem]++;
             }                        
 
             grid.Sort(grid.Columns[rnd.Next(grid.Columns.Count)], rnd.Next(2) == 0 ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);

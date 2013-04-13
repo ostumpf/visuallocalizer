@@ -116,7 +116,7 @@ namespace VisualLocalizer {
         /// <summary>
         /// Attributes ignored by ASP .NET code explorer, in the format [elementName]:[attributeName]. Symbol * is metacharacter, meaning "any string"
         /// </summary>
-        public static readonly string[] AspNetIgnoredAttributes = { "*:ID", "*:Name" };
+        public static readonly string[] AspNetIgnoredAttributes = { "*:ID", "*:Name", "*:runat" };
 
         public const string ContextSubstituteText = "**RESOURCE REFERENCE**";
         public const string GlobalWebSiteResourcesFolder = "App_GlobalResources";

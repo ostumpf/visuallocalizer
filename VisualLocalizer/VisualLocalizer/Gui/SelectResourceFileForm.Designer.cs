@@ -321,7 +321,7 @@
             this.KeyPreview = true;
             this.Name = "SelectResourceFileForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Select destination file";
+            this.Text = "Move to resources";
             this.Load += new System.EventHandler(this.SelectResourceFileForm_Load);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.SelectResourceFileForm_KeyUp);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SelectResourceFileForm_FormClosing);

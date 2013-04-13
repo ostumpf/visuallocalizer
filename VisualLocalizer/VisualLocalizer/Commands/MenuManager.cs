@@ -107,7 +107,7 @@ namespace VisualLocalizer.Commands {
             
             cmd.BeforeQueryStatus += queryStatusHandler;
             menuService.AddCommand(cmd);
-
+            
             return cmd;
         }
 
@@ -116,7 +116,7 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         /// <typeparam name="T">Type of the tool windows to display.</typeparam>
         /// <returns>Instance of the tool window.</returns>
-        private T ShowToolWindow<T>() where T:ToolWindowPane {
+        public T ShowToolWindow<T>() where T:ToolWindowPane {
             T pane = (T)VisualLocalizerPackage.Instance.FindToolWindow(typeof(T), 0, true);
             
             if (pane != null && pane.Frame != null) {
@@ -146,9 +146,7 @@ namespace VisualLocalizer.Commands {
                 cmd.Supported = supported;
                 cmd.Visible = supported;
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);                
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);           
             }
         }
 
@@ -174,9 +172,7 @@ namespace VisualLocalizer.Commands {
 
                 cmd.Enabled = !selection.IsEmpty;
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
             }
         }
        
@@ -204,15 +200,15 @@ namespace VisualLocalizer.Commands {
                         batchOperationsEnabled = batchOperationsEnabled && (canShow || isFolder); 
                     } else if (o.Object is Project) {
                         Project proj = (Project)o.Object;
-                        menuOk = menuOk && proj.IsKnownProjectType();                        
+                        menuOk = menuOk && proj.IsKnownProjectType();
+                    } else if (o.Object is Solution) {
+                        menuOk = true;
                     } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
                 }
 
                 (sender as OleMenuCommand).Visible = menuOk;
             } catch (Exception ex) {
-                string text = string.Format("{0} while processing command: {1}", ex.GetType().Name, ex.Message);
-
-                VLOutputWindow.VisualLocalizerPane.WriteLine(text);
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
             }
         }
 
@@ -332,6 +328,8 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.Process(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
+                    win.GridCheckboxColumnVisible = true;
+                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 
@@ -354,6 +352,8 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
+                    win.GridCheckboxColumnVisible = true;
+                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
@@ -398,6 +398,8 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.ProcessSelection(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
+                    win.GridCheckboxColumnVisible = true;
+                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();

@@ -116,7 +116,7 @@ namespace VisualLocalizer.Library {
                 bool check = (bool)row.Cells[CheckBoxColumnName].Value;
                 if (!check) {
                     rowsToRemove.Add(row);
-                    if (remember) removedRows.Add(row);
+                    if (remember) removedRows.Add(row);                    
                 }
             }
 
@@ -131,15 +131,18 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Puts removed rows back to the grid
         /// </summary>
-        public virtual void RestoreRemovedRows() {
-            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column
+        public virtual List<DataGridViewRow> RestoreRemovedRows() {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return null; // this grid does not contain checkbox column
 
             foreach (DataGridViewRow row in removedRows) {
                 Rows.Add(row);
             }
 
+            List<DataGridViewRow> returnList = new List<DataGridViewRow>(removedRows);
             removedRows.Clear();
             UpdateCheckHeader();
+
+            return returnList;
         }
 
         /// <summary>
@@ -197,7 +200,7 @@ namespace VisualLocalizer.Library {
         protected virtual void RowSelectionChanged(object sender, EventArgs e) {
             if (!Columns.Contains(ContextColumnName) || !Columns[ContextColumnName].Visible) return; // the grid does not have a context column or it is hidden
 
-            if (previouslySelectedRow != null) {
+            if (previouslySelectedRow != null && previouslySelectedRow.Index != -1) {
                 // shrink previous row
                 DataGridViewDynamicWrapCell cell = (DataGridViewDynamicWrapCell)previouslySelectedRow.Cells[ContextColumnName];
                 cell.SetWrapContents(false);

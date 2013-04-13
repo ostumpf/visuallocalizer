@@ -396,7 +396,7 @@ namespace VisualLocalizer.Settings {
 
                 ComboBox predicateBox = new ComboBox();
                 predicateBox.Width = 110;
-                predicateBox.DropDownWidth = 160;
+                predicateBox.DropDownWidth = 180;
                 predicateBox.DropDownStyle = ComboBoxStyle.DropDownList;
 
                 foreach (var o in Enum.GetValues(typeof(LocalizationCriterionPredicate)))
@@ -586,7 +586,7 @@ namespace VisualLocalizer.Settings {
                         int w = 0;
                         object val = row.Cells[2].Value;
                         if (val == null || !int.TryParse(val.ToString(), out w) || w < -100 || w > 100)
-                            throw new Exception("Error on '" + crit.Description + "' - invalid value '" + val + "'");
+                            throw new Exception("Error on '" + crit.Description + "' - invalid value '" + val + "'. Please enter an integer from -100 to 100.");
 
                         crit.Weight = w;
                     }

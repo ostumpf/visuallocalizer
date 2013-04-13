@@ -19,8 +19,8 @@ namespace VisualLocalizer.Gui {
     /// Represents "Batch inline" toolwindow
     /// </summary>
     [Guid("E7755751-5A96-451b-9DFF-DCA1422CCA0A")]
-    internal sealed class BatchInlineToolWindow : AbstractCodeToolWindow<BatchInlineToolPanel> {
-
+    internal sealed class BatchInlineToolWindow : AbstractCodeToolWindow<BatchInlineToolGrid> {
+        
         /// <summary>
         /// Creates new instance
         /// </summary>
@@ -30,21 +30,27 @@ namespace VisualLocalizer.Gui {
             // set the toolbar
             this.ToolBar = new CommandID(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarID);
             this.ToolBarLocation = (int)VSTWT_LOCATION.VSTWT_TOP;
-
+            
             OleMenuCommandService menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            if (menuService == null) throw new InvalidOperationException("Cannot obtain OleMenuCommandService.");
+            if (menuService == null) throw new InvalidOperationException("Cannot obtain OleMenuCommandService.");                  
 
             // add "Run" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRunID,
-                new EventHandler(RunClick), null, menuService);
+                new EventHandler(RunClick), new EventHandler(CommandsEnabled), menuService);
 
             // add "Remove unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRemoveUncheckedID,
-                new EventHandler(RemoveUnchecked), null, menuService);
+                new EventHandler(RemoveUnchecked), new EventHandler(CommandsEnabled), menuService);
 
             // add "Restore unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarPutBackUncheckedID,
-                new EventHandler(RestoreUnchecked), null, menuService);
+                new EventHandler(RestoreUnchecked), new EventHandler(CommandsEnabled), menuService);
+        }
+
+        private void CommandsEnabled(object sender, EventArgs e) {
+            MenuCommand mc = sender as MenuCommand;
+            mc.Visible = IsToolbarVisible;
+            mc.Enabled = IsToolbarVisible;
         }
 
         /// <summary>
@@ -79,6 +85,16 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        public bool IsToolbarVisible {
+            get;
+            set;
+        }
+
+        public bool GridCheckboxColumnVisible {
+            get;
+            set;
+        }
+
         /// <summary>
         /// "Run" button clicked
         /// </summary>        
@@ -111,6 +127,7 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         public void SetData(List<CodeReferenceResultItem> list) {
             if (list == null) throw new ArgumentNullException("list");
+            panel.Columns[panel.CheckBoxColumnName].Visible = GridCheckboxColumnVisible;
             panel.SetData(list);
         }
     }

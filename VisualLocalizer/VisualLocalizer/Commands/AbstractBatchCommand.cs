@@ -130,6 +130,9 @@ namespace VisualLocalizer.Commands {
                 } else if (o.Object is Project) {
                     Project proj = (Project)o.Object;
                     Process(proj, verbose);
+                } else if (o.Object is Solution) {
+                    Solution s = (Solution)o.Object;
+                    Process(s.Projects, verbose);
                 } else throw new Exception("Unexpected project item type: " + o.Object.GetVisualBasicType());
             }            
         }
@@ -157,9 +160,20 @@ namespace VisualLocalizer.Commands {
 
             selectionTopPoint = currentSelection.BottomPoint;
             selectionBotPoint = currentSelection.TopPoint;            
-        }       
+        }
+
+        protected virtual void Process(Projects projects, bool verbose) {
+            if (projects == null) return;
+
+            foreach (Project proj in projects) {
+                Process(proj, verbose);
+            }
+        }
 
         protected virtual void Process(Project project, bool verbose) {
+            if (project == null) return;
+            if (!project.IsKnownProjectType()) return;
+
             Process(project.ProjectItems, verbose);
         }
 

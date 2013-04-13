@@ -40,14 +40,16 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Adds removed rows back to the grid (register)
         /// </summary>
-        public override void RestoreRemovedRows() {
-            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return;
+        public override List<DataGridViewRow> RestoreRemovedRows() {
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return null;
            
-            base.RestoreRemovedRows();
+            var returnList = base.RestoreRemovedRows();
 
             foreach (DataGridViewKeyValueRow<ItemType> row in Rows) {
-                if (row.Cells[KeyColumnName].Tag==null) Validate(row);
+                if (row.Cells[KeyColumnName].Tag == null) Validate(row);
             }
+
+            return returnList;
         }
 
         /// <summary>

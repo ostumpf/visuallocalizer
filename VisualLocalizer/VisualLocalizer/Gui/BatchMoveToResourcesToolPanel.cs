@@ -188,6 +188,7 @@ namespace VisualLocalizer.Gui {
                 box.Items.Add(LocalizationCriterionAction2.UNCHECK.ToHumanForm());
                 box.Items.Add(LocalizationCriterionAction2.REMOVE.ToHumanForm());
                 box.Width = 130;
+                box.DropDownWidth = 200;
                 box.Name = crit.Name + "box";
                 box.SelectedIndex = (int)crit.Action;
                 box.SelectedIndexChanged += new EventHandler(Box_SelectedIndexChanged);

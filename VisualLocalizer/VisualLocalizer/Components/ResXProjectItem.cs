@@ -70,19 +70,11 @@ namespace VisualLocalizer.Components {
             this.DisplayName = displayName;
             this.InternalProjectItem = projectItem;
 
-            string customToolOutput = InternalProjectItem.GetCustomToolOutput(); 
-            if (string.IsNullOrEmpty(customToolOutput)) {
-                this.DesignerItem = null;
-            } else {
-                if (InternalProjectItem.ProjectItems.ContainsItem(customToolOutput)) {
-                    this.DesignerItem = InternalProjectItem.ProjectItems.Item(customToolOutput);
-                } else {
-                    this.DesignerItem = null;
-                }
-            }
+            string customToolOutput = InternalProjectItem.GetCustomToolOutput();
+            this.DesignerItem = InternalProjectItem.ProjectItems.GetItem(customToolOutput);
 
             this.MarkedInternalInReferencedProject = internalInReferenced;
-        }
+        }    
 
         /// <summary>
         /// Returns true if ResX file is culture specific
@@ -103,10 +95,33 @@ namespace VisualLocalizer.Components {
         /// </summary>
         public LANGUAGE DesignerLanguage {
             get {
-                if (DesignerItem != null && DesignerItem.GetCodeModel() != null) {
-                    string lang = DesignerItem.GetCodeModel().Language;
+                ProjectItem designer = DesignerItem;
+                if (IsCultureSpecific()) {
+                    ProjectItem parent = InternalProjectItem.Collection.GetItem(GetCultureNeutralName());
+                    if (parent != null) {
+                        designer = parent.ProjectItems.GetItem(parent.GetCustomToolOutput());
+                    }
+                }
+
+                if (designer != null && designer.GetCodeModel() != null) {
+                    string lang = designer.GetCodeModel().Language;
                     return lang == CodeModelLanguageConstants.vsCMLanguageCSharp ? LANGUAGE.CSHARP : LANGUAGE.VB;
-                } else return LANGUAGE.CSHARP;
+                } else {
+                    LANGUAGE? lang = InternalProjectItem.ContainingProject.GetCurrentWebsiteLanguage();
+                    return lang.HasValue ? lang.Value : LANGUAGE.CSHARP;
+                }
+            }
+        }
+
+        public bool HasImplicitDesignerFile {
+            get {
+                bool impliedDesignerItem = false;
+                if (InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject) { // must be located in ASP .NET WebSite project
+                    string relative = InternalProjectItem.GetRelativeURL();
+                    // must be in the App_GlobalResources folder
+                    impliedDesignerItem = !string.IsNullOrEmpty(relative) && relative.StartsWith(StringConstants.GlobalWebSiteResourcesFolder);
+                }
+                return impliedDesignerItem;
             }
         }
 
@@ -133,7 +148,7 @@ namespace VisualLocalizer.Components {
         public ProjectItem InternalProjectItem {
             get;
             private set;
-        }
+        }     
 
         /// <summary>
         /// Returns display name

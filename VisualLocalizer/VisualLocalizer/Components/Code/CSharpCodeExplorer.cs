@@ -160,32 +160,32 @@ namespace VisualLocalizer.Components {
             // add NumericConstants.ContextLineRadius lines above the result item with at least 2 non-whitespace characters
             while (currentLine >= 1 && topLines < NumericConstants.ContextLineRadius) {
                 editPoint.MoveToLineAndOffset(currentLine, 1);
-                string lineText = editPoint.GetText(editPoint.LineLength).Trim();
-                if (lineText.Length > 0) {
+                string lineText = editPoint.GetText(editPoint.LineLength);
+                if (lineText.Trim().Length > 0) {
                     context.Insert(0, lineText + Environment.NewLine);
                     contextRelativeLine++;
-                    if (lineText.Length > 1) topLines++;
+                    if (lineText.Trim().Length > 1) topLines++;
                 }
                 currentLine--;
             }
 
             editPoint.MoveToLineAndOffset(item.ReplaceSpan.iStartLine + 1, 1);
-            context.Append(editPoint.GetText(item.ReplaceSpan.iStartIndex).Trim());
+            context.Append(editPoint.GetText(item.ReplaceSpan.iStartIndex));
 
             context.Append(StringConstants.ContextSubstituteText); // add text that will be displayed instead of actual result item
 
             editPoint.MoveToLineAndOffset(item.ReplaceSpan.iEndLine + 1, item.ReplaceSpan.iEndIndex + 1);
-            context.Append(editPoint.GetText(editPoint.LineLength - item.ReplaceSpan.iEndIndex + 1).Trim());
+            context.Append(editPoint.GetText(editPoint.LineLength - item.ReplaceSpan.iEndIndex + 1));
 
             int botLines = 0;
             currentLine = item.ReplaceSpan.iEndLine + 2;
             // add NumericConstants.ContextLineRadius lines below the result item with at least 2 non-whitespace characters
             while (botLines < NumericConstants.ContextLineRadius) {
                 editPoint.MoveToLineAndOffset(currentLine, 1);
-                string lineText = editPoint.GetText(editPoint.LineLength).Trim();
-                if (lineText.Length > 0) {
+                string lineText = editPoint.GetText(editPoint.LineLength);
+                if (lineText.Trim().Length > 0) {
                     context.Append(Environment.NewLine + lineText);
-                    if (lineText.Length > 1) botLines++;
+                    if (lineText.Trim().Length > 1) botLines++;
                 }
                 editPoint.EndOfLine();
                 if (editPoint.AtEndOfDocument) break;
