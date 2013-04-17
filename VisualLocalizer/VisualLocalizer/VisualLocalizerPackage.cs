@@ -98,7 +98,7 @@ namespace VisualLocalizer
 
                 // register as an editor for ResX files
                 RegisterEditorFactory(new ResXEditorFactory());
-
+                
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Initialization completed");
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
@@ -108,12 +108,17 @@ namespace VisualLocalizer
         }
 
         private void InitBaseServices() {                       
-            DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));            
-            UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
+            DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
+            try {
+                UIHierarchy = (EnvDTE.UIHierarchy)DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
+            } catch {
+                UIHierarchy = null;
+            }
+
             menuService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
             clipboardHelper = (IVsUIHierWinClipboardHelper)GetService(typeof(SVsUIHierWinClipboardHelper));
 
-            if (DTE == null || UIHierarchy == null || menuService == null || clipboardHelper==null)
+            if (DTE == null || menuService == null || clipboardHelper==null)
                 throw new Exception("Error during initialization of base services.");
         }
        

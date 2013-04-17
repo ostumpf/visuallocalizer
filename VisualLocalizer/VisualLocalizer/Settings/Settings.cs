@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using VisualLocalizer.Components;
+using System.IO;
 
 namespace VisualLocalizer.Settings {
     
@@ -35,6 +36,7 @@ namespace VisualLocalizer.Settings {
         /// True if PropertyChanged event should not be issued despite changes of the properties
         /// </summary>
         public bool IgnorePropertyChanges { get; set; }
+             
 
         /// <summary>
         /// Unmodifiable set of filter criteria
@@ -55,7 +57,7 @@ namespace VisualLocalizer.Settings {
         }        
 
         /// <summary>
-        /// Resets criteria to original state (no custom criteria, common criteria initialized with default values)
+        /// Resets criteria to original state (default custom criteria, common criteria initialized with default values)
         /// </summary>
         public void ResetCriteria() {
             CustomLocalizabilityCriteria.Clear();
@@ -67,6 +69,7 @@ namespace VisualLocalizer.Settings {
             foreach (var pair in aspnetMembers)
                 if (!CommonLocalizabilityCriteria.ContainsKey(pair.Key))
                     CommonLocalizabilityCriteria.Add(pair.Key, pair.Value);
+            
         }
 
 

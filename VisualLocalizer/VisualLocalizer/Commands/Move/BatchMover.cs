@@ -96,14 +96,14 @@ namespace VisualLocalizer.Commands {
                         }
 
                         // check if such item already exists in destination file
-                        keyConflict = resultItem.DestinationItem.GetKeyConflictType(resultItem.Key, resultItem.Value);
+                        keyConflict = resultItem.DestinationItem.GetKeyConflictType(resultItem.Key, resultItem.Value, true);
                         if (keyConflict == CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE)
                             throw new InvalidOperationException(string.Format("Key \"{0}\" already exists with different value.", resultItem.Key));
                         resultItem.Key = resultItem.DestinationItem.GetRealKey(resultItem.Key); // if key already exists, return its name (solves case-sensitivity problems)
 
                         NamespacesList usedNamespaces = GetUsedNamespacesFor(resultItem);
-                        
-                        if (UseFullName || resultItem.MustUseFullName) { // reference will contain namespace
+
+                        if (UseFullName || resultItem.MustUseFullName || (resultItem.Language == LANGUAGE.VB && resultItem.DestinationItem.IsProjectDefault(resultItem.SourceItem.ContainingProject))) { // reference will contain namespace
                             referenceText = new ReferenceString(resultItem.DestinationItem.Namespace, resultItem.DestinationItem.Class, resultItem.Key);
                             addUsingBlock = false; // no using block will be added
                         } else {
@@ -122,7 +122,7 @@ namespace VisualLocalizer.Commands {
                         }
                     }
 
-                    if (RDTManager.IsFileOpen(path)) { // file is open
+                    if (RDTManager.IsFileOpen(path) && RDTManager.IsFileVisible(path)) { // file is open
                         if (resultItem.MoveThisItem || (MarkUncheckedStringsWithComment && !resultItem.IsMarkedWithUnlocalizableComment)) { // string literal in text will be modified (referenced or marked with comment)                            
                             if (!buffersCache.ContainsKey(path)) {
                                 // load file's buffer
@@ -145,7 +145,7 @@ namespace VisualLocalizer.Commands {
                                 // add using block to the source file
                                 int beforeLines, afterLines;
                                 buffersCache[path].GetLineCount(out beforeLines);
-                                resultItem.AddUsingBlock(null);
+                                resultItem.AddUsingBlock(buffersCache[path]);
                                 buffersCache[path].GetLineCount(out afterLines);
                                 int diff = afterLines - beforeLines;
 
@@ -247,7 +247,14 @@ namespace VisualLocalizer.Commands {
 
             // flush closed files texts
             foreach (var pair in filesCache) {
-                File.WriteAllText(pair.Key, pair.Value.ToString());
+                if (RDTManager.IsFileOpen(pair.Key)) {
+                    RDTManager.SetIgnoreFileChanges(pair.Key, true);
+                    File.WriteAllText(pair.Key, pair.Value.ToString());
+                    RDTManager.SetIgnoreFileChanges(pair.Key, false);
+                    RDTManager.SilentlyReloadFile(pair.Key);
+                } else {
+                    File.WriteAllText(pair.Key, pair.Value.ToString());
+                }
             }
             foreach (ResXProjectItem item in loadedResxItems) {
                 if (item.IsInBatchMode) {

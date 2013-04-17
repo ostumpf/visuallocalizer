@@ -60,7 +60,7 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             string[] testFiles = new string[] { Agent.VBStringsTestFile1 };
-            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib, Agent.CSharpResourceFileLib };
+            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib };
 
             InternalOpenedFileMoveTest(false, false, testFiles, targetFiles);
             InternalClosedFileMoveTest(false, false, testFiles, targetFiles);            
@@ -180,7 +180,8 @@ namespace VLUnitTests.VLTests {
             BatchMoveToResourcesToolWindow_Accessor window = InitBatchToolWindow(resxItems.Values.ToList(), items, fullName, mark, out resxCounts, out sourceItemCounts, out expectedToBeMarked);
 
             try {
-                window.RunClick(null, null);                
+                window.RunClick(null, null);
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
 
                 foreach (ResXProjectItem target in resxItems.Values) {
                     Assert.AreEqual(resxCounts.ContainsKey(target) ? resxCounts[target] : 0, GetResourcesCountIn(target));
@@ -188,10 +189,12 @@ namespace VLUnitTests.VLTests {
 
                 int checkedCount = resxCounts.Sum((pair) => { return pair.Value; });
                 List<CodeReferenceResultItem> inlineResults = BatchInlineLookup(testFiles);
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 Assert.AreEqual(checkedCount, inlineResults.Count);
                  
                 if (mark) {
                     int markedAfter = BatchMoveLookup(testFiles).Count((item) => { return item.IsMarkedWithUnlocalizableComment; });
+                    VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
                     Assert.AreEqual(expectedToBeMarked, markedAfter, "mark");
                 }
 
@@ -230,6 +233,7 @@ namespace VLUnitTests.VLTests {
                 foreach (ResXProjectItem target in resxItems.Values) {
                     ClearFile(target);                    
                 }
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
             }
         }
 
@@ -249,18 +253,21 @@ namespace VLUnitTests.VLTests {
 
             try {
                 window.RunClick(null, null);
-                
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
+
                 foreach (ResXProjectItem target in resxItems.Values) {
                     Assert.AreEqual(resxCounts.ContainsKey(target) ? resxCounts[target] : 0, GetResourcesCountIn(target));
                 }
 
                 int checkedCount = resxCounts.Sum((pair) => { return pair.Value; });
                 List<CodeReferenceResultItem> inlineResults = BatchInlineLookup(testFiles);
-               
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+
                 Assert.AreEqual(checkedCount, inlineResults.Count);
 
                 if (mark) {
                     int markedAfter = BatchMoveLookup(testFiles).Count((item) => { return item.IsMarkedWithUnlocalizableComment; });
+                    VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
                     Assert.AreEqual(expectedToBeMarked, markedAfter, "mark");
                 }
 
@@ -281,6 +288,7 @@ namespace VLUnitTests.VLTests {
                 foreach (ResXProjectItem target in resxItems.Values) {
                     ClearFile(target);                    
                 }
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
             }
         }        
 
@@ -289,14 +297,17 @@ namespace VLUnitTests.VLTests {
             if (projectItem.GetFileType() == FILETYPE.ASPX) return;
 
             HashSet<string> namespaces = new HashSet<string>();
+            bool fileOpened;
 
-            foreach (CodeElement codeElement in projectItem.GetCodeModel().CodeElements) {
+            foreach (CodeElement codeElement in projectItem.GetCodeModel(true, true, out fileOpened).CodeElements) {
                 if (codeElement.Kind != vsCMElement.vsCMElementImportStmt) continue;
                 CodeImport import=(CodeImport)codeElement;
                 if (namespaces.Contains(import.Namespace)) Assert.Fail();
 
                 namespaces.Add(import.Namespace);
             }
+
+            if (fileOpened) DocumentViewsManager.CloseFile(path);
         }
 
         private Dictionary<string, ResXProjectItem> InitResxItems(string[] targetFiles, Project containingProject) {
@@ -327,7 +338,7 @@ namespace VLUnitTests.VLTests {
             resxCounts = new Dictionary<ResXProjectItem, int>();
             
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in grid.Rows) {
-                bool check = rnd.Next(2) == 0 && !row.DataSourceItem.IsMarkedWithUnlocalizableComment;
+                bool check = rnd.Next(2) == 0;
                 if (check) {
                     row.Cells[grid.KeyColumnName].Value = string.Format("xx{0}", x);
 
@@ -341,9 +352,9 @@ namespace VLUnitTests.VLTests {
                 } else {
                     AspNetStringResultItem aitem = row.DataSourceItem as AspNetStringResultItem;
                     if (((row.DataSourceItem is CSharpStringResultItem) || (aitem != null && aitem.ComesFromCodeBlock && aitem.Language == LANGUAGE.CSHARP))) {
-                        if (mark) {
+                        if (mark && !row.DataSourceItem.IsMarkedWithUnlocalizableComment) {
                             if (!sourceItemCounts.ContainsKey(row.DataSourceItem.SourceItem)) sourceItemCounts.Add(row.DataSourceItem.SourceItem, 0);
-                            sourceItemCounts[row.DataSourceItem.SourceItem]++;
+                            sourceItemCounts[row.DataSourceItem.SourceItem]++;                            
                         }
                         expectedToBeMarked++;
                     }

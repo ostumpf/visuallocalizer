@@ -39,7 +39,8 @@ namespace VisualLocalizer.Commands {
             if (currentDocument.ReadOnly)
                 throw new Exception("Cannot perform this operation - active document is readonly");
 
-            currentCodeModel = currentDocument.ProjectItem.GetCodeModel();
+            bool fileOpened;
+            currentCodeModel = currentDocument.ProjectItem.GetCodeModel(false, false, out fileOpened);
 
             textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
             if (textManager == null)

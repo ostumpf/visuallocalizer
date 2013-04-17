@@ -11,6 +11,7 @@ using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using System.Drawing;
 using VisualLocalizer.Components;
+using System.IO;
 
 namespace VisualLocalizer.Settings {
 
@@ -60,7 +61,7 @@ namespace VisualLocalizer.Settings {
                             }
                         }
 
-                        SettingsObject.Instance.CustomLocalizabilityCriteria.Clear();
+                        SettingsObject.Instance.CustomLocalizabilityCriteria.Clear();                        
                         int customCriteriaCount = ReadIntFromRegKey(filtersKey, "CustomCriteriaCount", 0);
                         for (int i = 0; i < customCriteriaCount; i++) {
                             object val = filtersKey.GetValue("CustomCriteria" + i);
@@ -139,6 +140,104 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.UseReflectionInAsp = true;
 
             SettingsObject.Instance.ResetCriteria();
+
+            var valueIsFormat = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 20);
+            valueIsFormat.Predicate = LocalizationCriterionPredicate.MATCHES;
+            valueIsFormat.Target = LocalizationCriterionTarget.VALUE;
+            valueIsFormat.Regex = @"{\d+(:.+)?}(?# formatting placeholders)";
+            valueIsFormat.Name = Path.GetRandomFileName();
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueIsFormat);
+
+            var valueIsMultiline = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_ENABLE, 0);
+            valueIsMultiline.Predicate = LocalizationCriterionPredicate.MATCHES;
+            valueIsMultiline.Target = LocalizationCriterionTarget.VALUE;
+            valueIsMultiline.Regex = "\\w+.*\r\n\\w+.*(?# end of line characters)";
+            valueIsMultiline.Name = Path.GetRandomFileName();
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueIsMultiline);
+
+            var valueNoLetters = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            valueNoLetters.Predicate = LocalizationCriterionPredicate.NO_LETTERS;
+            valueNoLetters.Target = LocalizationCriterionTarget.VALUE;
+            valueNoLetters.Regex = string.Empty;
+            valueNoLetters.Name = Path.GetRandomFileName();
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueNoLetters);
+
+            var valueCaps = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            valueCaps.Predicate = LocalizationCriterionPredicate.ONLY_CAPS;
+            valueCaps.Target = LocalizationCriterionTarget.VALUE;
+            valueCaps.Regex = string.Empty;
+            valueCaps.Name = Path.GetRandomFileName();
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueCaps);
+
+            var valueWhitespace = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 20);
+            valueWhitespace.Predicate = LocalizationCriterionPredicate.MATCHES;
+            valueWhitespace.Target = LocalizationCriterionTarget.VALUE;
+            valueWhitespace.Regex = @"\w+ (?# contains whitespace)";
+            valueWhitespace.Name = Path.GetRandomFileName();
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueWhitespace);
+
+            var prefixNull = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -50);
+            prefixNull.Predicate = LocalizationCriterionPredicate.IS_NULL;
+            prefixNull.Target = LocalizationCriterionTarget.ELEMENT_PREFIX;
+            prefixNull.Name = Path.GetRandomFileName();
+            prefixNull.Regex = string.Empty;
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(prefixNull);
+
+            var smallLength = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            smallLength.Predicate = LocalizationCriterionPredicate.DOESNT_MATCH;
+            smallLength.Target = LocalizationCriterionTarget.VALUE;
+            smallLength.Name = Path.GetRandomFileName();
+            smallLength.Regex = "..(?# too short)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(smallLength);
+
+            var ipv4Address = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            ipv4Address.Predicate = LocalizationCriterionPredicate.MATCHES;
+            ipv4Address.Target = LocalizationCriterionTarget.VALUE;
+            ipv4Address.Name = Path.GetRandomFileName();
+            ipv4Address.Regex = @"^\d+\.\d+\.\d+.\d+$(?# IPv4 address)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(ipv4Address);
+
+            var ipv6Address = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            ipv6Address.Predicate = LocalizationCriterionPredicate.MATCHES;
+            ipv6Address.Target = LocalizationCriterionTarget.VALUE;
+            ipv6Address.Name = Path.GetRandomFileName();
+            ipv6Address.Regex = @"^[0-9a-fA-F]+(:?([0-9a-fA-F]+)?)*:[0-9a-fA-F]+$(?# IPv6 address)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(ipv6Address);
+
+            var link = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            link.Predicate = LocalizationCriterionPredicate.MATCHES;
+            link.Target = LocalizationCriterionTarget.VALUE;
+            link.Name = Path.GetRandomFileName();
+            link.Regex = @"^(http|https|ftp)://.*$(?# URL)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(link);
+
+            var camelCase = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -40);
+            camelCase.Predicate = LocalizationCriterionPredicate.MATCHES;
+            camelCase.Target = LocalizationCriterionTarget.VALUE;
+            camelCase.Name = Path.GetRandomFileName();
+            camelCase.Regex = @"^[0-9A-Z]?\w+([0-9A-Z](\w+)?)+$(?# camel case)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(camelCase);
+
+            var reference = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -40);
+            reference.Predicate = LocalizationCriterionPredicate.MATCHES;
+            reference.Target = LocalizationCriterionTarget.VALUE;
+            reference.Name = Path.GetRandomFileName();
+            reference.Regex = @"^\w+(\.\w+)*\.\w+$(?# reference)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(reference);
+
+            var filepath = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -40);
+            filepath.Predicate = LocalizationCriterionPredicate.MATCHES;
+            filepath.Target = LocalizationCriterionTarget.VALUE;
+            filepath.Name = Path.GetRandomFileName();
+            filepath.Regex = @"^.+([/\\].+)*[/\\].+$(?# file path)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(filepath);
+
+            var menuitem = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 30);
+            menuitem.Predicate = LocalizationCriterionPredicate.MATCHES;
+            menuitem.Target = LocalizationCriterionTarget.VALUE;
+            menuitem.Name = Path.GetRandomFileName();
+            menuitem.Regex = @"^.*&\w.*$(?# menu item text)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(menuitem);
 
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
@@ -260,7 +359,7 @@ namespace VisualLocalizer.Settings {
                 contextBox.AutoSize = true;
 
                 reflectionBox = new CheckBox();
-                reflectionBox.Text = "Use reflection to determine types of attributes in ASP .NET elements\n(potentially slow)";
+                reflectionBox.Text = "Determine types of attributes in ASP .NET elements\n(potentially slow)";
                 reflectionBox.CheckAlign = ContentAlignment.TopLeft;
                 reflectionBox.Margin = new Padding(3, 3, 0, 0);
                 reflectionBox.AutoSize = true;
@@ -549,7 +648,7 @@ namespace VisualLocalizer.Settings {
         protected override void OnActivate(CancelEventArgs e) {
             try {
                 base.OnActivate(e);
-
+               
                 if (closed) { // displayed for the first time
                     PopulateTable();
                     closed = false;
@@ -574,6 +673,7 @@ namespace VisualLocalizer.Settings {
                 try {
                     SettingsObject.Instance.IgnorePropertyChanges = true;
 
+                    bool revalidate = SettingsObject.Instance.ShowContextColumn != contextBox.Checked;
                     SettingsObject.Instance.ShowContextColumn = contextBox.Checked;
                     SettingsObject.Instance.UseReflectionInAsp = reflectionBox.Checked;
 
@@ -616,7 +716,10 @@ namespace VisualLocalizer.Settings {
 
                         SettingsObject.Instance.CustomLocalizabilityCriteria.Add(crit);
                     }
-                                        
+
+                    if (revalidate) {
+                        SettingsObject.Instance.NotifyRevalidationRequested();
+                    }                   
                 } catch (Exception ex) {
                     VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                     VisualLocalizer.Library.MessageBox.ShowException(ex);

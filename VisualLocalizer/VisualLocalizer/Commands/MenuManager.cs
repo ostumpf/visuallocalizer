@@ -182,6 +182,10 @@ namespace VisualLocalizer.Commands {
         /// </summary>        
         private void SolExpMenuQueryStatus(object sender, EventArgs args) {
             try {
+                if (VisualLocalizerPackage.Instance.UIHierarchy == null) {
+                    VisualLocalizerPackage.Instance.UIHierarchy = (EnvDTE.UIHierarchy)VisualLocalizerPackage.Instance.DTE.Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;                    
+                }
+
                 Array selectedItems = (Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems;
                 bool menuOk = selectedItems.Length > 0;
                 batchOperationsEnabled = menuOk;
@@ -290,6 +294,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;
@@ -311,6 +317,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;
@@ -335,6 +343,8 @@ namespace VisualLocalizer.Commands {
                 
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;
@@ -358,6 +368,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;
@@ -374,6 +386,8 @@ namespace VisualLocalizer.Commands {
 
                 globalTranslateCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems);
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                
                 Dictionary<string, string> add = null;
                 if (ex is CannotParseResponseException) {
                     CannotParseResponseException cpex = ex as CannotParseResponseException;                    
@@ -404,6 +418,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;
@@ -425,6 +441,8 @@ namespace VisualLocalizer.Commands {
                 } else throw new Exception("Unable to display tool window.");
                 batchMoveCommand.Results.Clear();
             } catch (Exception ex) {
+                if (OperationInProgress) VLDocumentViewsManager.ReleaseLocks();
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
                 OperationInProgress = false;

@@ -49,7 +49,11 @@ namespace VisualLocalizer.Gui {
 
             // initialize providers combobox
             foreach (TRANSLATE_PROVIDER prov in Enum.GetValues(typeof(TRANSLATE_PROVIDER))) {
-                providerBox.Items.Add(new ProviderItem(prov));
+                if (prov == TRANSLATE_PROVIDER.BING) {
+                    if (!string.IsNullOrEmpty(SettingsObject.Instance.BingAppId)) providerBox.Items.Add(new ProviderItem(prov));
+                } else {
+                    providerBox.Items.Add(new ProviderItem(prov));
+                }
             }
             providerBox.SelectedIndex = 0;
 

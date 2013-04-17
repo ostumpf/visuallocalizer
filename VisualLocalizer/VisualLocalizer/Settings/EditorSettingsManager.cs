@@ -394,7 +394,7 @@ namespace VisualLocalizer.Settings {
         protected override void OnActivate(CancelEventArgs e) {
             try {
                 base.OnActivate(e);
-
+               
                 if (closed) { // displayed for the first time - populate with data
                     PopulateTable();
                     closed = false;
@@ -428,12 +428,14 @@ namespace VisualLocalizer.Settings {
                     foreach (SettingsObject.LanguagePair newPair in languagePairsBox.Items) {
                         SettingsObject.Instance.LanguagePairs.Add(newPair);
                     }
-
-                    // key policy changed - loaded keys must be re-evaluated (in open ResX files etc.)
+                   
+                    // key policy changed - loaded keys must be re-evaluated (in open ResX files etc.)                    
                     bool forceRevalidation = SettingsObject.Instance.BadKeyNamePolicy != (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
                     SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)keyBehaviorBox.SelectedIndex;
 
-                    if (forceRevalidation) SettingsObject.Instance.NotifyRevalidationRequested();
+                    if (forceRevalidation) {
+                        SettingsObject.Instance.NotifyRevalidationRequested();
+                    }                   
                 }
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);

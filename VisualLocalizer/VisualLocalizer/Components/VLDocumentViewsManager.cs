@@ -14,6 +14,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
 using Microsoft.VisualStudio;
+using EnvDTE80;
 
 namespace VisualLocalizer.Components {
 
@@ -30,8 +31,11 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Set of closed locked documents (waiting to be locked after opening), keys are file paths
         /// </summary>
-        private static HashSet<string> lockedDocumentsWaiting;        
+        private static HashSet<string> lockedDocumentsWaiting;
+        private static Dictionary<string, object> invisibleWindows;        
         private static EnvDTE80.DTE2 DTE;
+        public static event Action<string> FileClosed;
+        private static bool suppressFileClosedEvent;
 
         static VLDocumentViewsManager() {
             IVsRunningDocumentTable IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
@@ -40,13 +44,15 @@ namespace VisualLocalizer.Components {
 
             lockedDocuments = new HashSet<string>();
             lockedDocumentsWaiting = new HashSet<string>();
+            invisibleWindows = new Dictionary<string, object>();
 
             uint evCookie;
             // register file open and close events
             RDTEvents rdtEvents = new RDTEvents();
             rdtEvents.FileOpened += new Action<string>(RdtEvents_FileOpened);
             rdtEvents.FileClosed += new Action<string>(RdtEvents_FileClosed);
-          
+            rdtEvents.FileClosed+=new Action<string>(NotifyFileClosed);
+
             int hr = IVsRunningDocumentTable.AdviseRunningDocTableEvents(rdtEvents, out evCookie);
             Marshal.ThrowExceptionForHR(hr);
         }
@@ -73,6 +79,51 @@ namespace VisualLocalizer.Components {
                 lockedDocumentsWaiting.Remove(path);
                 SetFileReadonly(path, true);
             }
+        }
+
+        /// <summary>
+        /// Adds a window to the list of invisible windows, opened in the background to obtain file code model
+        /// </summary>        
+        public static void AddInvisibleWindow(string path, object author) {
+            if (path == null) throw new ArgumentNullException("path");
+
+            if (!invisibleWindows.ContainsKey(path)) {
+                invisibleWindows.Add(path, author);
+            }
+        }
+
+        /// <summary>
+        /// Closes all invisible windows
+        /// </summary>        
+        public static void CloseInvisibleWindows(object ofAuthor, bool saveIfClosed) {
+            List<string> toDelete = new List<string>();
+            try {
+                suppressFileClosedEvent = true;
+
+                foreach (var pair in invisibleWindows) {
+                    if (pair.Value == ofAuthor || ofAuthor == null) {
+                        IVsWindowFrame frame = GetWindowFrameForFile(pair.Key, false);
+                        if (frame != null) {
+                            var window = VsShellUtilities.GetWindowObject(frame);
+                            if (!window.Visible) {
+                                try {
+                                    window.Detach();                                    
+                                } catch { }
+                                window.Close(saveIfClosed ? vsSaveChanges.vsSaveChangesYes : vsSaveChanges.vsSaveChangesNo);
+                                VLOutputWindow.VisualLocalizerPane.WriteLine("\tClosing invisible window: " + Path.GetFileName(pair.Key));
+                            }
+                        }
+                        toDelete.Add(pair.Key);
+                    }
+                }
+                foreach (string path in toDelete) invisibleWindows.Remove(path);
+            } finally {
+                suppressFileClosedEvent = false;
+            }
+        }
+
+        private static void NotifyFileClosed(string file) {
+            if (!suppressFileClosedEvent && FileClosed != null) FileClosed(file);
         }
 
         /// <summary>
@@ -306,7 +357,7 @@ namespace VisualLocalizer.Components {
                 object o;
                 int hr = pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out o);
                 Marshal.ThrowExceptionForHR(hr);
-
+                
                 string path = o.ToString();
                 if (FileClosed != null) {
                     FileClosed(path);

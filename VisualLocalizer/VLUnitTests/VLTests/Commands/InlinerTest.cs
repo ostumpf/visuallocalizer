@@ -11,6 +11,7 @@ using System.IO;
 using Microsoft.VisualStudio.OLE.Interop;
 using EnvDTE80;
 using EnvDTE;
+using VisualLocalizer.Commands;
 
 namespace VLUnitTests.VLTests {
     
@@ -73,8 +74,8 @@ namespace VLUnitTests.VLTests {
 
             string[] files = { Agent.AspNetReferencesTestFile1, Agent.CSharpReferencesTestFile1, Agent.VBReferencesTestFile1 };
 
-            InternalFileTest(true, files, 18 + 2 + 1);
-            InternalFileTest(false, files, 18 + 2 + 1);
+            InternalFileTest(true, files, 8 + 2 + 1);
+            InternalFileTest(false, files, 8 + 2 + 1);
         }
 
         private void InternalFileTest(bool fileOpened, string[] referenceFiles, int correction) {
@@ -89,8 +90,10 @@ namespace VLUnitTests.VLTests {
 
             try {
                 window.RunClick(null, null);
-                
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+
                 List<CodeStringResultItem> moveList = BatchMoveLookup(referenceFiles);
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
 
                 Assert.AreEqual(checkedCount, moveList.Count - correction);
 
@@ -116,9 +119,9 @@ namespace VLUnitTests.VLTests {
                     }
                 }
             } finally {
-                if (fileOpened) SetFilesOpened(referenceFiles, false);
-                RestoreBackups(backups);
-     
+                SetFilesOpened(referenceFiles, false);                                             
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+                RestoreBackups(backups);   
             }
         }
 

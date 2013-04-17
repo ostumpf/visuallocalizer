@@ -10,6 +10,8 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System.Collections;
 using VisualLocalizer.Extensions;
 using VisualLocalizer.Library.AspxParser;
+using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace VisualLocalizer.Commands {
 
@@ -86,7 +88,12 @@ namespace VisualLocalizer.Commands {
         /// <param name="fileName">Name of the ASP .NET document</param>
         /// <returns>List of result items</returns>
         public abstract IList LookupInVBAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string fileName);
-        
+
+        /// <summary>
+        /// Signature of the windows opened by this command in the background
+        /// </summary>
+        protected object invisibleWindowsAuthor;
+
         /// <summary>
         /// Sets currently processed item and cleares all cache
         /// </summary>        
@@ -216,6 +223,8 @@ namespace VisualLocalizer.Commands {
             if (searchedProjectItems.Contains(projectItem)) return;
             searchedProjectItems.Add(projectItem);
 
+            invisibleWindowsAuthor = GetType();
+
             if (VLDocumentViewsManager.IsFileLocked(projectItem.GetFullPath()) || RDTManager.IsFileReadonly(projectItem.GetFullPath())) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", projectItem.Name);
             } else {                
@@ -232,27 +241,14 @@ namespace VisualLocalizer.Commands {
         /// Treats given ProjectItem as a C# code file, using CSharpCodeExplorer to examine the file. LookInCSharp method is called as a callback,
         /// given plain methods text.
         /// </summary>        
-        protected void ProcessCSharp(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
-            FileCodeModel2 codeModel = projectItem.GetCodeModel();
-            if (codeModel == null) {
-                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
-                return;
-            }            
-            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+        protected virtual void ProcessCSharp(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            bool fileOpened;
+            FileCodeModel2 codeModel = projectItem.GetCodeModel(false, true, out fileOpened);
+            if (fileOpened) {
+                VLDocumentViewsManager.AddInvisibleWindow(projectItem.GetFullPath(), invisibleWindowsAuthor);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("\tForce opening {0} in background in order to obtain code model", projectItem.Name);
+            }
 
-            currentlyProcessedItem = projectItem;
-            
-            CSharpCodeExplorer.Instance.Explore(this, exploreable, codeModel);            
-            
-            currentlyProcessedItem = null;
-        }
-
-        /// <summary>
-        /// Treats given ProjectItem as a VB code file, using VBCodeExplorer to examine the file. LookInVB method is called as a callback,
-        /// given plain methods text.
-        /// </summary>    
-        protected void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
-            FileCodeModel2 codeModel = projectItem.GetCodeModel();
             if (codeModel == null) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
                 return;
@@ -261,8 +257,49 @@ namespace VisualLocalizer.Commands {
 
             currentlyProcessedItem = projectItem;
 
-            VBCodeExplorer.Instance.Explore(this, exploreable, codeModel);
-            
+            try {
+                CSharpCodeExplorer.Instance.Explore(this, exploreable, codeModel);               
+            } catch (COMException ex) {
+                if (ex.ErrorCode == -2147483638) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tError occured during processing {0} - the file is not yet compiled.", projectItem.Name);
+                } else {
+                    throw;
+                }
+            }
+
+            currentlyProcessedItem = null;
+        }
+
+        /// <summary>
+        /// Treats given ProjectItem as a VB code file, using VBCodeExplorer to examine the file. LookInVB method is called as a callback,
+        /// given plain methods text.
+        /// </summary>    
+        protected virtual void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            bool fileOpened;
+            FileCodeModel2 codeModel = projectItem.GetCodeModel(false, true, out fileOpened);
+            if (fileOpened) {
+                VLDocumentViewsManager.AddInvisibleWindow(projectItem.GetFullPath(), invisibleWindowsAuthor);
+                VLOutputWindow.VisualLocalizerPane.WriteLine("\tForce opening {0} in background in order to obtain code model", projectItem.Name);
+            }
+                        
+            if (codeModel == null) {
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
+                return;
+            }
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+
+            currentlyProcessedItem = projectItem;
+
+            try {
+                VBCodeExplorer.Instance.Explore(this, exploreable, codeModel);                
+            } catch (COMException ex) {
+                if (ex.ErrorCode == -2147483638) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tError occured during processing {0} - the file is not yet compiled.", projectItem.Name);
+                } else {
+                    throw;
+                }
+            }
+
             currentlyProcessedItem = null;
         }
         

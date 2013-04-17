@@ -250,15 +250,24 @@ namespace VisualLocalizer.Editor {
         }
 
         /// <summary>
-        /// Copies selected rows to clipboard, separating columns with , and rows with ;
+        /// Copies selected rows to clipboard, using both CSV format and tab-separated format in order to cooperate with Excel and text editors
         /// </summary>
         public bool Copy() {
-            StringBuilder content = new StringBuilder();
+            DataObject dataObject = new DataObject();
+
+            StringBuilder tabbedContent = new StringBuilder();
+            StringBuilder csvContent = new StringBuilder();
             foreach (DataGridViewRow row in SelectedRows) {
                 if (row.IsNewRow) continue;
-                content.AppendFormat("{0},{1},{2};", (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
+                tabbedContent.AppendFormat("{0}\t{1}\t{2}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
+                csvContent.AppendFormat("{0};{1};{2}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
             }
-            Clipboard.SetText(content.ToString(), TextDataFormat.UnicodeText);
+            dataObject.SetText(tabbedContent.ToString());
+
+            MemoryStream ms = new MemoryStream(Encoding.Default.GetBytes(csvContent.ToString()));
+            dataObject.SetData(DataFormats.CommaSeparatedValue, ms);
+
+            Clipboard.SetDataObject(dataObject, true);
             return true;
         }
 
@@ -701,18 +710,18 @@ namespace VisualLocalizer.Editor {
         /// Adds given clipboard text to the grid - values separated with , and rows separated with ; format is expected
         /// </summary>
         /// <param name="text"></param>
-        public void AddClipboardText(string text) {
+        public void AddClipboardText(string text, bool isCsv) {
             if (text == null) throw new ArgumentNullException("text");
 
-            string[] rows = text.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries); // get the rows
+            string[] rows = text.Split(new string[] { Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries); // get the rows
             List<ResXStringGridRow> addedRows = new List<ResXStringGridRow>();
             foreach (string row in rows) {
-                string[] columns = row.Split(','); // get the columns
-                if (columns.Length != 3) continue;
+                string[] columns = row.Split(isCsv ? ';' : '\t'); // get the columns
+                if (columns.Length == 0) continue;
 
-                string key = columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage); // modify key so that is a valid identifier
-                string value = columns[1];
-                string comment = columns[2];
+                string key = columns.Length >= 1 ? columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage) : ""; // modify key so that is a valid identifier
+                string value = columns.Length >= 2 ? columns[1] : "";
+                string comment = columns.Length >= 3 ? columns[2] : "";
 
                 ResXDataNode node = new ResXDataNode(key, value); // create new resource
                 node.Comment = comment;

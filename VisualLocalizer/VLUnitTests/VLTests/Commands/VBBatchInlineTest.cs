@@ -62,6 +62,7 @@ namespace VLUnitTests.VLTests {
             GenericTest(Agent.BatchInlineCommand, itemsToSelect, expectedFiles, GetExpectedResultsFor);
         }
 
+        [TestMethod()]
         public void ProcessSelectedItemsTest1() {
             string[] itemsToSelect = { Agent.VBReferencesTestFile1 }; 
             string[] expectedFiles = { Agent.VBReferencesTestFile1 }; 

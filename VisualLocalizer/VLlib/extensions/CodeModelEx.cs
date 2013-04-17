@@ -86,26 +86,28 @@ namespace VisualLocalizer.Library {
         public static bool HasLocalizableFalseAttribute(this CodeElement element) {
             if (element == null) throw new ArgumentNullException("element");
             bool set = false;
-            switch (element.Kind) {
-                case vsCMElement.vsCMElementClass:
-                    set = AttributesContainLocalizableFalse((element as CodeClass).Attributes);
-                    break;
-                case vsCMElement.vsCMElementStruct:
-                    set = AttributesContainLocalizableFalse((element as CodeStruct).Attributes);
-                    break;
-                case vsCMElement.vsCMElementModule:
-                    set = AttributesContainLocalizableFalse((element as CodeClass).Attributes);
-                    break;
-                case vsCMElement.vsCMElementProperty:
-                    set = AttributesContainLocalizableFalse((element as CodeProperty).Attributes);
-                    break;
-                case vsCMElement.vsCMElementFunction:
-                    set = AttributesContainLocalizableFalse((element as CodeFunction).Attributes);
-                    break;
-                case vsCMElement.vsCMElementVariable:
-                    set = AttributesContainLocalizableFalse((element as CodeVariable).Attributes);
-                    break;
-            }
+            try {
+                switch (element.Kind) {
+                    case vsCMElement.vsCMElementClass:
+                        set = AttributesContainLocalizableFalse((element as CodeClass).Attributes);
+                        break;
+                    case vsCMElement.vsCMElementStruct:
+                        set = AttributesContainLocalizableFalse((element as CodeStruct).Attributes);
+                        break;
+                    case vsCMElement.vsCMElementModule:
+                        set = AttributesContainLocalizableFalse((element as CodeClass).Attributes);
+                        break;
+                    case vsCMElement.vsCMElementProperty:
+                        set = AttributesContainLocalizableFalse((element as CodeProperty).Attributes);
+                        break;
+                    case vsCMElement.vsCMElementFunction:
+                        set = AttributesContainLocalizableFalse((element as CodeFunction).Attributes);
+                        break;
+                    case vsCMElement.vsCMElementVariable:
+                        set = AttributesContainLocalizableFalse((element as CodeVariable).Attributes);
+                        break;
+                }
+            } catch { }
 
             return set;
         }
@@ -142,7 +144,11 @@ namespace VisualLocalizer.Library {
             if (codeFunction == null) throw new ArgumentNullException("codeFunction");
 
             CodeElement2 parent = codeFunction.Parent as CodeElement2;
-            return GetClassInternal(parent);
+            if (parent is CodeProperty) {
+                return GetClassInternal((CodeElement2)((CodeProperty)parent).Parent);
+            } else {
+                return GetClassInternal(parent);
+            }
         }
 
         /// <summary>
@@ -230,7 +236,9 @@ namespace VisualLocalizer.Library {
                 CodeNamespace parent = GetNamespace(codeNamespace as CodeElement);
                 GetUsedNamespacesInternal(parent, item, list);
             } else { // top level namespace - only add top level import statements
-                if (item.GetCodeModel() != null) AddUsedNamespacesToList(item.GetCodeModel().CodeElements, list);
+                bool fileOpened;
+                FileCodeModel model = item.GetCodeModel(false, false, out fileOpened); 
+                if (model != null) AddUsedNamespacesToList(model.CodeElements, list);
             }
         }
 

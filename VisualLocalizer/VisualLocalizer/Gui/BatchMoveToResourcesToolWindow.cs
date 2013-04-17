@@ -163,6 +163,8 @@ namespace VisualLocalizer.Gui {
                 panel.ToolGrid.UnloadResXItems();// release all ResX files loaded in the grid           
                 panel.ToolGrid.ResetConflictResolver();
                 MenuManager.OperationInProgress = false; // permits other operations
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
+                panel.ToolGrid.Clear();
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
@@ -317,6 +319,8 @@ namespace VisualLocalizer.Gui {
             } finally {
                 IVsWindowFrame frame = ((IVsWindowFrame)this.Frame);
                 if (frame != null) frame.CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
+
+                panel.ToolGrid.Clear();
 
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);

@@ -222,9 +222,9 @@ namespace VisualLocalizer.Library {
         /// (Un)checks checkbox in header and sets check-state of all rows accordingly
         /// </summary>        
         protected virtual void OnCheckHeaderClicked(object sender, EventArgs e) {
-            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column
+            if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column          
 
-            EndEdit(); // if there is an editing of a cell in progress, terminate it
+            CheckedRowsCount = CheckHeader.Checked == true ? Rows.Count : 0; 
             errorRows.Clear();            
             foreach (DataGridViewRow row in Rows) {                 
                 row.Cells[CheckBoxColumnName].Value = CheckHeader.Checked == true;
@@ -233,8 +233,7 @@ namespace VisualLocalizer.Library {
                 if (!string.IsNullOrEmpty(row.ErrorText) && CheckHeader.Checked == true) errorRows.Add(row);
             }
             
-            RefreshEdit(); 
-            CheckedRowsCount = CheckHeader.Checked == true ? Rows.Count : 0;
+                       
             NotifyErrorRowsChanged();
         }
 

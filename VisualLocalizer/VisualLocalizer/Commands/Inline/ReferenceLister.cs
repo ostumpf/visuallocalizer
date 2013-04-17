@@ -10,6 +10,8 @@ using System.Resources;
 using VisualLocalizer.Extensions;
 using System.Collections;
 using VisualLocalizer.Library.AspxParser;
+using System.Runtime.InteropServices;
+using VisualLocalizer.Editor;
 
 namespace VisualLocalizer.Commands {
 
@@ -20,6 +22,8 @@ namespace VisualLocalizer.Commands {
 
         private Trie<CodeReferenceTrieElement> trie;
         private ResXProjectItem prefferedResXItem;
+        private bool isInitial;
+        private ResXEditor editorInstance;
 
         /// <summary>
         /// Runs this command, filling Results with references to resources in given file
@@ -27,9 +31,12 @@ namespace VisualLocalizer.Commands {
         /// <param name="projects">List of referenced projects (are included in the search)</param>
         /// <param name="trie">Trie created from resource names</param>
         /// <param name="prefferedResXItem">Original ResX project item - used when culture-neutral vs. culture-specific differences are handled</param>
-        public void Process(List<Project> projects, Trie<CodeReferenceTrieElement> trie, ResXProjectItem prefferedResXItem) {
+        public void Process(ResXEditor editorInstance, List<Project> projects, Trie<CodeReferenceTrieElement> trie, ResXProjectItem prefferedResXItem, bool isInitial) {
             this.trie = trie;
-            this.prefferedResXItem = prefferedResXItem; 
+            this.prefferedResXItem = prefferedResXItem;
+            this.isInitial = isInitial;
+            this.editorInstance = editorInstance;
+
             searchedProjectItems.Clear();
             generatedProjectItems.Clear();
 
@@ -81,6 +88,105 @@ namespace VisualLocalizer.Commands {
         /// </summary>
         protected override Trie<CodeReferenceTrieElement> GetActualTrie() {
             return trie;
+        }
+
+        /// <summary>
+        /// Search given ProjectItem, using predicate to determine whether a code element should be explored (used when processing selection)
+        /// </summary>
+        /// <param name="projectItem">Item to search</param>
+        /// <param name="exploreable">Predicate returning true, if given code element should be searched for result items</param>
+        /// <param name="verbose"></param>
+        protected override void Process(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            if (searchedProjectItems.Contains(projectItem)) return;
+            searchedProjectItems.Add(projectItem);
+
+            invisibleWindowsAuthor = editorInstance;
+
+            if (!editorInstance.UIControl.ReadOnly && (VLDocumentViewsManager.IsFileLocked(projectItem.GetFullPath()) || RDTManager.IsFileReadonly(projectItem.GetFullPath()))) {
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", projectItem.Name);
+            } else {
+                switch (projectItem.GetFileType()) {
+                    case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
+                    case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
+                    case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
+                    default: break; // do nothing if file type is not known
+                }
+            }
+        }
+
+        /// <summary>
+        /// Treats given ProjectItem as a C# code file, using CSharpCodeExplorer to examine the file. LookInCSharp method is called as a callback,
+        /// given plain methods text. This method is called by the ReferenceLookuperThread and therefore it handles file with no code model differently - 
+        /// if such file is found, its closing event is registered and when such occurs, the reference count is updated.
+        /// </summary>     
+        protected override void ProcessCSharp(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            if (isInitial || editorInstance.UIControl.sourceFilesThatNeedUpdate.Contains(projectItem.GetFullPath().ToLower())) {
+                base.ProcessCSharp(projectItem, exploreable, verbose);
+            } else {
+                bool fileOpened;
+                FileCodeModel2 codeModel = projectItem.GetCodeModel(false, false, out fileOpened);
+
+                if (codeModel == null && !RDTManager.IsFileOpen(projectItem.GetFullPath())) {
+                    editorInstance.UIControl.RegisterAsStaticReferenceSource(projectItem);
+                    return;
+                }
+
+                if (codeModel == null) {
+                    if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
+                    return;
+                }
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+
+                currentlyProcessedItem = projectItem;
+
+                try {
+                    CSharpCodeExplorer.Instance.Explore(this, exploreable, codeModel);
+                } catch (COMException ex) {
+                    if (ex.ErrorCode == -2147483638) {
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("\tError occured during processing {0} - the file is not yet compiled.", projectItem.Name);
+                    } else {
+                        throw;
+                    }
+                }
+
+                currentlyProcessedItem = null;
+            }
+            editorInstance.UIControl.sourceFilesThatNeedUpdate.Remove(projectItem.GetFullPath().ToLower());
+        }
+
+        protected override void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
+            if (isInitial || editorInstance.UIControl.sourceFilesThatNeedUpdate.Contains(projectItem.GetFullPath().ToLower())) {
+                base.ProcessVB(projectItem, exploreable, verbose);
+            } else {
+                bool fileOpened;
+                FileCodeModel2 codeModel = projectItem.GetCodeModel(false, false, out fileOpened);
+
+                if (codeModel == null && !RDTManager.IsFileOpen(projectItem.GetFullPath())) {
+                    editorInstance.UIControl.RegisterAsStaticReferenceSource(projectItem);
+                    return;
+                }
+
+                if (codeModel == null) {
+                    if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tCannot process {0}, file code model does not exist.", projectItem.Name);
+                    return;
+                }
+                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tProcessing {0}", projectItem.Name);
+
+                currentlyProcessedItem = projectItem;
+
+                try {
+                    VBCodeExplorer.Instance.Explore(this, exploreable, codeModel);
+                } catch (COMException ex) {
+                    if (ex.ErrorCode == -2147483638) {
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("\tError occured during processing {0} - the file is not yet compiled.", projectItem.Name);
+                    } else {
+                        throw;
+                    }
+                }
+
+                currentlyProcessedItem = null;
+            }
+            editorInstance.UIControl.sourceFilesThatNeedUpdate.Remove(projectItem.GetFullPath().ToLower());
         }
 
         /// <summary>

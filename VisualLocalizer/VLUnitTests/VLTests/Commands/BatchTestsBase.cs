@@ -233,7 +233,7 @@ namespace VLUnitTests.VLTests {
             for (int i = 0; i < expectedFiles.Length; i++) {
                 Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
             }
-        }
+        }     
 
         internal class TestCSharpStringResultItem : CSharpStringResultItem {
             public string NamespaceElementName { get; set; }

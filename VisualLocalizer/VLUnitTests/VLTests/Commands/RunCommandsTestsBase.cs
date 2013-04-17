@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using VisualLocalizer.Library;
 using Microsoft.VisualStudio.Shell;
+using VisualLocalizer.Commands;
 
 namespace VLUnitTests.VLTests {
     public class RunCommandsTestsBase {
@@ -21,10 +22,16 @@ namespace VLUnitTests.VLTests {
                 i++;
             }
 
+            Agent.BatchInlineCommand.Results = null;
             Agent.BatchInlineCommand.Process(selectedItems, true);
             VLDocumentViewsManager.ReleaseLocks();
 
-            return Agent.BatchInlineCommand.Results;
+            List<CodeReferenceResultItem> list = new List<CodeReferenceResultItem>();
+            foreach (CodeReferenceResultItem item in Agent.BatchInlineCommand.Results) {
+                list.Add(item);
+            }
+
+            return list;
         }
 
         protected List<CodeStringResultItem> BatchMoveLookup(string[] testFiles) {
@@ -36,8 +43,9 @@ namespace VLUnitTests.VLTests {
                 Assert.IsNotNull(selectedItems[i]);
             }
 
+            Agent.BatchMoveCommand.Results = null;
             Agent.BatchMoveCommand.Process(selectedItems, true);
-
+            
             foreach (CodeStringResultItem item in Agent.BatchMoveCommand.Results) {
                 list.Add(item);
             }
@@ -82,8 +90,10 @@ namespace VLUnitTests.VLTests {
         protected void SetFilesOpened(string[] testFiles, bool shouldBeOpened) {
             foreach (string sourcePath in testFiles) {
                 if (!shouldBeOpened && RDTManager.IsFileOpen(sourcePath)) {
-                    var win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, false));
-                    win.Visible = false;                                        
+                    var win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, false));                                        
+                    
+                    win.Detach();
+                    win.Close(vsSaveChanges.vsSaveChangesNo);
                 }
                 if (shouldBeOpened) {
                     Window win = null;
@@ -93,9 +103,9 @@ namespace VLUnitTests.VLTests {
                         win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, true));
                     }
                     Assert.IsNotNull(win, "Window cannot be opened " + sourcePath);
+                    win.Activate();
                     win.Visible = true;                    
-                }
-                System.Threading.Thread.Sleep(100);
+                }                
             }
         }
     }

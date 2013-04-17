@@ -24,7 +24,7 @@ namespace VisualLocalizer.Components {
                 if (instance == null) instance = new CSharpCodeExplorer();
                 return instance;
             }
-        }
+        }        
 
         /// <summary>
         /// Recursively explores given file
@@ -124,10 +124,14 @@ namespace VisualLocalizer.Components {
         /// Explores given method using C# lookuper
         /// </summary> 
         protected virtual void Explore(AbstractBatchCommand parentCommand, CodeFunction2 codeFunction, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
-            if (codeFunction.MustImplement) return; // method must not be abstract
+            if (codeFunction.MustImplement) return; // method must not be abstract or declated in an interface            
             if (!exploreable(codeFunction as CodeElement)) return; // predicate must eval to true
 
-            string functionText = codeFunction.GetText(); // get method text
+            // there is no way of knowing whether a function is not declared 'extern'. In that case, following will throw an exception.
+            string functionText = null;
+            try {
+                functionText = codeFunction.GetText(); // get method text
+            } catch (Exception) { }
             if (string.IsNullOrEmpty(functionText)) return;
 
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
@@ -147,8 +151,6 @@ namespace VisualLocalizer.Components {
         /// Adds context to the result item, coming from code block starting at given position
         /// </summary> 
         protected void AddContextToItem(AbstractResultItem item, EditPoint2 editPoint) {
-            if (!Settings.SettingsObject.Instance.ShowContextColumn) return;
-
             StringBuilder context = new StringBuilder();
             // indices +1 !!
             

@@ -34,18 +34,23 @@ namespace VisualLocalizer.Commands {
         public override void Process(bool verbose) {
             base.Process(verbose); // initialize class variables
 
-            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");            
-
-            Results = new List<CodeStringResultItem>();
-
-            Process(currentlyProcessedItem, verbose); // process active document
-
-            Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; }); // remove empty strings            
+            if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on active document... ");
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
             
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
-            });
+            try {
+                Results = new List<CodeStringResultItem>();
+
+                Process(currentlyProcessedItem, verbose); // process active document
+
+                Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; }); // remove empty strings            
+
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });
+            } finally {
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
@@ -58,21 +63,26 @@ namespace VisualLocalizer.Commands {
             base.ProcessSelection(verbose); // initialize class variables
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on text selection of active document ");
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
-            Results = new List<CodeStringResultItem>();
+            try {
+                Results = new List<CodeStringResultItem>();
 
-            Process(currentlyProcessedItem, IntersectsWithSelection, verbose); // process active document, leaving only those items that have non-empty intersection with the selection
+                Process(currentlyProcessedItem, IntersectsWithSelection, verbose); // process active document, leaving only those items that have non-empty intersection with the selection
 
-            // remove empty strings and result items laying outside the selection
-            Results.RemoveAll((item) => {
-                bool empty = item.Value.Trim().Length == 0;
-                return empty || IsItemOutsideSelection(item);
-            });
+                // remove empty strings and result items laying outside the selection
+                Results.RemoveAll((item) => {
+                    bool empty = item.Value.Trim().Length == 0;
+                    return empty || IsItemOutsideSelection(item);
+                });
 
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
-            });
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });
+            } finally {
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
@@ -84,17 +94,23 @@ namespace VisualLocalizer.Commands {
         /// <param name="verbose">True if processing info should be printed to the output</param>
         public override void Process(Array selectedItems, bool verbose) {
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources command started on selected items from Solution Explorer");
-            Results = new List<CodeStringResultItem>();
-            
-            base.Process(selectedItems, verbose);
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
-            // remove empty strings
-            Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
+            try {
+                Results = new List<CodeStringResultItem>();
 
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
-            });
+                base.Process(selectedItems, verbose);
+
+                // remove empty strings
+                Results.RemoveAll((item) => { return item.Value.Trim().Length == 0; });
+
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });
+            } finally {
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Move to Resources completed - found {0} items to be moved", Results.Count);
         }

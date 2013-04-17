@@ -320,7 +320,7 @@ namespace VisualLocalizer.Settings {
 
             bool relevant;
             string testString = GetTarget(resultItem, out relevant);
-            if (!relevant && Predicate != LocalizationCriterionPredicate.IS_NULL) return null;
+            if (!relevant) return null;
 
             switch (Predicate) {
                 case LocalizationCriterionPredicate.MATCHES:
@@ -342,7 +342,7 @@ namespace VisualLocalizer.Settings {
                     if (testString == null) return true;
                     bool ok = true;
                     foreach (char c in testString) {
-                        if (!char.IsUpper(c) && !char.IsSymbol(c) && !char.IsPunctuation(c)) { 
+                        if (!char.IsUpper(c) && !char.IsSymbol(c) && !char.IsPunctuation(c) && !char.IsDigit(c)) { 
                             ok = false; break;
                         }
                     }
@@ -465,7 +465,7 @@ namespace VisualLocalizer.Settings {
             LocalizationCustomCriterion crit = new LocalizationCustomCriterion();
             InternalDeepCopy(crit);
             crit.Predicate = Predicate;
-            crit.Regex = (string)Regex.Clone();
+            crit.Regex = Regex == null ? null : (string)Regex.Clone();
             crit.Target = Target;
             return crit;
         }

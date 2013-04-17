@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="VisualLocalizer.Components.AbstractResultItem" Collapsed="true">
-    <Position X="5.25" Y="0.5" Width="1.75" />
+  <Class Name="VisualLocalizer.Components.AbstractResultItem">
+    <Position X="4.75" Y="0.5" Width="2.5" />
     <TypeIdentifier>
       <HashCode>AAEAAABACgAAAUQSCAAgAAAAAiAAAAACAAAgAAAAAEA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
@@ -38,7 +38,7 @@
   <Class Name="VisualLocalizer.Components.AspNetStringResultItem" Collapsed="true">
     <Position X="9.75" Y="0.5" Width="2.5" />
     <TypeIdentifier>
-      <HashCode>AAQBAAAACABIAEABQAiAAAQAAQAgAAAAAAIAAAQKIAA=</HashCode>
+      <HashCode>AAQBAAAACABIAMABQAiAAAQAAQAgAAAAAAIAAAQKIAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>

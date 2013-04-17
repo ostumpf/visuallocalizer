@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Extensions;
+using System.IO;
 
 namespace VisualLocalizer.Components {
 
@@ -105,7 +106,7 @@ namespace VisualLocalizer.Components {
 
             var designerFilePredicate = new LocalizationCommonCriterion("ComesFromDesignerFile",
                 "String comes from designer file",
-                LocalizationCriterionAction.FORCE_DISABLE, 0,
+                LocalizationCriterionAction.IGNORE, 0,
                 (item) => { return item.ComesFromDesignerFile; });
 
             var clientCommentPredicate = new LocalizationCommonCriterion("ComesFromClientComment",
@@ -126,7 +127,7 @@ namespace VisualLocalizer.Components {
             localizationCriteriaList.Add(designerFilePredicate.Name, designerFilePredicate);
             localizationCriteriaList.Add(clientCommentPredicate.Name, clientCommentPredicate);
             localizationCriteriaList.Add(localizableFalsePredicate.Name, localizableFalsePredicate);
-            localizationCriteriaList.Add(unlocalizableCommentPredicate.Name, unlocalizableCommentPredicate);
+            localizationCriteriaList.Add(unlocalizableCommentPredicate.Name, unlocalizableCommentPredicate);            
 
             return localizationCriteriaList;
         }
@@ -313,7 +314,7 @@ namespace VisualLocalizer.Components {
 
             var wasVerbatimPredicate = new LocalizationCommonCriterion("WasVerbatim",
                 "Is verbatim string",
-                LocalizationCriterionAction.VALUE, 10, 
+                LocalizationCriterionAction.VALUE, -10, 
                 (item) => { return item.WasVerbatim; });
 
             localizationCriteriaList.Add(wasVerbatimPredicate.Name, wasVerbatimPredicate);
@@ -340,14 +341,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Namespace where the result item belongs
         /// </summary>
-        public CodeNamespace NamespaceElement { get; set; }
-
-        /// <summary>
-        /// Returns composed reference text
-        /// </summary>   
-        public override string GetReferenceText(ReferenceString referenceText) {
-            return (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart;
-        }
+        public CodeNamespace NamespaceElement { get; set; }       
 
         /// <summary>
         /// Returns list of suggestions for a key name
@@ -399,6 +393,13 @@ namespace VisualLocalizer.Components {
             get { return LANGUAGE.CSHARP; }
             set { }
         }
+
+        /// <summary>
+        /// Returns composed reference text
+        /// </summary>   
+        public override string GetReferenceText(ReferenceString referenceText) {
+            return (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart;
+        }
     }
 
     /// <summary>
@@ -416,6 +417,17 @@ namespace VisualLocalizer.Components {
         public override LANGUAGE Language {
             get { return LANGUAGE.VB; }
             set { }
+        }
+
+        /// <summary>
+        /// Returns composed reference text
+        /// </summary>   
+        public override string GetReferenceText(ReferenceString referenceText) {
+            if (DestinationItem.IsProjectDefault(SourceItem.ContainingProject)) { // employ My.Resources feature
+                return "My.Resources." + referenceText.KeyPart;
+            } else {
+                return (string.IsNullOrEmpty(referenceText.NamespacePart) ? "" : referenceText.NamespacePart + ".") + referenceText.ClassPart + "." + referenceText.KeyPart;
+            }
         }
     }
 
@@ -570,27 +582,27 @@ namespace VisualLocalizer.Components {
 
             var comesFromInlineExpressionPredicate = new LocalizationCommonCriterion("ComesFromInlineExpression",
                 "String comes from ASP .NET inline expression",
-                LocalizationCriterionAction.FORCE_ENABLE, 0,
+                LocalizationCriterionAction.VALUE, -20,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromInlineExpression; });
 
             var localizabilityProvedPredicate = new LocalizationCommonCriterion("LocalizabilityProved",
                 "ASP.NET attribute's type is String",
-                LocalizationCriterionAction.VALUE, 70,
+                LocalizationCriterionAction.VALUE, 80,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.LocalizabilityProved; });
 
             var comesFromPlainTextPredicate = new LocalizationCommonCriterion("ComesFromPlainText",
                 "String literal comes from ASP .NET plain text",
-                LocalizationCriterionAction.VALUE, 20,
+                LocalizationCriterionAction.VALUE, 30,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromPlainText; });
 
             var comesFromDirectivePredicate = new LocalizationCommonCriterion("ComesFromDirective",
                 "String literal comes from ASP .NET directive",
-                LocalizationCriterionAction.VALUE, -10,
+                LocalizationCriterionAction.VALUE, -20,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromDirective; });
 
             var comesFromCodeBlockPredicate = new LocalizationCommonCriterion("ComesFromCodeBlock",
                 "String literal comes from ASP .NET code block",
-                LocalizationCriterionAction.VALUE, 0,
+                LocalizationCriterionAction.VALUE, -10,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromCodeBlock; });
 
             localizationCriteriaList.Add(comesFromElementPredicate.Name, comesFromElementPredicate);

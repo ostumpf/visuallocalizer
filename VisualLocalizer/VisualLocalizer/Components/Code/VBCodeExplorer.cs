@@ -31,7 +31,11 @@ namespace VisualLocalizer.Components {
             if (codeFunction.MustImplement) return; // method must not be abstract
             if (!exploreable(codeFunction as CodeElement)) return; // predicate must eval to true
 
-            string functionText = codeFunction.GetText(); // get method text
+            // there is no way of knowing whether a function is not declared 'extern'. In that case, following will throw an exception.
+            string functionText = null;
+            try {
+                functionText = codeFunction.GetText(); // get method text
+            } catch (Exception) { }
             if (string.IsNullOrEmpty(functionText)) return;
 
             TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);

@@ -46,20 +46,25 @@ namespace VisualLocalizer.Commands {
             base.Process(verbose); // initialize class variables            
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on active document... ");
-            
-            Results = new List<CodeReferenceResultItem>();
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
-            Process(currentlyProcessedItem, verbose);
+            try {
+                Results = new List<CodeReferenceResultItem>();
 
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
-            });
+                Process(currentlyProcessedItem, verbose);
 
-            // clear cached data
-            trieCache.Clear();
-            codeUsingsCache.Clear();
-            
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });
+
+            } finally {
+                // clear cached data
+                trieCache.Clear();
+                codeUsingsCache.Clear();
+
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 
@@ -70,18 +75,25 @@ namespace VisualLocalizer.Commands {
         /// <param name="verbose">True if processing info should be printed to the output</param>
         public override void Process(Array selectedItems, bool verbose) {            
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on selection");
-            Results = new List<CodeReferenceResultItem>();
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
-            base.Process(selectedItems, verbose);
+            try {
+                Results = new List<CodeReferenceResultItem>();
 
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true); 
-            });
+                base.Process(selectedItems, verbose);
 
-            // clear cached data
-            trieCache.Clear();
-            codeUsingsCache.Clear();
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });
+            } finally {
+                // clear cached data
+                trieCache.Clear();
+                codeUsingsCache.Clear();
+
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
+
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline completed - found {0} items to be moved", Results.Count);
         }
 
@@ -93,25 +105,31 @@ namespace VisualLocalizer.Commands {
             base.ProcessSelection(verbose);
 
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command started on text selection of active document ");
+            if (verbose) ProgressBarHandler.StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
 
-            Results = new List<CodeReferenceResultItem>();
+            try {
+                Results = new List<CodeReferenceResultItem>();
 
-            Process(currentlyProcessedItem, IntersectsWithSelection, verbose);
+                Process(currentlyProcessedItem, IntersectsWithSelection, verbose);
 
-            // remove items laying outside the selection
-            Results.RemoveAll((item) => {
-                return IsItemOutsideSelection(item);
-            });
+                // remove items laying outside the selection
+                Results.RemoveAll((item) => {
+                    return IsItemOutsideSelection(item);
+                });
 
-            // set each source file as readonly
-            Results.ForEach((item) => {
-                VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
-            });
+                // set each source file as readonly
+                Results.ForEach((item) => {
+                    VLDocumentViewsManager.SetFileReadonly(item.SourceItem.GetFullPath(), true);
+                });                
 
-            // clear cached data
-            trieCache.Clear();
-            trieCache.Clear();
-            codeUsingsCache.Clear();
+            } finally {
+                // clear cached data
+                trieCache.Clear();
+                trieCache.Clear();
+                codeUsingsCache.Clear();
+
+                if (verbose) ProgressBarHandler.StopIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants.SBAI_Find);
+            }
             if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("Found {0} items to be moved", Results.Count);
         }
 

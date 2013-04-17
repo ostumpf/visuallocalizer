@@ -110,6 +110,7 @@ namespace VisualLocalizer.Library {
                 } else {
                     // unescape well-known characters
                     switch (c) {
+                        case '\0': b.Append("\\0"); break;
                         case '\a': b.Append("\\a"); break;
                         case '\b': b.Append("\\b"); break;
                         case '\f': b.Append("\\f"); break;
@@ -149,6 +150,7 @@ namespace VisualLocalizer.Library {
                         char next = text[i];
                     
                         switch (next) {
+                            case '0': result.Append('\0'); break;
                             case '"': result.Append('"'); break;
                             case '\\': result.Append('\\'); break;
                             case 'r': result.Append('\r'); break;

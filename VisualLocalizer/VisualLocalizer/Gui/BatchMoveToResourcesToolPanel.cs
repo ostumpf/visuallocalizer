@@ -102,14 +102,20 @@ namespace VisualLocalizer.Gui {
                         filterPanel.Controls[crit.Name + "label"].Text = crit.Description; // update its text
 
                         // update its data
-                        LocalizationCustomCriterion oldCrit = (LocalizationCustomCriterion)filterCriteriaCopy[crit.Name];
-                        oldCrit.Predicate = crit.Predicate;
-                        oldCrit.Regex = crit.Regex;
-                        oldCrit.Target = crit.Target;
+                        if (filterCriteriaCopy.ContainsKey(crit.Name)) {
+                            LocalizationCustomCriterion oldCrit = (LocalizationCustomCriterion)filterCriteriaCopy[crit.Name];
+                            oldCrit.Predicate = crit.Predicate;
+                            oldCrit.Regex = crit.Regex;
+                            oldCrit.Target = crit.Target;
+                        } else {
+                            filterCriteriaCopy.Add(crit.Name, crit);
+                        }
 
-                        // add it to he future list of criteria in the tool panel
-                        used.Add(crit.Name + "box");
-                        used.Add(crit.Name + "label");
+                        if (!used.Contains(crit.Name + "box")) {
+                            // add it to he future list of criteria in the tool panel
+                            used.Add(crit.Name + "box");
+                            used.Add(crit.Name + "label");
+                        }
                     } else { // the criterion is not yet in the tool panel - add it
                         toAdd.Add(crit);
                     }

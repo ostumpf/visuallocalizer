@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VisualLocalizer.Components;
 using VisualLocalizer.Commands;
+using System.IO;
 
 namespace VLUnitTests.VLTests {
     
@@ -47,6 +48,7 @@ namespace VLUnitTests.VLTests {
             var backups = CreateBackupsOf(files);
             try {
                 List<CodeReferenceResultItem> list = BatchInlineLookup(files);
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 int originalCount = list.Count;
                 Assert.IsTrue(list.Count > 0);
 
@@ -59,10 +61,12 @@ namespace VLUnitTests.VLTests {
                 int errors = 0;
                 BatchReferenceReplacer replacer = new BatchReferenceReplacer();
                 replacer.Inline(list, true, ref errors);
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
 
                 Assert.AreEqual(0, errors);
 
                 int newCount = BatchInlineLookup(files).Count((item) => { return item.OriginalReferenceText.EndsWith("XX"); });
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 Assert.AreEqual(originalCount, newCount);
             } finally {
                 RestoreBackups(backups);

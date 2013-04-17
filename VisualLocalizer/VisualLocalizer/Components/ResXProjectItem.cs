@@ -103,8 +103,12 @@ namespace VisualLocalizer.Components {
                     }
                 }
 
-                if (designer != null && designer.GetCodeModel() != null) {
-                    string lang = designer.GetCodeModel().Language;
+                bool fileOpened;
+                FileCodeModel2 codeModel = null;
+                if (designer != null) codeModel = designer.GetCodeModel(false, false, out fileOpened);
+
+                if (designer != null && codeModel != null) {
+                    string lang = codeModel.Language;
                     return lang == CodeModelLanguageConstants.vsCMLanguageCSharp ? LANGUAGE.CSHARP : LANGUAGE.VB;
                 } else {
                     LANGUAGE? lang = InternalProjectItem.ContainingProject.GetCurrentWebsiteLanguage();
@@ -139,7 +143,11 @@ namespace VisualLocalizer.Components {
             if (InternalProjectItem.Name.ToLower() != "resources.resx") return false;
 
             ProjectItem pitem = (ProjectItem)parent;
-            return pitem.Name == "Properties" && pitem.Kind.ToUpper() == StringConstants.PhysicalFolder;
+            if (DesignerLanguage == LANGUAGE.CSHARP) {
+                return pitem.Name == "Properties" && pitem.Kind.ToUpper() == StringConstants.PhysicalFolder;
+            } else {
+                return pitem.Name == "My Project" && pitem.Kind.ToUpper() == StringConstants.PhysicalFolder;
+            }
         }  
        
         /// <summary>
@@ -339,22 +347,26 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns value from CONTAINS_KEY_RESULT enumeration identifying conflict type for given key/value pair.
         /// </summary>     
-        public CONTAINS_KEY_RESULT GetKeyConflictType(string key, string value) {
+        public CONTAINS_KEY_RESULT GetKeyConflictType(string key, string value, bool ignoreCase) {
             bool wasLoaded = IsLoaded;
             if (!IsLoaded) Load(); // load data if necessary
             if (string.IsNullOrEmpty(key)) return CONTAINS_KEY_RESULT.DOESNT_EXIST; 
 
-            string lowerKey = key.ToLower();
+            string lowerKey = key.ToLower();            
 
             CONTAINS_KEY_RESULT status;
             if (data.ContainsKey(lowerKey)) { // key exists
-                if (data[lowerKey].HasValue<string>()) { // key has string value
-                    if (string.Compare(data[lowerKey].GetValue<string>(), value, false, CultureInfo.CurrentCulture) == 0) {
-                        status = CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE;  // key exists and its value is the same
-                    } else {
-                        status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE; // key exists and its value is different
-                    }
-                } else status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                if (!ignoreCase && data[lowerKey].Name != key) {
+                    status = CONTAINS_KEY_RESULT.DOESNT_EXIST;
+                } else {
+                    if (data[lowerKey].HasValue<string>()) { // key has string value
+                        if (string.Compare(data[lowerKey].GetValue<string>(), value, false, CultureInfo.CurrentCulture) == 0) {
+                            status = CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE;  // key exists and its value is the same
+                        } else {
+                            status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE; // key exists and its value is different
+                        }
+                    } else status = CONTAINS_KEY_RESULT.EXISTS_WITH_DIFF_VALUE;
+                }
             } else status = CONTAINS_KEY_RESULT.DOESNT_EXIST; // key is not present in this file
 
             if (!wasLoaded) Unload(); // unload data
@@ -497,7 +509,9 @@ namespace VisualLocalizer.Components {
 
                 // select first namespace in the designer file
                 CodeElement nmspcElemet = null;
-                foreach (CodeElement element in DesignerItem.GetCodeModel().CodeElements) {
+                bool fileOpened;
+
+                foreach (CodeElement element in DesignerItem.GetCodeModel(true, false, out fileOpened).CodeElements) {
                     if (element.Kind == vsCMElement.vsCMElementNamespace) {
                         Namespace = element.FullName;
                         nmspcElemet = element;

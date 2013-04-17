@@ -75,7 +75,7 @@ namespace VisualLocalizer.Commands {
                         string text = GetReplaceString(resultItem); 
                         
                         string path = resultItem.SourceItem.GetFullPath();
-                        if (RDTManager.IsFileOpen(path)) { // file is open
+                        if (RDTManager.IsFileOpen(path) && RDTManager.IsFileVisible(path)) { // file is open
                             if (!buffersCache.ContainsKey(path)) { // file's buffer is not yet loaded
                                 // load buffer
                                 IVsTextLines textLines = DocumentViewsManager.GetTextLinesForFile(path, false);
@@ -120,7 +120,14 @@ namespace VisualLocalizer.Commands {
             }
 
             foreach (var pair in filesCache) {
-                File.WriteAllText(pair.Key, pair.Value.ToString());
+                if (RDTManager.IsFileOpen(pair.Key)) {
+                    RDTManager.SetIgnoreFileChanges(pair.Key, true);
+                    File.WriteAllText(pair.Key, pair.Value.ToString());
+                    RDTManager.SetIgnoreFileChanges(pair.Key, false);
+                    RDTManager.SilentlyReloadFile(pair.Key);
+                } else {
+                    File.WriteAllText(pair.Key, pair.Value.ToString());
+                }
             }
             if (errorRows > 0) throw new Exception("Error occured while processing some rows - see Output window for details."); 
         }

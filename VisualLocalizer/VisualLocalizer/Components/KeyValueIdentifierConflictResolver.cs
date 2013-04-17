@@ -19,9 +19,9 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Returns error message displayed when key is considered invalid
         /// </summary>
-        protected string KeyIsNotValidIdentifierErrorMessage {
+        protected string KeyIsNotValidIdentifierErrorMessageFormat {
             get {
-                return "Key is not a valid identifier";
+                return "Key is not a valid identifier: '{0}'";
             }
         }
 
@@ -53,11 +53,12 @@ namespace VisualLocalizer.Components {
                         identifierError = empty || !validIdentifier; // all kinds of invalid identifiers are reported
                         break;
                 }
-                
+
+                item.ErrorMessages.Remove(string.Format(KeyIsNotValidIdentifierErrorMessageFormat, oldKey));
                 if (identifierError) {
-                    item.ErrorMessages.Add(KeyIsNotValidIdentifierErrorMessage);
-                } else {
-                    item.ErrorMessages.Remove(KeyIsNotValidIdentifierErrorMessage);
+                    item.ErrorMessages.Add(string.Format(KeyIsNotValidIdentifierErrorMessageFormat, newKey));
+                } else {                    
+                    item.ErrorMessages.Remove(string.Format(KeyIsNotValidIdentifierErrorMessageFormat, newKey));
                 }                
             }
             TryAdd(oldKey, newKey, item);

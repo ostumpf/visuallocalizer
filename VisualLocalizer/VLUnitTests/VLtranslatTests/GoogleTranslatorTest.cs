@@ -66,7 +66,7 @@ namespace VLUnitTests {
             string fromLanguage = string.Empty;
             string toLanguage = "en";
             string untranslatedText = "Tohle je testovací překlad.\nDalší řádek.";
-            string expected = "This is a test translation.\nThe next row.";
+            string expected = "This is a test translation.\nAnother row.";
             string actual = target.Translate(fromLanguage, toLanguage, untranslatedText);
             
             Assert.AreEqual(expected, actual);

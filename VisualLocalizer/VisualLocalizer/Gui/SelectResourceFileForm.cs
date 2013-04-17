@@ -154,6 +154,7 @@ namespace VisualLocalizer.Gui {
                     item.Load();
                     VLDocumentViewsManager.SetFileReadonly(item.InternalProjectItem.GetFullPath(), true);                    
                 }
+                resultItem.DestinationItem = item;
 
                 bool isKeyEmpty = string.IsNullOrEmpty(keyBox.Text);
                 bool isValidIdentifier = keyBox.Text.IsValidIdentifier(resultItem.Language);
@@ -174,7 +175,7 @@ namespace VisualLocalizer.Gui {
                 }
                                                
                 if (!identifierErrorExists) { // identifier ok - check for key name conflicts
-                    keyConflict = item.GetKeyConflictType(keyBox.Text, valueBox.Text);
+                    keyConflict = item.GetKeyConflictType(keyBox.Text, valueBox.Text, true);
                     
                     Color backColor = Color.White;
                     switch (keyConflict) {

@@ -311,6 +311,7 @@ namespace VisualLocalizer.Library {
 
             string ext = item.GetExtension();
             if (ext == null) ext = Path.GetExtension(item.GetFullPath());
+            if (ext == null) return false;
 
             return ext.ToLower() == ".resx";
         }
@@ -318,18 +319,17 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Returns code model for given item
         /// </summary>        
-        public static FileCodeModel2 GetCodeModel(this ProjectItem item) {
+        public static FileCodeModel2 GetCodeModel(this ProjectItem item, bool throwOnNull, bool openFileIfNecessary, out bool fileOpened) {
             if (item == null) throw new ArgumentNullException("item");
-            
-            if (item.FileCodeModel == null) {
-                item.Open(EnvDTE.Constants.vsViewKindCode);
-            }
-            if (item.FileCodeModel == null) {
-                item.Open(null);
+            fileOpened = false;
+
+            if (item.FileCodeModel == null && !RDTManager.IsFileOpen(item.GetFullPath()) && openFileIfNecessary) {
+                item.Open(EnvDTE.Constants.vsext_vk_Code);
+                fileOpened = true;
             }
 
-            if (item.FileCodeModel != null && (item.FileCodeModel as FileCodeModel2).ParseStatus == vsCMParseStatus.vsCMParseStatusError) {               
-                throw new InvalidOperationException("FileCodeModel for " + item.Name + " returned error status.");
+            if (item.FileCodeModel == null && throwOnNull) {
+                throw new InvalidOperationException("FileCodeModel for " + item.Name + " cannot be obtained. Try recompiling the file.");
             }
             return (FileCodeModel2)item.FileCodeModel;
         }

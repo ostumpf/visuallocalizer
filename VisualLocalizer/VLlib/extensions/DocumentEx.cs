@@ -22,9 +22,9 @@ namespace VisualLocalizer.Library {
             if (document == null || document.ProjectItem == null) throw new Exception("No document or project item.");
             if (string.IsNullOrEmpty(newNamespace)) throw new ArgumentNullException("newNamespace");
 
-            FileCodeModel2 model = document.ProjectItem.GetCodeModel();
-            if (model == null) throw new Exception("Current document has no CodeModel.");
-
+            bool fileOpened;
+            FileCodeModel2 model = document.ProjectItem.GetCodeModel(true, false, out fileOpened);
+            
             return model.AddImport(newNamespace, 0, string.Empty);
         }
 

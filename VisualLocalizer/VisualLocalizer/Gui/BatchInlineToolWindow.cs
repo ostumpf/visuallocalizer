@@ -59,6 +59,8 @@ namespace VisualLocalizer.Gui {
         protected override void OnWindowHidden(object sender, EventArgs e) {
             VLDocumentViewsManager.ReleaseLocks(); // unlock all previously locked documents
             MenuManager.OperationInProgress = false; // enable other operations to run
+            VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+            panel.Clear();
         }
 
         /// <summary>
@@ -108,14 +110,15 @@ namespace VisualLocalizer.Gui {
                 MenuManager.OperationInProgress = false; // permit other operations
                 BatchInliner inliner = new BatchInliner(); 
 
-                inliner.Inline(panel.GetData(), false, ref rowErrors); // run inliner
-               
+                inliner.Inline(panel.GetData(), false, ref rowErrors); // run inliner                
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 MessageBox.ShowException(ex);
             } finally {
                 if (this.Frame != null)
                     ((IVsWindowFrame)this.Frame).CloseFrame((uint)__FRAMECLOSE.FRAMECLOSE_NoSave); // close the toolwindow
+
+                panel.Clear();
 
                 VLOutputWindow.VisualLocalizerPane.Activate();
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Batch Inline command completed - selected {0} rows of {1}, {2} rows processed successfully", checkedRows, rowCount, checkedRows - rowErrors);

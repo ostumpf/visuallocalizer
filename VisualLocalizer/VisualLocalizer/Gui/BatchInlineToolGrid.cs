@@ -48,6 +48,17 @@ namespace VisualLocalizer.Gui {
             contextMenu.MenuItems.Add(stateMenu);            
 
             this.ContextMenu = contextMenu;
+            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+        }
+
+        /// <summary>
+        /// Updates visibility of the checkbox column after modified in the settings
+        /// </summary>
+        private void Instance_RevalidationRequested() {
+            if (!this.Visible) return;
+            if (!string.IsNullOrEmpty(ContextColumnName) && Columns.Contains(ContextColumnName)) {
+                Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
+            }
         }
 
         /// <summary>
@@ -221,6 +232,14 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         public override string CheckBoxColumnName {
             get { return "InlineThisItem"; }
+        }
+
+        /// <summary>
+        /// Removes current data from the grid
+        /// </summary>
+        public void Clear() {
+            Rows.Clear();
+            if (errorRows != null) errorRows.Clear();
         }
     }
 }

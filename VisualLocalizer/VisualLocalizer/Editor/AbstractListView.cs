@@ -129,6 +129,7 @@ namespace VisualLocalizer.Editor {
 
             showResultItemsMenuItem = new ImageMenuItem("Show references");
             showResultItemsMenuItem.Image = Editor.search;
+            showResultItemsMenuItem.Shortcut = Shortcut.CtrlF;
             showResultItemsMenuItem.Click += new EventHandler(showResultItemsMenuItem_Click);
 
             deleteContextMenu.MenuItems.Add(deleteContextMenuItem);

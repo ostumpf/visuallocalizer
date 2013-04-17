@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System.Resources;
 using System.Collections;
 using System.IO;
+using VisualLocalizer.Extensions;
 
 namespace VisualLocalizer.Commands {
 
@@ -161,7 +162,8 @@ namespace VisualLocalizer.Commands {
 
         private void SearchForResxFiles(Projects projects, List<GlobalTranslateProjectItem> resxFiles) {
             if (projects == null) return;
-            foreach (Project item in projects) {                
+            foreach (Project item in projects) {
+                if (!item.IsKnownProjectType()) continue;
                 SearchForResxFiles(item.ProjectItems, resxFiles);
             }
         }

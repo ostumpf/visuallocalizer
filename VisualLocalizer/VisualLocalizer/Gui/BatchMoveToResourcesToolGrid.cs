@@ -457,7 +457,7 @@ namespace VisualLocalizer.Gui {
                 string key = row.Key;
                 string value = row.Value;
                                 
-                CONTAINS_KEY_RESULT keyConflict = resxItem.GetKeyConflictType(key, value); // get conflict type
+                CONTAINS_KEY_RESULT keyConflict = resxItem.GetKeyConflictType(key, value, true); // get conflict type
                 switch (keyConflict) {
                     case CONTAINS_KEY_RESULT.EXISTS_WITH_SAME_VALUE:                        
                         row.ErrorMessages.Remove(DuplicateKeyError);
@@ -511,6 +511,9 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         private void Instance_RevalidationRequested() {
             if (!this.Visible) return;
+            if (!string.IsNullOrEmpty(ContextColumnName) && Columns.Contains(ContextColumnName)) {
+                Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
+            }
 
             foreach (DataGridViewKeyValueRow<CodeStringResultItem> row in Rows) {
                 if (row.IsNewRow) continue;
@@ -688,7 +691,17 @@ namespace VisualLocalizer.Gui {
         public string DestinationColumnName {
             get { return "Destination"; }
         }
-        
+
+        /// <summary>
+        /// Removes current data from the grid
+        /// </summary>
+        public void Clear() {
+            Rows.Clear();
+            if (errorRows != null) errorRows.Clear();
+            if (destinationItemsCache != null) destinationItemsCache.Clear();
+            if (resxItemsCache != null) resxItemsCache.Clear();
+            if (loadedItems != null) loadedItems.Clear(); 
+        }        
     }
 
     

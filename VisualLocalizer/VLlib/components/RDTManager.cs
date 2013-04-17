@@ -137,6 +137,20 @@ namespace VisualLocalizer.Library {
             bool open = DTE.get_IsOpenFile(null, path);            
             if (open) DTE.Documents.Item(path).Saved = saved;
         }
-        
+
+        /// <summary>
+        /// Returns true if the file's editor window is visible
+        /// </summary>        
+        public static bool IsFileVisible(string path) {
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException("path");
+
+            IVsWindowFrame frame = DocumentViewsManager.GetWindowFrameForFile(path, false);
+            if (frame == null) return false;
+
+            Window win = VsShellUtilities.GetWindowObject(frame);
+            if (win == null) return false;
+
+            return win.Visible;
+        }
     }    
 }

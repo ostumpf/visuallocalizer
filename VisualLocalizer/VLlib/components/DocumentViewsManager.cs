@@ -109,7 +109,17 @@ namespace VisualLocalizer.Library {
             } else throw new Exception("Cannot get IVsWindowFrame for " + file);
         }
 
-        
+        /// <summary>
+        /// Closes the window of edited file
+        /// </summary>        
+        public static void CloseFile(string path) {
+            if (path == null) throw new ArgumentNullException("path");
+            var window = VsShellUtilities.GetWindowObject(GetWindowFrameForFile(path, false));
+            try {
+                window.Detach();
+            } catch { }
+            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
+        }
 
     }
 }

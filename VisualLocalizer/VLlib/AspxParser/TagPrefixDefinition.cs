@@ -194,10 +194,15 @@ namespace VisualLocalizer.Library.AspxParser {
             } else {
                 if (!ReflectionCache.Instance.Assemblies.ContainsKey(AssemblyName)) {
                     // load given assembly and add it to cache
-                    ReflectionCache.Instance.Assemblies.Add(AssemblyName, Assembly.Load(AssemblyName));
+                    Assembly assembly=null;
+                    try {
+                        assembly = Assembly.Load(AssemblyName); 
+                    } catch (Exception) {}
+                    ReflectionCache.Instance.Assemblies.Add(AssemblyName, assembly);
                 }
                 Assembly a = ReflectionCache.Instance.Assemblies[AssemblyName];
-                
+                if (a == null) return null;
+
                 // attempt to get type from assembly
                 Type elementType = a.GetType(fullname);
 
@@ -246,6 +251,7 @@ namespace VisualLocalizer.Library.AspxParser {
             string projPath = projectItem.ContainingProject.FullName;
             if (projPath.EndsWith("\\")) projPath = projPath.Substring(0, projPath.Length - 1);
             string sourcePath = Source.Replace("~", projPath);
+            if (!File.Exists(sourcePath)) return;
 
             // read the source file and stop after first Control directive (code behind class name)
             ControlDirectiveHandler handler = new ControlDirectiveHandler();
@@ -265,13 +271,13 @@ namespace VisualLocalizer.Library.AspxParser {
             ProjectItem codeItem = solution.FindProjectItem(Uri.UnescapeDataString(codeItemUri.ToString()));
             if (codeItem == null) throw new InvalidOperationException("Cannot find declared code behind file " + codeItem.GetFullPath());
 
-            // ensure the window is open to get the code model            
-            if (codeItem.GetCodeModel() == null) {
-                return;
-            }
+            // ensure the window is open to get the code model   
+            bool fileOpened;
+            FileCodeModel model = codeItem.GetCodeModel(false, true, out fileOpened);
+            if (model == null) return;
 
             CodeClass classElement = null;
-            foreach (CodeElement el in codeItem.GetCodeModel().CodeElements) {
+            foreach (CodeElement el in model.CodeElements) {
                 if (el.Kind == vsCMElement.vsCMElementClass && el.Name == handler.ControlInfo.Inherits) {
                     classElement = (CodeClass)el;
                     break;
@@ -286,7 +292,8 @@ namespace VisualLocalizer.Library.AspxParser {
                     }
                 }
             }
-            
+
+            if (fileOpened) DocumentViewsManager.CloseFile(codeItem.GetFullPath());
         }
 
         /// <summary>

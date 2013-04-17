@@ -127,6 +127,10 @@ namespace VisualLocalizer.Editor {
         private ReferenceLister referenceLister;
         public bool ReferenceCounterThreadSuspended = false;
         private System.Threading.Thread referenceUpdaterThread;
+        private static object LookuperThreadLockObject = new object();
+        private HashSet<string> registeredAsIgnoredList;
+        private bool referenceUpdaterThreadCompleted = false;
+        public HashSet<string> sourceFilesThatNeedUpdate = new HashSet<string>();
 
         /// <summary>
         /// Initializes the GUI
@@ -134,6 +138,9 @@ namespace VisualLocalizer.Editor {
         public void Init<T>(AbstractSingleViewEditor<T> editor) where T : Control, IEditorControl, new() {
             try {
                 this.Editor = editor as ResXEditor;
+                this.registeredAsIgnoredList = new HashSet<string>();
+                VLDocumentViewsManager.FileClosed += new Action<string>(VLDocumentViewsManager_FileClosed);
+                this.Disposed += new EventHandler(ResXEditorControl_Disposed);
 
                 // initialize the reference lookuper thread
                 this.referenceLister = new ReferenceLister();
@@ -159,11 +166,29 @@ namespace VisualLocalizer.Editor {
                 this.Controls.Add(toolStrip, 0, 0);
                 this.Controls.Add(tabs, 0, 1);
 
+                this.Cursor = Cursors.Default;
+
                 // revalidate the keys on RevalidationRequested event
                 SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        private void ResXEditorControl_Disposed(object sender, EventArgs e) {
+            try {
+                VLDocumentViewsManager.CloseInvisibleWindows(Editor, false);
+            } catch { }
+        }
+
+        
+        /// <summary>
+        /// Called when a file in VS is closed
+        /// </summary>        
+        private void VLDocumentViewsManager_FileClosed(string path) {
+            if (!sourceFilesThatNeedUpdate.Contains(path.ToLower())) {
+                sourceFilesThatNeedUpdate.Add(path.ToLower());
             }
         }       
 
@@ -173,7 +198,7 @@ namespace VisualLocalizer.Editor {
         public ResXEditor Editor {
             get;
             private set;
-        }
+        }        
 
         /// <summary>
         /// Initializes the toolstrip GUI
@@ -428,54 +453,59 @@ namespace VisualLocalizer.Editor {
         public void UpdateReferencesCount(IEnumerable items) {
             if (items == null) throw new ArgumentNullException("items");
             if (ReferenceCounterThreadSuspended) return;
+            lock (LookuperThreadLockObject) {
+                ResXProjectItem resxItem = Editor.ProjectItem;
 
-            ResXProjectItem resxItem = Editor.ProjectItem;
-
-            // if edited file is part of solution
-            if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
-                // get ResX project items
-                Project containingProject = resxItem.InternalProjectItem.ContainingProject;
-                resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(false, true));
-
-                // create list of all projects in which references will be seeked
-                List<Project> projects = new List<Project>();                
-                projects.Add(containingProject); // add this project
-                foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
-                    foreach (Project proj in solutionProject.GetReferencedProjects()) { // add referenced projects
-                        if (proj == containingProject) {
-                            projects.Add(solutionProject);
-                            break;
+                // if edited file is part of solution
+                if (resxItem != null && resxItem.InternalProjectItem.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(resxItem.InternalProjectItem)) {
+                    // get ResX project items
+                    Project containingProject = resxItem.InternalProjectItem.ContainingProject;
+                    resxItem.ResolveNamespaceClass(containingProject.GetResXItemsAround(false, true));
+                    
+                    // create list of all projects in which references will be seeked
+                    List<Project> projects = new List<Project>();
+                    projects.Add(containingProject); // add this project
+                    foreach (Project solutionProject in VisualLocalizerPackage.Instance.DTE.Solution.Projects) {
+                        foreach (Project proj in solutionProject.GetReferencedProjects()) { // add referenced projects
+                            if (proj == containingProject) {
+                                projects.Add(solutionProject);
+                                break;
+                            }
                         }
                     }
-                }
-                
-                if (resxItem.DesignerItem == null && !resxItem.HasImplicitDesignerFile) { // this indicates an error
-                    foreach (IReferencableKeyValueSource item in items) {
-                        item.CodeReferences.Clear();
-                        item.UpdateReferenceCount(false);
-                    }
-                } else {
-                    // build trie
-                    Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
-                    foreach (IReferencableKeyValueSource item in items) {                                                
-                        if (!string.IsNullOrEmpty(item.Key)) {
-                            string referenceKey = item.Key.CreateIdentifier(resxItem.DesignerLanguage);
 
-                            var element = trie.Add(resxItem.Class + "." + referenceKey);
-                            element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = item.Key });
+                    if (resxItem.DesignerItem == null && !resxItem.HasImplicitDesignerFile) { // this indicates an error
+                        foreach (IReferencableKeyValueSource item in items) {
+                            item.CodeReferences.Clear();
+                            item.UpdateReferenceCount(false);
                         }
-                    }
-                    trie.CreatePredecessorsAndShortcuts();
+                    } else {
+                        // build trie
+                        Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
+                        foreach (IReferencableKeyValueSource item in items) {
+                            if (!string.IsNullOrEmpty(item.Key)) {
+                                string referenceKey = item.Key.CreateIdentifier(resxItem.DesignerLanguage);
 
-                    referenceLister.Process(projects, trie, resxItem); // run lookuper
+                                var element = trie.Add(resxItem.Class + "." + referenceKey);
+                                element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = item.Key });
+                            }
+                        }
+                        trie.CreatePredecessorsAndShortcuts();
 
-                    // display results
-                    foreach (IReferencableKeyValueSource item in items) {
-                        item.CodeReferences.Clear();                        
-                        item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
-                            return i.Key == item.Key;
-                        }));
-                        item.UpdateReferenceCount(true); 
+                        registeredAsIgnoredList.Clear();
+                        referenceLister.Process(Editor, projects, trie, resxItem, !referenceUpdaterThreadCompleted); // run lookuper
+
+                        // display results
+                        foreach (IReferencableKeyValueSource item in items) {
+                            item.CodeReferences.RemoveAll((i) => { return !registeredAsIgnoredList.Contains(i.SourceItem.GetFullPath().ToLower()); });
+                            item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
+                                return i.Key == item.Key;
+                            }));
+                            item.UpdateReferenceCount(true);
+                        }
+
+                        referenceUpdaterThreadCompleted = true;
+                        VLDocumentViewsManager.CloseInvisibleWindows(Editor, false);
                     }
                 }
             }
@@ -495,6 +525,12 @@ namespace VisualLocalizer.Editor {
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
+            }
+        }
+
+        public bool ReadOnly {
+            get {
+                return readOnly;
             }
         }
 
@@ -518,9 +554,26 @@ namespace VisualLocalizer.Editor {
                     string[] files = (string[])iData.GetData(StringConstants.FILE_LIST);                    
                     AddExistingFiles(files, FILES_ORIGIN.CLIPBOARD_REF);
                     return true;
+                } else if (iData.GetDataPresent(DataFormats.CommaSeparatedValue) && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
+                    // contains plain text
+                    object o = iData.GetData(DataFormats.CommaSeparatedValue);
+                    string text;
+
+                    if (o is MemoryStream) {
+                        MemoryStream ms = (MemoryStream)o;
+                        byte[] buffer = new byte[ms.Length];
+                        ms.Read(buffer, 0, buffer.Length);
+                        text = Encoding.Default.GetString(buffer);
+                    } else {
+                        text = o.ToString();
+                    }
+
+                    stringGrid.AddClipboardText(text, true);
+                    tabs.SelectedTab = stringTab;
+                    return true;
                 } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
                     // contains plain text
-                    stringGrid.AddClipboardText((string)iData.GetData("Text"));
+                    stringGrid.AddClipboardText((string)iData.GetData("Text"), false);
                     tabs.SelectedTab = stringTab;
                     return true;
                 } else {                    
@@ -672,6 +725,18 @@ namespace VisualLocalizer.Editor {
         }
 
         /// <summary>
+        /// Called from lookuper thread, when project item with no code model is found - its result items are fixed 
+        /// </summary>        
+        public void RegisterAsStaticReferenceSource(ProjectItem pitem) {
+            if (pitem == null) throw new ArgumentNullException("pitem");
+            string fullPath = pitem.GetFullPath().ToLower();
+
+            if (!registeredAsIgnoredList.Contains(fullPath)) {
+                registeredAsIgnoredList.Add(fullPath);
+            }
+        }
+
+        /// <summary>
         /// Updates references count for specified item
         /// </summary>
         /// <param name="src"></param>
@@ -722,6 +787,11 @@ namespace VisualLocalizer.Editor {
             List<ListViewKeyItem> newItems = new List<ListViewKeyItem>();
 
             foreach (string file in files) {
+                if (Directory.Exists(file)) {
+                    AddExistingFiles(Directory.GetFiles(file), origin);
+                    continue;
+                }
+
                 string extension = Path.GetExtension(file);
                 if (!string.IsNullOrEmpty(extension)) extension = extension.ToLower();
 
@@ -1225,7 +1295,7 @@ namespace VisualLocalizer.Editor {
                     string newKey = pair.Value.Name; 
                     string newValue = pair.Value.GetValue<string>();
                     string newComment = pair.Value.Comment; 
-                    if (Editor.ProjectItem.GetKeyConflictType(newKey, newValue) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
+                    if (Editor.ProjectItem.GetKeyConflictType(newKey, newValue, false) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
                         ResXDataNode newNode = new ResXDataNode(newKey, newValue);
                         newNode.Comment = newComment;
                         ResXStringGridRow newRow = (ResXStringGridRow)stringGrid.Add(newKey, newNode);
@@ -1282,7 +1352,7 @@ namespace VisualLocalizer.Editor {
 
                         // add all non-existing data
                         foreach (var pair in stringGrid.GetData(true)) {
-                            if (!data.ContainsKey(pair.Key)) {
+                            if (!data.ContainsKey(pair.Value.Name)) {
                                 data.Add(pair.Key, pair.Value);
                                 wasUpdated = true;
                             }
@@ -1294,8 +1364,8 @@ namespace VisualLocalizer.Editor {
 
                         resxChild.BeginBatch();
                         foreach (var pair in stringGrid.GetData(true)) {
-                            if (resxChild.GetKeyConflictType(pair.Key, pair.Value.GetValue<string>()) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
-                                resxChild.AddString(pair.Key, pair.Value.GetValue<string>());
+                            if (resxChild.GetKeyConflictType(pair.Value.Name, pair.Value.GetValue<string>(), false) == CONTAINS_KEY_RESULT.DOESNT_EXIST) {
+                                resxChild.AddString(pair.Value.Name, pair.Value.GetValue<string>());
                                 wasUpdated = true;
                             }
                         }
@@ -1620,7 +1690,7 @@ namespace VisualLocalizer.Editor {
                 foreach (object o in enumarable) {
                     foreach (var item in dataTabItems) {
                         ResXDataNode node = (o is DictionaryEntry) ? ((DictionaryEntry)o).Value as ResXDataNode : ((KeyValuePair<string, ResXDataNode>)o).Value;
-                        string key = (o is DictionaryEntry) ? ((DictionaryEntry)o).Key.ToString() : ((KeyValuePair<string, ResXDataNode>)o).Key;
+                        string key = node.Name;
 
                         // select propert tab for the new node
                         if (item.CanContainItem(node)) {
@@ -1674,14 +1744,22 @@ namespace VisualLocalizer.Editor {
                 bool selectedString = stringGrid.Visible;
                 IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
 
+                bool allSelectedResourcesExternal = false;                
+                if (item is AbstractListView) {
+                    allSelectedResourcesExternal = true;                    
+                    foreach (ListViewKeyItem listItem in (item as AbstractListView).SelectedItems) {
+                        allSelectedResourcesExternal = allSelectedResourcesExternal && listItem.DataNode.FileRef != null;                        
+                    }
+                }                
+
                 inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && stringGrid.AreReferencesKnownOnSelected;
-                removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-                removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
+                removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
+                removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
                 removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
                 viewButton.Enabled = !selectedString && !item.IsEditing;
                 addButton.Enabled = !readOnly;
                 translateButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
-                mergeButton.Enabled = !readOnly;
+                mergeButton.Enabled = !readOnly;                
 
                 if (Editor.ProjectItem != null) {
                     bool specific = Editor.ProjectItem.IsCultureSpecific();

@@ -67,7 +67,8 @@ namespace VisualLocalizer.Commands {
                     // and if not, create new using block with the namespace name.
 
                     try {
-                        if (f.UsingFullName || resultItem.MustUseFullName) {
+                        resultItem.DestinationItem = f.SelectedItem;
+                        if (f.UsingFullName || resultItem.MustUseFullName || (resultItem.Language==LANGUAGE.VB && resultItem.DestinationItem.IsProjectDefault(resultItem.SourceItem.ContainingProject))) {
                             referenceText = new ReferenceString(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key);
                             addUsing = false;
                         } else {

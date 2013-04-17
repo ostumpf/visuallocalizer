@@ -95,7 +95,11 @@ namespace VisualLocalizer.Components {
                 this.projectItem = projectItem;
 
                 // initialize type resolver
-                webConfig = WebConfig.Get(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
+                if (parentCommand is BatchMoveCommand) {
+                    webConfig = WebConfig.Get(projectItem, VisualLocalizerPackage.Instance.DTE.Solution);
+                } else {
+                    webConfig = null;
+                }
                 fileText = null;
 
                 if (RDTManager.IsFileOpen(fullPath)) { // file is open
@@ -195,9 +199,9 @@ namespace VisualLocalizer.Components {
                 // add definitions of elements for future type resolution
                 if (!string.IsNullOrEmpty(tagPrefix)) {
                     if (!string.IsNullOrEmpty(assembly) && !string.IsNullOrEmpty(nmspc)) {
-                        webConfig.AddTagPrefixDefinition(new TagPrefixAssemblyDefinition(assembly, nmspc, tagPrefix));
+                        if (webConfig != null) webConfig.AddTagPrefixDefinition(new TagPrefixAssemblyDefinition(assembly, nmspc, tagPrefix));
                     } else if (!string.IsNullOrEmpty(tagName) && !string.IsNullOrEmpty(src)) {
-                        webConfig.AddTagPrefixDefinition(new TagPrefixSourceDefinition(projectItem, 
+                        if (webConfig != null) webConfig.AddTagPrefixDefinition(new TagPrefixSourceDefinition(projectItem, 
                             VisualLocalizerPackage.Instance.DTE.Solution, tagName, src, tagPrefix));
                     }
                 }
@@ -370,12 +374,11 @@ namespace VisualLocalizer.Components {
         /// Adds few lines of code as a context to the result item
         /// </summary>        
         private void AddContextToItem(AbstractResultItem item) {
-            if (!Settings.SettingsObject.Instance.ShowContextColumn) return;
             item.ContextRelativeLine = 0;
 
             int currentPos = item.AbsoluteCharOffset;
             string currentLine = GetLine(ref currentPos, 0); // current line's text
-            currentLine = currentLine.Substring(0, item.ReplaceSpan.iStartIndex) + StringConstants.ContextSubstituteText;
+            currentLine = currentLine.Substring(0, Math.Min(item.ReplaceSpan.iStartIndex, currentLine.Length)) + StringConstants.ContextSubstituteText;
 
             StringBuilder context = new StringBuilder();
             context.Append(currentLine);
@@ -395,7 +398,7 @@ namespace VisualLocalizer.Components {
 
             currentPos = item.AbsoluteCharOffset+item.AbsoluteCharLength;
             currentLine = GetLine(ref currentPos, 0);
-            context.Append(currentLine.Substring(item.ReplaceSpan.iEndIndex));
+            context.Append(currentLine.Substring(Math.Min(item.ReplaceSpan.iEndIndex, currentLine.Length - 1)));
 
             while ((currentLine = GetLine(ref currentPos, +1)) != null && botLines < NumericConstants.ContextLineRadius) {
                 string lineText = currentLine.ToString();
