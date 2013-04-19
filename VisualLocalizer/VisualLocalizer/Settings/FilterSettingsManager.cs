@@ -257,14 +257,14 @@ namespace VisualLocalizer.Settings {
             email.Predicate = LocalizationCriterionPredicate.MATCHES;
             email.Target = LocalizationCriterionTarget.VALUE;
             email.Name = Path.GetRandomFileName();
-            email.Regex = @"^\w+@\w+$(?# email)";
+            email.Regex = @"^\w+@\w+.*$(?# email)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(email);
 
             var style = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
             style.Predicate = LocalizationCriterionPredicate.MATCHES;
             style.Target = LocalizationCriterionTarget.VALUE;
             style.Name = Path.GetRandomFileName();
-            style.Regex = @"^.*{.{8,}}.*$(?# style)";
+            style.Regex = @"(.*\s*.*)*{(.*\s*.*)*}(.*\s*.*)*(?# CSS)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(style);
 
             SettingsObject.Instance.IgnorePropertyChanges = false;

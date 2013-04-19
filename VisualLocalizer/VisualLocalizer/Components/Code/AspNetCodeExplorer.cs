@@ -337,7 +337,7 @@ namespace VisualLocalizer.Components {
             span.iEndIndex = info.BlockSpan.EndIndex - (stripApos ? 1 : 0);
 
             AspNetStringResultItem resultItem = new AspNetStringResultItem();
-            resultItem.Value = info.Value.ConvertAspNetEscapeSequences();
+            resultItem.Value = info.Value.ConvertAspNetEscapeSequences().Trim();
             resultItem.ReplaceSpan = span;
             resultItem.AbsoluteCharOffset = info.BlockSpan.AbsoluteCharOffset + (stripApos ? 2 : 0);
             resultItem.AbsoluteCharLength = info.Value.Length;

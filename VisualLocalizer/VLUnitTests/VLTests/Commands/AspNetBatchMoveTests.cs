@@ -494,10 +494,7 @@ namespace VLUnitTests.VLTests {
             });
 
             list.Add(new TestAspNetStringResultItem() {
-                Value = @"    
-         
-         PlainText
-         ",
+                Value = "PlainText",
                 WasVerbatim = false,
                 SourceItem = projectItem,
                 ClassOrStructElementName = className,
