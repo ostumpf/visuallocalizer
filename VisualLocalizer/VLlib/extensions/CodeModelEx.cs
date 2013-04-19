@@ -126,7 +126,7 @@ namespace VisualLocalizer.Library {
                     IEnumerator enumerator = attr.Arguments.GetEnumerator();
                     enumerator.MoveNext();
 
-                    CodeAttributeArgument arg = enumerator.Current as CodeAttributeArgument;
+                    CodeAttributeArgument arg = enumerator.Current as CodeAttributeArgument;                    
                     if (arg.Value.Trim().ToLower() == "false") {
                         contains = true;
                         break;

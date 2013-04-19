@@ -5,8 +5,8 @@
   <Extern href="stdidcmd.h"/>
 
   <!--This header contains the command ids for the menus provided by the shell. -->
-  <Extern href="vsshlids.h"/>
-
+  <Extern href="vsshlids.h"/>  
+  
   <!-- definition of batch inline toolbar -->
   <Commands>
     <Groups>
@@ -187,7 +187,9 @@
 
   <!-- definition of new context menu items -->
   <Commands package="VLPackageGuid">
-    
+
+   
+
     <!-- add the items to context menus -->
     <Groups>    
       <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
@@ -307,6 +309,7 @@
     </Menus>           
   </Commands>
 
+
   <!-- other placements for context menu items -->
   <CommandPlacements>
     <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
@@ -419,7 +422,9 @@
       <IDSymbol name="IDM_ASP_SOURCE" value ="0x0035"/>
       <IDSymbol name="IDM_ASP_CSHARP_CODEBLOCK" value ="0x036"/>
       <IDSymbol name="IDM_ASP_VB_CODEBLOCK" value ="0x037"/>
-    </GuidSymbol>    
+    </GuidSymbol>
+
+    
   </Symbols>
 
 </CommandTable>

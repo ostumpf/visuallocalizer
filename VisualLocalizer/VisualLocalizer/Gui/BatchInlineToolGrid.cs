@@ -21,12 +21,42 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         public event EventHandler<CodeResultItemEventArgs> HighlightRequired;
 
+        /// <summary>
+        /// Determines whether source and destination files are locked during SetData()
+        /// </summary>
+        public bool LockFiles {
+            get;
+            set;
+        }
+
+        private bool _ContextMenuEnabled;
+        private ContextMenu contextMenu;
+
+        /// <summary>
+        /// True if SetData() was already called
+        /// </summary>
+        public bool SetDataFinished {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// True if context menu is enabled
+        /// </summary>
+        public bool ContextMenuEnabled {
+            get { return _ContextMenuEnabled; }
+            set {
+                _ContextMenuEnabled = value;
+                this.ContextMenu = value ? contextMenu : new ContextMenu();
+            }
+        }
+
         public BatchInlineToolGrid() : base(SettingsObject.Instance.ShowContextColumn) {
             this.MultiSelect = true;
             this.MouseUp += new MouseEventHandler(OnContextMenuShow);
 
             // create context menu with option to (un)check selected rows
-            ContextMenu contextMenu = new ContextMenu();
+            contextMenu = new ContextMenu();
 
             MenuItem stateMenu = new MenuItem("State");
             stateMenu.MenuItems.Add("Checked", new EventHandler((o, e) => {
@@ -46,11 +76,12 @@ namespace VisualLocalizer.Gui {
                 }
             }));
             contextMenu.MenuItems.Add(stateMenu);            
-
+            
             this.ContextMenu = contextMenu;
-            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);
+            
+            SettingsObject.Instance.RevalidationRequested += new Action(Instance_RevalidationRequested);           
         }
-
+      
         /// <summary>
         /// Updates visibility of the checkbox column after modified in the settings
         /// </summary>
@@ -76,21 +107,24 @@ namespace VisualLocalizer.Gui {
             this.Columns.Insert(2, referenceColumn);
 
             DataGridViewTextBoxColumn valueColumn = new DataGridViewTextBoxColumn();
-            valueColumn.MinimumWidth = 250;
+            valueColumn.MinimumWidth = 50;
+            valueColumn.Width = 250;
             valueColumn.HeaderText = "Value";
             valueColumn.Name = "Value";
             valueColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Insert(3, valueColumn);
 
             DataGridViewTextBoxColumn sourceFileColumn = new DataGridViewTextBoxColumn();
-            sourceFileColumn.MinimumWidth = 250;
+            sourceFileColumn.MinimumWidth = 50;
+            sourceFileColumn.Width = 250;
             sourceFileColumn.HeaderText = "Source File";
             sourceFileColumn.Name = "Source";
             sourceFileColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             this.Columns.Insert(4, sourceFileColumn);
 
             DataGridViewTextBoxColumn destinationColumn = new DataGridViewTextBoxColumn();
-            destinationColumn.MinimumWidth = 250;
+            destinationColumn.MinimumWidth = 50;
+            destinationColumn.Width = 250;
             destinationColumn.HeaderText = "Resource File";
             destinationColumn.Name = "Destination";
             destinationColumn.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
@@ -118,74 +152,77 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         public override void SetData(List<CodeReferenceResultItem> value) {
             if (value == null) throw new ArgumentNullException("value");
+            try {
+                Rows.Clear();
+                errorRows.Clear();
+                this.SuspendLayout();
 
-            Rows.Clear();
-            errorRows.Clear();
-            this.SuspendLayout();
+                // adjust "context" column visibility according to the settings
+                if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
 
-            // adjust "context" column visibility according to the settings
-            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
+                // create new row for each result item
+                foreach (var item in value) {
+                    DataGridViewCheckedRow<CodeReferenceResultItem> row = new DataGridViewCheckedRow<CodeReferenceResultItem>();
+                    row.DataSourceItem = item;
 
-            // create new row for each result item
-            foreach (var item in value) {
-                DataGridViewCheckedRow<CodeReferenceResultItem> row = new DataGridViewCheckedRow<CodeReferenceResultItem>();
-                row.DataSourceItem = item;
+                    DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
+                    checkCell.Value = item.MoveThisItem;
+                    row.Cells.Add(checkCell);
 
-                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
-                checkCell.Value = item.MoveThisItem;
-                row.Cells.Add(checkCell);
+                    DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
+                    lineCell.Value = item.ReplaceSpan.iStartLine + 1;
+                    row.Cells.Add(lineCell);
 
-                DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
-                lineCell.Value = item.ReplaceSpan.iStartLine + 1;
-                row.Cells.Add(lineCell);
+                    DataGridViewTextBoxCell referenceCell = new DataGridViewTextBoxCell();
+                    referenceCell.Value = item.FullReferenceText;
+                    row.Cells.Add(referenceCell);
 
-                DataGridViewTextBoxCell referenceCell = new DataGridViewTextBoxCell();
-                referenceCell.Value = item.FullReferenceText;
-                row.Cells.Add(referenceCell);
+                    DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
+                    valueCell.Value = item.Value;
+                    row.Cells.Add(valueCell);
 
-                DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
-                valueCell.Value = item.Value;
-                row.Cells.Add(valueCell);               
+                    DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
+                    sourceCell.Value = item.SourceItem.Name;
+                    row.Cells.Add(sourceCell);
 
-                DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
-                sourceCell.Value = item.SourceItem.Name;
-                row.Cells.Add(sourceCell);
+                    DataGridViewTextBoxCell destinationCell = new DataGridViewTextBoxCell();
+                    destinationCell.Value = item.DestinationItem.ToString();
+                    if (LockFiles) VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.GetFullPath(), true); // lock selected destination file
+                    row.Cells.Add(destinationCell);
 
-                DataGridViewTextBoxCell destinationCell = new DataGridViewTextBoxCell();
-                destinationCell.Value = item.DestinationItem.ToString();
-                VLDocumentViewsManager.SetFileReadonly(item.DestinationItem.InternalProjectItem.GetFullPath(), true); // lock selected destination file
-                row.Cells.Add(destinationCell);
-                
-                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
-                contextCell.Value = item.Context;
-                contextCell.RelativeLine = item.ContextRelativeLine;
-                contextCell.FullText = item.Context;
-                contextCell.SetWrapContents(false);
-                row.Cells.Add(contextCell);
-                                   
-                DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
-                row.Cells.Add(cell);                
+                    DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
+                    contextCell.Value = item.Context;
+                    contextCell.RelativeLine = item.ContextRelativeLine;
+                    contextCell.FullText = item.Context;
+                    contextCell.SetWrapContents(false);
+                    row.Cells.Add(contextCell);
 
-                Rows.Add(row);
+                    DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
+                    row.Cells.Add(cell);
 
-                referenceCell.ReadOnly = true;
-                valueCell.ReadOnly = true;
-                sourceCell.ReadOnly = true;
-                destinationCell.ReadOnly = true;
-                lineCell.ReadOnly = true;
-                contextCell.ReadOnly = true;
-            }
+                    Rows.Add(row);
 
-            CheckedRowsCount = Rows.Count;
-            CheckHeader.Checked = true;
-            this.ClearSelection();
-            this.ResumeLayout(true);
-            this.OnResize(null);
-            NotifyErrorRowsChanged();
+                    referenceCell.ReadOnly = true;
+                    valueCell.ReadOnly = true;
+                    sourceCell.ReadOnly = true;
+                    destinationCell.ReadOnly = true;
+                    lineCell.ReadOnly = true;
+                    contextCell.ReadOnly = true;
+                }
 
-            // perform sorting
-            if (SortedColumn != null) {
-                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+                CheckedRowsCount = Rows.Count;
+                CheckHeader.Checked = true;
+                this.ClearSelection();
+                this.ResumeLayout(true);
+                this.OnResize(null);
+                NotifyErrorRowsChanged();
+
+                // perform sorting
+                if (SortedColumn != null) {
+                    Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+                }
+            } finally {
+                SetDataFinished = true;
             }
         }
 

@@ -66,14 +66,14 @@ namespace VisualLocalizer.Commands {
                     CodeReferenceResultItem resultItem = dataList[i];
 
                     if (resultItem.MoveThisItem) { // the item was checked in the toolwindow grid                        
-                        int absoluteStartIndex, absoluteLength;
-                        
-                        // get position information about block to replace
-                        TextSpan inlineSpan = GetInlineReplaceSpan(resultItem, out absoluteStartIndex, out absoluteLength);
+                        int absoluteStartIndex, absoluteLength;                                               
                         
                         // get text that replaces the result item
-                        string text = GetReplaceString(resultItem); 
-                        
+                        string text = GetReplaceString(resultItem);
+
+                        // get position information about block to replace
+                        TextSpan inlineSpan = GetInlineReplaceSpan(resultItem, out absoluteStartIndex, out absoluteLength);
+
                         string path = resultItem.SourceItem.GetFullPath();
                         if (RDTManager.IsFileOpen(path) && RDTManager.IsFileVisible(path)) { // file is open
                             if (!buffersCache.ContainsKey(path)) { // file's buffer is not yet loaded

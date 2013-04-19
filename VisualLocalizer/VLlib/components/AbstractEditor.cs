@@ -80,7 +80,7 @@ namespace VisualLocalizer.Library {
     public abstract class AbstractSingleViewEditor<T> :
         WindowPane, 
         IOleCommandTarget, 
-        IVsPersistDocData,
+        IVsPersistDocData2,
         IPersistFileFormat,
         IVsFileChangeEvents,
         IExtensibleObject,
@@ -96,7 +96,7 @@ namespace VisualLocalizer.Library {
             : base(null) {
             
             UIControl = new T();            
-            UIControl.Init(this);
+            UIControl.Init(this);            
         }        
 
         #region WindowPane members
@@ -143,7 +143,7 @@ namespace VisualLocalizer.Library {
                 return VSConstants.E_INVALIDARG;
 
             COMMAND_STATUS status;
-            if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97) {
+            if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97) {                  
                 switch ((VSConstants.VSStd97CmdID)prgCmds[0].cmdID) {
                     case VSConstants.VSStd97CmdID.Paste: 
                         status = IsPasteSupported;
@@ -154,6 +154,15 @@ namespace VisualLocalizer.Library {
                     case VSConstants.VSStd97CmdID.Copy:
                         status = IsCopySupported;
                         break;
+                    case VSConstants.VSStd97CmdID.Save:
+                        status = !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                        break;
+                    case VSConstants.VSStd97CmdID.SaveProjectItem:
+                        status = !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                        break;
+                    case VSConstants.VSStd97CmdID.SaveSelection:
+                        status = !ReadOnly ? COMMAND_STATUS.ENABLED : COMMAND_STATUS.DISABLED;
+                        break;                    
                     default:
                         status = GetSystemCommandStatus((VSConstants.VSStd97CmdID)prgCmds[0].cmdID);
                         break;
@@ -293,46 +302,46 @@ namespace VisualLocalizer.Library {
 
         #endregion
 
-        #region IVsPersistDocData members
+        #region IVsPersistDocData2 members
 
-        int IVsPersistDocData.Close() {
+        public int Close() {
             SetFileChangeNotification(FileName, false);
 
-            Close();
+            EditorClose();
 
             return VSConstants.S_OK;
         }
 
-        int IVsPersistDocData.GetGuidEditorType(out Guid pClassID) {
+        public int GetGuidEditorType(out Guid pClassID) {
             return ((IPersistFileFormat)this).GetClassID(out pClassID);
         }
 
-        int IVsPersistDocData.IsDocDataDirty(out int pfDirty) {
+        public int IsDocDataDirty(out int pfDirty) {
             return ((IPersistFileFormat)this).IsDirty(out pfDirty);
         }
 
-        int IVsPersistDocData.IsDocDataReloadable(out int pfReloadable) {
+        public int IsDocDataReloadable(out int pfReloadable) {
             pfReloadable = 1;
             return VSConstants.S_OK;
         }
 
-        int IVsPersistDocData.LoadDocData(string pszMkDocument) {
+        public int LoadDocData(string pszMkDocument) {
             return ((IPersistFileFormat)this).Load(pszMkDocument, 0, 0);
         }
 
-        int IVsPersistDocData.OnRegisterDocData(uint docCookie, IVsHierarchy pHierNew, uint itemidNew) {
+        public int OnRegisterDocData(uint docCookie, IVsHierarchy pHierNew, uint itemidNew) {
             return VSConstants.S_OK;
         }
 
-        int IVsPersistDocData.ReloadDocData(uint ignoreNextChange) {
+        public int ReloadDocData(uint ignoreNextChange) {
             return ((IPersistFileFormat)this).Load(FileName, ignoreNextChange, 0);
         }
 
-        int IVsPersistDocData.RenameDocData(uint grfAttribs, IVsHierarchy pHierNew, uint itemidNew, string pszMkDocumentNew) {
+        public int RenameDocData(uint grfAttribs, IVsHierarchy pHierNew, uint itemidNew, string pszMkDocumentNew) {
             return VSConstants.S_OK;
         }
 
-        int IVsPersistDocData.SaveDocData(VSSAVEFLAGS saveFlag, out string newFilePath, out int saveCanceled) {
+        public int SaveDocData(VSSAVEFLAGS saveFlag, out string newFilePath, out int saveCanceled) {
             newFilePath = null;
             saveCanceled = 0;
             int hr = VSConstants.S_OK;
@@ -407,9 +416,25 @@ namespace VisualLocalizer.Library {
             return VSConstants.S_OK;
         }
 
-        int IVsPersistDocData.SetUntitledDocPath(string pszDocDataPath) {
+        public int SetUntitledDocPath(string pszDocDataPath) {
             return ((IPersistFileFormat)this).InitNew(formatIndex);
         }
+
+        public int IsDocDataReadOnly(out int pfReadOnly) {
+            pfReadOnly = ReadOnly ? 1 : 0;
+            return VSConstants.S_OK;
+        }
+
+        public int SetDocDataDirty(int fDirty) {
+            IsDirty = fDirty != 0;
+            return VSConstants.S_OK;
+        }
+
+        public int SetDocDataReadOnly(int fReadOnly) {
+            ReadOnly = fReadOnly != 0;
+            return VSConstants.S_OK;
+        }
+
 
         #endregion
 
@@ -609,29 +634,12 @@ namespace VisualLocalizer.Library {
             }
         }       
 
-        public virtual void Close() {
+        public virtual void EditorClose() {
         }
-
-        protected bool _ReadOnly;
+        
         public virtual bool ReadOnly {
-            get { return _ReadOnly; }
-            set {
-                _ReadOnly = value;
-
-
-                IVsWindowFrame frame = (IVsWindowFrame)GetService(typeof(SVsWindowFrame));
-                object capt;                
-                int hr = frame.GetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, out capt);
-                Marshal.ThrowExceptionForHR(hr);
-                string title = (string)capt;
-
-                string readonlyAdd = "[ReadOnly]";
-                if (_ReadOnly && !title.EndsWith(readonlyAdd)) {
-                    frame.SetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, title + readonlyAdd);
-                } else if (!_ReadOnly && title.EndsWith(readonlyAdd)) {
-                    frame.SetProperty((int)__VSFPROPID.VSFPROPID_EditorCaption, title.Substring(0, title.Length - readonlyAdd.Length));
-                }
-            }
+            get;
+            set;
         }
 
         public virtual void FileChangedOutsideVS() {
@@ -728,7 +736,7 @@ namespace VisualLocalizer.Library {
         public virtual bool ExecuteCopy() {
             return true;
         }
-      
+    
     }
 
     public enum COMMAND_STATUS { ENABLED, DISABLED, UNSUPPORTED };

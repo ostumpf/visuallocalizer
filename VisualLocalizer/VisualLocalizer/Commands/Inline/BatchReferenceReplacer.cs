@@ -25,10 +25,14 @@ namespace VisualLocalizer.Commands {
         }
 
         /// <summary>
-        /// Returns replace span of the reference (what should be replaced)
+        /// Returns replace span of the reference (what should be replaced) and also updates it to fit the new result item
         /// </summary>
         public override TextSpan GetInlineReplaceSpan(CodeReferenceResultItem item, out int absoluteStartIndex, out int absoluteLength) {
-            return item.GetInlineReplaceSpan(true, out absoluteStartIndex, out absoluteLength);
+            TextSpan current = item.GetInlineReplaceSpan(true, out absoluteStartIndex, out absoluteLength);
+
+            item.UpdateReplaceSpan();
+
+            return current;
         }
 
         /// <summary>

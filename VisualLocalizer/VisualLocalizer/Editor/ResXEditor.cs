@@ -13,6 +13,8 @@ using VisualLocalizer.Editor.UndoUnits;
 using System.IO;
 using VisualLocalizer.Components;
 using System.Windows.Forms;
+using System.ComponentModel.Design;
+using Microsoft.VisualStudio;
 
 namespace VisualLocalizer.Editor {
 
@@ -125,8 +127,7 @@ namespace VisualLocalizer.Editor {
             }
             set {
                 base.ReadOnly = value;
-                UIControl.SetReadOnly(value); // update GUI
-                SetUndoManagerEnabled(!value); // update undo manager state
+                UIControl.SetReadOnly(value); // update GUI                       
             }
         }
 

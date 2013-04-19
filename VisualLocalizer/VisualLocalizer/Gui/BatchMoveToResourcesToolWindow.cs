@@ -60,6 +60,8 @@ namespace VisualLocalizer.Gui {
 
         public BatchMoveToResourcesToolWindow() {
             this.Caption = "Batch Move to Resources - Visual Localizer"; // title
+            this.BitmapResourceID = 502;
+            this.BitmapIndex = 0;
 
             // set selected options according to settings
             this.currentNamespacePolicy = NAMESPACE_POLICY_ITEMS[SettingsObject.Instance.NamespacePolicyIndex];
@@ -159,11 +161,13 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         protected override void OnWindowHidden(object sender, EventArgs e) {
             try {
-                VLDocumentViewsManager.ReleaseLocks(); // unlocks all locked files
-                panel.ToolGrid.UnloadResXItems();// release all ResX files loaded in the grid           
-                panel.ToolGrid.ResetConflictResolver();
-                MenuManager.OperationInProgress = false; // permits other operations
-                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
+                if (panel.ToolGrid.SetDataFinished) {
+                    VLDocumentViewsManager.ReleaseLocks(); // unlocks all locked files
+                    panel.ToolGrid.UnloadResXItems();// release all ResX files loaded in the grid           
+                    panel.ToolGrid.ResetConflictResolver();
+                    MenuManager.OperationInProgress = false; // permits other operations
+                    VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
+                }
                 panel.ToolGrid.Clear();
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);

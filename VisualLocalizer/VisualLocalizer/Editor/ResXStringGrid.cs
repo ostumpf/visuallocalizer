@@ -147,7 +147,13 @@ namespace VisualLocalizer.Editor {
             this.ColumnHeadersHeight = 24;            
 
             UpdateContextItemsEnabled();
-        }        
+        }
+
+        public ResXEditorControl EditorControl {
+            get {
+                return editorControl;
+            }
+        }
 
         #region IDataTabItem members
 
@@ -217,6 +223,13 @@ namespace VisualLocalizer.Editor {
 
             Rows.Add(row);
             Validate(row);
+
+            if (row.ErrorMessages.Count > 0) {
+                row.Status = KEY_STATUS.ERROR;
+            } else {
+                row.Status = KEY_STATUS.OK;
+                row.LastValidKey = row.Key;
+            }
 
             return row;
         }
@@ -512,12 +525,20 @@ namespace VisualLocalizer.Editor {
         /// </summary>        
         protected override void OnCellBeginEdit(DataGridViewCellCancelEventArgs e) {            
             try {
+                if (Columns[e.ColumnIndex].Name == KeyColumnName && e.RowIndex>=0) {
+                    ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
+                    if (row.CodeReferenceContainsReadonly) {
+                        e.Cancel = true;
+                        VisualLocalizer.Library.MessageBox.ShowError("This operation cannot be executed, because some of the references are located in readonly files.");
+                        return;
+                    }
+                }
+
                 base.OnCellBeginEdit(e);
 
                 if (e.ColumnIndex == 0) {
                     ResXStringGridRow row = (ResXStringGridRow)Rows[e.RowIndex];
-                    if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
-
+                    
                     editorControl.ReferenceCounterThreadSuspended = true; 
                     editorControl.UpdateReferencesCount(row);
                 }                
@@ -547,8 +568,7 @@ namespace VisualLocalizer.Editor {
 
                     if (Columns[e.ColumnIndex].Name == KeyColumnName) { // key was edited
                         string newKey = (string)row.Cells[KeyColumnName].Value;
-                        if (row.ErrorMessages.Count == 0) row.LastValidKey = row.Key;
-
+                      
                         if (isNewRow) {
                             SetNewKey(row, newKey);
                             row.Cells[ReferencesColumnName].Value = "?";
@@ -565,7 +585,7 @@ namespace VisualLocalizer.Editor {
                         if (newValue == null) newValue = string.Empty;
 
                         if (isNewRow) {
-                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            row.Status = KEY_STATUS.ERROR;
                             row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
@@ -578,10 +598,11 @@ namespace VisualLocalizer.Editor {
                             ResXDataNode newNode;
                             if (string.IsNullOrEmpty(key)) {
                                 newNode = new ResXDataNode("A", newValue);
-                                row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                                row.Status = KEY_STATUS.ERROR;
                             } else {
                                 newNode = new ResXDataNode(key, newValue);
-                                row.Status = ResXStringGridRow.STATUS.OK;
+                                row.Status = KEY_STATUS.OK;
+                                row.LastValidKey = key;
                             }
 
                             newNode.Comment = (string)row.Cells[CommentColumnName].Value;
@@ -590,7 +611,7 @@ namespace VisualLocalizer.Editor {
                     } else { // comment was edited
                         string newComment = (string)row.Cells[CommentColumnName].Value;
                         if (isNewRow) {
-                            row.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                            row.Status = KEY_STATUS.ERROR;
                             row.Cells[ReferencesColumnName].Value = "?";
                             StringRowAdded(row);
                             NotifyDataChanged();
@@ -640,7 +661,7 @@ namespace VisualLocalizer.Editor {
         /// Called after comment was changed - adds undo unit
         /// </summary>        
         public void StringCommentChanged(ResXStringGridRow row, string oldComment, string newComment) {
-            string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            string key = row.Status == KEY_STATUS.ERROR ? null : row.DataSourceItem.Name;
             StringChangeCommentUndoUnit unit = new StringChangeCommentUndoUnit(row, this, key, oldComment, newComment);
             editorControl.Editor.AddUndoUnit(unit);
 
@@ -651,7 +672,7 @@ namespace VisualLocalizer.Editor {
         /// Called after value was changed - adds undo unit
         /// </summary> 
         public void StringValueChanged(ResXStringGridRow row, string oldValue, string newValue) {
-            string key = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            string key = row.Status == KEY_STATUS.ERROR ? null : row.DataSourceItem.Name;
             StringChangeValueUndoUnit unit = new StringChangeValueUndoUnit(row, this, key, oldValue, newValue, row.DataSourceItem.Comment);
             editorControl.Editor.AddUndoUnit(unit);
 
@@ -662,7 +683,8 @@ namespace VisualLocalizer.Editor {
         /// Called after key was changed - adds undo unit and performs refactoring of code
         /// </summary> 
         public void StringKeyRenamed(ResXStringGridRow row, string newKey) {
-            string oldKey = row.Status == ResXStringGridRow.STATUS.KEY_NULL ? null : row.DataSourceItem.Name;
+            string oldKey = row.Status == KEY_STATUS.ERROR ? null : row.DataSourceItem.Name;
+            
             StringRenameKeyUndoUnit unit = new StringRenameKeyUndoUnit(row, editorControl, oldKey, newKey);
             editorControl.Editor.AddUndoUnit(unit);
 
@@ -671,7 +693,7 @@ namespace VisualLocalizer.Editor {
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
                 resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(false, true));
 
-                if (row.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+                if (row.ConflictItems.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific() && !string.IsNullOrEmpty(newKey)) {
                     int errors = 0;
                     int count = row.CodeReferences.Count;
                     
@@ -679,9 +701,13 @@ namespace VisualLocalizer.Editor {
                     row.CodeReferences.ForEach((item) => { item.KeyAfterRename = newKey.CreateIdentifier(resxItem.DesignerLanguage); });
                     
                     // run the replacer
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
-                    replacer.Inline(row.CodeReferences, true, ref errors);
-
+                    try {
+                        editorControl.ReferenceCounterThreadSuspended = true;
+                        BatchReferenceReplacer replacer = new BatchReferenceReplacer();
+                        replacer.Inline(row.CodeReferences, true, ref errors);
+                    } finally {
+                        editorControl.ReferenceCounterThreadSuspended = false;
+                    }
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code, {1} errors", count, errors);
                 }                
             }            
@@ -830,13 +856,13 @@ namespace VisualLocalizer.Editor {
             if (node.Comment.StartsWith("@@@")) { // it's a mangled comment (row was not valid when saving)
                 string[] data = GetMangledCommentData(node.Comment);
 
-                row.Status = (ResXStringGridRow.STATUS)int.Parse(data[0]);
+                row.Status = (KEY_STATUS)int.Parse(data[0]);
                 name = data[1];
                 comment = data[2];
                 value = node.GetValue<string>();
 
                 // set key
-                if (row.Status == ResXStringGridRow.STATUS.OK) {
+                if (row.Status == KEY_STATUS.OK) {
                     node.Name = name;
                 } else {
                     name = string.Empty;
@@ -878,10 +904,11 @@ namespace VisualLocalizer.Editor {
             if (row == null) throw new ArgumentNullException("row");
 
             if (string.IsNullOrEmpty(newKey)) {
-                row.Status = ResXStringGridRow.STATUS.KEY_NULL;                
+                row.Status = KEY_STATUS.ERROR;                
             } else {
-                row.Status = ResXStringGridRow.STATUS.OK;
+                row.Status = KEY_STATUS.OK;
                 row.DataSourceItem.Name = newKey;
+                row.LastValidKey = newKey;
             }
         }
 
@@ -978,7 +1005,7 @@ namespace VisualLocalizer.Editor {
             inlineContextMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing && AreReferencesKnownOnSelected;            
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
             translateMenu.Enabled = SelectedRows.Count >= 1 && !ReadOnly && !IsEditing;
-            showResultItemsMenuItem.Enabled = SelectedRows.Count >= 1 && !IsEditing && AreReferencesKnownOnSelected && !MenuManager.OperationInProgress;   
+            showResultItemsMenuItem.Enabled = SelectedRows.Count >= 1 && !IsEditing && AreReferencesKnownOnSelected;   
         }
 
         /// <summary>
@@ -1097,6 +1124,18 @@ namespace VisualLocalizer.Editor {
         /// </summary>
         /// <param name="kind">Bitmask of INLINEKIND parameters</param>
         private void EditorControl_InlineRequested(INLINEKIND kind) {
+            bool readonlyExists = false;
+            foreach (ResXStringGridRow row in SelectedRows) {
+                if (row.IsNewRow) continue;
+
+                readonlyExists = readonlyExists || row.CodeReferenceContainsReadonly;
+                if (readonlyExists) break;
+            }
+            if (readonlyExists) {
+                VisualLocalizer.Library.MessageBox.ShowError("This operation cannot be executed, because some of the references are located in readonly files.");
+                return;
+            }
+
             // show confirmation
             DialogResult result = VisualLocalizer.Library.MessageBox.Show("This operation is irreversible, cannot be undone globally, only using undo managers in open files. Do you want to proceed?",
                 null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND, OLEMSGICON.OLEMSGICON_WARNING);

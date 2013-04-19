@@ -35,6 +35,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
+            if (Control.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 HashSet<AbstractListView> usedLists = new HashSet<AbstractListView>();
 
@@ -129,6 +131,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Redo() {
+            if (Control.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 HashSet<AbstractListView> usedLists = new HashSet<AbstractListView>();
 

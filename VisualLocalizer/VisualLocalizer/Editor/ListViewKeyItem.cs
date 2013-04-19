@@ -46,6 +46,16 @@ namespace VisualLocalizer.Editor {
         public string AfterEditKey { get; set; }
 
         /// <summary>
+        /// Determines whether current key is null
+        /// </summary>
+        public KEY_STATUS Status { get; set; }
+
+        /// <summary>
+        /// Last known key in with OK state
+        /// </summary>
+        public string LastValidKey { get; set; }
+
+        /// <summary>
         /// Parent list view
         /// </summary>
         public AbstractListView AbstractListView { get; private set; }
@@ -130,6 +140,24 @@ namespace VisualLocalizer.Editor {
         public void UpdateReferenceCount(bool determinated) {
             ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s),
                 ErrorMessages.Count == 0 && determinated ? CodeReferences.Count.ToString() : "?");             
+        }
+
+        /// <summary>
+        /// Returns true if any of the code references comes from readonly (or locked) file
+        /// </summary>
+        public bool CodeReferenceContainsReadonly {
+            get {
+                bool readonlyExists = false;
+                if (CodeReferences != null) {
+                    foreach (CodeReferenceResultItem item in CodeReferences) {
+                        if (RDTManager.IsFileReadonly(item.SourceItem.GetFullPath()) || VLDocumentViewsManager.IsFileLocked(item.SourceItem.GetFullPath())) {
+                            readonlyExists = true;
+                            break;
+                        }
+                    }
+                }
+                return readonlyExists;
+            }
         }
     }
 }

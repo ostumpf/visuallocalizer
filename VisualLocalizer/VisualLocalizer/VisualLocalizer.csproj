@@ -179,6 +179,7 @@
       <DependentUpon>CommentWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Editor\UndoUnits\ListViewItemsAddUndoUnit.cs" />
+    <Compile Include="Gui\ShowReferencesToolWindow.cs" />
     <Compile Include="Gui\GlobalTranslateForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -276,6 +277,8 @@
     <Content Include="Resources\execute.png" />
     <None Include="Resources\external.png" />
     <Content Include="Resources\icon.ico" />
+    <None Include="Resources\logo_16.bmp" />
+    <None Include="Resources\search_16.bmp" />
     <None Include="Resources\view.png" />
     <None Include="Resources\remove.png" />
     <None Include="Resources\sync.png" />

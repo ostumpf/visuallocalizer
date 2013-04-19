@@ -43,14 +43,16 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeColumnValue(string from, string to) {
+            if (Grid.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+            
             try {
                 string newKey;
                 if (!string.IsNullOrEmpty(Key)) {
                     newKey = Key;
-                    SourceRow.Status = ResXStringGridRow.STATUS.OK;
+                    SourceRow.Status = KEY_STATUS.OK;
                 } else {
                     newKey = "A";
-                    SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
+                    SourceRow.Status = KEY_STATUS.ERROR;
                 }
                 SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
                 SourceRow.DataSourceItem.Comment = Comment;
@@ -59,6 +61,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 Grid.ValidateRow(SourceRow);
                 Grid.NotifyDataChanged();
                 Grid.SetContainingTabPageSelected();
+
+                if (SourceRow.ErrorMessages.Count > 0) {
+                    SourceRow.Status = KEY_STATUS.ERROR;
+                } else {
+                    SourceRow.Status = KEY_STATUS.OK;
+                    SourceRow.LastValidKey = SourceRow.Key;
+                }
 
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Edited value of \"{0}\"", Key);
             } catch (Exception ex) {

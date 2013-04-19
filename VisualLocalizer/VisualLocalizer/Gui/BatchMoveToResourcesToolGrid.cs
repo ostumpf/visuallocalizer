@@ -57,7 +57,15 @@ namespace VisualLocalizer.Gui {
         /// ResX files loaded in this instance (unloaded in the Unload() method)
         /// </summary>
         private List<ResXProjectItem> loadedItems = new List<ResXProjectItem>();
-        
+
+        /// <summary>
+        /// True if SetData() was already called
+        /// </summary>
+        public bool SetDataFinished {
+            get;
+            private set;
+        }
+
         /// <summary>
         /// New key was created in "key" column combo box
         /// </summary>
@@ -152,92 +160,96 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         public override void SetData(List<CodeStringResultItem> value) {
             if (value == null) throw new ArgumentNullException("value");
-            base.SetData(value);
+            try {
+                base.SetData(value);
 
-            this.Rows.Clear();
-            destinationItemsCache.Clear();
-            resxItemsCache.Clear();
-            loadedItems.Clear();            
-            CheckedRowsCount = 0;            
-            SuspendLayout();            
+                this.Rows.Clear();
+                destinationItemsCache.Clear();
+                resxItemsCache.Clear();
+                loadedItems.Clear();
+                CheckedRowsCount = 0;
+                SuspendLayout();
 
-            // set "context" column visibility according to settings
-            if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
+                // set "context" column visibility according to settings
+                if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
 
-            foreach (CodeStringResultItem item in value) {
-                DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
-                row.DataSourceItem = item;                
+                foreach (CodeStringResultItem item in value) {
+                    DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
+                    row.DataSourceItem = item;
 
-                DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
-                checkCell.Value = false;
-                row.Cells.Add(checkCell);
+                    DataGridViewCheckBoxCell checkCell = new DataGridViewCheckBoxCell();
+                    checkCell.Value = false;
+                    row.Cells.Add(checkCell);
 
-                DataGridViewTextBoxCell locProbCell = new DataGridViewTextBoxCell();
-                row.Cells.Add(locProbCell);
+                    DataGridViewTextBoxCell locProbCell = new DataGridViewTextBoxCell();
+                    row.Cells.Add(locProbCell);
 
-                DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
-                lineCell.Value = item.ReplaceSpan.iStartLine + 1;
-                row.Cells.Add(lineCell);                
+                    DataGridViewTextBoxCell lineCell = new DataGridViewTextBoxCell();
+                    lineCell.Value = item.ReplaceSpan.iStartLine + 1;
+                    row.Cells.Add(lineCell);
 
-                DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
-                
-                // add key name suggestions
-                foreach (string key in item.GetKeyNameSuggestions()) {
-                    keyCell.Items.Add(key);
-                    if (keyCell.Value == null) // add first suggestion as default value
-                        keyCell.Value = key;
-                }               
-                row.Cells.Add(keyCell);
+                    DataGridViewComboBoxCell keyCell = new DataGridViewComboBoxCell();
 
-                DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
-                valueCell.Value = item.Value;
-                row.Cells.Add(valueCell);                
+                    // add key name suggestions
+                    foreach (string key in item.GetKeyNameSuggestions()) {
+                        keyCell.Items.Add(key);
+                        if (keyCell.Value == null) // add first suggestion as default value
+                            keyCell.Value = key;
+                    }
+                    row.Cells.Add(keyCell);
 
-                DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
-                sourceCell.Value = item.SourceItem.Name;
-                row.Cells.Add(sourceCell);
+                    DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
+                    valueCell.Value = item.Value;
+                    row.Cells.Add(valueCell);
 
-                DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
+                    DataGridViewTextBoxCell sourceCell = new DataGridViewTextBoxCell();
+                    sourceCell.Value = item.SourceItem.Name;
+                    row.Cells.Add(sourceCell);
 
-                // add possible ResX files as destinations
-                destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem));
-                if (destinationCell.Items.Count > 0)
-                    destinationCell.Value = destinationCell.Items[0].ToString();
-                row.Cells.Add(destinationCell);
-                
-                DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();                
-                contextCell.Value = item.Context;
-                contextCell.RelativeLine = item.ContextRelativeLine;
-                contextCell.FullText = item.Context;
-                contextCell.SetWrapContents(false);
-                row.Cells.Add(contextCell);
-                                    
-                DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
-                row.Cells.Add(cell);
-                Rows.Add(row);
+                    DataGridViewComboBoxCell destinationCell = new DataGridViewComboBoxCell();
 
-                locProbCell.ReadOnly = true;
-                valueCell.ReadOnly = false;
-                sourceCell.ReadOnly = true;
-                lineCell.ReadOnly = true;
-                contextCell.ReadOnly = true;
+                    // add possible ResX files as destinations
+                    destinationCell.Items.AddRange(CreateDestinationOptions(destinationCell, item.SourceItem));
+                    if (destinationCell.Items.Count > 0)
+                        destinationCell.Value = destinationCell.Items[0].ToString();
+                    row.Cells.Add(destinationCell);
 
-                var x = row.Cells[ContextColumnName];
+                    DataGridViewDynamicWrapCell contextCell = new DataGridViewDynamicWrapCell();
+                    contextCell.Value = item.Context;
+                    contextCell.RelativeLine = item.ContextRelativeLine;
+                    contextCell.FullText = item.Context;
+                    contextCell.SetWrapContents(false);
+                    row.Cells.Add(contextCell);
 
-                Validate(row);
-                keyCell.Tag = keyCell.Value;
-            }            
-            
-            this.ClearSelection();            
-            this.ResumeLayout();            
-            this.OnResize(null);
-            
-            parentToolPanel.ResetFilterSettings(); // reset filter according to settings
-            UpdateCheckHeader();
+                    DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell();
+                    row.Cells.Add(cell);
+                    Rows.Add(row);
 
-            // perform sorting
-            if (SortedColumn != null) {
-                Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+                    locProbCell.ReadOnly = true;
+                    valueCell.ReadOnly = false;
+                    sourceCell.ReadOnly = true;
+                    lineCell.ReadOnly = true;
+                    contextCell.ReadOnly = true;
+
+                    var x = row.Cells[ContextColumnName];
+
+                    Validate(row);
+                    keyCell.Tag = keyCell.Value;
+                }
+
+                this.ClearSelection();
+                this.ResumeLayout();
+                this.OnResize(null);
+
+                parentToolPanel.ResetFilterSettings(); // reset filter according to settings
+                UpdateCheckHeader();
+
+                // perform sorting
+                if (SortedColumn != null) {
+                    Sort(SortedColumn, SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending);
+                }
+            } finally {
+                SetDataFinished = true;
             }
         }
 

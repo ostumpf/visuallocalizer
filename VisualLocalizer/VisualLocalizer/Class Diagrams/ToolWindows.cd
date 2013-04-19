@@ -21,5 +21,12 @@
       <FileName>Gui\BatchMoveToResourcesToolWindow.cs</FileName>
     </TypeIdentifier>
   </Class>
+  <Class Name="VisualLocalizer.Gui.ShowReferencesToolWindow" Collapsed="true">
+    <Position X="4" Y="2" Width="4.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>Gui\ShowReferencesToolWindow.cs</FileName>
+    </TypeIdentifier>
+  </Class>
   <Font Name="Tahoma" Size="11" />
 </ClassDiagram>

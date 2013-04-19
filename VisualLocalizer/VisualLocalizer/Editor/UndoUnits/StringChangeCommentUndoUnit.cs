@@ -41,6 +41,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeComment(string from, string to) {
+            if (Grid.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 SourceRow.DataSourceItem.Comment = to;
                 SourceRow.Cells[Grid.CommentColumnName].Tag = from;

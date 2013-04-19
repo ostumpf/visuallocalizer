@@ -395,13 +395,17 @@ namespace VisualLocalizer.Settings {
                     break;
                 case LocalizationCriterionTarget.ELEMENT_NAME:
                     if (aResItem == null) return null;  // C# or VB result items don't have element names
-                    relevant = true;
-                    testString = aResItem.ElementName;
+                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement) {
+                        relevant = true;
+                        testString = aResItem.ElementName;
+                    } else return null;
                     break;
                 case LocalizationCriterionTarget.ELEMENT_PREFIX:
                     if (aResItem == null) return null;  // C# or VB result items don't have element prefixes
-                    relevant = true;
-                    testString = aResItem.ElementPrefix;
+                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement) {
+                        relevant = true;
+                        testString = aResItem.ElementPrefix;
+                    } else return null;
                     break;
                 case LocalizationCriterionTarget.VARIABLE_NAME:
                     if (cResItem == null) return null; ; // ASP .NET result items don't initialize variables
@@ -410,8 +414,10 @@ namespace VisualLocalizer.Settings {
                     break;
                 case LocalizationCriterionTarget.ATTRIBUTE_NAME:
                     if (aResItem == null) return null;  // C# or VB result items don't originate from elements
-                    relevant = true;
-                    testString = aResItem.AttributeName;
+                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement) {
+                        relevant = true;
+                        testString = aResItem.AttributeName;
+                    } else return null;
                     break;
             }
             return testString;

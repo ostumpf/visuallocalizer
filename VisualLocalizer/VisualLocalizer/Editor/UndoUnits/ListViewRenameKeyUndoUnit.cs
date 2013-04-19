@@ -5,6 +5,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using VisualLocalizer.Components;
 using VisualLocalizer.Commands;
+using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -38,7 +39,12 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void UpdateSourceReferences(string from, string to) {
-            try {
+            if (Item.CodeReferenceContainsReadonly) {
+                throw new Exception("This operation cannot be executed, because some of the references are located in readonly files.");                
+            }
+            if (Control.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
+            try {                
                 // suspend reference lookuper thread and update references for the item
                 Control.ReferenceCounterThreadSuspended = true;
                 Control.UpdateReferencesCount(Item);
@@ -50,17 +56,30 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 ListView.Validate(Item);
                 ListView.NotifyDataChanged();
 
+                if (Item.ErrorMessages.Count > 0) {
+                    Item.Status = KEY_STATUS.ERROR;
+                } else {
+                    Item.Status = KEY_STATUS.OK;
+                    Item.DataNode.Name = Item.Key;
+                    Item.LastValidKey = Item.Key;
+                }
+
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", Item.BeforeEditKey, Item.AfterEditKey);
                 if (Item.AbstractListView != null) Item.AbstractListView.SetContainingTabPageSelected();
 
                 // if item has no errors, perform pseudo-refactoring
-                if (Item.ErrorMessages.Count == 0) {
+                if (Item.ConflictItems.Count == 0 && !string.IsNullOrEmpty(to)) {
                     int errors = 0;
                     int count = Item.CodeReferences.Count;
-                    Item.CodeReferences.ForEach((i) => { i.KeyAfterRename = to; });
+                    Item.CodeReferences.ForEach((i) => { i.KeyAfterRename = to.CreateIdentifier(Control.Editor.ProjectItem.DesignerLanguage); });
 
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
-                    replacer.Inline(Item.CodeReferences, true, ref errors);
+                    try {
+                        Control.ReferenceCounterThreadSuspended = true;
+                        BatchReferenceReplacer replacer = new BatchReferenceReplacer();
+                        replacer.Inline(Item.CodeReferences, true, ref errors);
+                    } finally {
+                        Control.ReferenceCounterThreadSuspended = false;
+                    }
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
                 }

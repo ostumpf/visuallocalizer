@@ -65,8 +65,8 @@ namespace VisualLocalizer.Editor {
             this.LabelEdit = true;
             this.ShowItemToolTips = true;            
             this.TileSize = new System.Drawing.Size(70, 70);
-            this.AfterLabelEdit += new LabelEditEventHandler(ResXImagesList_AfterLabelEdit);
-            this.BeforeLabelEdit += new LabelEditEventHandler(ResXImagesList_BeforeLabelEdit);
+            this.AfterLabelEdit += new LabelEditEventHandler(AbstractListView_AfterLabelEdit);
+            this.BeforeLabelEdit += new LabelEditEventHandler(AbstractListView_BeforeLabelEdit);
             this.SelectedIndexChanged += new EventHandler((o, e) => { NotifyItemsStateChanged(); });
             this.MouseDoubleClick += new MouseEventHandler(AbstractListView_MouseDoubleClick);
             this.AllowDrop = true;
@@ -156,7 +156,13 @@ namespace VisualLocalizer.Editor {
             this.ContextMenu = contextMenu;
 
             InitializeColumns();
-        }        
+        }
+
+        public ResXEditorControl EditorControl {
+            get {
+                return editorControl;
+            }
+        }
 
         #region IDataTabItem members
 
@@ -250,7 +256,7 @@ namespace VisualLocalizer.Editor {
             item.SubItems.Add(subReferences);
 
             Items.Add(item);
-            item.Text = key;
+            item.Text = key;            
 
             return item;
         }
@@ -534,20 +540,25 @@ namespace VisualLocalizer.Editor {
             // create the undo unit
             ListViewRenameKeyUndoUnit unit = new ListViewRenameKeyUndoUnit(editorControl, this, item, item.BeforeEditKey, item.AfterEditKey);
             editorControl.Editor.AddUndoUnit(unit);
-
+            
             if (VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(editorControl.Editor.ProjectItem.InternalProjectItem)) {
                 // create ResX project item
                 ResXProjectItem resxItem = editorControl.Editor.ProjectItem;
                 resxItem.ResolveNamespaceClass(resxItem.InternalProjectItem.ContainingProject.GetResXItemsAround(false, true));
-                
-                if (item.ErrorMessages.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific()) {
+
+                if (item.ConflictItems.Count == 0 && resxItem != null && !resxItem.IsCultureSpecific() && !string.IsNullOrEmpty(item.AfterEditKey)) {
                     int errors = 0;
                     int count = item.CodeReferences.Count;
-                    item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditKey.CreateIdentifier(resxItem.DesignerLanguage); });
+                    item.CodeReferences.ForEach((i) => { i.KeyAfterRename = item.AfterEditKey.CreateIdentifier(resxItem.DesignerLanguage); ;  });
 
                     // run replacer
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
-                    replacer.Inline(item.CodeReferences, true, ref errors);
+                    try {
+                        editorControl.ReferenceCounterThreadSuspended = true;
+                        BatchReferenceReplacer replacer = new BatchReferenceReplacer();
+                        replacer.Inline(item.CodeReferences, true, ref errors);
+                    } finally {
+                        editorControl.ReferenceCounterThreadSuspended = false;
+                    }
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code, {1} errors occured", count, errors);
                 }
@@ -802,7 +813,7 @@ namespace VisualLocalizer.Editor {
             copyContextMenuItem.Enabled = this.CanCutOrCopy == COMMAND_STATUS.ENABLED;
             pasteContextMenuItem.Enabled = this.CanPaste == COMMAND_STATUS.ENABLED;
 
-            showResultItemsMenuItem.Enabled = SelectedItems.Count >= 1 && !IsEditing && !MenuManager.OperationInProgress;
+            showResultItemsMenuItem.Enabled = SelectedItems.Count >= 1 && !IsEditing && AreReferencesKnownOnSelected;
         }
 
         /// <summary>
@@ -837,9 +848,16 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Handles before-edit event; saves current label as key and suspends reference lookuper thread
         /// </summary> 
-        protected void ResXImagesList_BeforeLabelEdit(object sender, LabelEditEventArgs e) {
+        protected void AbstractListView_BeforeLabelEdit(object sender, LabelEditEventArgs e) {
             try {
                 ListViewKeyItem item = (ListViewKeyItem)Items[e.Item];
+                
+                if (item.CodeReferenceContainsReadonly) {
+                    e.CancelEdit = true;
+                    VisualLocalizer.Library.MessageBox.ShowError("This operation cannot be executed, because some of the references are located in readonly files.");
+                    return;
+                }                
+                
                 item.BeforeEditKey = item.Key;
                 CurrentlyEditedItem = item;
 
@@ -856,15 +874,23 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Handles after-edit event; adds undo unit, revalidates the item and resumes reference lookuper thread
         /// </summary>       
-        protected void ResXImagesList_AfterLabelEdit(object sender, LabelEditEventArgs e) {
+        protected void AbstractListView_AfterLabelEdit(object sender, LabelEditEventArgs e) {
             try {
                 ListViewKeyItem item = (ListViewKeyItem)Items[e.Item];
 
                 if (e.Label != null && string.Compare(e.Label, item.BeforeEditKey) != 0) { // value changed
                     item.AfterEditKey = e.Label;
+                                        
+                    Validate(item); // validation
                     ListItemKeyRenamed(item); // adds undo unit
 
-                    Validate(item); // validation
+                    if (item.ErrorMessages.Count > 0) {
+                        item.Status = KEY_STATUS.ERROR;
+                    } else {
+                        item.Status = KEY_STATUS.OK;
+                        item.LastValidKey = item.AfterEditKey;
+                    }
+
                     NotifyDataChanged(); // document dirty
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed from \"{0}\" to \"{1}\"", item.BeforeEditKey, item.AfterEditKey);
                 }
@@ -962,6 +988,26 @@ namespace VisualLocalizer.Editor {
         protected void CheckListItemsForErrors(IEnumerable list) {
             foreach (ListViewKeyItem item in list) {
                 if (item.ErrorMessages.Count > 0) throw new InvalidOperationException("Cannot execute this operation, because some of the selected items have errors.");
+            }
+        }
+
+        /// <summary>
+        /// Returns true if all selected items' code references were succesfully looked up
+        /// </summary>
+        protected bool AreReferencesKnownOnSelected {
+            get {
+                bool ok = true;
+                foreach (ListViewKeyItem item in SelectedItems) {
+                    string s = item.SubItems["References"].Text;
+                    if (string.IsNullOrEmpty(s)) { // reference count column must have a value
+                        ok = false;
+                        break;
+                    }
+
+                    int iv;
+                    ok = ok && !string.IsNullOrEmpty(s) && int.TryParse(s, out iv); // the value must be a number
+                }
+                return ok;
             }
         }
 

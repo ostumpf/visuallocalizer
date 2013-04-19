@@ -27,6 +27,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
         
         public override void Undo() {
+            if (ListView.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 ListView.MakeResourcesExternal(Items, !Deleted, false);
             } catch (Exception ex) {
@@ -36,6 +38,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Redo() {
+            if (ListView.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 ListView.MakeResourcesEmbedded(Items, Deleted, false);
             } catch (Exception ex) {

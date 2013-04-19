@@ -27,6 +27,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
+            if (((AbstractListView)Item.ListView).EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 Item.DataNode.Comment = OldComment;
                 Item.SubItems["Comment"].Text = OldComment;
@@ -40,6 +42,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Redo() {
+            if (((AbstractListView)Item.ListView).EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 Item.DataNode.Comment = NewComment;
                 Item.SubItems["Comment"].Text = NewComment;

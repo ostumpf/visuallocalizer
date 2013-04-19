@@ -92,6 +92,7 @@ namespace VisualLocalizer.Commands {
             ConfigureMenuCommand(typeof(Guids.VLCommandSet).GUID,
                 PackageCommandIDs.BatchMoveSelectionCodeMenuItem,
                 new EventHandler(BatchMoveSelectionCodeClick), new EventHandler(SelectionCodeQueryStatus), VisualLocalizerPackage.Instance.menuService);
+
         }
 
         /// <summary>
@@ -336,8 +337,6 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.Process(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
-                    win.GridCheckboxColumnVisible = true;
-                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 
@@ -362,8 +361,6 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.Process((Array)VisualLocalizerPackage.Instance.UIHierarchy.SelectedItems, true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
-                    win.GridCheckboxColumnVisible = true;
-                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();
@@ -412,8 +409,6 @@ namespace VisualLocalizer.Commands {
                 batchInlineCommand.ProcessSelection(true);
                 BatchInlineToolWindow win = ShowToolWindow<BatchInlineToolWindow>();
                 if (win != null) {
-                    win.GridCheckboxColumnVisible = true;
-                    win.IsToolbarVisible = true;
                     win.SetData(batchInlineCommand.Results);
                 } else throw new Exception("Unable to display tool window.");
                 batchInlineCommand.Results.Clear();

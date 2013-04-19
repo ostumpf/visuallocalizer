@@ -37,6 +37,11 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void UpdateSourceReferences(string from, string to) {
+            if (SourceRow.CodeReferenceContainsReadonly) {
+                throw new Exception("This operation cannot be executed, because some of the references are located in readonly files.");                
+            }
+            if (Control.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {                
                 // suspend the reference lookuper thread
                 Control.ReferenceCounterThreadSuspended = true;
@@ -45,13 +50,18 @@ namespace VisualLocalizer.Editor.UndoUnits {
                 ChangeColumnValue(from, to);
 
                 // if the rows has no errors, perform pseudo-refactoring
-                if (SourceRow.ErrorMessages.Count == 0) {
+                if (SourceRow.ConflictItems.Count == 0 && !string.IsNullOrEmpty(to)) {
                     int errors = 0;
                     int count = SourceRow.CodeReferences.Count;
-                    SourceRow.CodeReferences.ForEach((item) => { item.KeyAfterRename = to; });
+                    SourceRow.CodeReferences.ForEach((item) => { item.KeyAfterRename = to.CreateIdentifier(Control.Editor.ProjectItem.DesignerLanguage); });
 
-                    BatchReferenceReplacer replacer = new BatchReferenceReplacer();
-                    replacer.Inline(SourceRow.CodeReferences, true, ref errors);
+                    try {
+                        Control.ReferenceCounterThreadSuspended = true;
+                        BatchReferenceReplacer replacer = new BatchReferenceReplacer();
+                        replacer.Inline(SourceRow.CodeReferences, true, ref errors);
+                    } finally {
+                        Control.ReferenceCounterThreadSuspended = false;
+                    }
 
                     VLOutputWindow.VisualLocalizerPane.WriteLine("Renamed {0} key references in code", count);
                 }
@@ -65,13 +75,6 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeColumnValue(string from, string to) {
-            if (!string.IsNullOrEmpty(to)) {                
-                SourceRow.DataSourceItem.Name = to;
-                SourceRow.Status = ResXStringGridRow.STATUS.OK;
-            } else {
-                SourceRow.Status = ResXStringGridRow.STATUS.KEY_NULL;
-            }
-            
             ResXStringGrid grid = (ResXStringGrid)SourceRow.DataGridView;
             SourceRow.Cells[grid.KeyColumnName].Tag = from;
             SourceRow.Cells[grid.KeyColumnName].Value = to;
@@ -79,7 +82,13 @@ namespace VisualLocalizer.Editor.UndoUnits {
             grid.NotifyDataChanged();
             grid.SetContainingTabPageSelected();
 
-            if (SourceRow.ErrorMessages.Count == 0) SourceRow.LastValidKey = to;
+            if (SourceRow.ErrorMessages.Count > 0) {
+                SourceRow.Status = KEY_STATUS.ERROR;
+            } else {
+                SourceRow.Status = KEY_STATUS.OK;
+                SourceRow.DataSourceItem.Name = SourceRow.Key;
+                SourceRow.LastValidKey = SourceRow.Key;
+            }
         }
     }
 }

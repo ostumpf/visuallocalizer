@@ -34,6 +34,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
+            if (Grid.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 Grid.SuspendLayout();
                 
@@ -54,6 +56,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Redo() {
+            if (Grid.EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
+
             try {
                 Grid.SuspendLayout();
                 foreach (var element in Elements.Where((el) => { return el != null; }).OrderByDescending((el) => { return el.IndexAtDeleteTime; })) {

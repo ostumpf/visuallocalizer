@@ -102,15 +102,11 @@ namespace VisualLocalizer.Commands {
 
             invisibleWindowsAuthor = editorInstance;
 
-            if (!editorInstance.UIControl.ReadOnly && (VLDocumentViewsManager.IsFileLocked(projectItem.GetFullPath()) || RDTManager.IsFileReadonly(projectItem.GetFullPath()))) {
-                if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", projectItem.Name);
-            } else {
-                switch (projectItem.GetFileType()) {
-                    case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
-                    case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
-                    case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
-                    default: break; // do nothing if file type is not known
-                }
+            switch (projectItem.GetFileType()) {
+                case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
+                case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
+                case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
+                default: break; // do nothing if file type is not known
             }
         }
 

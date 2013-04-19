@@ -577,7 +577,7 @@ namespace VisualLocalizer.Components {
 
             var comesFromElementPredicate = new LocalizationCommonCriterion("ComesFromElement",
                 "String comes from ASP .NET element attribute",
-                LocalizationCriterionAction.VALUE, 20,
+                LocalizationCriterionAction.VALUE, 10,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromElement; });
 
             var comesFromInlineExpressionPredicate = new LocalizationCommonCriterion("ComesFromInlineExpression",
@@ -587,12 +587,12 @@ namespace VisualLocalizer.Components {
 
             var localizabilityProvedPredicate = new LocalizationCommonCriterion("LocalizabilityProved",
                 "ASP.NET attribute's type is String",
-                LocalizationCriterionAction.VALUE, 80,
+                LocalizationCriterionAction.VALUE, 40,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.LocalizabilityProved; });
 
             var comesFromPlainTextPredicate = new LocalizationCommonCriterion("ComesFromPlainText",
                 "String literal comes from ASP .NET plain text",
-                LocalizationCriterionAction.VALUE, 30,
+                LocalizationCriterionAction.VALUE, 40,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromPlainText; });
 
             var comesFromDirectivePredicate = new LocalizationCommonCriterion("ComesFromDirective",
@@ -632,7 +632,7 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Used when renaming keys - new name
         /// </summary>
-        public string KeyAfterRename { get; set; }
+        public string KeyAfterRename { get; set; }      
 
         /// <summary>
         /// Returns value in the format in which it can be inserted in the code (escaped sequences)
@@ -651,6 +651,11 @@ namespace VisualLocalizer.Components {
         /// Returns reference built from KeyAfterRename
         /// </summary>       
         public abstract string GetReferenceAfterRename(string newKey);
+
+        /// <summary>
+        /// Called during the rename process - adjusts the position of the item to fit the renamed
+        /// </summary>
+        public abstract void UpdateReplaceSpan();
     }
 
     /// <summary>
@@ -676,6 +681,25 @@ namespace VisualLocalizer.Components {
         public override string GetReferenceAfterRename(string newKey) {
             string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf('.'));
             return prefix + "." + newKey;
+        }
+
+        /// <summary>
+        /// Called during the rename process - adjusts the position of the item to fit the renamed
+        /// </summary>
+        public override void UpdateReplaceSpan() {
+            string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf('.')).RemoveWhitespace();
+            string newReference = prefix + "." + KeyAfterRename;
+
+            TextSpan newSpan = new TextSpan();
+            newSpan.iStartIndex = ReplaceSpan.iStartIndex;
+            newSpan.iStartLine = ReplaceSpan.iStartLine;
+            newSpan.iEndLine = ReplaceSpan.iStartLine;
+            newSpan.iEndIndex = ReplaceSpan.iStartIndex + newReference.Length;
+            this.ReplaceSpan = newSpan;
+            this.AbsoluteCharLength = newReference.Length;
+            this.FullReferenceText = FullReferenceText.Substring(0, FullReferenceText.LastIndexOf('.')).RemoveWhitespace() + "." + KeyAfterRename;
+            this.Key = KeyAfterRename;
+            this.OriginalReferenceText = newReference;
         }
     }
 
@@ -826,6 +850,32 @@ namespace VisualLocalizer.Components {
 
             string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf(splitChar));
             return prefix + splitChar + newKey;
+        }
+
+        /// <summary>
+        /// Called during the rename process - adjusts the position of the item to fit the renamed
+        /// </summary>
+        public override void UpdateReplaceSpan() {
+            char splitChar;
+            if (ComesFromWebSiteResourceReference) {
+                splitChar = ',';
+            } else {
+                splitChar = '.';
+            }
+
+            string prefix = OriginalReferenceText.Substring(0, OriginalReferenceText.LastIndexOf(splitChar)).RemoveWhitespace();
+            string newReference = prefix + splitChar + KeyAfterRename;
+
+            TextSpan newSpan = new TextSpan();
+            newSpan.iStartIndex = ReplaceSpan.iStartIndex;
+            newSpan.iStartLine = ReplaceSpan.iStartLine;
+            newSpan.iEndLine = ReplaceSpan.iStartLine;
+            newSpan.iEndIndex = ReplaceSpan.iStartIndex + newReference.Length;
+            this.ReplaceSpan = newSpan;
+            this.AbsoluteCharLength = newReference.Length;
+            this.FullReferenceText = FullReferenceText.Substring(0, FullReferenceText.LastIndexOf('.')).RemoveWhitespace() + '.' + KeyAfterRename;
+            this.Key = KeyAfterRename;
+            this.OriginalReferenceText = newReference;
         }
     }
 

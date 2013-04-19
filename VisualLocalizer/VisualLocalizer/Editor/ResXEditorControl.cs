@@ -359,14 +359,11 @@ namespace VisualLocalizer.Editor {
 
         /// <summary>
         /// Displays given list of code references in the BatchInlineToolWindow
-        /// </summary>
-        /// <param name="selected"></param>
+        /// </summary>     
         public void ShowReferences(List<CodeReferenceResultItem> selected) {
             if (selected == null) throw new ArgumentNullException("selected");
 
-            BatchInlineToolWindow window = VisualLocalizerPackage.Instance.menuManager.ShowToolWindow<BatchInlineToolWindow>();
-            window.IsToolbarVisible = false;
-            window.GridCheckboxColumnVisible = false;
+            ShowReferencesToolWindow window = VisualLocalizerPackage.Instance.menuManager.ShowToolWindow<ShowReferencesToolWindow>();
             window.SetData(selected);
         }
 
@@ -483,11 +480,11 @@ namespace VisualLocalizer.Editor {
                         // build trie
                         Trie<CodeReferenceTrieElement> trie = new Trie<CodeReferenceTrieElement>();
                         foreach (IReferencableKeyValueSource item in items) {
-                            if (!string.IsNullOrEmpty(item.Key)) {
-                                string referenceKey = item.Key.CreateIdentifier(resxItem.DesignerLanguage);
+                            if (!string.IsNullOrEmpty(item.LastValidKey)) {
+                                string referenceKey = item.LastValidKey.CreateIdentifier(resxItem.DesignerLanguage);
 
                                 var element = trie.Add(resxItem.Class + "." + referenceKey);
-                                element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = item.Key });
+                                element.Infos.Add(new CodeReferenceInfo() { Origin = resxItem, Value = item.Value, Key = item.LastValidKey });
                             }
                         }
                         trie.CreatePredecessorsAndShortcuts();
@@ -499,7 +496,7 @@ namespace VisualLocalizer.Editor {
                         foreach (IReferencableKeyValueSource item in items) {
                             item.CodeReferences.RemoveAll((i) => { return !registeredAsIgnoredList.Contains(i.SourceItem.GetFullPath().ToLower()); });
                             item.CodeReferences.AddRange(referenceLister.Results.Where((i) => {
-                                return i.Key == item.Key;
+                                return i.Key == item.LastValidKey;
                             }));
                             item.UpdateReferenceCount(true);
                         }
@@ -1713,7 +1710,7 @@ namespace VisualLocalizer.Editor {
                 }                
                 
                 // create undo unit
-                MergeUndoUnit unit = new MergeUndoUnit(Path.GetFileName(file), units);
+                MergeUndoUnit unit = new MergeUndoUnit(this, Path.GetFileName(file), units);
                 Editor.AddUndoUnit(unit);
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Merged files \"{0}\" and \"{1}\"", Editor.FileName, file);
 

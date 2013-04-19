@@ -172,7 +172,7 @@ namespace VisualLocalizer.Settings {
             var valueWhitespace = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 20);
             valueWhitespace.Predicate = LocalizationCriterionPredicate.MATCHES;
             valueWhitespace.Target = LocalizationCriterionTarget.VALUE;
-            valueWhitespace.Regex = @"\w+ (?# contains whitespace)";
+            valueWhitespace.Regex = @"\w+\s+\w+(?# contains whitespace)";
             valueWhitespace.Name = Path.GetRandomFileName();
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueWhitespace);
 
@@ -211,7 +211,7 @@ namespace VisualLocalizer.Settings {
             link.Regex = @"^(http|https|ftp)://.*$(?# URL)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(link);
 
-            var camelCase = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -40);
+            var camelCase = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -80);
             camelCase.Predicate = LocalizationCriterionPredicate.MATCHES;
             camelCase.Target = LocalizationCriterionTarget.VALUE;
             camelCase.Name = Path.GetRandomFileName();
@@ -238,6 +238,34 @@ namespace VisualLocalizer.Settings {
             menuitem.Name = Path.GetRandomFileName();
             menuitem.Regex = @"^.*&\w.*$(?# menu item text)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(menuitem);
+
+            var relativePath = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            relativePath.Predicate = LocalizationCriterionPredicate.MATCHES;
+            relativePath.Target = LocalizationCriterionTarget.VALUE;
+            relativePath.Name = Path.GetRandomFileName();
+            relativePath.Regex = @"^~[/\\].*$(?# relative path)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(relativePath);
+
+            var sqlQuery = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            sqlQuery.Predicate = LocalizationCriterionPredicate.MATCHES;
+            sqlQuery.Target = LocalizationCriterionTarget.VALUE;
+            sqlQuery.Name = Path.GetRandomFileName();
+            sqlQuery.Regex = @"^(SELECT|UPDATE|DELETE|CREATE|DROP|ALTER|REMOVE|INSERT|SHOW|TRUNCATE).*$(?# SQL query)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(sqlQuery);
+
+            var email = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            email.Predicate = LocalizationCriterionPredicate.MATCHES;
+            email.Target = LocalizationCriterionTarget.VALUE;
+            email.Name = Path.GetRandomFileName();
+            email.Regex = @"^\w+@\w+$(?# email)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(email);
+
+            var style = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            style.Predicate = LocalizationCriterionPredicate.MATCHES;
+            style.Target = LocalizationCriterionTarget.VALUE;
+            style.Name = Path.GetRandomFileName();
+            style.Regex = @"^.*{.{8,}}.*$(?# style)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(style);
 
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);

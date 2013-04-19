@@ -26,6 +26,8 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         public BatchInlineToolWindow() {
             this.Caption = "Batch Inline - Visual Localizer"; // window title
+            this.BitmapResourceID = 502;
+            this.BitmapIndex = 0;
 
             // set the toolbar
             this.ToolBar = new CommandID(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarID);
@@ -36,30 +38,26 @@ namespace VisualLocalizer.Gui {
 
             // add "Run" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRunID,
-                new EventHandler(RunClick), new EventHandler(CommandsEnabled), menuService);
+                new EventHandler(RunClick), null, menuService);
 
             // add "Remove unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarRemoveUncheckedID,
-                new EventHandler(RemoveUnchecked), new EventHandler(CommandsEnabled), menuService);
+                new EventHandler(RemoveUnchecked), null, menuService);
 
             // add "Restore unchecked" button
             MenuManager.ConfigureMenuCommand(typeof(VisualLocalizer.Guids.VLBatchInlineToolbarCommandSet).GUID, PackageCommandIDs.BatchInlineToolbarPutBackUncheckedID,
-                new EventHandler(RestoreUnchecked), new EventHandler(CommandsEnabled), menuService);
-        }
-
-        private void CommandsEnabled(object sender, EventArgs e) {
-            MenuCommand mc = sender as MenuCommand;
-            mc.Visible = IsToolbarVisible;
-            mc.Enabled = IsToolbarVisible;
-        }
+                new EventHandler(RestoreUnchecked), null, menuService);
+        }       
 
         /// <summary>
         /// When window is closed
         /// </summary>        
         protected override void OnWindowHidden(object sender, EventArgs e) {
-            VLDocumentViewsManager.ReleaseLocks(); // unlock all previously locked documents
-            MenuManager.OperationInProgress = false; // enable other operations to run
-            VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+            if (panel.SetDataFinished) {
+                VLDocumentViewsManager.ReleaseLocks(); // unlock all previously locked documents
+                MenuManager.OperationInProgress = false; // enable other operations to run
+                VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
+            }
             panel.Clear();
         }
 
@@ -85,17 +83,7 @@ namespace VisualLocalizer.Gui {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
                 VisualLocalizer.Library.MessageBox.ShowException(ex);
             }
-        }
-
-        public bool IsToolbarVisible {
-            get;
-            set;
-        }
-
-        public bool GridCheckboxColumnVisible {
-            get;
-            set;
-        }
+        }       
 
         /// <summary>
         /// "Run" button clicked
@@ -130,7 +118,9 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         public void SetData(List<CodeReferenceResultItem> list) {
             if (list == null) throw new ArgumentNullException("list");
-            panel.Columns[panel.CheckBoxColumnName].Visible = GridCheckboxColumnVisible;
+            panel.Columns[panel.CheckBoxColumnName].Visible = true;
+            panel.LockFiles = true;
+            panel.ContextMenuEnabled = true;
             panel.SetData(list);
         }
     }

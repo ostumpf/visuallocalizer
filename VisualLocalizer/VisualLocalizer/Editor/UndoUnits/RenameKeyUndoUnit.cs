@@ -18,8 +18,8 @@ namespace VisualLocalizer.Editor.UndoUnits {
             this.NewKey = newKey;
         }
 
-        public string OldKey { get; protected set; }
-        public string NewKey { get; protected set; }        
+        public string OldKey { get; set; }
+        public string NewKey { get; set; }        
 
         public override string GetUndoDescription() {
             return string.Format("Key name changed from \"{0}\" to \"{1}\"", OldKey, NewKey);

@@ -87,6 +87,13 @@ namespace VisualLocalizer.Editor {
             Validate(item);
             NotifyItemsStateChanged();
 
+            if (item.ErrorMessages.Count > 0) {
+                item.Status = KEY_STATUS.ERROR;
+            } else {
+                item.Status = KEY_STATUS.OK;
+                item.LastValidKey = item.Key;
+            }
+
             string p = item.ImageKey;
             item.ImageKey = null;
             item.ImageKey = p;

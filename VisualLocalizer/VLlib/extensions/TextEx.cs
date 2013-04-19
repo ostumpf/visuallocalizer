@@ -233,8 +233,8 @@ namespace VisualLocalizer.Library {
         /// <summary>
         /// Replaces all invalid characters (those which cannot be part of identifiers) with underscores and returns result.
         /// </summary>        
-        public static string CreateIdentifier(this string original, LANGUAGE lang) {            
-            if (original == null) throw new ArgumentNullException("original");
+        public static string CreateIdentifier(this string original, LANGUAGE lang) {
+            if (original == null) return string.Empty;
             
             StringBuilder b = new StringBuilder();
 

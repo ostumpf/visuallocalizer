@@ -53,7 +53,11 @@ namespace VisualLocalizer
     // registers tool window displayed on "Batch inline" command
     [ProvideToolWindow(typeof(BatchInlineToolWindow), MultiInstances = false, 
         Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
-    
+
+    // registers tool window used by the "Show references" command in ResX editor
+    [ProvideToolWindow(typeof(ShowReferencesToolWindow), MultiInstances = false,
+        Style = VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom, Window = ToolWindowGuids.Outputwindow)]
+
     // registers settings (necessary in order to Import/Export settings work) - contains descriptions and names of nodes
     [ProvideProfile(typeof(GeneralSettingsManager), "VisualLocalizer", "GeneralSettings", 114, 115, false, DescriptionResourceID = 116)]
     [ProvideProfile(typeof(FilterSettingsManager), "VisualLocalizer", "FilterSettings", 117, 118, true, DescriptionResourceID = 119,

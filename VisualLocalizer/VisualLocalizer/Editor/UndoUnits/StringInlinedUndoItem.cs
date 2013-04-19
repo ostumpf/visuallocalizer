@@ -22,8 +22,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         public override void Undo() {
-            MessageBox.ShowError("This operation cannot be undone.");
-            Marshal.ThrowExceptionForHR(VSConstants.E_ABORT);
+            throw new Exception("This operation cannot be undone.");            
         }
 
         public override void Redo() {

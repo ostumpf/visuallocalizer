@@ -15,19 +15,24 @@ namespace VisualLocalizer.Editor.UndoUnits {
     internal sealed class MergeUndoUnit : AbstractUndoUnit {
 
         private string SourceFile { get; set; }
+        private ResXEditorControl EditorControl { get; set; }
 
-        public MergeUndoUnit(string file, Stack<IOleUndoUnit> partialUnits) {
+        public MergeUndoUnit(ResXEditorControl editorControl, string file, Stack<IOleUndoUnit> partialUnits) {
+            if (editorControl == null) throw new ArgumentNullException("editorControl");
             if (file == null) throw new ArgumentNullException("file");
             if (partialUnits == null) throw new ArgumentNullException("partialUnits");
 
+            this.EditorControl = editorControl;
             this.SourceFile = file;
             this.AppendUnits.AddRange(partialUnits);
         }
 
-        public override void Undo() {            
+        public override void Undo() {
+            if (EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
         }
 
-        public override void Redo() {            
+        public override void Redo() {
+            if (EditorControl.Editor.ReadOnly) throw new Exception("Cannot perform this operation - the document is readonly.");
         }
 
         public override string GetUndoDescription() {
