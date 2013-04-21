@@ -70,16 +70,20 @@ namespace VisualLocalizer.Library {
                 referenceText.NamespacePart = GlobalWebSiteResourcesNamespace;
                 return false;
             } else {
-                if (project.CodeModel == null) throw new ArgumentNullException("project code model");
+                List<Project> referencedProjects = project.GetReferencedProjects();
+                referencedProjects.Insert(0, project);
 
                 foreach (UsedNamespaceItem item in this) {
                     // try obtain the class
                     string fullName = item.Namespace + "." + designerClass;
                     CodeType codeType = null;
-                    try {
-                        codeType = project.CodeModel.CodeTypeFromFullName(fullName);
-                    } catch {
-                        codeType = null;
+                    foreach (Project p in referencedProjects) {
+                        try {
+                            codeType = p.CodeModel.CodeTypeFromFullName(fullName);
+                            if (codeType != null) break;
+                        } catch {
+                            codeType = null;
+                        }
                     }
 
                     if (codeType != null) { // class with given name exists
@@ -117,8 +121,19 @@ namespace VisualLocalizer.Library {
                     return item;
                 } else {
                     string fullName = item.Namespace + "." + referenceClass;
-                    CodeType codeType = TryGetType(fullName, project);
-                    
+                    CodeType codeType = null;
+                    List<Project> referencedProjects = project.GetReferencedProjects();
+                    referencedProjects.Insert(0, project);
+
+                    foreach (Project p in referencedProjects) {
+                        try {
+                            codeType = p.CodeModel.CodeTypeFromFullName(fullName);
+                            if (codeType != null) break;
+                        } catch {
+                            codeType = null;
+                        }
+                    }
+
                     if (codeType != null) {
                         result = item;
                         break;
@@ -130,15 +145,6 @@ namespace VisualLocalizer.Library {
             return result;
         }
 
-        private CodeType TryGetType(string fullName, Project project) {
-            CodeType codeType = null;
-            try {
-                codeType = project.CodeModel.CodeTypeFromFullName(fullName);
-            } catch (Exception ex) {
-                codeType = null;
-            }
-            return codeType;
-        }
     }
 
     /// <summary>

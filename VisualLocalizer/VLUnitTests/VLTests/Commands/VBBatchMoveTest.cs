@@ -49,6 +49,7 @@ namespace VLUnitTests.VLTests {
 
                 ValidateResults(GetExpectedResultsFor(Agent.VBStringsTestFile1), target.Results);
 
+                window.Detach();
                 window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
                 Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.VBStringsTestFile1));
 
@@ -89,7 +90,8 @@ namespace VLUnitTests.VLTests {
 
             BatchMoveCommand_Accessor target = Agent.BatchMoveCommand_Accessor;
 
-            IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBStringsTestFile1, true, true);
+            Window window = Agent.GetDTE().OpenFile(null, Agent.VBStringsTestFile1);
+            IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBStringsTestFile1, false, true);
             view.SetSelection(40, 17, 44, 26);
 
             List<CodeStringResultItem> emptyList = new List<CodeStringResultItem>();
@@ -97,7 +99,8 @@ namespace VLUnitTests.VLTests {
             ValidateResults(emptyList, target.Results);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.VBStringsTestFile1));
 
-            VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(Agent.VBStringsTestFile1, false)).Close(vsSaveChanges.vsSaveChangesNo);
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         private static void GenerateValidResultsForStrings1() {

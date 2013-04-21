@@ -60,7 +60,7 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             string[] testFiles = new string[] { Agent.VBStringsTestFile1 };
-            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib };
+            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib, Agent.CSharpResourceFileLib };
 
             InternalOpenedFileMoveTest(false, false, testFiles, targetFiles);
             InternalClosedFileMoveTest(false, false, testFiles, targetFiles);            
@@ -82,7 +82,7 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             string[] testFiles = new string[] { Agent.VBStringsTestFile1, Agent.VBStringsTestFile2, Agent.VBStringsTestFile3 };
-            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib };
+            string[] targetFiles = new string[] { Agent.VBResourceFile1, Agent.VBResourceFileLib, Agent.CSharpResourceFileLib };
 
             InternalOpenedFileMoveTest(false, false, testFiles, targetFiles);
             InternalClosedFileMoveTest(false, false, testFiles, targetFiles);            
@@ -180,9 +180,9 @@ namespace VLUnitTests.VLTests {
             BatchMoveToResourcesToolWindow_Accessor window = InitBatchToolWindow(resxItems.Values.ToList(), items, fullName, mark, out resxCounts, out sourceItemCounts, out expectedToBeMarked);
 
             try {
-                window.RunClick(null, null);
+                window.RunClick(null, null);                               
                 VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchMoveCommand), false);
-
+                
                 foreach (ResXProjectItem target in resxItems.Values) {
                     Assert.AreEqual(resxCounts.ContainsKey(target) ? resxCounts[target] : 0, GetResourcesCountIn(target));
                 }
@@ -284,6 +284,7 @@ namespace VLUnitTests.VLTests {
                     CheckForDuplicateUsings(path);
                 }
             } finally {
+                SetFilesOpened(testFiles, false);
                 RestoreBackups(backups);
                 foreach (ResXProjectItem target in resxItems.Values) {
                     ClearFile(target);                    

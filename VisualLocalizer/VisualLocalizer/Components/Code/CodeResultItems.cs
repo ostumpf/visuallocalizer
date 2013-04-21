@@ -259,9 +259,8 @@ namespace VisualLocalizer.Components {
         /// </summary>
         public int GetLocalizationProbability(Dictionary<string, AbstractLocalizationCriterion> criteria) {
             bool disableRequest = false;
-            float positiveSum = 0, negativeSum = 0;
-            int positiveCount = 0, negativeCount = 0;
-
+            float sum = 0;
+            
             foreach (var pair in criteria) {
                 AbstractLocalizationCriterion crit = pair.Value;
 
@@ -274,32 +273,20 @@ namespace VisualLocalizer.Components {
                             disableRequest = true;
                             break;
                         case LocalizationCriterionAction.VALUE:
-                            if (crit.Weight > 0) {
-                                positiveSum += crit.Weight;
-                                positiveCount++;
-                            }
-                            if (crit.Weight < 0) {
-                                negativeSum += -crit.Weight;
-                                negativeCount++;
-                            }
+                            sum += crit.Weight;                            
                             break;
                         case LocalizationCriterionAction.IGNORE:                            
                             break;
                     }
                 }
             }
-
+            
+             
             if (disableRequest) return 0;
+            
+            double half = AbstractLocalizationCriterion.MAX_LOC_PROBABILITY / 2.0;
 
-            float s = 0;            
-            if (positiveSum > negativeSum) {
-                if (positiveCount != 0) s = positiveSum / positiveCount; 
-            } else {
-                if (negativeCount != 0) s = -negativeSum / negativeCount;
-            }
-            s /= 2;
-
-            int x = (int)(AbstractLocalizationCriterion.MAX_LOC_PROBABILITY / 2 + s);
+            int x = (int)(half + Math.Atan(sum/half)*AbstractLocalizationCriterion.MAX_LOC_PROBABILITY/Math.PI);
             if (x >= 0 && x <= AbstractLocalizationCriterion.MAX_LOC_PROBABILITY)
                 return x;
             else
@@ -592,7 +579,7 @@ namespace VisualLocalizer.Components {
 
             var comesFromPlainTextPredicate = new LocalizationCommonCriterion("ComesFromPlainText",
                 "String literal comes from ASP .NET plain text",
-                LocalizationCriterionAction.VALUE, 40,
+                LocalizationCriterionAction.VALUE, 30,
                 (item) => { var i = (item as AspNetStringResultItem); return i == null ? (bool?)null : i.ComesFromPlainText; });
 
             var comesFromDirectivePredicate = new LocalizationCommonCriterion("ComesFromDirective",

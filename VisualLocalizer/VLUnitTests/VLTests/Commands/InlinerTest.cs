@@ -33,9 +33,9 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             string[] files = { Agent.CSharpReferencesTestFile1, Agent.CSharpReferencesTestFile2 };
-
+            
             InternalFileTest(true, files, 2);
-            InternalFileTest(false, files, 2);
+            InternalFileTest(false, files, 2);            
         }
 
         [TestMethod()]

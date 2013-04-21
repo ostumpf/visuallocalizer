@@ -395,14 +395,14 @@ namespace VisualLocalizer.Settings {
                     break;
                 case LocalizationCriterionTarget.ELEMENT_NAME:
                     if (aResItem == null) return null;  // C# or VB result items don't have element names
-                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement) {
+                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement || aResItem.ComesFromPlainText) {
                         relevant = true;
                         testString = aResItem.ElementName;
                     } else return null;
                     break;
                 case LocalizationCriterionTarget.ELEMENT_PREFIX:
                     if (aResItem == null) return null;  // C# or VB result items don't have element prefixes
-                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement) {
+                    if (aResItem.ComesFromDirective || aResItem.ComesFromElement || aResItem.ComesFromPlainText) {
                         relevant = true;
                         testString = aResItem.ElementPrefix;
                     } else return null;

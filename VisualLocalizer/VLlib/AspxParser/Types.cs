@@ -142,6 +142,7 @@ namespace VisualLocalizer.Library.AspxParser {
         public List<AttributeInfo> Attributes { get; set; }
         public BlockSpan BlockSpan { get; set; }
         public bool WithinClientSideComment { get; set; }
+        public bool IsEnd { get; set; }
     }
 
     /// <summary>

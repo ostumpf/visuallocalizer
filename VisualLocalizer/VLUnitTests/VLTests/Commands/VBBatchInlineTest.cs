@@ -43,7 +43,8 @@ namespace VLUnitTests.VLTests {
             DTE2 DTE = Agent.GetDTE();
             BatchInlineCommand_Accessor target = Agent.BatchInlineCommand_Accessor;
 
-            IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBReferencesTestFile1, true, true);
+            Window window = DTE.OpenFile(null, Agent.VBReferencesTestFile1);
+            IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBReferencesTestFile1, false, true);
             view.SetSelection(28, 4, 35, 31);
 
             List<AbstractResultItem> emptyList = new List<AbstractResultItem>();
@@ -51,7 +52,8 @@ namespace VLUnitTests.VLTests {
             ValidateResults(emptyList, target.Results);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.VBReferencesTestFile1));
 
-            VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(Agent.VBReferencesTestFile1, false)).Close(vsSaveChanges.vsSaveChangesNo);
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -85,12 +87,14 @@ namespace VLUnitTests.VLTests {
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.VBReferencesTestFile1));
 
             ValidateResults(GetExpectedResultsFor(Agent.VBReferencesTestFile1), target.Results);
-
-            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
+            
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.VBReferencesTestFile1));
 
             VLDocumentViewsManager.SetFileReadonly(Agent.VBReferencesTestFile1, false);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.VBReferencesTestFile1));
+
+            window.Detach();
+            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
         }
 
 

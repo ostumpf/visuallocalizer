@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Components;
 using Microsoft.VisualStudio.TextManager.Interop;
+using EnvDTE;
 
 namespace VLUnitTests.VLTests {
 
@@ -18,12 +19,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             AspNetInlineCommand_Accessor target = new AspNetInlineCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.AspNetReferencesTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.AspNetReferencesTestFile1, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.AspNetReferencesTestFile1, false);
             var expected = AspNetBatchInlineTests.GetExpectedResultsFor(Agent.AspNetReferencesTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -32,12 +37,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             AspNetInlineCommand_Accessor target = new AspNetInlineCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.AspNetReferencesTestFile2);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.AspNetReferencesTestFile2, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.AspNetReferencesTestFile2, false);
             var expected = AspNetBatchInlineTests.GetExpectedResultsFor(Agent.AspNetReferencesTestFile2);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -46,12 +55,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             CSharpInlineCommand_Accessor target = new CSharpInlineCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.CSharpReferencesTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.CSharpReferencesTestFile1, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.CSharpReferencesTestFile1, false);
             var expected = CSharpBatchInlineTest.GetExpectedResultsFor(Agent.CSharpReferencesTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -60,12 +73,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             VBInlineCommand_Accessor target = new VBInlineCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.VBReferencesTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBReferencesTestFile1, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.VBReferencesTestFile1, false);
             var expected = VBBatchInlineTest.GetExpectedResultsFor(Agent.VBReferencesTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         protected void RunTest<T>(InlineCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : AbstractResultItem, new() {

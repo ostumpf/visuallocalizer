@@ -17,7 +17,7 @@ namespace VisualLocalizer.Library.AspxParser {
         private IAspxHandler handler;
 
         private int currentLine, currentIndex, currentOffset, maxLine, maxIndex, plaintTextStartCorrection;
-        private char currentChar, quotesChar;
+        private char currentChar, quotesChar, lastNonWhitespaceChar;
         private bool withinAspElement, withinAspDirective, withinCodeBlock, withinOutputElement, withinAspTags, attributeValueContainsOutput,
             withinServerComment, withinClientComment, withinEndAspElement, withinAttributeName, withinAttributeValue, withinPlainText,
             hardStop, softStop, withinScriptBlock, scriptBeginTagContainedRunatServer;
@@ -64,7 +64,8 @@ namespace VisualLocalizer.Library.AspxParser {
             plainTextBuilder = new StringBuilder(); // builder for plain text
             attributeNameBuilder = new StringBuilder(); // builder for elements' attributes names
             attributeValueBuilder = new StringBuilder();// builder for elements' attributes values
-            
+            lastNonWhitespaceChar = '?';
+
             bool justEnteredAspTags = false;
             softStop = false; // stop is requested, but wait for current block to finish first
             hardStop = false; // stop will be performed right away
@@ -143,6 +144,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     HandleAspElements();
                 }
 
+                if (!char.IsWhiteSpace(currentChar)) lastNonWhitespaceChar = currentChar;
                 Move();
             }
         }
@@ -208,7 +210,8 @@ namespace VisualLocalizer.Library.AspxParser {
                             BlockSpan = externalSpan,
                             ElementName = elementName,
                             Prefix = elementPrefix,
-                            WithinClientSideComment = withinClientComment
+                            WithinClientSideComment = withinClientComment,
+                            IsEnd = lastNonWhitespaceChar == '/'
                         });
                         externalSpan = null;
                         codeBuilder.Length = 0;

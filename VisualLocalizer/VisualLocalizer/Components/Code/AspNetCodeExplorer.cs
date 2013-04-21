@@ -64,6 +64,12 @@ namespace VisualLocalizer.Components {
 
         private object syncObject = new object();
 
+        /// <summary>
+        /// Stack of elements, used to determine in which element plain text belongs
+        /// </summary>
+        private Stack<ElementContext> openedElements = new Stack<ElementContext>();
+
+
         private AspNetCodeExplorer() { }
 
         private static AspNetCodeExplorer instance;
@@ -93,6 +99,7 @@ namespace VisualLocalizer.Components {
                 this.declaredNamespaces.Clear();
                 this.ClassFileName = Path.GetFileNameWithoutExtension(fullPath);
                 this.projectItem = projectItem;
+                this.openedElements.Clear();
 
                 // initialize type resolver
                 if (parentCommand is BatchMoveCommand) {
@@ -225,6 +232,8 @@ namespace VisualLocalizer.Components {
         /// Called after beginnnig tag is read
         /// </summary>    
         public void OnElementBegin(ElementContext context) {
+            if (!context.IsEnd) openedElements.Push(context);
+
             if (parentCommand is BatchMoveCommand) { // no resource references can be directly in the attributes, safe to look only for string literals
                 foreach (var info in context.Attributes) {
                     if (info.ContainsAspTags) continue; // attribute's value contains &lt;%= - like tags - localization is not desirable
@@ -311,6 +320,12 @@ namespace VisualLocalizer.Components {
                 if (newItem != null) {
                     newItem.ComesFromPlainText = true;
                     newItem.ComesFromElement = false;
+
+                    if (openedElements.Count > 0) {
+                        ElementContext element = openedElements.Peek();
+                        newItem.ElementName = element.ElementName;
+                        newItem.ElementPrefix = element.Prefix;
+                    }
                 }
             }
         }
@@ -318,7 +333,10 @@ namespace VisualLocalizer.Components {
         /// <summary>
         /// Called after end tag is read
         /// </summary>
-        public void OnElementEnd(EndElementContext context) { }        
+        public void OnElementEnd(EndElementContext context) {
+            if (openedElements.Count > 0 && openedElements.Peek().ElementName == context.ElementName && openedElements.Peek().Prefix == context.Prefix)
+                openedElements.Pop();
+        }        
 
         /// <summary>
         /// Adds new result item

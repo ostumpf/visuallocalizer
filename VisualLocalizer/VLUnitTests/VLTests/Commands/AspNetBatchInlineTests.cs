@@ -81,12 +81,14 @@ namespace VLUnitTests.VLTests {
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.AspNetReferencesTestFile1));
 
             ValidateResults(GetExpectedResultsFor(Agent.AspNetReferencesTestFile1), target.Results);
-
-            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
+            
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.AspNetReferencesTestFile1));
 
             VLDocumentViewsManager.ReleaseLocks();
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.AspNetReferencesTestFile1));
+
+            window.Detach();
+            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
         }
 
         private static void GenerateValidResultsForReferences1() {

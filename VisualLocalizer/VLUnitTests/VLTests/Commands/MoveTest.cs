@@ -8,6 +8,8 @@ using EnvDTE80;
 using VisualLocalizer.Components;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Diagnostics;
+using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 
 namespace VLUnitTests.VLTests {
     
@@ -20,12 +22,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             AspNetMoveToResourcesCommand_Accessor target = new AspNetMoveToResourcesCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.AspNetStringsTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.AspNetStringsTestFile1, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.AspNetStringsTestFile1, false);
             var expected = AspNetBatchMoveTests.GetExpectedResultsFor(Agent.AspNetStringsTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -34,12 +40,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             AspNetMoveToResourcesCommand_Accessor target = new AspNetMoveToResourcesCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.AspNetStringsTestFile2);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.AspNetStringsTestFile2, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.AspNetStringsTestFile2, false);
             var expected = AspNetBatchMoveTests.GetExpectedResultsFor(Agent.AspNetStringsTestFile2);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -47,13 +57,17 @@ namespace VLUnitTests.VLTests {
         public void CSharpMoveTest() {
             Agent.EnsureSolutionOpen();
             
-            CSharpMoveToResourcesCommand_Accessor target = new CSharpMoveToResourcesCommand_Accessor();                         
+            CSharpMoveToResourcesCommand_Accessor target = new CSharpMoveToResourcesCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.CSharpStringsTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.CSharpStringsTestFile1, true, true);            
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.CSharpStringsTestFile1, false);
             var expected = CSharpBatchMoveTest.GetExpectedResultsFor(Agent.CSharpStringsTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -62,12 +76,16 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             VBMoveToResourcesCommand_Accessor target = new VBMoveToResourcesCommand_Accessor();
+            Window window = Agent.GetDTE().OpenFile(null, Agent.VBStringsTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.VBStringsTestFile1, true, true);
             IVsTextLines lines = VLDocumentViewsManager.GetTextLinesForFile(Agent.VBStringsTestFile1, false);
             var expected = VBBatchMoveTest.GetExpectedResultsFor(Agent.VBStringsTestFile1);
 
             RunTest(target, view, lines, expected);
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         protected void RunTest<T>(MoveToResourcesCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : AbstractResultItem,new() {

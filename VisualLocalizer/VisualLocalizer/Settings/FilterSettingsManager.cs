@@ -169,20 +169,13 @@ namespace VisualLocalizer.Settings {
             valueCaps.Name = Path.GetRandomFileName();
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueCaps);
 
-            var valueWhitespace = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 20);
+            var valueWhitespace = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 30);
             valueWhitespace.Predicate = LocalizationCriterionPredicate.MATCHES;
             valueWhitespace.Target = LocalizationCriterionTarget.VALUE;
             valueWhitespace.Regex = @"\w+\s+\w+(?# contains whitespace)";
             valueWhitespace.Name = Path.GetRandomFileName();
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(valueWhitespace);
-
-            var prefixNull = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -50);
-            prefixNull.Predicate = LocalizationCriterionPredicate.IS_NULL;
-            prefixNull.Target = LocalizationCriterionTarget.ELEMENT_PREFIX;
-            prefixNull.Name = Path.GetRandomFileName();
-            prefixNull.Regex = string.Empty;
-            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(prefixNull);
-
+            
             var smallLength = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
             smallLength.Predicate = LocalizationCriterionPredicate.DOESNT_MATCH;
             smallLength.Target = LocalizationCriterionTarget.VALUE;
@@ -218,7 +211,7 @@ namespace VisualLocalizer.Settings {
             camelCase.Regex = @"^[0-9A-Z]?\w+([0-9A-Z](\w+)?)+$(?# camel case)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(camelCase);
 
-            var reference = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -40);
+            var reference = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
             reference.Predicate = LocalizationCriterionPredicate.MATCHES;
             reference.Target = LocalizationCriterionTarget.VALUE;
             reference.Name = Path.GetRandomFileName();
@@ -246,25 +239,25 @@ namespace VisualLocalizer.Settings {
             relativePath.Regex = @"^~[/\\].*$(?# relative path)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(relativePath);
 
-            var sqlQuery = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            var sqlQuery = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -80);
             sqlQuery.Predicate = LocalizationCriterionPredicate.MATCHES;
             sqlQuery.Target = LocalizationCriterionTarget.VALUE;
             sqlQuery.Name = Path.GetRandomFileName();
-            sqlQuery.Regex = @"^(SELECT|UPDATE|DELETE|CREATE|DROP|ALTER|REMOVE|INSERT|SHOW|TRUNCATE).*$(?# SQL query)";
+            sqlQuery.Regex = @"^\s*(SELECT|UPDATE|DELETE|CREATE|DROP|ALTER|REMOVE|INSERT|SHOW|TRUNCATE).*$(?# SQL query)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(sqlQuery);
 
             var email = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
             email.Predicate = LocalizationCriterionPredicate.MATCHES;
             email.Target = LocalizationCriterionTarget.VALUE;
             email.Name = Path.GetRandomFileName();
-            email.Regex = @"^\w+@\w+.*$(?# email)";
+            email.Regex = @"^\w+@\w+\.\w+.*$(?# email)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(email);
 
-            var style = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -60);
+            var style = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, -80);
             style.Predicate = LocalizationCriterionPredicate.MATCHES;
-            style.Target = LocalizationCriterionTarget.VALUE;
+            style.Target = LocalizationCriterionTarget.ELEMENT_NAME;
             style.Name = Path.GetRandomFileName();
-            style.Regex = @"(.*\s*.*)*{(.*\s*.*)*}(.*\s*.*)*(?# CSS)";
+            style.Regex = @"^style$(?# CSS)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(style);
 
             SettingsObject.Instance.IgnorePropertyChanges = false;

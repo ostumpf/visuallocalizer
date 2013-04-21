@@ -76,12 +76,14 @@ namespace VLUnitTests.VLTests {
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.AspNetStringsTestFile1));
 
             ValidateResults(GetExpectedResultsFor(Agent.AspNetStringsTestFile1), target.Results);
-
-            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
+            
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.AspNetStringsTestFile1));
 
             VLDocumentViewsManager.ReleaseLocks();
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.AspNetStringsTestFile1));
+
+            window.Detach();
+            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -99,6 +101,7 @@ namespace VLUnitTests.VLTests {
             Agent.EnsureSolutionOpen();
 
             BatchMoveCommand_Accessor target = Agent.BatchMoveCommand_Accessor;
+            Window window = Agent.GetDTE().OpenFile(null, Agent.AspNetReferencesTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.AspNetStringsTestFile1, true, true);
             view.SetSelection(14, 60, 16, 25);
@@ -107,6 +110,9 @@ namespace VLUnitTests.VLTests {
             target.ProcessSelection(true);
             ValidateResults(emptyList, target.Results);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.AspNetStringsTestFile1));
+
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
 
@@ -248,7 +254,7 @@ namespace VLUnitTests.VLTests {
                 ComesFromElement = false,
                 ComesFromInlineExpression = false,
                 ComesFromPlainText = true,
-                ElementName = null,
+                ElementName = "title",
                 ElementPrefix = null,
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
@@ -506,7 +512,7 @@ namespace VLUnitTests.VLTests {
                 ComesFromElement = false,
                 ComesFromInlineExpression = false,
                 ComesFromPlainText = true,
-                ElementName = null,
+                ElementName = "form",
                 ElementPrefix = null,
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
@@ -566,11 +572,11 @@ namespace VLUnitTests.VLTests {
                 ComesFromElement = false,
                 ComesFromInlineExpression = false,
                 ComesFromPlainText = true,
-                ElementName = null,
+                ElementName = "p",
                 ElementPrefix = null,
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = false,
-                ReplaceSpan = CreateTextSpan(26, 48, 26, 58)
+                ReplaceSpan = CreateTextSpan(26, 51, 26, 61)
             });
 
             list.Add(new TestAspNetStringResultItem() {
@@ -590,7 +596,7 @@ namespace VLUnitTests.VLTests {
                 ElementPrefix = "asp",
                 Language = VisualLocalizer.Library.LANGUAGE.CSHARP,
                 LocalizabilityProved = true,
-                ReplaceSpan = CreateTextSpan(26, 77, 26, 78)
+                ReplaceSpan = CreateTextSpan(26, 84, 26, 85)
             });
             
             list.Add(new TestAspNetStringResultItem() {
@@ -817,7 +823,7 @@ namespace VLUnitTests.VLTests {
                 ComesFromElement = false,
                 ComesFromInlineExpression = false,
                 ComesFromPlainText = true,
-                ElementName = null,
+                ElementName = "title",
                 ElementPrefix = null,
                 Language = VisualLocalizer.Library.LANGUAGE.VB,
                 LocalizabilityProved = false,

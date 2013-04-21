@@ -102,9 +102,9 @@ namespace VLUnitTests.VLTests {
                     } else {
                         win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(sourcePath, true));
                     }
-                    Assert.IsNotNull(win, "Window cannot be opened " + sourcePath);
+                    Assert.IsNotNull(win, "Window cannot be opened " + sourcePath);                                        
+                    win.Visible = true;
                     win.Activate();
-                    win.Visible = true;                    
                 }                
             }
         }

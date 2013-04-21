@@ -85,12 +85,14 @@ namespace VLUnitTests.VLTests {
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.CSharpStringsTestFile1));
 
             ValidateResults(GetExpectedResultsFor(Agent.CSharpStringsTestFile1), target.Results);
-
-            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
+            
             Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(Agent.CSharpStringsTestFile1));
 
             VLDocumentViewsManager.SetFileReadonly(Agent.CSharpStringsTestFile1, false);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.CSharpStringsTestFile1));
+
+            window.Detach();
+            window.Close(EnvDTE.vsSaveChanges.vsSaveChangesNo);
         }
 
         [TestMethod()]
@@ -109,6 +111,7 @@ namespace VLUnitTests.VLTests {
 
             DTE2 DTE = Agent.GetDTE();
             BatchMoveCommand_Accessor target = Agent.BatchMoveCommand_Accessor;
+            Window window = DTE.OpenFile(null, Agent.CSharpStringsTestFile1);
 
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.CSharpStringsTestFile1, true, true);
             view.SetSelection(133,33,138,35);
@@ -118,7 +121,8 @@ namespace VLUnitTests.VLTests {
             ValidateResults(emptyList, target.Results);
             Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(Agent.CSharpStringsTestFile1));
 
-            VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(Agent.CSharpStringsTestFile1, false)).Close(vsSaveChanges.vsSaveChangesNo);
+            window.Detach();
+            window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
         private static void GenerateValidResultsForStrings1() {
