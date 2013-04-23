@@ -49,9 +49,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="blank.Designer.cs">
-      <DependentUpon>blank.resx</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
+      <DependentUpon>blank.resx</DependentUpon>
     </Compile>
     <Compile Include="Data\Inner\strings3.cs" />
     <Compile Include="Data\strings2.cs" />

@@ -1,13 +1,11 @@
-﻿Imports VBLib.My.Resources
-
-Public Class A
-    Private a_1 As String = VBLib.My.Resources.blank.xx0
+﻿Public Class A
+    Private a_1 As String = "a_1"
     Private a_2 As String = ""
-    Private a_3 As String = VBTests.My.Resources.blank.xx1
+    Private a_3 As String = """a_3"""
     Private a_4 As String = """"
-    Private a_5 As String = VBLib.My.Resources.blank.xx3
+    Private a_5 As String = """"""
     Private a_6 As String = """\"""
-    Private a_7 As String = VBTests.My.Resources.blank.xx5
+    Private a_7 As String = "@"
 
     Private a_8 As Char = "a"c
 
@@ -23,17 +21,17 @@ Public Class A
         Dim a_13 As String = "a_13"
         '' aaa "bbb"
         Dim a_14 As String = "a_14"
-        Dim a_15 As String = VBTests.My.Resources.blank.xx11
+        Dim a_15 As String = "'"
         Dim a_16 As String = "a_16"
         Dim a_17 As String = "''"
-        Dim a_18 As String = blank.xx14
+        Dim a_18 As String = "a_18"
 
         REM "test"
-        Dim a_19 As String = CSharpLib.blank.xx15
+        Dim a_19 As String = "a_19"
         REM aaaa "bbb"
         'REM "cc"
         REM ee ' "dd"
-        Dim a_20 As String = VBTests.My.Resources.blank.xx16
+        Dim a_20 As String = "REM"
         Dim a_REM_b As String = "a_21"
         Dim a_REM As String = "a_22"
         Dim REM_b As String = "a_23"
@@ -44,7 +42,7 @@ Public Class A
     End Function
 
     Private Class A_c_inner
-        Dim a_26 As String = CSharpLib.blank.xx22
+        Dim a_26 As String = "a_26"
     End Class
 
     Private Structure A_s_inner
@@ -71,13 +69,13 @@ Namespace N1
 
     Namespace N1_inner
         Class C_inner
-            Dim a_33 As String = blank.xx28
+            Dim a_33 As String = "a_33"
         End Class
 
         Class C_inner_2
             Dim a_34 As String = "a_34"+ControlChars.NewLine &ControlChars.Quote &"@baf"
-            Dim a_35 As String = CSharpLib.blank.xx30
-            Dim a_36 As String = blank.xx31
+            Dim a_35 As String = "a_35" & "baf"
+            Dim a_36 As String = "a_36"+"baf"
             Dim a_37 As String = "a_37" _
     + _
              "baf"
