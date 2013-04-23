@@ -36,6 +36,10 @@ namespace VisualLocalizer.Gui {
             panel.Clear();
         }
 
+        protected override void OnSolutionClosing() {
+            OnWindowHidden(null, null);
+        }
+
         /// <summary>
         /// Set content of toolwindow
         /// </summary>        

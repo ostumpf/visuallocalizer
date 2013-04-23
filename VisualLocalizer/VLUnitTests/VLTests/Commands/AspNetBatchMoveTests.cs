@@ -13,6 +13,9 @@ using Microsoft.VisualStudio.Shell;
 
 namespace VLUnitTests.VLTests {
 
+    /// <summary>
+    /// Tests for ASP .NET batch move to resources command.
+    /// </summary>
     [TestClass()]
     public class AspNetBatchMoveTests : BatchTestsBase {
         private static Dictionary<string, List<AbstractResultItem>> validResults = new Dictionary<string, List<AbstractResultItem>>();

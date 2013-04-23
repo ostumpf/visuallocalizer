@@ -14,8 +14,15 @@ using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Library.AspxParser;
 
 namespace VLUnitTests.VLTests {
+
+    /// <summary>
+    /// Base class for "Batch" commands tests
+    /// </summary>
     public abstract class BatchTestsBase {
 
+        /// <summary>
+        /// Compares expected and actual result item
+        /// </summary>        
         internal static void ValidateItems(AbstractResultItem a, AbstractResultItem b) {
             if (b is NetStringResultItem) {
                 NetStringResultItem an = a as NetStringResultItem;
@@ -112,6 +119,9 @@ namespace VLUnitTests.VLTests {
             Assert.AreEqual(a.AbsoluteCharLength, b.AbsoluteCharLength, "AbsoluteLengths are not equal, " + a.Value + " on line " + a.ReplaceSpan.iStartLine);             
         }
 
+        /// <summary>
+        /// Compares expected and actual list of result items
+        /// </summary>        
         protected void ValidateResults<T1,T2>(List<T1> expected, List<T2> actual) 
             where T1 : AbstractResultItem
             where T2 : AbstractResultItem {
@@ -121,6 +131,9 @@ namespace VLUnitTests.VLTests {
             }
         }
 
+        /// <summary>
+        /// For given result item with specified ReplaceSpan calculates AbsoluteCharOffset and AbsoluteCharLength
+        /// </summary>
         protected static void CalculateAbsolutePosition(AbstractResultItem item) {
             IVsTextLines view = VLDocumentViewsManager.GetTextLinesForFile(item.SourceItem.GetFullPath(), true);
             object o;
@@ -133,6 +146,9 @@ namespace VLUnitTests.VLTests {
             item.AbsoluteCharLength = tp2.AbsoluteCharOffset + item.ReplaceSpan.iEndLine - 1 - item.AbsoluteCharOffset;            
         }
 
+        /// <summary>
+        /// For given BlockSpan located in specified file, its absolute position parameters are calculated
+        /// </summary>
         protected static void CalculateAbsolutePosition(string path, BlockSpan span) {
             IVsTextLines view = VLDocumentViewsManager.GetTextLinesForFile(path, true);
             object o;
@@ -145,6 +161,9 @@ namespace VLUnitTests.VLTests {
             span.AbsoluteCharLength = tp2.AbsoluteCharOffset + span.EndLine - 1 - span.AbsoluteCharOffset;
         }
 
+        /// <summary>
+        /// Returns TextSpan instance from specified data
+        /// </summary>        
         protected static TextSpan CreateTextSpan(int startLine, int startColumn, int endLine, int endColumn) {
             TextSpan span = new TextSpan();
             span.iStartLine = startLine;
@@ -154,6 +173,9 @@ namespace VLUnitTests.VLTests {
             return span;
         }
 
+        /// <summary>
+        /// Returns BlockSpan instance from specified data
+        /// </summary> 
         protected static BlockSpan CreateBlockSpan(int startLine, int startColumn, int endLine, int endColumn) {
             BlockSpan span = new BlockSpan();            
             span.StartLine = startLine;
@@ -163,12 +185,24 @@ namespace VLUnitTests.VLTests {
             return span;
         }
 
-        protected void GenericSelectionTest(AbstractBatchCommand_Accessor target, string file, IVsTextView view, IVsTextLines lines, Func<string, List<AbstractResultItem>> getExpected) {            
+        /// <summary>
+        /// Generic test for the "(selection)" commands
+        /// </summary>
+        /// <param name="target">Command to process</param>
+        /// <param name="file">File path</param>
+        /// <param name="view"></param>
+        /// <param name="lines"></param>
+        /// <param name="getExpected">Function that returns list of expected results for specified file path</param>
+        protected void GenericSelectionTest(AbstractBatchCommand_Accessor target, string file, IVsTextView view, IVsTextLines lines, Func<string, List<AbstractResultItem>> getExpected) {
+            Agent.EnsureSolutionOpen();
+
             int lineCount;
             lines.GetLineCount(out lineCount);
-            Random rnd = new Random(1990);
+            Random rnd = new Random();
 
             for (int i = 0; i < 20; i++) {
+
+                // initialize selection range
                 int beginLine = rnd.Next(lineCount);
                 int endLine = beginLine + rnd.Next(Math.Min(lineCount, beginLine + i) - beginLine);
 
@@ -179,15 +213,20 @@ namespace VLUnitTests.VLTests {
                 int endColumn = beginLine == endLine ? beginColumn + (rnd.Next(Math.Min(endLineLength, beginColumn + i) - beginColumn)) : rnd.Next(endLineLength);
                 if (beginLine == endLine && beginColumn == endColumn) endColumn++;
 
+                // set the selection
                 view.SetSelection(beginLine, beginColumn, endLine, endColumn);
                 target.InitializeSelection();
 
+                // obtain the list of expected results
                 List<AbstractResultItem> expectedList = new List<AbstractResultItem>();
                 foreach (AbstractResultItem expected in getExpected(file)) {
                     if (!target.IsItemOutsideSelection(expected)) expectedList.Add(expected);
                 }
 
+                // run the command
                 target.ProcessSelection(true);
+
+                // compare the results
                 if (target is BatchMoveCommand_Accessor) {
                     ValidateResults(expectedList, (target as BatchMoveCommand_Accessor).Results);
                 } else if (target is BatchInlineCommand_Accessor) {
@@ -200,34 +239,51 @@ namespace VLUnitTests.VLTests {
                 Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(file));
             }
 
-            VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(file, false)).Close(vsSaveChanges.vsSaveChangesNo);
+            // close the window
+            Window win = VsShellUtilities.GetWindowObject(VLDocumentViewsManager.GetWindowFrameForFile(file, false));
+            win.Detach();
+            win.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+
+        /// <summary>
+        /// Generic test for classic variant of batch commands
+        /// </summary>
+        /// <param name="target">Command to test</param>
+        /// <param name="itemsToSelect">List of items that should be marked as selected in the Solution Explorer</param>
+        /// <param name="expectedFiles">List of files that are expected to be searched</param>
+        /// <param name="getExpected">Function that returns list of expected result items for specified file</param>
         protected void GenericTest(AbstractBatchCommand target, string[] itemsToSelect, string[] expectedFiles, Func<string, List<AbstractResultItem>> getExpected) {
             Agent.EnsureSolutionOpen();
 
+            // select the items in Solution Explorer
             UIHierarchyItem[] selectedItems = new UIHierarchyItem[itemsToSelect.Length];
             for (int i = 0; i < itemsToSelect.Length; i++) {
                 selectedItems[i] = Agent.FindUIHierarchyItem(Agent.GetUIHierarchy().UIHierarchyItems, itemsToSelect[i]);
                 Assert.IsNotNull(selectedItems[i]);
             }
             
+            // run the command on the selection
             target.Process(selectedItems, true);
 
+            // test if all expected files were processed
             for (int i = 0; i < expectedFiles.Length; i++) {
                 Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
             }
 
+            // create the list of expected results
             List<AbstractResultItem> list = new List<AbstractResultItem>();
             for (int i = 0; i < expectedFiles.Length; i++) {
                 list.AddRange(getExpected(expectedFiles[i]));
             }
 
+            // compare the results
             if (target is BatchMoveCommand) {
                 ValidateResults(list, (target as BatchMoveCommand).Results);
             } else if (target is BatchInlineCommand) {
                 ValidateResults(list, (target as BatchInlineCommand).Results);
             } else Assert.Fail("Unkown parent command type");
+
 
             VLDocumentViewsManager.ReleaseLocks();
             for (int i = 0; i < expectedFiles.Length; i++) {

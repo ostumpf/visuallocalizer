@@ -11,7 +11,10 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell;
 
 namespace VLUnitTests.VLTests {
-    
+
+    /// <summary>
+    /// Tests for C# batch inline command.
+    /// </summary>
     [TestClass()]
     public class CSharpBatchInlineTest : BatchTestsBase {
 

@@ -10,9 +10,15 @@ using EnvDTE;
 
 namespace VLUnitTests.VLTests {
 
+    /// <summary>
+    /// Tests for ad-hoc version of the "inline" command.
+    /// </summary>
     [TestClass()]
     public class InlineTest {
 
+        /// <summary>
+        /// Tests ASP .NET (C# variant) files
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void AspNetInlineTest1() {
@@ -31,6 +37,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests ASP .NET (VB variant) files
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void AspNetInlineTest2() {
@@ -49,6 +58,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests C# files
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void CSharpInlineTest() {
@@ -67,6 +79,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests VB files
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void VBInlineTest() {
@@ -85,14 +100,24 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Generic test for the ad-hoc inline commands.
+        /// </summary>
+        /// <typeparam name="T">Expected type of result items</typeparam>
+        /// <param name="target">Command to execute</param>
+        /// <param name="view"></param>
+        /// <param name="lines"></param>
+        /// <param name="expectedList">List of expected result items</param>
         protected void RunTest<T>(InlineCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : AbstractResultItem, new() {
             Random rnd = new Random();
             target.InitializeVariables();
 
+            // simulate right-click around each of expected result items and verify that move command reacts
             foreach (AbstractResultItem expectedItem in expectedList) {
                 Assert.IsTrue(expectedItem.ReplaceSpan.iStartLine >= 0);
                 Assert.IsTrue(expectedItem.ReplaceSpan.iEndLine >= 0);
 
+                // each result item will be clicked at every its characted
                 for (int line = expectedItem.ReplaceSpan.iStartLine; line <= expectedItem.ReplaceSpan.iEndLine; line++) {
                     int begin;
                     int end;
@@ -110,7 +135,10 @@ namespace VLUnitTests.VLTests {
                     }
 
                     for (int column = begin; column <= end; column++) {
+                        // perform right-click
                         view.SetSelection(line, column, line, column);
+
+                        // run the command
                         var actualItem = target.GetCodeReferenceResultItem();
 
                         Assert.IsNotNull(actualItem, "Actual item cannot be null");
@@ -119,6 +147,7 @@ namespace VLUnitTests.VLTests {
                         BatchTestsBase.ValidateItems(expectedItem, actualItem);
                     }
 
+                    // create random selections within the result item
                     for (int i = 0; i < 5; i++) {
                         int b = rnd.Next(begin, end + 1);
                         int e = rnd.Next(b, end + 1);

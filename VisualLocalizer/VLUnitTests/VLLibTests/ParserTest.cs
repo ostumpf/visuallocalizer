@@ -3,11 +3,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+
 namespace VLUnitTests {
 
+    /// <summary>
+    /// Tests for AspX parser.
+    /// </summary>
     [TestClass()]
     public class ParserTest {
-
 
         private TestContext testContextInstance;
 
@@ -50,22 +53,34 @@ namespace VLUnitTests {
         //
         #endregion
 
-
+        /// <summary>
+        /// Tests if the parser reports all elements, attributes etc. with correctly initialized data.
+        /// </summary>
         [TestMethod()]        
         public void ProcessTest() {
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VLUnitTests.Resources.AspxTest.aspx");
-            string text = stream.readAll();
-            TestAspxHandler handler = new TestAspxHandler();
+            string text = stream.readAll(); // read the aspx text
+            
+            TestAspxHandler handler = new TestAspxHandler(); // register testing handler
             Parser parser = new Parser(text, handler);
             
             parser.Process();
         }
     }
 
+    /// <summary>
+    /// Testing handler of AspX parser events - each event is checked whether it occured in the right time and whether it contains the right data.
+    /// </summary>
     public class TestAspxHandler : IAspxHandler {
 
+        /// <summary>
+        /// Current event number 
+        /// </summary>
         private int index = 0;
 
+        /// <summary>
+        /// Compares expected and actual list of attributes
+        /// </summary>        
         private void CheckAttrs(List<AttributeInfo> a, List<AttributeInfo> b) {
             for (int i = 0; i < a.Count; i++) {
                 Assert.AreEqual(a[i].Name, b[i].Name);

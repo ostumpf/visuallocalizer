@@ -3,6 +3,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace VLUnitTests {
 
+    /// <summary>
+    /// Tests for Google Translate service.
+    /// </summary>
     [TestClass()]
     public class GoogleTranslatorTest {
 
@@ -48,7 +51,9 @@ namespace VLUnitTests {
         //
         #endregion
 
-
+        /// <summary>
+        /// Tests if escape sequences in the response text are correctly parsed
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VLtranslat.dll")]
         public void ReadJSONStringTest() {
@@ -60,13 +65,16 @@ namespace VLUnitTests {
             Assert.AreEqual(expected, actual);            
         }
 
+        /// <summary>
+        /// Tests the translation
+        /// </summary>
         [TestMethod()]
         public void TranslateTest() {
             GoogleTranslator target = new GoogleTranslator();
             string fromLanguage = string.Empty;
             string toLanguage = "en";
             string untranslatedText = "Tohle je testovací překlad.\nDalší řádek.";
-            string expected = "This is a test translation.\nAnother row.";
+            string expected = "This is a test translation.\nAnother row .";
             string actual = target.Translate(fromLanguage, toLanguage, untranslatedText);
             
             Assert.AreEqual(expected, actual);

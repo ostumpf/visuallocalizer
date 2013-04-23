@@ -1,9 +1,11 @@
 ﻿using VisualLocalizer.Translate;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace VLUnitTests
-{
 
+namespace VLUnitTests {
 
+    /// <summary>
+    /// Tests for MyMemory translation service
+    /// </summary>
     [TestClass()]
     public class MyMemoryTranslatorTest {
 
@@ -50,6 +52,9 @@ namespace VLUnitTests
         #endregion
 
 
+        /// <summary>
+        /// Tests translation - source language must be exactly specified since auto-detection is not supported
+        /// </summary>
         [TestMethod()]
         public void TranslateTest() {
             MyMemoryTranslator target = new MyMemoryTranslator();

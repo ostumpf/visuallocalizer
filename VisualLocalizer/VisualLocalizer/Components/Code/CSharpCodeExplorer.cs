@@ -35,7 +35,7 @@ namespace VisualLocalizer.Components {
         public void Explore(AbstractBatchCommand parentCommand, Predicate<CodeElement> exploreable, FileCodeModel2 codeModel) {
             if (parentCommand == null) throw new ArgumentNullException("parentCommand");
             if (codeModel == null) throw new ArgumentNullException("codeModel");
-            if (codeModel.CodeElements == null) throw new ArgumentNullException("codeModel");
+            if (codeModel.CodeElements == null) return;
 
             foreach (CodeElement2 codeElement in codeModel.CodeElements) {
                 // explore namespaces, classes, structs and modules

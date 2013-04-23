@@ -10,6 +10,7 @@ using VisualLocalizer.Library;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio;
+using EnvDTE80;
 
 namespace VisualLocalizer.Gui {
 
@@ -87,7 +88,15 @@ namespace VisualLocalizer.Gui {
             windowEvents = new ToolWindowEvents();
             windowEvents.WindowHidden += new EventHandler(OnWindowHidden);
 
+            try {
+                var events = VisualLocalizerPackage.Instance.DTE.Events as Events2;
+                events.SolutionEvents.BeforeClosing += new EnvDTE._dispSolutionEvents_BeforeClosingEventHandler(OnSolutionClosing);
+            } catch { }
+
             AddEventsListener();
+        }
+
+        protected virtual void OnSolutionClosing() {            
         }
 
         protected override void Initialize() {

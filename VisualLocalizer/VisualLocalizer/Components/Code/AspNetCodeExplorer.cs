@@ -145,10 +145,17 @@ namespace VisualLocalizer.Components {
 
             // run parent command methods, adding found result items to results
             IList list = null;
-            if (fileLanguage == FILETYPE.CSHARP) {
-                list = parentCommand.LookupInCSharpAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
-            } else if (fileLanguage == FILETYPE.VB) {
-                list = parentCommand.LookupInVBAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+            try {
+                if (fileLanguage == FILETYPE.CSHARP) {
+                    list = parentCommand.LookupInCSharpAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+                } else if (fileLanguage == FILETYPE.VB) {
+                    list = parentCommand.LookupInVBAspNet(context.BlockText, context.InnerBlockSpan, declaredNamespaces, ClassFileName);
+                }
+            } catch (Exception ex) {
+                if (!(parentCommand is ReferenceLister)) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tException occured while processing " + projectItem.Name);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                }
             }
 
             if (list != null) {

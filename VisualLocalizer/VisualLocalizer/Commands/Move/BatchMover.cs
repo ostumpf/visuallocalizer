@@ -304,6 +304,10 @@ namespace VisualLocalizer.Commands {
                 throw new InvalidOperationException("Item key and value cannot be null");
             if (resultItem.DestinationItem == null)
                 throw new InvalidOperationException("Item destination cannot be null");
+            if (resultItem.DestinationItem.InternalProjectItem == null)
+                throw new InvalidOperationException("Item destination cannot be null");
+            if (!File.Exists(resultItem.DestinationItem.InternalProjectItem.GetFullPath()))
+                throw new InvalidOperationException("File does not exist");
             if (!string.IsNullOrEmpty(resultItem.ErrorText))
                 throw new InvalidOperationException(string.Format("on key \"{0}\": \"{1}\"", resultItem.Key, resultItem.ErrorText));
         }

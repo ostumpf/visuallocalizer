@@ -11,6 +11,9 @@ using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VLUnitTests.VLTests {
 
+    /// <summary>
+    /// Tests for C# batch move to resources command.
+    /// </summary>
     [TestClass()]
     public class CSharpBatchMoveTest : BatchTestsBase {
 
@@ -112,7 +115,7 @@ namespace VLUnitTests.VLTests {
             DTE2 DTE = Agent.GetDTE();
             BatchMoveCommand_Accessor target = Agent.BatchMoveCommand_Accessor;
             Window window = DTE.OpenFile(null, Agent.CSharpStringsTestFile1);
-
+            
             IVsTextView view = VLDocumentViewsManager.GetTextViewForFile(Agent.CSharpStringsTestFile1, true, true);
             view.SetSelection(133,33,138,35);
 

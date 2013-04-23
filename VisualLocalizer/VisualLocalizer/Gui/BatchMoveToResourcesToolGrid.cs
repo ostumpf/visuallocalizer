@@ -15,6 +15,7 @@ using VisualLocalizer.Settings;
 using System.Text.RegularExpressions;
 using VisualLocalizer.Extensions;
 using System.ComponentModel;
+using System.IO;
 
 namespace VisualLocalizer.Gui {
 
@@ -171,7 +172,7 @@ namespace VisualLocalizer.Gui {
                 SuspendLayout();
 
                 // set "context" column visibility according to settings
-                if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;
+                if (Columns.Contains(ContextColumnName)) Columns[ContextColumnName].Visible = SettingsObject.Instance.ShowContextColumn;                         
 
                 foreach (CodeStringResultItem item in value) {
                     DataGridViewKeyValueRow<CodeStringResultItem> row = new DataGridViewKeyValueRow<CodeStringResultItem>();
@@ -234,7 +235,7 @@ namespace VisualLocalizer.Gui {
                     var x = row.Cells[ContextColumnName];
 
                     Validate(row);
-                    keyCell.Tag = keyCell.Value;
+                    keyCell.Tag = keyCell.Value;                    
                 }
 
                 this.ClearSelection();
@@ -242,7 +243,7 @@ namespace VisualLocalizer.Gui {
                 this.OnResize(null);
 
                 parentToolPanel.ResetFilterSettings(); // reset filter according to settings
-                UpdateCheckHeader();
+                UpdateCheckHeader();              
 
                 // perform sorting
                 if (SortedColumn != null) {

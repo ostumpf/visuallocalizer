@@ -9,9 +9,15 @@ using System.IO;
 
 namespace VLUnitTests.VLTests {
     
+    /// <summary>
+    /// Tests for renaming resource keys and their references from ResX editor
+    /// </summary>
     [TestClass()]
     public class RenamerTest : RunCommandsTestsBase {
 
+        /// <summary>
+        /// Tests C# files
+        /// </summary>
         [TestMethod()]
         public void CSharpTest1() {
             Agent.EnsureSolutionOpen();
@@ -20,6 +26,9 @@ namespace VLUnitTests.VLTests {
             InternalTest(files);
         }
 
+        /// <summary>
+        /// Tests VB files
+        /// </summary>
         [TestMethod()]
         public void VBTest1() {
             Agent.EnsureSolutionOpen();
@@ -28,6 +37,9 @@ namespace VLUnitTests.VLTests {
             InternalTest(files);
         }
 
+        /// <summary>
+        /// Tests ASP .NET (C# variant) files
+        /// </summary>
         [TestMethod()]
         public void AspNetTest1() {
             Agent.EnsureSolutionOpen();
@@ -36,6 +48,9 @@ namespace VLUnitTests.VLTests {
             InternalTest(files);
         }
 
+        /// <summary>
+        /// Tests ASP .NET (VB variant) files
+        /// </summary>
         [TestMethod()]
         public void AspNetTest2() {
             Agent.EnsureSolutionOpen();
@@ -44,14 +59,22 @@ namespace VLUnitTests.VLTests {
             InternalTest(files);
         }
 
+        /// <summary>
+        /// Generic test method
+        /// </summary>
+        /// <param name="files">List of files whose references should be renamed</param>
         public void InternalTest(string[] files) {
+            // backup the files
             var backups = CreateBackupsOf(files);
+
             try {
+                // get the result items
                 List<CodeReferenceResultItem> list = BatchInlineLookup(files);
                 VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 int originalCount = list.Count;
                 Assert.IsTrue(list.Count > 0);
 
+                // rename each item by adding "XX". These resources must be present in the ResX files.
                 list.ForEach((item) => {
                     item.Key = item.FullReferenceText.Substring(item.FullReferenceText.LastIndexOf('.') + 1);
                     item.KeyAfterRename = item.Key + "XX";
@@ -65,6 +88,7 @@ namespace VLUnitTests.VLTests {
 
                 Assert.AreEqual(0, errors);
 
+                // run the inline command again - the number of result items should be equal to the one before renaming
                 int newCount = BatchInlineLookup(files).Count((item) => { return item.OriginalReferenceText.EndsWith("XX"); });
                 VLDocumentViewsManager.CloseInvisibleWindows(typeof(BatchInlineCommand), false);
                 Assert.AreEqual(originalCount, newCount);

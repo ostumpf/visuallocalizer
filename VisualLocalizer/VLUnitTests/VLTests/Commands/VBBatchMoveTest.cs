@@ -11,7 +11,10 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell;
 
 namespace VLUnitTests.VLTests {
-    
+
+    /// <summary>
+    /// Tests for Visual Basic .NET batch move to resources command.
+    /// </summary>
     [TestClass()]
     public class VBBatchMoveTest : BatchTestsBase {
 

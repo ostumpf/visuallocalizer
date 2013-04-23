@@ -68,6 +68,10 @@ namespace VisualLocalizer.Commands {
 
                     try {
                         resultItem.DestinationItem = f.SelectedItem;
+                        if (resultItem.DestinationItem == null) throw new InvalidOperationException("Destination item must be selected.");
+                        if (resultItem.DestinationItem.InternalProjectItem == null) throw new InvalidOperationException("Destination item must be selected.");
+                        if (!File.Exists(resultItem.DestinationItem.InternalProjectItem.GetFullPath())) throw new InvalidOperationException("Destination item file does not exist.");
+
                         if (f.UsingFullName || resultItem.MustUseFullName || (resultItem.Language==LANGUAGE.VB && resultItem.DestinationItem.IsProjectDefault(resultItem.SourceItem.ContainingProject))) {
                             referenceText = new ReferenceString(f.SelectedItem.Namespace, f.SelectedItem.Class, f.Key);
                             addUsing = false;

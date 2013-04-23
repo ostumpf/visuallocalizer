@@ -13,6 +13,9 @@ using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VLUnitTests.VLTests {
 
+    /// <summary>
+    /// Tests for ASP .NET batch inline command.
+    /// </summary>
     [TestClass()]
     public class AspNetBatchInlineTests : BatchTestsBase {
 

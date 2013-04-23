@@ -102,11 +102,18 @@ namespace VisualLocalizer.Commands {
 
             invisibleWindowsAuthor = editorInstance;
 
-            switch (projectItem.GetFileType()) {
-                case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
-                case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
-                case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
-                default: break; // do nothing if file type is not known
+            try {
+                switch (projectItem.GetFileType()) {
+                    case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
+                    case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
+                    case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
+                    default: break; // do nothing if file type is not known
+                }
+            } catch (Exception ex) {
+                if (verbose) {
+                    VLOutputWindow.VisualLocalizerPane.WriteLine("\tException occured while processing " + projectItem.Name);
+                    VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                }
             }
         }
 

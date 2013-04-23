@@ -61,6 +61,10 @@ namespace VisualLocalizer.Gui {
             panel.Clear();
         }
 
+        protected override void OnSolutionClosing() {
+            OnWindowHidden(null, null);
+        }
+
         /// <summary>
         /// "Remove unchecked" button clicked
         /// </summary>        

@@ -227,12 +227,19 @@ namespace VisualLocalizer.Commands {
 
             if (VLDocumentViewsManager.IsFileLocked(projectItem.GetFullPath()) || RDTManager.IsFileReadonly(projectItem.GetFullPath())) {
                 if (verbose) VLOutputWindow.VisualLocalizerPane.WriteLine("\tSkipping {0} - document is readonly", projectItem.Name);
-            } else {                
-                switch (projectItem.GetFileType()) {
-                    case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
-                    case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
-                    case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
-                    default: break; // do nothing if file type is not known
+            } else {
+                try {
+                    switch (projectItem.GetFileType()) {
+                        case FILETYPE.CSHARP: ProcessCSharp(projectItem, exploreable, verbose); break;
+                        case FILETYPE.ASPX: ProcessAspNet(projectItem, verbose); break;
+                        case FILETYPE.VB: ProcessVB(projectItem, exploreable, verbose); break;
+                        default: break; // do nothing if file type is not known
+                    }
+                } catch (Exception ex) {
+                    if (verbose) {
+                        VLOutputWindow.VisualLocalizerPane.WriteLine("\tException occured while processing " + projectItem.Name);
+                        VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                    }
                 }
             }
         }

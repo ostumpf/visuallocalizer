@@ -31,9 +31,10 @@ namespace VisualLocalizer.Library {
         public static void StartIndeterminate(Microsoft.VisualStudio.Shell.Interop.Constants icon) {
             CheckInstance();
             object i = (short)icon;
-            
-            int hr = statusBar.Animation(1, ref i);
-            Marshal.ThrowExceptionForHR(hr);
+
+            try {
+                statusBar.Animation(1, ref i);
+            } catch { }
         }
 
         /// <summary>
@@ -43,8 +44,9 @@ namespace VisualLocalizer.Library {
             CheckInstance();
             object i = (short)icon;
 
-            int hr = statusBar.Animation(0, ref i);
-            Marshal.ThrowExceptionForHR(hr);
+            try {
+                statusBar.Animation(0, ref i);
+            } catch { }
         }
 
         /// <summary>
@@ -58,8 +60,9 @@ namespace VisualLocalizer.Library {
             statusBarCookie = 0;
             total = (uint)totalAmount;
 
-            int hr = statusBar.Progress(ref statusBarCookie, 1, text, 0, total);
-            Marshal.ThrowExceptionForHR(hr);
+            try {
+                statusBar.Progress(ref statusBarCookie, 1, text, 0, total);
+            } catch { }
         }
 
         /// <summary>
@@ -79,8 +82,9 @@ namespace VisualLocalizer.Library {
             t.Interval = 500;
             t.Elapsed += new ElapsedEventHandler((o,e) => {
                 if (determinateTimerHit) {
-                    hr = statusBar.Progress(ref statusBarCookie, 0, readyText, total, total);
-                    Marshal.ThrowExceptionForHR(hr);
+                    try {
+                        statusBar.Progress(ref statusBarCookie, 0, readyText, total, total);
+                    } catch { }
 
                     t.Stop();
                     t.Dispose();
@@ -98,8 +102,9 @@ namespace VisualLocalizer.Library {
         public static void SetDeterminateProgress(int completed, string text) {
             CheckInstance();
 
-            int hr = statusBar.Progress(ref statusBarCookie, 1, text, (uint)completed, total);
-            Marshal.ThrowExceptionForHR(hr);
+            try {
+                statusBar.Progress(ref statusBarCookie, 1, text, (uint)completed, total);
+            } catch { }
         }
     }
 }

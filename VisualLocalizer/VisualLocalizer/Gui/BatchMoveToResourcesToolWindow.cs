@@ -123,6 +123,10 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        protected override void OnSolutionClosing() {
+            OnWindowHidden(null, null);
+        }
+
         /// <summary>
         /// Displayes/Hides the filter
         /// </summary>        

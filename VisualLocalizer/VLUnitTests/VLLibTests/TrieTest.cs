@@ -5,14 +5,13 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-namespace VLUnitTests
-{
+namespace VLUnitTests {
 
-
+    /// <summary>
+    /// Tests for the customized Aho-Corasick algorithm implemented in the Trie class
+    /// </summary>
     [TestClass()]
     public class TrieTest {
-
-
         private TestContext testContextInstance;
 
         public TestContext TestContext {
@@ -56,24 +55,29 @@ namespace VLUnitTests
 
 
   
-
+        /// <summary>
+        /// Tests the Trie
+        /// </summary>
         [TestMethod()]
         public void TrieConstructorTest() {
             Trie<TrieElement> trie = new Trie<TrieElement>();
             
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VLUnitTests.Resources.TrieTest.txt");
-            string text = stream.readAll();
+            string text = stream.readAll(); // read all data from testing file
 
-            trie.Add("id.aliquam.lorem");
+            // add "references" that will be searched
+            trie.Add("id.aliquam.lorem"); 
             trie.Add("a.b.c.d");
             trie.Add("x.y");
             trie.Add("eeee.eeee");
             
+            // complete building the trie
             trie.CreatePredecessorsAndShortcuts();
 
             TrieElement e = trie.Root;
             List<string> foundWords = new List<string>(); 
             
+            // create list of expeced results
             List<string> expectedWords = new List<string>();
             expectedWords.Add("id.aliquam.lorem");
             expectedWords.Add("id.aliquam.lorem");
@@ -88,11 +92,13 @@ namespace VLUnitTests
             expectedWords.Add("a.b.c.d");
             expectedWords.Add("a.b.c.d");
 
+            // run the algorithm
             foreach (char c in text) {
                 e = trie.Step(e, c);
                 if (e.IsTerminal) foundWords.Add(e.Word);
             }
 
+            // compare with expected
             if (foundWords.Count == expectedWords.Count) {
                 bool ok = true;
                 for (int i = 0; i < foundWords.Count; i++) {

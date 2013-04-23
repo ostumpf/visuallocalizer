@@ -13,9 +13,15 @@ using Microsoft.VisualStudio.Shell;
 
 namespace VLUnitTests.VLTests {
     
+    /// <summary>
+    /// Tests for ad-hoc version of the "move to resources" command.
+    /// </summary>
     [TestClass()]
     public class MoveTest {
 
+        /// <summary>
+        /// Tests ASP .NET (C# variant) files.
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void AspNetMoveTest1() {
@@ -34,6 +40,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests ASP .NET (VB variant) files.
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void AspNetMoveTest2() {
@@ -52,6 +61,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests C# files.
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]        
         public void CSharpMoveTest() {
@@ -70,6 +82,9 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Tests VB files.
+        /// </summary>
         [TestMethod()]
         [DeploymentItem("VisualLocalizer.dll")]
         public void VBMoveTest() {
@@ -88,14 +103,24 @@ namespace VLUnitTests.VLTests {
             window.Close(vsSaveChanges.vsSaveChangesNo);
         }
 
+        /// <summary>
+        /// Generic test for the ad-hoc move commands.
+        /// </summary>
+        /// <typeparam name="T">Type of expected result item</typeparam>
+        /// <param name="target">Target command</param>
+        /// <param name="view"></param>
+        /// <param name="lines"></param>
+        /// <param name="expectedList">List of expected results</param>
         protected void RunTest<T>(MoveToResourcesCommand_Accessor<T> target, IVsTextView view, IVsTextLines lines, List<AbstractResultItem> expectedList) where T : AbstractResultItem,new() {
             Random rnd = new Random();
             target.InitializeVariables();
 
+            // simulate right-click around each of expected result items and verify that move command reacts
             foreach (AbstractResultItem expectedItem in expectedList) {
                 Assert.IsTrue(expectedItem.ReplaceSpan.iStartLine >= 0);
                 Assert.IsTrue(expectedItem.ReplaceSpan.iEndLine >= 0);
 
+                // each result item will be clicked at every its characted
                 for (int line = expectedItem.ReplaceSpan.iStartLine; line <= expectedItem.ReplaceSpan.iEndLine; line++) {
                     int begin;
                     int end;
@@ -113,15 +138,20 @@ namespace VLUnitTests.VLTests {
                     }
 
                     for (int column = begin; column <= end; column++) {
+                        // perform the click
                         view.SetSelection(line, column, line, column);
+
+                        // execute the command
                         var actualItem = target.GetReplaceStringItem();
 
                         Assert.IsNotNull(actualItem, "Actual item cannot be null");
                         actualItem.IsWithinLocalizableFalse = expectedItem.IsWithinLocalizableFalse; // can be ignored
 
+                        // compare results
                         BatchTestsBase.ValidateItems(expectedItem, actualItem);
                     }
 
+                    // try selecting random block of code within the item
                     for (int i = 0; i < 5; i++) {
                         int b = rnd.Next(begin, end + 1);
                         int e = rnd.Next(b, end + 1);
@@ -134,6 +164,7 @@ namespace VLUnitTests.VLTests {
                     }
                 }
 
+                // simulate clicks out of the result item and verify null results
                 if (expectedItem.ReplaceSpan.iStartIndex - 1 >= 0) {
                     view.SetSelection(expectedItem.ReplaceSpan.iStartLine, expectedItem.ReplaceSpan.iStartIndex - 1, expectedItem.ReplaceSpan.iStartLine, expectedItem.ReplaceSpan.iStartIndex - 1);
                     Assert.IsNull(target.GetReplaceStringItem(), "For item " + expectedItem.Value);
