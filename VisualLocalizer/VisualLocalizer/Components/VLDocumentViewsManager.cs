@@ -32,9 +32,25 @@ namespace VisualLocalizer.Components {
         /// Set of closed locked documents (waiting to be locked after opening), keys are file paths
         /// </summary>
         private static HashSet<string> lockedDocumentsWaiting;
+
+        /// <summary>
+        /// List of invisible editor windows that were opened in order to obtain their code model
+        /// </summary>
         private static Dictionary<string, object> invisibleWindows;        
+
+        /// <summary>
+        /// Instance of the DTE2 object
+        /// </summary>
         private static EnvDTE80.DTE2 DTE;
+
+        /// <summary>
+        /// Issued whenever is file in VS closed
+        /// </summary>
         public static event Action<string> FileClosed;
+
+        /// <summary>
+        /// True if the FileClosed should not be issued even though file was closed
+        /// </summary>
         private static bool suppressFileClosedEvent;
 
         static VLDocumentViewsManager() {
@@ -122,6 +138,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Issues the FileClosed event
+        /// </summary>        
         private static void NotifyFileClosed(string file) {
             if (!suppressFileClosedEvent && FileClosed != null) FileClosed(file);
         }

@@ -115,21 +115,74 @@ namespace VisualLocalizer.Editor {
         private ToolStripComboBox codeGenerationBox;
         private bool readOnly;
 
+        /// <summary>
+        /// Invoked when data changed in the editor
+        /// </summary>
         public event EventHandler DataChanged;
+
+        /// <summary>
+        /// Invoked when "Remove" button on the toolbar was used
+        /// </summary>
         public event Action<REMOVEKIND> RemoveRequested;
+
+        /// <summary>
+        /// Invoked when "View" was modified on the toolbar
+        /// </summary>
         public event Action<View> ViewKindChanged;
+
+        /// <summary>
+        /// Invoked when "New language pair" menu item was clicked
+        /// </summary>
         public event Action<TRANSLATE_PROVIDER> NewTranslatePairAdded;
+
+        /// <summary>
+        /// Invoked when "Translate" button was clicked on the toolbar
+        /// </summary>
         public event Action<TRANSLATE_PROVIDER, string, string> TranslateRequested;
+
+        /// <summary>
+        /// Invoked when "Inline" button was clicked on the toolbar
+        /// </summary>
         public event Action<INLINEKIND> InlineRequested;
 
+        /// <summary>
+        /// Key names conflict resolver used in whole editor instance
+        /// </summary>
         public KeyValueIdentifierConflictResolver conflictResolver;
 
+        /// <summary>
+        /// ReferenceLister used to lookup references to resources in this file
+        /// </summary>
         private ReferenceLister referenceLister;
+
+        /// <summary>
+        /// True if the reference lookuper should not be run
+        /// </summary>
         public bool ReferenceCounterThreadSuspended = false;
+
+        /// <summary>
+        /// Background thread that handles the references lookup
+        /// </summary>
         private System.Threading.Thread referenceUpdaterThread;
+
+        /// <summary>
+        /// Synchronization object for the reference lookup thread
+        /// </summary>
         private static object LookuperThreadLockObject = new object();
+
+        /// <summary>
+        /// List of files that had to be force-opened to be searched for references and are now closed; their references are not deleted from each resource's list
+        /// </summary>
         private HashSet<string> registeredAsIgnoredList;
+
+        /// <summary>
+        /// True if reference lookup finished at least once
+        /// </summary>
         private bool referenceUpdaterThreadCompleted = false;
+
+        /// <summary>
+        /// The source files previously ignored, but now edited and closed again
+        /// </summary>
         public HashSet<string> sourceFilesThatNeedUpdate = new HashSet<string>();
 
         /// <summary>
@@ -176,6 +229,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Closes all invisible windows opened by this editor instance
+        /// </summary>        
         private void ResXEditorControl_Disposed(object sender, EventArgs e) {
             try {
                 VLDocumentViewsManager.CloseInvisibleWindows(Editor, false);
@@ -525,6 +581,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// True if this editor instance is readonly or locked
+        /// </summary>
         public bool ReadOnly {
             get {
                 return readOnly;
@@ -1477,18 +1536,30 @@ namespace VisualLocalizer.Editor {
             toolStrip.Focus();
         }                
 
+        /// <summary>
+        /// Invokes the InlineRequested(inline) event
+        /// </summary>        
         private void InlineButton_ButtonClick(object sender, EventArgs e) {
             NotifyInlineRequested(INLINEKIND.INLINE);
         }
 
+        /// <summary>
+        /// Invokes the InlineRequested(inline & remove) event
+        /// </summary>        
         private void InlineAndRemoveButton_ButtonClick(object sender, EventArgs e) {
             NotifyInlineRequested(INLINEKIND.INLINE | INLINEKIND.REMOVE);
         }
 
+        /// <summary>
+        /// Merges two resource files, preserving both
+        /// </summary>        
         private void MergeButton_PreserveClick(object sender, EventArgs e) {
             MergeWithFile(false);
         }
 
+        /// <summary>
+        /// Merges two resource files, deleting original
+        /// </summary>        
         private void MergeButton_DeleteClick(object sender, EventArgs e) {
             MergeWithFile(true);
         }
@@ -1729,6 +1800,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Invokes the ViewKindChanged event
+        /// </summary>        
         private void NotifyViewKindChanged(View newView) {
             if (ViewKindChanged != null) ViewKindChanged(newView);
         }
@@ -1786,14 +1860,23 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Issues the "NewTranslatePairNeeded" event
+        /// </summary>        
         private void NotifyNewTranslatePairAdded(TRANSLATE_PROVIDER provider) {
             if (NewTranslatePairAdded != null) NewTranslatePairAdded(provider);
         }
 
+        /// <summary>
+        /// Issues the "TranslateRequested" event
+        /// </summary>        
         private void NotifyTranslateRequested(TRANSLATE_PROVIDER provider, string fromLanguage, string toLanguage) {
             if (TranslateRequested != null) TranslateRequested(provider, fromLanguage, toLanguage);
         }
 
+        /// <summary>
+        /// Issues the "InlineRequested" event
+        /// </summary>        
         private void NotifyInlineRequested(INLINEKIND inlineKind) {
             if (InlineRequested != null) InlineRequested(inlineKind);
         }

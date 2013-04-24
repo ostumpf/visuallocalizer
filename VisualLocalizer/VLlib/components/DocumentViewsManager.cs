@@ -19,9 +19,12 @@ namespace VisualLocalizer.Library {
 
         private static ServiceProvider serviceProvider;
 
+        /// <summary>
+        /// Initializes the services from hosting VS environment
+        /// </summary>
         static DocumentViewsManager() {
             DTE2 dte2 = (DTE2)Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(SDTE));
-            if (dte2 == null) throw new InvalidOperationException("Cannot consume SDTE.");
+            if (dte2 == null) throw new InvalidOperationException("Cannot consume DTE.");
 
             Microsoft.VisualStudio.OLE.Interop.IServiceProvider sp = (Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte2;
             serviceProvider = new ServiceProvider(sp);

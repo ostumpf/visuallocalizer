@@ -128,7 +128,7 @@ namespace VisualLocalizer.Settings {
         }
 
         /// <summary>
-        /// Never called (bug?)
+        /// Never called by VS (bug?)
         /// </summary>
         public override void ResetSettings() {
             SettingsObject.Instance.IgnorePropertyChanges = true;
@@ -141,6 +141,7 @@ namespace VisualLocalizer.Settings {
 
             SettingsObject.Instance.ResetCriteria();
 
+            // create list of default criteria
             var valueIsFormat = new LocalizationCustomCriterion(LocalizationCriterionAction.VALUE, 20);
             valueIsFormat.Predicate = LocalizationCriterionPredicate.MATCHES;
             valueIsFormat.Target = LocalizationCriterionTarget.VALUE;

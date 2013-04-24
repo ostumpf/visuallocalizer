@@ -359,6 +359,9 @@ namespace VisualLocalizer.Components {
             SourceItem.Document.AddUsingBlock(DestinationItem.Namespace);
         }
 
+        /// <summary>
+        /// Returns criteria displayed in toolwindow's filter, used to calculate localization probability
+        /// </summary>   
         public static new Dictionary<string, LocalizationCommonCriterion> GetCriteria() {
             return CodeStringResultItem.GetCriteria();
         }

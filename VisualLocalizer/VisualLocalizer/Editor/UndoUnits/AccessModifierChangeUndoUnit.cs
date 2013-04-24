@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using VisualLocalizer.Components;
 
+/// Contains undo units used in ResX editor.
 namespace VisualLocalizer.Editor.UndoUnits {
 
     internal enum SELECTION_CHANGE_INITIATOR { UNDO_MANAGER, INITIALIZER }

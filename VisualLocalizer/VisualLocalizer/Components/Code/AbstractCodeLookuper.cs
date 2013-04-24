@@ -129,7 +129,14 @@ namespace VisualLocalizer.Components {
         /// </summary>
         protected Trie<CodeReferenceTrieElement> Trie { get; set; }  
       
+        /// <summary>
+        /// In case of ambiguity errors during namespace resolution, this item should be preffered
+        /// </summary>
         protected ResXProjectItem prefferedResXItem;
+
+        /// <summary>
+        /// Synchronization object
+        /// </summary>
         private object syncRoot = new object();
 
         /// <summary>
@@ -634,6 +641,9 @@ namespace VisualLocalizer.Components {
             return nfo;
         }
 
+        /// <summary>
+        /// Merges the two instances of result items together (joins the values and adjusts TextSpan)
+        /// </summary>
         protected virtual void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
             string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);
 

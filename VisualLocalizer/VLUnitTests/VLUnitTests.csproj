@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\TrieTest.txt" />
+    <Compile Include="TestExtensions.cs" />
     <Compile Include="VLTests\Commands\AspNetBatchInlineTests.cs" />
     <Compile Include="VLTests\Commands\AspNetBatchMoveTests.cs" />
     <Compile Include="VLTests\Commands\BatchTestsBase.cs" />

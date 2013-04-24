@@ -11,12 +11,18 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public sealed class DisableableCheckedListBox : CheckedListBox {
 
+        /// <summary>
+        /// Set of objects that are currently disabled
+        /// </summary>
         private HashSet<object> disabledItems;
 
         public DisableableCheckedListBox() {
             disabledItems = new HashSet<object>();
         }
 
+        /// <summary>
+        /// Draws the item
+        /// </summary>        
         protected override void OnDrawItem(DrawItemEventArgs e) {
             DrawItemEventArgs ne = e;
             if (disabledItems.Contains(Items[e.Index])) {
@@ -25,6 +31,9 @@ namespace VisualLocalizer.Library {
             base.OnDrawItem(ne);
         }
 
+        /// <summary>
+        /// Change the check state of an item
+        /// </summary>        
         protected override void OnItemCheck(ItemCheckEventArgs ice) {
             if (disabledItems.Contains(Items[ice.Index])) {
                 ice.NewValue = ice.CurrentValue;

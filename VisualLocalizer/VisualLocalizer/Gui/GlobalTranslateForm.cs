@@ -34,6 +34,9 @@ namespace VisualLocalizer.Gui {
         /// </summary>
         public SettingsObject.LanguagePair LanguagePair { get; private set; }
 
+        /// <summary>
+        /// List of cultures in the comboboxes
+        /// </summary>
         private CultureInfo[] displayedCultures;
 
         /// <summary>
@@ -86,7 +89,10 @@ namespace VisualLocalizer.Gui {
             useNewPairBox.Checked = false;
         }
 
-       
+    
+        /// <summary>
+        /// Updates check state of the resource file and updates enabled state of the translate button
+        /// </summary>
         private void ResxListBox_SelectedValueChanged(object sender, EventArgs e) {
             GlobalTranslateProjectItem item = (GlobalTranslateProjectItem)resxListBox.SelectedItem;
             item.Checked = resxListBox.CheckedIndices.Contains(resxListBox.SelectedIndex);
@@ -138,6 +144,11 @@ namespace VisualLocalizer.Gui {
             LanguagePair = (SettingsObject.LanguagePair)languagePairsBox.SelectedItem;
         }
 
+        /// <summary>
+        /// Initializes the language pair and saves it if requested
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GlobalTranslateForm_FormClosing(object sender, FormClosingEventArgs e) {
             if (DialogResult == DialogResult.OK) {
                 try {

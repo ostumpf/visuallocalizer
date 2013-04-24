@@ -17,6 +17,7 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Translate;
 using System.Collections;
 
+/// Contains types handling the user's commands.
 namespace VisualLocalizer.Commands {
 
     /// <summary>
@@ -36,6 +37,9 @@ namespace VisualLocalizer.Commands {
         private bool globalTranslateEnabled, batchOperationsEnabled;
         public static bool OperationInProgress;
 
+        /// <summary>
+        /// Initializes commands instances and registers the as handlers for menu items clicks
+        /// </summary>
         public MenuManager() {
             this.csharpInlineCommand = new CSharpInlineCommand();
             this.aspNetInlineCommand = new AspNetInlineCommand();
@@ -217,10 +221,18 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        /// <summary>
+        /// Determines status of the "Global translate" menu item in the Solution Explorer's context menu.
+        /// It is enabled only if container items or ResX items are selected.
+        /// </summary>        
         private void TranslateSolExpQueryStatus(object sender, EventArgs args) {
             (sender as OleMenuCommand).Enabled = globalTranslateEnabled;
         }
 
+        /// <summary>
+        /// Determines status of the "Batch move" and "Batch inline" menu items in the Solution Explorer's context menu.
+        /// It is enabled only if container items or C#, VB .NET or ASP .NET code files are enabled.
+        /// </summary>        
         private void BatchSolExpQueryStatus(object sender, EventArgs args) {
             (sender as OleMenuCommand).Enabled = batchOperationsEnabled;
         }

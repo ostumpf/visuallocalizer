@@ -14,12 +14,26 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public class OutputWindow {
 
+        /// <summary>
+        /// Instance of the IVsOutputWindow service
+        /// </summary>
         protected static IVsOutputWindow outputWindowService;
+
+        /// <summary>
+        /// Cache of output window panes
+        /// </summary>
         protected static Dictionary<Guid, OutputWindowPane> cache;
+
+        /// <summary>
+        /// GUID of the virtual window pane
+        /// </summary>
         protected static Guid blackHoleGuid = new Guid("35416BF3-EA5A-4749-B4F9-09CF305C16D5");
 
         protected OutputWindow() { }
 
+        /// <summary>
+        /// Initializes the services and adds well-known window panes to the cache
+        /// </summary>
         static OutputWindow() {            
             cache = new Dictionary<Guid, OutputWindowPane>();
             outputWindowService = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;

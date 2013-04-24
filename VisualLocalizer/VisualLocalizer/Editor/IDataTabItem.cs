@@ -5,6 +5,7 @@ using System.Text;
 using System.Resources;
 using VisualLocalizer.Library;
 
+/// Contains types related with the ResX editor, mainly GUI.
 namespace VisualLocalizer.Editor {
     /// <summary>
     /// Common interface for all controls handling various resources (by types)

@@ -14,20 +14,53 @@ namespace VisualLocalizer.Library.AspxParser {
     /// page directives.
     /// </summary>
     public class WebConfig {
+        /// <summary>
+        /// Name of the web.config file
+        /// </summary>
         public const string WebConfigFilename = "web.config";
+
+        /// <summary>
+        /// Name of the machinge.config file
+        /// </summary>
         public const string MachineConfigFilename = "machine.config";
+
+        /// <summary>
+        /// Path to the default web.config file
+        /// </summary>
         public const string WebConfigDefaultLocFormat = @"{0}\Microsoft.NET\Framework\{1}\CONFIG\" + WebConfigFilename;
+
+        /// <summary>
+        /// Path to the default machine.config file
+        /// </summary>
         public const string MachineConfigDefaultLocFormat = @"{0}\Microsoft.NET\Framework\{1}\CONFIG\" + MachineConfigFilename;
+        
+        /// <summary>
+        /// List of element and prefixes definitions loaded from the configuration files
+        /// </summary>
         private HashSet<TagPrefixDefinition> definitions;
+
+        /// <summary>
+        /// Project item for which is the list relevant
+        /// </summary>
         private ProjectItem projectItem;
+
+        /// <summary>
+        /// Solution in which the project item belongs
+        /// </summary>
         private Solution solution;        
 
+        /// <summary>
+        /// Cache of WebConfig for various project items
+        /// </summary>
         private static Dictionary<ProjectItem, WebConfig> cache;
 
         static WebConfig() {
             cache = new Dictionary<ProjectItem, WebConfig>();
         }
 
+        /// <summary>
+        /// Returns instance of WebConfig valid for given project item
+        /// </summary>        
         public static WebConfig Get(ProjectItem projectItem, Solution solution) {
             if (projectItem == null) throw new ArgumentNullException("projectItem");
             if (solution == null) throw new ArgumentNullException("solution");

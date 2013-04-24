@@ -218,6 +218,9 @@ namespace VisualLocalizer.Settings {
             Weight = int.Parse(a[1]);            
         }
 
+        /// <summary>
+        /// Copies this object's data to the given criterion
+        /// </summary>        
         protected void InternalDeepCopy(AbstractLocalizationCriterion crit) {
             crit.Action = Action;
             crit.Description = Description;
@@ -481,6 +484,10 @@ namespace VisualLocalizer.Settings {
     /// Extension class for translating localization enums into human readeble form
     /// </summary>
     static class LocalizationEnumsTranslations {
+
+        /// <summary>
+        /// Returns human-readable name of the criterion action
+        /// </summary>        
         public static string ToHumanForm(this LocalizationCriterionAction act) {
             switch (act) {
                 case LocalizationCriterionAction.FORCE_ENABLE:
@@ -496,6 +503,9 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Returns human-readable representation of the criterion predicate
+        /// </summary>        
         public static string ToHumanForm(this LocalizationCriterionPredicate pred) {
             switch (pred) {
                 case LocalizationCriterionPredicate.MATCHES:
@@ -515,6 +525,9 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Returns human-readable representation of the criterion target
+        /// </summary>        
         public static string ToHumanForm(this LocalizationCriterionTarget target) {
             switch (target) {
                 case LocalizationCriterionTarget.VALUE:
@@ -538,6 +551,9 @@ namespace VisualLocalizer.Settings {
             }            
         }
 
+        /// <summary>
+        /// Returns human-readable representation of the criterion target
+        /// </summary>   
         public static string ToHumanForm(this LocalizationCriterionAction2 act) {
             switch (act) {
                 case LocalizationCriterionAction2.CHECK:

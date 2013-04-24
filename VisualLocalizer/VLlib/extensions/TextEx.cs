@@ -8,6 +8,7 @@ using EnvDTE;
 using EnvDTE80;
 using System.Web;
 
+/// Contains functionality not dependant on Visual Localizer and potentialy useful for other developers.
 namespace VisualLocalizer.Library {
 
     public enum LANGUAGE { CSHARP, VB }
@@ -19,6 +20,15 @@ namespace VisualLocalizer.Library {
 
         private static CodeDomProvider csharp = Microsoft.CSharp.CSharpCodeProvider.CreateProvider("C#");
         private static CodeDomProvider vb = Microsoft.VisualBasic.VBCodeProvider.CreateProvider("VisualBasic");
+
+        /// <summary>
+        /// Radix of an escape sequence
+        /// </summary>
+        private enum ESCAPE_SEQUENCE_RADIX { HEX, OCT };
+
+        /// <summary>
+        /// List of character categories which can appear in an identifier
+        /// </summary>
         private static UnicodeCategory[] validIdentifierCategories = {
                                                      UnicodeCategory.TitlecaseLetter,
                                                      UnicodeCategory.UppercaseLetter,
@@ -159,10 +169,10 @@ namespace VisualLocalizer.Library {
                             case 'b': result.Append('\b'); break;
                             case 'n': result.Append('\n'); break;
                             case 'a': result.Append('\a'); break;
-                            case 'x': result.Append(ReadEscapeSeq(text, i + 1, 4, 16)); i += 4; break;
+                            case 'x': result.Append(ReadEscapeSeq(text, i + 1, 4, ESCAPE_SEQUENCE_RADIX.HEX)); i += 4; break;
                             default:
                                 if (next >= '0' && next <= '8') {
-                                    result.Append(ReadEscapeSeq(text, i + 1, 3, 8));
+                                    result.Append(ReadEscapeSeq(text, i + 1, 3, ESCAPE_SEQUENCE_RADIX.OCT));
                                     i += 3;
                                 } else {
                                     result.Append(next); 
@@ -179,14 +189,25 @@ namespace VisualLocalizer.Library {
             return resultText;
         }
 
-        private static char ReadEscapeSeq(string text, int startIndex, int charCount, int radix) {
+        /// <summary>
+        /// Reads the hexadecimal escape sequence in given text, starting at given index
+        /// </summary>        
+        private static char ReadEscapeSeq(string text, int startIndex, int charCount, ESCAPE_SEQUENCE_RADIX radix) {
             int end = startIndex + charCount;
             if (end > text.Length) throw new Exception("Invalid string escape sequence.");
 
             int sum = 0;
+            bool initialized = false;
             for (int i = startIndex; i < end; i++) {
-                sum = sum * radix + ToDecimal(text[i]);
+                if ((radix == ESCAPE_SEQUENCE_RADIX.HEX && text[i].IsHexDec()) || (radix == ESCAPE_SEQUENCE_RADIX.OCT && text[i].IsOct())) {
+                    int r = radix == ESCAPE_SEQUENCE_RADIX.HEX ? 16 : 8;
+                    sum = sum * r + ToDecimal(text[i]);
+                    initialized = true;
+                } else {
+                    break;
+                }
             }
+            if (!initialized) throw new Exception("Invalid string escape sequence.");
 
             return (char)sum;
         }
@@ -221,6 +242,28 @@ namespace VisualLocalizer.Library {
                     return (hexDec - 'A') + 10;
                 } else throw new ArgumentException("Invalid hexdec character " + hexDec);
             }
+        }
+
+        /// <summary>
+        /// Returns true if given character is a hexadecimal character
+        /// </summary>
+        private static bool IsHexDec(this char c) {
+            if (c >= '0' && c <= '9') {
+                return true;
+            } else {
+                if (char.IsLower(c)) {
+                    return c >= 'a' && c <= 'f';
+                } else if (char.IsUpper(c)) {
+                    return c >= 'A' && c <= 'F';
+                } else return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if given character can be used as octal number
+        /// </summary>        
+        private static bool IsOct(this char c) {
+            return (c - '0') >= 0 && (c - '0') < 8;
         }
 
         /// <summary>

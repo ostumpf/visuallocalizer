@@ -78,6 +78,9 @@ namespace VisualLocalizer.Components {
             return TryResolve(prefix, className, trieElementInfos);
         }
 
+        /// <summary>
+        /// Merges the two instances of result items together (joins the values and adjusts TextSpan)
+        /// </summary>
         protected override void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
             string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);
 

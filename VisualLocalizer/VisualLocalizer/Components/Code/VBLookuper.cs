@@ -16,7 +16,14 @@ namespace VisualLocalizer.Components {
     /// <typeparam name="T">Type of result item</typeparam>
     internal class VBLookuper<T> : AbstractCodeLookuper<T> where T : AbstractResultItem, new() {
 
+        /// <summary>
+        /// Regular expression describing possible content between two result items that can be merged
+        /// </summary>
         private static Regex VBConcateningRegexp;
+
+        /// <summary>
+        /// List of possible statements between two merged result items
+        /// </summary>
         private static List<AbstractConcatenatingChar> concatenatingList;
 
         static VBLookuper() {
@@ -113,14 +120,18 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Concatenates two result items based on the content between them. If any control characters are added, they are interpreted and added to the strings.
+        /// </summary>
         protected override void ConcatenateWithPreviousResult(IList results, CodeStringResultItem previouslyAddedItem, CodeStringResultItem resultItem) {
             string textBetween = text.Substring(previouslyAddedItem.AbsoluteCharOffset + previouslyAddedItem.AbsoluteCharLength - OriginalAbsoluteOffset, resultItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharOffset - previouslyAddedItem.AbsoluteCharLength);            
-            Match match = VBConcateningRegexp.Match(textBetween);
+            Match match = VBConcateningRegexp.Match(textBetween); // test if the content between is known
             
             if (match.Success) {
                 bool ok = match.Groups.Count == 3;
                 if (!ok) return;
 
+                // interpret control characters
                 StringBuilder addedValues = new StringBuilder();
                 for (int i = 0; i < match.Groups[2].Captures.Count; i++) {
                     bool matched = false;
@@ -134,6 +145,7 @@ namespace VisualLocalizer.Components {
                     ok = ok && matched;
                 }
 
+                // if all control characters were known, add them to the result item and merge it with the previous one
                 if (ok) {
                     previouslyAddedItem.Value += addedValues.ToString();
                     results.RemoveAt(results.Count - 1);
@@ -143,32 +155,64 @@ namespace VisualLocalizer.Components {
             }
         }
 
-
+        /// <summary>
+        /// Base class for statement between two VB string result items
+        /// </summary>
         private abstract class AbstractConcatenatingChar {
+
+            /// <summary>
+            /// Returns true if given text corresponds to this statement
+            /// </summary>            
             public abstract bool Matches(string input);
+
+            /// <summary>
+            /// The control character that this statement represents
+            /// </summary>
             public string ReplaceChar { get; protected set; }
         }   
 
+        /// <summary>
+        /// Represents statements between two VB string result items like vbCrLf, vbNewLine, vbTab etc.
+        /// </summary>
         private class ExplicitConcatenatingCharWithOptionalNamespace : AbstractConcatenatingChar {
             private Regex regex;
 
+            /// <summary>
+            /// Creates new instance
+            /// </summary>
+            /// <param name="regex">The text of the statement</param>
+            /// <param name="c">Control character it represents</param>
             public ExplicitConcatenatingCharWithOptionalNamespace(string regex, string c) {
                 this.regex = new Regex(regex);
                 this.ReplaceChar = c;
             }
 
+            /// <summary>
+            /// Returns true if given text corresponds to this statement
+            /// </summary>
             public override bool Matches(string input) {
                 return regex.IsMatch(input);
             }
         }
 
+        /// <summary>
+        /// Represents Chr() and ChrW() functions used between two VB string result items
+        /// </summary>
         private class ChrConcatenatingChar : AbstractConcatenatingChar {
             private Regex regex;
 
+            /// <summary>
+            /// Creates new instance
+            /// </summary>
+            /// <param name="regex">The regular expression for Chr and ChrW</param>
             public ChrConcatenatingChar(string regex) {
                 this.regex = new Regex(regex);                
             }
 
+
+            /// <summary>
+            /// Returns true if given text corresponds to this statement. Parses the input and initializes ReplaceChar properly.
+            /// </summary>
             public override bool Matches(string input) {
                 Match m = regex.Match(input);
                 if (!m.Success) return false;

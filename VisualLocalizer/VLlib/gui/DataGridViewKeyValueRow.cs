@@ -40,7 +40,10 @@ namespace VisualLocalizer.Library {
                 ErrorText = ErrorMessages.First();
             }
         }
-  
+
+        /// <summary>
+        /// Resource key
+        /// </summary>
         public string Key {
             get {
                 var grid = this.DataGridView as AbstractKeyValueGridView<ItemType>;
@@ -52,6 +55,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Resource value
+        /// </summary>
         public string Value {
             get {
                 var grid = this.DataGridView as AbstractKeyValueGridView<ItemType>;

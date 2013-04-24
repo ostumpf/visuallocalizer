@@ -18,11 +18,34 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal abstract class AbstractCommand {
 
+        /// <summary>
+        /// IVsTextManager instance for current document's buffer
+        /// </summary>
         protected IVsTextManager textManager;        
+
+        /// <summary>
+        /// IVsTextLines instance for current document's buffered; used to replace text 
+        /// </summary>
         protected IVsTextLines textLines;
+
+        /// <summary>
+        /// IVsTextView instance for current document's buffer; used to set selection
+        /// </summary>
         protected IVsTextView textView;
-        protected IOleUndoManager undoManager;        
+
+        /// <summary>
+        /// Undo manager for current document's buffer, used to add undo units
+        /// </summary>
+        protected IOleUndoManager undoManager;  
+      
+        /// <summary>
+        /// Active document instance
+        /// </summary>
         protected Document currentDocument;
+
+        /// <summary>
+        /// Active document's code model
+        /// </summary>
         protected FileCodeModel2 currentCodeModel;
      
         /// <summary>
@@ -32,6 +55,9 @@ namespace VisualLocalizer.Commands {
             InitializeVariables();
         }
 
+        /// <summary>
+        /// Initializes objects used to access opened document's buffer
+        /// </summary>
         protected void InitializeVariables() {
             currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             if (currentDocument == null)
@@ -48,7 +74,7 @@ namespace VisualLocalizer.Commands {
 
             int hr = textManager.GetActiveView(1, null, out textView);
             Marshal.ThrowExceptionForHR(hr);
-
+            
             hr = textView.GetBuffer(out textLines);
             Marshal.ThrowExceptionForHR(hr);
 

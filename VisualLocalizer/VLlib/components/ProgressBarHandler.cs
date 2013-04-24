@@ -14,8 +14,24 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public static class ProgressBarHandler {
 
+        /// <summary>
+        /// Instance of the IVsStatusbar service
+        /// </summary>
         private static IVsStatusbar statusBar = null;
-        private static uint statusBarCookie = 0, total;                
+
+        /// <summary>
+        /// Token used during determinate progress bar to identify this process
+        /// </summary>
+        private static uint statusBarCookie = 0;
+
+        /// <summary>
+        /// Total number of work units that will be performed during the determinate process
+        /// </summary>
+        private static uint total;                
+
+        /// <summary>
+        /// True if the 100% progress bar can be replaced by the "Ready" text
+        /// </summary>
         private static bool determinateTimerHit;
 
         /// <summary>

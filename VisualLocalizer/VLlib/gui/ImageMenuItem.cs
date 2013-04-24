@@ -22,6 +22,9 @@ namespace VisualLocalizer.Library {
             this.MeasureItem+=new MeasureItemEventHandler(ImageMenuItem_MeasureItem);            
         }
 
+        /// <summary>
+        /// Draws the menu item
+        /// </summary>        
         private void ImageMenuItem_DrawItem(object sender, DrawItemEventArgs e) {
             MenuItem mi = (MenuItem)sender;
             SolidBrush menuBrush = null;
@@ -80,6 +83,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Returns dimensions of this menu item
+        /// </summary>        
         private void ImageMenuItem_MeasureItem(object sender, MeasureItemEventArgs e) {
             MenuItem mi = (MenuItem)sender;
 
@@ -94,6 +100,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Returns human-readeble form of the shortcut
+        /// </summary>  
         private string GetTextFor(Shortcut shortcut) {
             StringBuilder b = new StringBuilder(System.Enum.GetName(typeof(Shortcut), shortcut));
             for (int i = 0; i < b.Length; i++) {
@@ -109,6 +118,10 @@ namespace VisualLocalizer.Library {
         }
 
         private Image _Image;
+
+        /// <summary>
+        /// Image to be displayed in the menu item
+        /// </summary>
         public Image Image {
             get { return _Image; }
             set {
@@ -130,21 +143,33 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// The greyscale version of the image
+        /// </summary>
         private Image DisabledImage {
             get;
             set;
         }
 
+        /// <summary>
+        /// Font for menu text
+        /// </summary>
         public Font Font {
             get;
             set;
         }
 
+        /// <summary>
+        /// Margin of the image
+        /// </summary>
         public Padding ImageMargin {
             get;
             set;
         }
 
+        /// <summary>
+        /// Margin of the text
+        /// </summary>
         public Padding Margin {
             get;
             set;

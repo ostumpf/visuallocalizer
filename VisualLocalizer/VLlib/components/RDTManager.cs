@@ -19,10 +19,19 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public static class RDTManager {
 
+        /// <summary>
+        /// Instance of the IVsRunningDocumentTable service
+        /// </summary>
         private static IVsRunningDocumentTable IVsRunningDocumentTable;
+
+        /// <summary>
+        /// Instance of the DTE object
+        /// </summary>
         private static EnvDTE80.DTE2 DTE;
         
-        // initialize services
+        /// <summary>
+        /// Initialize the services
+        /// </summary>
         static RDTManager() {
             IVsRunningDocumentTable = (IVsRunningDocumentTable)Package.GetGlobalService(typeof(SVsRunningDocumentTable));
             DTE = (EnvDTE80.DTE2)Package.GetGlobalService(typeof(EnvDTE.DTE));

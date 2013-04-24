@@ -535,6 +535,9 @@ namespace VisualLocalizer.Gui {
             }
         }        
 
+        /// <summary>
+        /// Invokes the HighlightRequired action
+        /// </summary>        
         private void OnRowDoubleClick(object sender, DataGridViewCellEventArgs e) {
             if (HighlightRequired != null && e.RowIndex >= 0) {
                 HighlightRequired(this, new CodeResultItemEventArgs() {
@@ -697,10 +700,16 @@ namespace VisualLocalizer.Gui {
             get { return "Value"; }
         }
         
+        /// <summary>
+        /// Returns name of the column used to hold localization probability
+        /// </summary>
         public string LocProbColumnName {
             get { return "LocalizationProbability"; }
         }
 
+        /// <summary>
+        /// Returns name of the column used to hold destination resource file
+        /// </summary>
         public string DestinationColumnName {
             get { return "Destination"; }
         }

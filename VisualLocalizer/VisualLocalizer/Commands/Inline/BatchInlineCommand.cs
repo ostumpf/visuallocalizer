@@ -337,6 +337,13 @@ namespace VisualLocalizer.Commands {
             return list;
         }
 
+        /// <summary>
+        /// Calculates line and column from the absolute position in text
+        /// </summary>
+        /// <param name="text">Text to search</param>
+        /// <param name="index">Absolute position within the text, whose line and column we want</param>
+        /// <param name="lineOffset">Number of lines from the beginning of the text</param>
+        /// <param name="indexOffset">Column index (number of characters from the beginning of the last line)</param>
         private void GetLineOffset(string text, int index, out int lineOffset, out int indexOffset) {
             lineOffset = 0;
             indexOffset = 0;

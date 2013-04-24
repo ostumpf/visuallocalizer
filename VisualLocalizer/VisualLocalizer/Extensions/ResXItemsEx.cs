@@ -7,6 +7,7 @@ using VisualLocalizer.Components;
 using EnvDTE;
 using System.Text.RegularExpressions;
 
+/// Contains extension classes used only within Visual Localizer.
 namespace VisualLocalizer.Extensions {
 
     /// <summary>

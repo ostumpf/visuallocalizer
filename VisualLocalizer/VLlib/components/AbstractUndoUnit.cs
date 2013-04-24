@@ -14,8 +14,19 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public abstract class AbstractUndoUnit : IOleUndoUnit {
 
+        /// <summary>
+        /// True if this unit is undo unit; false if it is redo unit
+        /// </summary>
         protected bool isUndo;
+
+        /// <summary>
+        /// Global ID counter
+        /// </summary>
         protected static int globalid = 1;
+
+        /// <summary>
+        /// ID of this unit
+        /// </summary>
         protected int id;
         
         public AbstractUndoUnit() {

@@ -295,6 +295,7 @@
     <None Include="Class Diagrams\ToolGrids.cd" />
     <None Include="Class Diagrams\Commands.cd" />
     <None Include="Class Diagrams\Editor.cd" />
+    <None Include="Class Diagrams\BatchCommands.cd" />
     <None Include="vlkey.snk" />
   </ItemGroup>
   <ItemGroup>

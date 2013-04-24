@@ -15,6 +15,9 @@ namespace VisualLocalizer.Components {
             Infos = new List<CodeReferenceInfo>();
         }
 
+        /// <summary>
+        /// List of resource files, keys and values from which the trie element was added
+        /// </summary>
         public List<CodeReferenceInfo> Infos {
             get;
             private set;

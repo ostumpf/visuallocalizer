@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
 using System.Collections.Generic;
 
+/// Contains all types associated with the Visual Localizer project, including VLlib.
 namespace VisualLocalizer {
 
     /// <summary>
@@ -73,7 +74,26 @@ namespace VisualLocalizer {
     /// <summary>
     /// Filetype based on file extension
     /// </summary>
-    public enum FILETYPE { UNKNOWN, CSHARP, ASPX, VB }
+    public enum FILETYPE { 
+        /// <summary>
+        /// Unknown file type
+        /// </summary>
+        UNKNOWN, 
+
+        /// <summary>
+        /// *.cs file
+        /// </summary>
+        CSHARP, 
+
+        /// <summary>
+        /// *.aspx, *.master or *.ascx file
+        /// </summary>
+        ASPX, 
+
+        /// <summary>
+        /// *.vb file
+        /// </summary>
+        VB }
 
     /// <summary>
     /// String constants used in VL

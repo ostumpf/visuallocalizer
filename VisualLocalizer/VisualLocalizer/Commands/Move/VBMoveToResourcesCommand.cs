@@ -10,6 +10,10 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Library;
 
 namespace VisualLocalizer.Commands {
+
+    /// <summary>
+    /// Represents "move to resources" command on a VB .NET source code.
+    /// </summary>
     internal sealed class VBMoveToResourcesCommand : MoveToResourcesCommand<VBStringResultItem> {
 
         /// <summary>

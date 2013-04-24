@@ -25,11 +25,17 @@ namespace VisualLocalizer.Gui {
             commentBox.Text = oldComment;
         }
 
+        /// <summary>
+        /// Comment set in the dialog
+        /// </summary>
         public string Comment {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Initializes the comment from the value in the box
+        /// </summary>        
         private void CommentWindow_FormClosing(object sender, FormClosingEventArgs e) {
             Comment = commentBox.Text;
         }

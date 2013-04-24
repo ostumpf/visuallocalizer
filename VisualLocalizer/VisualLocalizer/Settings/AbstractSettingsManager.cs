@@ -16,8 +16,20 @@ namespace VisualLocalizer.Settings {
     /// </summary>
     [Guid("4047ABC0-DE2D-43dd-9872-4143ED94C928")]
     internal abstract class AbstractSettingsManager : DialogPage {
+
+        /// <summary>
+        /// Name of the registry key within Visual Studio in which Visual Localizer stores its settings
+        /// </summary>
         protected const string REG_KEY = "VisualLocalizerSettings";
+
+        /// <summary>
+        /// Name of the Filter settings subkey
+        /// </summary>
         protected const string FILTER_KEY = "BatchFilter";        
+
+        /// <summary>
+        /// Name of the editor subkey
+        /// </summary>
         protected const string EDITOR_KEY = "Editor";
 
         /// <summary>
@@ -33,7 +45,7 @@ namespace VisualLocalizer.Settings {
         }
         
         /// <summary>
-        /// Never called (bug?)
+        /// Never called (VS bug?)
         /// </summary>
         public override void ResetSettings() {
         }

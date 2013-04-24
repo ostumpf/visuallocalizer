@@ -15,6 +15,9 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class AspNetMoveToResourcesCommand : MoveToResourcesCommand<AspNetStringResultItem> {
 
+        /// <summary>
+        /// Private instance of the BatchMoveCommand, which is used as callback when the AspNetCodeExplorer hits a code block
+        /// </summary>
         private BatchMoveCommand batchMoveInstance;
 
         public AspNetMoveToResourcesCommand() {

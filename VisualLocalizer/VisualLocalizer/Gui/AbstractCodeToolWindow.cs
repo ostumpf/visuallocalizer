@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio;
 using EnvDTE80;
 
+/// Contains types producing GUI (but not related with ResX editor).
 namespace VisualLocalizer.Gui {
 
     /// <summary>
@@ -82,7 +83,7 @@ namespace VisualLocalizer.Gui {
         protected ToolWindowEvents windowEvents;
 
         public AbstractCodeToolWindow():base(null) {
-            this.panel = new T(); // creates new toolwindow content
+            this.panel = new T(); // creates new tool window content
             this.panel.HighlightRequired+=new EventHandler<CodeResultItemEventArgs>(Panel_HighlightRequired);
 
             windowEvents = new ToolWindowEvents();
@@ -96,6 +97,9 @@ namespace VisualLocalizer.Gui {
             AddEventsListener();
         }
 
+        /// <summary>
+        /// Called when current solution is being closed
+        /// </summary>
         protected virtual void OnSolutionClosing() {            
         }
 
@@ -153,6 +157,9 @@ namespace VisualLocalizer.Gui {
             }
         }
 
+        /// <summary>
+        /// Returns control handling client portion of the window
+        /// </summary>
         public override IWin32Window Window {
             get { return panel; }
         }

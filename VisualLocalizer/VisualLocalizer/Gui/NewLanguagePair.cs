@@ -15,6 +15,9 @@ namespace VisualLocalizer.Gui {
     /// </summary>
     public partial class NewLanguagePairWindow : Form {
 
+        /// <summary>
+        /// List of languages displayed in source and target comboboxes
+        /// </summary>
         private CultureInfo[] displayedCultures;
 
         /// <summary>
@@ -95,6 +98,9 @@ namespace VisualLocalizer.Gui {
             if (e.KeyCode == Keys.ControlKey) ctrlDown = false;
         }
 
+        /// <summary>
+        /// Initializes the language pair from comboboxes
+        /// </summary>        
         private void NewLanguagePairWindow_FormClosing(object sender, FormClosingEventArgs e) {
             if (sourceBox.SelectedIndex == 0) {
                 SourceLanguage = string.Empty; // "auto" option was selected

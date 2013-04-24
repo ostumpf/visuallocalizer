@@ -17,7 +17,14 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public static class ProjectEx {
 
+        /// <summary>
+        /// Name of the Global Resources folder in ASP .NET websites
+        /// </summary>
         private const string GlobalWebSiteResourcesFolder = "App_GlobalResources";
+
+        /// <summary>
+        /// GUID of the ASP .NET website project
+        /// </summary>
         private const string WebSiteProject = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
 
         /// <summary>

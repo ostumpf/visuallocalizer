@@ -27,9 +27,14 @@ namespace VisualLocalizer.Commands {
         protected ProjectItem currentlyProcessedItem;
 
         /// <summary>
-        /// Used when processing a selection - marks selection scope
+        /// Used when processing a selection - marks top point of the selection scope
         /// </summary>
-        protected VirtualPoint selectionTopPoint, selectionBotPoint;
+        protected VirtualPoint selectionTopPoint;
+            
+        /// <summary>
+        /// Used when processing a selection - marks bottom point of the selection scope
+        /// </summary>
+        protected VirtualPoint selectionBotPoint;
 
         /// <summary>
         /// ProjectItems that were already searched in this instance (cleared before each Process command)
@@ -157,6 +162,9 @@ namespace VisualLocalizer.Commands {
             InitializeSelection();
         }
 
+        /// <summary>
+        /// Initializes selectionTopPoint and selectionBotPoint from active document's selection
+        /// </summary>
         protected void InitializeSelection() {
             Document currentDocument = VisualLocalizerPackage.Instance.DTE.ActiveDocument;
             currentlyProcessedItem = currentDocument.ProjectItem;
@@ -169,6 +177,9 @@ namespace VisualLocalizer.Commands {
             selectionBotPoint = currentSelection.TopPoint;            
         }
 
+        /// <summary>
+        /// Recursively processes given list of projects
+        /// </summary>        
         protected virtual void Process(Projects projects, bool verbose) {
             if (projects == null) return;
 
@@ -177,6 +188,9 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        /// <summary>
+        /// If the project is of known type, processes its project items
+        /// </summary>        
         protected virtual void Process(Project project, bool verbose) {
             if (project == null) return;
             if (!project.IsKnownProjectType()) return;
@@ -184,6 +198,9 @@ namespace VisualLocalizer.Commands {
             Process(project.ProjectItems, verbose);
         }
 
+        /// <summary>
+        /// Recursively processes given list of project items
+        /// </summary>        
         protected virtual void Process(ProjectItems items, bool verbose) {
             if (items == null) return;            
 
@@ -373,6 +390,9 @@ namespace VisualLocalizer.Commands {
         }
     }
 
+    /// <summary>
+    /// Compares position of two result items according to their absolute char offset, putting the earlier result item first.
+    /// </summary>    
     public class ResultItemsPositionCompararer<T> : IComparer<T> where T:AbstractResultItem {
         
         public int Compare(T x, T y) {

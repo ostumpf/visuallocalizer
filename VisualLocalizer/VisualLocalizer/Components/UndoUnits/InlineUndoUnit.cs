@@ -41,10 +41,16 @@ namespace VisualLocalizer.Components {
             
         }
 
+        /// <summary>
+        /// Returns text that appears in the undo list
+        /// </summary>        
         public override string GetUndoDescription() {
             return String.Format("{1}Inline {0}", Key, ExternalChange ? "*" : "");
         }
 
+        /// <summary>
+        /// Returns text that appears in the redo list
+        /// </summary>        
         public override string GetRedoDescription() {
             return GetUndoDescription();
         }

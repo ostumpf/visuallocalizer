@@ -20,10 +20,25 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class ReferenceLister : BatchInlineCommand {
 
-        private Trie<CodeReferenceTrieElement> trie;
-        private ResXProjectItem prefferedResXItem;
-        private bool isInitial;
-        private ResXEditor editorInstance;
+        /// <summary>
+        /// Instance of Trie passed from the ResX editor
+        /// </summary>
+        private Trie<CodeReferenceTrieElement> trie { get; set; }
+
+        /// <summary>
+        /// In case of ambiguity errors, resource file which should have higher priority
+        /// </summary>
+        private ResXProjectItem prefferedResXItem { get; set; }
+
+        /// <summary>
+        /// True if this run of the ReferenceLister is initial and invisible windows should be opened for files with no FileCodeModel
+        /// </summary>
+        private bool isInitial { get; set; }
+
+        /// <summary>
+        /// Instance of the ResX editor which issues the search
+        /// </summary>
+        private ResXEditor editorInstance { get; set; }
 
         /// <summary>
         /// Runs this command, filling Results with references to resources in given file
@@ -49,14 +64,23 @@ namespace VisualLocalizer.Commands {
             codeUsingsCache.Clear();      
         }
 
+        /// <summary>
+        /// This method is not available in this context.
+        /// </summary>        
         public override void Process(bool verbose) {
             throw new InvalidOperationException("This method is not supported.");
         }
 
+        /// <summary>
+        /// This method is not available in this context.
+        /// </summary>
         public override void ProcessSelection(bool verbose) {
             throw new InvalidOperationException("This method is not supported.");
         }
 
+        /// <summary>
+        /// This method is not available in this context.
+        /// </summary>
         public override void Process(Array selectedItems, bool verbose) {
             throw new InvalidOperationException("This method is not supported.");
         }
@@ -157,6 +181,10 @@ namespace VisualLocalizer.Commands {
             editorInstance.UIControl.sourceFilesThatNeedUpdate.Remove(projectItem.GetFullPath().ToLower());
         }
 
+        /// <summary>
+        /// Treats given ProjectItem as a VB code file, using VBCodeExplorer to examine the file. LookInVB method is called as a callback,
+        /// given plain methods text.
+        /// </summary>    
         protected override void ProcessVB(ProjectItem projectItem, Predicate<CodeElement> exploreable, bool verbose) {
             if (isInitial || editorInstance.UIControl.sourceFilesThatNeedUpdate.Contains(projectItem.GetFullPath().ToLower())) {
                 base.ProcessVB(projectItem, exploreable, verbose);

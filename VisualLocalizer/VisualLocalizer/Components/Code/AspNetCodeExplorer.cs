@@ -62,6 +62,9 @@ namespace VisualLocalizer.Components {
         /// </summary>
         private FILETYPE fileLanguage;
 
+        /// <summary>
+        /// Synchronization object
+        /// </summary>
         private object syncObject = new object();
 
         /// <summary>
@@ -73,6 +76,10 @@ namespace VisualLocalizer.Components {
         private AspNetCodeExplorer() { }
 
         private static AspNetCodeExplorer instance;
+
+        /// <summary>
+        /// Returns instance of AspNetCodeExplorer
+        /// </summary>
         public static AspNetCodeExplorer Instance {
             get {                
                 if (instance == null) instance = new AspNetCodeExplorer();
@@ -135,6 +142,10 @@ namespace VisualLocalizer.Components {
             Explore(parentCommand, projectItem, int.MaxValue, int.MaxValue);
         }
 
+        /// <summary>
+        /// Should return true, when parsing should be stopped. Currently processed block/element is first finished,
+        /// after that parser exits.
+        /// </summary>
         public bool StopRequested { get { return false;  } }
 
         /// <summary>
@@ -346,7 +357,7 @@ namespace VisualLocalizer.Components {
         }        
 
         /// <summary>
-        /// Adds new result item
+        /// Adds new result item to the list of results
         /// </summary>
         private AspNetStringResultItem AddResult(AttributeInfo info, string elementPrefix,string elementName, bool comesFromClientComment,
             bool propertyLocalizableFalse, bool comesFromElement, bool stripApos) {
@@ -368,7 +379,7 @@ namespace VisualLocalizer.Components {
             resultItem.AbsoluteCharLength = info.Value.Length;
             resultItem.WasVerbatim = false;
             resultItem.IsWithinLocalizableFalse = propertyLocalizableFalse;
-            resultItem.IsMarkedWithUnlocalizableComment = info.IsMarkedWithUnlocalizableComment;
+            resultItem.IsMarkedWithUnlocalizableComment = false;
             resultItem.ClassOrStructElementName = ClassFileName;
             resultItem.DeclaredNamespaces = declaredNamespaces;
             resultItem.ComesFromElement = comesFromElement;
@@ -385,10 +396,17 @@ namespace VisualLocalizer.Components {
             return resultItem;
         }
 
+        /// <summary>
+        /// Adds new result item to the list of results
+        /// </summary>
         private AspNetStringResultItem AddResult(AttributeInfo info, ElementContext elementContext, bool propertyLocalizableFalse) {
             return AddResult(info, elementContext.Prefix, elementContext.ElementName, elementContext.WithinClientSideComment, propertyLocalizableFalse, true, true);
         }
     
+        /// <summary>
+        /// Adds context to given list of result items
+        /// </summary>
+        /// <param name="items"></param>
         public void AddContextToItems(IEnumerable items) {
             foreach (AbstractResultItem item in items) {
                 AddContextToItem(item);
@@ -437,6 +455,11 @@ namespace VisualLocalizer.Components {
             item.Context = context.ToString();
         }
 
+        /// <summary>
+        /// Returns text of the line after or before the given absolute index
+        /// </summary>
+        /// <param name="currentPos"></param>
+        /// <param name="delta">+1 for next line, -1 for previous line</param>        
         private string GetLine(ref int currentPos, int delta) {
             if (delta == 0) {
                 return GetTextOnLine(currentPos);
@@ -457,6 +480,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Returns line text on given absolute offset
+        /// </summary>        
         private string GetTextOnLine(int currentPos) {
             int startIndex = -1;
             int endIndex = -1;
@@ -479,24 +505,6 @@ namespace VisualLocalizer.Components {
         }
 
 
-        
-        private sealed class StringIgnoreCaseComparer : IEqualityComparer<string> {
-            static StringIgnoreCaseComparer() {
-                Instance = new StringIgnoreCaseComparer();
-            }
-
-            public static StringIgnoreCaseComparer Instance {
-                get;
-                private set;
-            }
-
-            public bool Equals(string x, string y) {
-                return string.Compare(x, y, true) == 0;
-            }
-
-            public int GetHashCode(string obj) {
-                return obj.GetHashCode();
-            }
-        }
+      
     }
 }

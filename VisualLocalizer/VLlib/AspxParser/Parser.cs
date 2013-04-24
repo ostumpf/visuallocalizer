@@ -458,8 +458,7 @@ namespace VisualLocalizer.Library.AspxParser {
                     // add attribute to the element's list
                     AttributeInfo nfo = new AttributeInfo() {
                         Name = attributeNameBuilder.ToString(),
-                        Value = attributeValueBuilder.ToString().Substring(1), // " or '
-                        IsMarkedWithUnlocalizableComment = false,
+                        Value = attributeValueBuilder.ToString().Substring(1), // " or '                        
                         BlockSpan = currentAttributeBlockSpan,
                         ContainsAspTags = attributeValueContainsOutput
                     };

@@ -8,6 +8,10 @@ using EnvDTE;
 using System.Collections;
 
 namespace VisualLocalizer.Components {
+
+    /// <summary>
+    /// Represents lookuper of string literals in ASP .NET VB code blocks
+    /// </summary>
     internal sealed class AspNetVBStringLookuper : VBLookuper<AspNetStringResultItem> {
 
         /// <summary>

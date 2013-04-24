@@ -10,15 +10,31 @@ namespace VisualLocalizer.Library {
     /// Represents list of namespaces used (declared or imported) in a file
     /// </summary>
     public class NamespacesList : List<UsedNamespaceItem> {
+        /// <summary>
+        /// GUID of the ASP .NET website projects
+        /// </summary>
         private const string WebSiteProjectGuid = "{E24C65DC-7377-472B-9ABA-BC803B73C61A}";
+
+        /// <summary>
+        /// Default namespace for ASP .NET website projects
+        /// </summary>
         private const string GlobalWebSiteResourcesNamespace = "Resources";
         
+        /// <summary>
+        /// Adds a new entry to this list
+        /// </summary>
+        /// <param name="namespaceName">Full name of the namespace</param>
+        /// <param name="alias">Alias (can be null)</param>
+        /// <param name="isImport">True if the namespace comes from the import statement</param>
         public void Add(string namespaceName, string alias, bool isImport) {
             if (string.IsNullOrEmpty(namespaceName)) throw new ArgumentNullException("namespaceName");
 
             Add(new UsedNamespaceItem(namespaceName, alias, isImport));
         }
-
+        
+        /// <summary>
+        /// Returns true if given full namespace name exists in this list
+        /// </summary>        
         public bool ContainsNamespace(string namespaceName) {
             if (string.IsNullOrEmpty(namespaceName)) throw new ArgumentNullException("namespaceName");
 
@@ -157,8 +173,19 @@ namespace VisualLocalizer.Library {
             this.IsImported = isImported;
         }
 
+        /// <summary>
+        /// Full namespace name
+        /// </summary>
         public string Namespace { get; set; }
+
+        /// <summary>
+        /// Alias - can be null
+        /// </summary>
         public string Alias { get; set; }
+
+        /// <summary>
+        /// True if the namespace comes from the import statement
+        /// </summary>
         public bool IsImported { get; set; }
     }
 
@@ -177,8 +204,19 @@ namespace VisualLocalizer.Library {
             this.KeyPart = keyPart;
         }
 
+        /// <summary>
+        /// Namespace part of the reference (can be null)
+        /// </summary>
         public string NamespacePart { get; set; }
+
+        /// <summary>
+        /// Class name
+        /// </summary>
         public string ClassPart { get; set; }
+
+        /// <summary>
+        /// Resource key name
+        /// </summary>
         public string KeyPart { get; set; }
 
     }

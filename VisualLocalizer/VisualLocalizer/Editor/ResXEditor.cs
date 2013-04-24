@@ -35,6 +35,9 @@ namespace VisualLocalizer.Editor {
             UIControl.DataChanged += new EventHandler(UIControl_DataChanged);            
         }
 
+        /// <summary>
+        /// Sets this document dirty state to true
+        /// </summary>        
         private void UIControl_DataChanged(object sender, EventArgs e) {
             IsDirty = true;            
         }
@@ -158,6 +161,9 @@ namespace VisualLocalizer.Editor {
             get { return StringConstants.ResXExtension; }
         }
 
+        /// <summary>
+        /// GUID of the editor factory that created this editor
+        /// </summary>
         public override Guid EditorFactoryGuid {
             get { return typeof(ResXEditorFactory).GUID; }
         }

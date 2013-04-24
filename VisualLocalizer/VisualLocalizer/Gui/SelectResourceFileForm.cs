@@ -99,6 +99,9 @@ namespace VisualLocalizer.Gui {
             errorLabel.Text = "";            
         }
 
+        /// <summary>
+        /// Initializes output values from the controls
+        /// </summary>        
         private void SelectResourceFileForm_FormClosing(object sender, FormClosingEventArgs e) {
             // initialize output values
             Key = keyBox.Text;
@@ -116,22 +119,37 @@ namespace VisualLocalizer.Gui {
                 item.Unload();
         }
 
+        /// <summary>
+        /// Validates data
+        /// </summary>        
         private void KeyBox_TextChanged(object sender, EventArgs e) {
             ValidateData();
         }
 
+        /// <summary>
+        /// Validates data
+        /// </summary>
         private void ComboBox_SelectedIndexChanged(object sender, EventArgs e) {            
             ValidateData();
         }
 
+        /// <summary>
+        /// Validates data
+        /// </summary>
         private void ValueBox_TextChanged(object sender, EventArgs e) {
             ValidateData();
         }
 
+        /// <summary>
+        /// Validates data
+        /// </summary>
         private void SelectResourceFileForm_Load(object sender, EventArgs e) {
             ValidateData();
         }
 
+        /// <summary>
+        /// Validates data
+        /// </summary>
         private void UsingBox_CheckedChanged(object sender, EventArgs e) {
             fullBox.Checked = !usingBox.Checked;
             ValidateData();
@@ -332,30 +350,10 @@ namespace VisualLocalizer.Gui {
         public bool UsingFullName {
             get;
             private set;
-        }             
-               
-        private class CaseInsensitiveComparer : IEqualityComparer<string> {
-
-            private static CaseInsensitiveComparer instance;
-
-            public static CaseInsensitiveComparer Instance {
-                get {
-                    if (instance == null) instance = new CaseInsensitiveComparer();
-                    return instance;
-                }
-            }
-
-            public bool Equals(string x, string y) {
-                return x.ToLower() == y.ToLower();
-            }
-
-            public int GetHashCode(string obj) {
-                return obj.GetHashCode();
-            }
-        }
+        }                                   
 
         /// <summary>
-        /// Resize the text box vertically
+        /// Resizes the text box vertically
         /// </summary>        
         private void ExistingValueBox_TextChanged(object sender, EventArgs e) {
             Size sz = new Size(existingValueBox.ClientSize.Width, int.MaxValue);

@@ -73,8 +73,11 @@ namespace VisualLocalizer.Editor {
                 _FileRefOk = value;
                 UpdateErrorSetDisplay();
             }
-        }       
+        }
 
+        /// <summary>
+        /// Resource key
+        /// </summary>
         public string Key {
             get {
                 return this.Text;
@@ -87,9 +90,20 @@ namespace VisualLocalizer.Editor {
         public string Value {
             get { return null; }
         }
-    
+
+        /// <summary>
+        /// Index the item had at the moment it was deleted (used by undo units)
+        /// </summary>
         public int IndexAtDeleteTime { get; set; }
+
+        /// <summary>
+        /// The RemoveKind used to remove this item (used by undo units)
+        /// </summary>
         public REMOVEKIND RemoveKind { get; set; }
+
+        /// <summary>
+        /// Collection of ProjectItems in the same directory as linked resource (used by undo units)
+        /// </summary>
         public ProjectItems NeighborItems { get; set; }
 
         /// <summary>

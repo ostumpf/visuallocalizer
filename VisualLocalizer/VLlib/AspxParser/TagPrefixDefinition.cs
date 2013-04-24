@@ -53,6 +53,9 @@ namespace VisualLocalizer.Library.AspxParser {
             set;
         }
 
+        /// <summary>
+        /// Returns true if given type is already in the cache
+        /// </summary>        
         public bool IsDefined(string typeName, string propertyName) {
             if (typeName == null) throw new ArgumentNullException("typeName");
             if (propertyName == null) throw new ArgumentNullException("propertyName");
@@ -60,6 +63,9 @@ namespace VisualLocalizer.Library.AspxParser {
             return Types.ContainsKey(typeName + "." + propertyName);
         }
 
+        /// <summary>
+        /// Returns the type from cache
+        /// </summary>        
         public Type GetType(string typeName, string propertyName) {
             if (typeName == null) throw new ArgumentNullException("typeName");
             if (propertyName == null) throw new ArgumentNullException("propertyName");
@@ -67,6 +73,9 @@ namespace VisualLocalizer.Library.AspxParser {
             return Types[typeName + "." + propertyName];
         }
 
+        /// <summary>
+        /// Returns true if given type is located within block decorated with [Localizable(false)]
+        /// </summary>
         public bool HasLocalizableFalse(string typeName, string propertyName) {
             if (typeName == null) throw new ArgumentNullException("typeName");
             if (propertyName == null) throw new ArgumentNullException("propertyName");
@@ -74,6 +83,9 @@ namespace VisualLocalizer.Library.AspxParser {
             return Localizables.ContainsKey(typeName + "." + propertyName) && Localizables[typeName + "." + propertyName];
         }
 
+        /// <summary>
+        /// Adds a new type to the types and localizables cache, examinig given CodeProperty for the Localizable attribute
+        /// </summary>
         public void AddType(string typeName, string propertyName, CodeProperty property) {
             if (typeName == null) throw new ArgumentNullException("typeName");
             if (propertyName == null) throw new ArgumentNullException("propertyName");
@@ -96,6 +108,9 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Adds a new type to the types and localizables cache, examinig given PropertyInfo for the Localizable attribute
+        /// </summary>
         public void AddType(string typeName, string propertyName, PropertyInfo info) {
             if (typeName == null) throw new ArgumentNullException("typeName");
             if (propertyName == null) throw new ArgumentNullException("propertyName");
@@ -121,6 +136,9 @@ namespace VisualLocalizer.Library.AspxParser {
             }
         }
 
+        /// <summary>
+        /// Clears the cache
+        /// </summary>
         public void Clear() {
             Assemblies.Clear();
             Types.Clear();
@@ -377,9 +395,23 @@ namespace VisualLocalizer.Library.AspxParser {
         }
     }
 
+    /// <summary>
+    /// Represents a Page or Control directive attributes
+    /// </summary>
     public sealed class ControlDirectiveInfo {
+        /// <summary>
+        /// Value of the CodeBehind attribute
+        /// </summary>
         public string CodeBehind { get; set; }
+
+        /// <summary>
+        /// Value of the Inherits attribute
+        /// </summary>
         public string Inherits { get; set; }
+
+        /// <summary>
+        /// Value of the CodeFile attribute
+        /// </summary>
         public string CodeFile { get; set; }
     }
 }

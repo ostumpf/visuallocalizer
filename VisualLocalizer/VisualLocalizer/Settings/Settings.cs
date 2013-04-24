@@ -5,12 +5,23 @@ using System.Text;
 using VisualLocalizer.Components;
 using System.IO;
 
+/// Contains types related with saving, loading and editing settings.
 namespace VisualLocalizer.Settings {
     
     /// <summary>
     /// Categories of settings values, corresponding to subfolders in Tools/Options pages.
     /// </summary>
-    internal enum CHANGE_CATEGORY { FILTER = 1, EDITOR = 2 }
+    internal enum CHANGE_CATEGORY { 
+        /// <summary>
+        /// Settings involving "batch move" filter - localization criteria, split container splitter distance...
+        /// </summary>
+        FILTER = 1, 
+
+        /// <summary>
+        /// Settings involving ResX editor - language pairs, reference lookuper update interval...
+        /// </summary>
+        EDITOR = 2 
+    }
 
     /// <summary>
     /// Holds all Visual Localizer settings saved in VS registry. Implemented as singleton.

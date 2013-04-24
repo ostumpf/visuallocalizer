@@ -117,6 +117,9 @@ namespace VisualLocalizer.Components {
             }
         }
 
+        /// <summary>
+        /// Returns true if this item has implicit designer file. This happens for resource files in ASP .NET projects located in the App_GlobalResources folder.
+        /// </summary>
         public bool HasImplicitDesignerFile {
             get {
                 bool impliedDesignerItem = false;

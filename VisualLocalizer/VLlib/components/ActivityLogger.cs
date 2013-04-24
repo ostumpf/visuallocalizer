@@ -13,10 +13,16 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public class ActivityLogger {
 
+        /// <summary>
+        /// Instance of the IVsActivityLog service
+        /// </summary>
         protected static IVsActivityLog logService;
 
         protected ActivityLogger() { }
 
+        /// <summary>
+        /// Initializes the services
+        /// </summary>
         static ActivityLogger() {
             logService = (IVsActivityLog)Package.GetGlobalService(typeof(SVsActivityLog));
             if (logService == null) throw new Exception("Cannot consume SVsActivityLog service.");
@@ -30,7 +36,11 @@ namespace VisualLocalizer.Library {
             set;
         }
 
-       
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
         public static void Log(EntryType type, string message) {
             if (message == null) throw new ArgumentNullException("message");
             if (Source == null) throw new InvalidOperationException("ActivityLogger is not sufficiently initialized.");
@@ -39,6 +49,12 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="path">File path that will be written to the log</param>
         public static void Log(EntryType type, string message,string path) {
             if (message == null) throw new ArgumentNullException("message");
             if (path == null) throw new ArgumentNullException("path");
@@ -48,6 +64,12 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="hr">HResult that caused the error</param>
         public static void Log(EntryType type, string message,int hr) {
             if (message == null) throw new ArgumentNullException("message");
             if (Source == null) throw new InvalidOperationException("ActivityLogger is not sufficiently initialized.");
@@ -56,6 +78,12 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(returnHr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="guid">GUID of the object that caused the error</param>
         public static void Log(EntryType type, string message,Guid guid) {
             if (message == null) throw new ArgumentNullException("message");
             if (guid == null) throw new ArgumentNullException("guid");
@@ -65,6 +93,13 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="hr">HResult that caused the error</param>
+        /// <param name="path">File path that will be written to the log</param>
         public static void Log(EntryType type, string message,int hr, string path) {
             if (message == null) throw new ArgumentNullException("message");
             if (path == null) throw new ArgumentNullException("path");
@@ -74,6 +109,13 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(returnHr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="guid">GUID of the object that caused the error</param>
+        /// <param name="path">File path that will be written to the log</param>
         public static void Log(EntryType type, string message, Guid guid, string path) {
             if (message == null) throw new ArgumentNullException("message");
             if (path == null) throw new ArgumentNullException("path");
@@ -84,6 +126,13 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(hr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="guid">GUID of the object that caused the error</param>
+        /// <param name="hr">HResult that caused the error</param>        
         public static void Log(EntryType type, string message, Guid guid, int hr) {
             if (message == null) throw new ArgumentNullException("message");
             if (guid == null) throw new ArgumentNullException("guid");
@@ -93,6 +142,14 @@ namespace VisualLocalizer.Library {
             Marshal.ThrowExceptionForHR(returnHr);
         }
 
+        /// <summary>
+        /// Creates a new log entry
+        /// </summary>
+        /// <param name="type">Category of the entry</param>
+        /// <param name="message">Message</param>
+        /// <param name="guid">GUID of the object that caused the error</param>
+        /// <param name="hr">HResult that caused the error</param>        
+        /// <param name="path">File path that will be written to the log</param>
         public static void Log(EntryType type, string message, Guid guid, int hr,string path) {
             if (message == null) throw new ArgumentNullException("message");
             if (path == null) throw new ArgumentNullException("path");
@@ -104,8 +161,22 @@ namespace VisualLocalizer.Library {
         }
     }
 
+    /// <summary>
+    /// Categories of the log entries
+    /// </summary>
     public enum EntryType : uint { 
+        /// <summary>
+        /// Information
+        /// </summary>
         INFORMATION=__ACTIVITYLOG_ENTRYTYPE.ALE_INFORMATION, 
+
+        /// <summary>
+        /// Warning
+        /// </summary>
         WARNING=__ACTIVITYLOG_ENTRYTYPE.ALE_WARNING, 
+
+        /// <summary>
+        /// Error
+        /// </summary>
         ERROR=__ACTIVITYLOG_ENTRYTYPE.ALE_ERROR };
 }

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Text;
 
+/// Contains actions performed during installation of Visual Localizer.
 namespace VLSetupFinalizer {
 
     /// <summary>

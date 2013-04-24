@@ -36,6 +36,9 @@ namespace VisualLocalizer.Gui {
             panel.Clear();
         }
 
+        /// <summary>
+        /// Called when current solution is being closed
+        /// </summary>
         protected override void OnSolutionClosing() {
             OnWindowHidden(null, null);
         }

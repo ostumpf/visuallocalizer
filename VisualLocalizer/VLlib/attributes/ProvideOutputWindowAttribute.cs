@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.Shell;
 
+/// Contains attributes classes, assigneable to a package class and used by the RegPkg utilitiy
 namespace VisualLocalizer.Library.Attributes {
     
     /// <summary>
@@ -68,11 +69,17 @@ namespace VisualLocalizer.Library.Attributes {
             set;
         }
 
+        /// <summary>
+        /// True if the window pane should be cleared when solution is closed
+        /// </summary>
         public bool ClearWithSolution {
             get;
             set;
         }
 
+        /// <summary>
+        /// True if the window pane is invisible until activated
+        /// </summary>
         public bool InitiallyInvisible {
             get;
             set;

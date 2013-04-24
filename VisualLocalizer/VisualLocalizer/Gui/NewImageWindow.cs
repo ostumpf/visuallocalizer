@@ -20,7 +20,21 @@ namespace VisualLocalizer.Gui {
         /// Background color displayed in case of error
         /// </summary>
         private static readonly Color errorColor = Color.FromArgb(255, 213, 213);
-        private bool widthOk, heightOk, nameOk;
+        
+        /// <summary>
+        /// True if correct width was specified
+        /// </summary>
+        private bool widthOk;
+
+        /// <summary>
+        /// True if correct height was specified
+        /// </summary>
+        private bool heightOk;
+
+        /// <summary>
+        /// True if correct name was specified
+        /// </summary>
+        private bool nameOk;
 
         /// <summary>
         /// Creates new instance

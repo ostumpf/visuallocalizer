@@ -14,9 +14,20 @@ namespace VisualLocalizer.Settings {
     internal sealed class GeneralSettingsManager : AbstractSettingsManager {
 
         private bool propertyChangedHooked = false;
+
+        /// <summary>
+        /// Instance of FilterSettingsManager
+        /// </summary>
         private FilterSettingsManager filterManager = new FilterSettingsManager();
+
+        /// <summary>
+        /// Instance of EditorSettingsManager
+        /// </summary>
         private EditorSettingsManager editorManager = new EditorSettingsManager();
 
+        /// <summary>
+        /// Loads settings from registry storage (on package load)
+        /// </summary>
         public override void LoadSettingsFromStorage() {
             // add PropertyChanged handler - save changed settings category
             if (!propertyChangedHooked) {
@@ -28,20 +39,36 @@ namespace VisualLocalizer.Settings {
              editorManager.LoadSettingsFromStorage();
         }
 
+        /// <summary>
+        /// Value of settings changed - saves the appropriate portion of settings into the registry
+        /// </summary>
+        /// <param name="category"></param>
         private void Instance_PropertyChanged(CHANGE_CATEGORY category) {
               if ((category & CHANGE_CATEGORY.FILTER) == CHANGE_CATEGORY.FILTER) filterManager.SaveSettingsToStorage();
               if ((category & CHANGE_CATEGORY.EDITOR) == CHANGE_CATEGORY.EDITOR) editorManager.SaveSettingsToStorage();
         }
 
+        /// <summary>
+        /// Blank - settings handled in EditorSettingsManager and FilterSettingsManager
+        /// </summary>
         public override void LoadSettingsFromXml(IVsSettingsReader reader) {            
         }
 
+        /// <summary>
+        /// Blank - settings handled in EditorSettingsManager and FilterSettingsManager
+        /// </summary>
         public override void ResetSettings() {            
         }
 
+        /// <summary>
+        /// Blank - settings handled in EditorSettingsManager and FilterSettingsManager
+        /// </summary>
         public override void SaveSettingsToStorage() {            
         }
 
+        /// <summary>
+        /// Blank - settings handled in EditorSettingsManager and FilterSettingsManager
+        /// </summary>
         public override void SaveSettingsToXml(IVsSettingsWriter writer) {            
         }
         

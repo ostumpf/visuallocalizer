@@ -10,16 +10,25 @@ using System.IO;
 using VSLangProj;
 using VisualLocalizer.Commands;
 
-namespace VLUnitTests {
+/// Contains tests of the Visual Localizer project.
+namespace VLUnitTests.VLTests {
 
     /// <summary>
     /// Helper class containing methods to control testing instance of Visual Studio and paths of testing files.
     /// </summary>
     internal class Agent {
+
+        /// <summary>
+        /// Returns DTE2 instance for hosting VS
+        /// </summary>        
         public static EnvDTE80.DTE2 GetDTE() {
             return (EnvDTE80.DTE2)Package.GetGlobalService(typeof(EnvDTE.DTE));   
         }
 
+        /// <summary>
+        /// Returns UIHieararchy for hosting VS
+        /// </summary>
+        /// <returns></returns>
         public static EnvDTE.UIHierarchy GetUIHierarchy() {
             return (EnvDTE.UIHierarchy)GetDTE().Windows.Item(EnvDTE.Constants.vsWindowKindSolutionExplorer).Object;
         }

@@ -29,11 +29,15 @@ namespace VisualLocalizer.Library {
         protected ToolTip ErrorToolTip; // tooltip displayed over error icon
         protected DataGridViewCheckBoxHeaderCell CheckHeader; // header cell with checkbox            
         protected Timer ErrorTimer; // controls ErrorToolTip display
-        protected bool ErrorToolTipVisible;                
+        protected bool ErrorToolTipVisible;
         protected Color ErrorColor = Color.FromArgb(255, 213, 213); // background color of rows with error (red)
         protected Color ExistingKeySameValueColor = Color.FromArgb(213, 255, 213); // background color of rows whose key is already in the resource file with the same value (ok - green)
         protected HashSet<DataGridViewRow> errorRows = new HashSet<DataGridViewRow>();
         protected DataGridViewRow previouslySelectedRow = null;
+        
+        /// <summary>
+        /// Rows that were removed from the grid and remembered
+        /// </summary>
         protected List<DataGridViewRow> removedRows;
 
         public AbstractCheckedGridView(bool showContextColumn) {
@@ -385,10 +389,16 @@ namespace VisualLocalizer.Library {
             ErrorTimer.Stop();
         }
 
+        /// <summary>
+        /// Issues the HasErrorChanged event
+        /// </summary>
         protected void NotifyErrorRowsChanged() {
             if (HasErrorChanged != null) HasErrorChanged(this, null);
         }
 
+        /// <summary>
+        /// Displays the tooltip and starts the 1s timer which hides it
+        /// </summary>        
         private void RowHeaderMouseMove(object sender, MouseEventArgs e) {
             HitTestInfo info = this.HitTest(e.X, e.Y);
             if (info != null && info.Type == DataGridViewHitTestType.RowHeader && info.RowIndex >= 0) {

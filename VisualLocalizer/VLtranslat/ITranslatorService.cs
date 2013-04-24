@@ -6,8 +6,9 @@ using System.Text;
 /*
  * This library provides functionality for translating texts using free online translation providers.
  * Each of these providers has its own implementation of ITranslatorService interface.
- * 
  */
+
+/// Contains implementation of translation services by Microsoft, Google and MyMemory.
 namespace VisualLocalizer.Translate {
     
     public enum TRANSLATE_PROVIDER { BING, MYMEMORY, GOOGLE }

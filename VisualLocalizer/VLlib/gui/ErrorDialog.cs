@@ -16,6 +16,9 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public partial class ErrorDialog : Form {
 
+        /// <summary>
+        /// True if details box is expanded
+        /// </summary>
         private bool detailsDisplayed = false;
 
         /// <summary>
@@ -55,6 +58,9 @@ namespace VisualLocalizer.Library {
             detailsBox.Hide();
         }
 
+        /// <summary>
+        /// Shows/hides the details box
+        /// </summary>
         private void DetailsButton_Click(object sender, EventArgs e) {
             var rowStyle = tableLayoutPanel1.RowStyles[2];
             detailsDisplayed = !detailsDisplayed;
@@ -76,6 +82,9 @@ namespace VisualLocalizer.Library {
             ResumeLayout();
         }
 
+        /// <summary>
+        /// Plays the error sound
+        /// </summary>        
         private void ErrorDialog_Load(object sender, EventArgs e) {
             SystemSounds.Hand.Play();
         }

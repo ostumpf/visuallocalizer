@@ -21,7 +21,14 @@ namespace VisualLocalizer.Commands {
     /// </summary>
     internal sealed class GlobalTranslateCommand {
 
+        /// <summary>
+        /// Contains project items that were already searched (not to be searched again)
+        /// </summary>
         private HashSet<ProjectItem> searchedProjectItems = new HashSet<ProjectItem>();
+
+        /// <summary>
+        /// Contains list of loaded project items (to be unloaded when finished)
+        /// </summary>
         private List<ResXProjectItem> loadedResxItems = new List<ResXProjectItem>();
 
         /// <summary>
@@ -141,6 +148,9 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        /// <summary>
+        /// If the given item is ResX file, adds it to the list of ResX files
+        /// </summary>        
         private void SearchForResxFiles(ProjectItem item, List<GlobalTranslateProjectItem> resxFiles) {
             if (searchedProjectItems.Contains(item)) return;
             SearchForResxFiles(item.ProjectItems, resxFiles);
@@ -154,12 +164,18 @@ namespace VisualLocalizer.Commands {
             }
         }
 
+        /// <summary>
+        /// Recursively searches list of project items 
+        /// </summary>        
         private void SearchForResxFiles(ProjectItems items, List<GlobalTranslateProjectItem> resxFiles) {
             if (items == null) return;
             foreach (ProjectItem item in items)
                 SearchForResxFiles(item, resxFiles);
         }
 
+        /// <summary>
+        /// Recursively searches list of projects; only projects of a known type are searched
+        /// </summary>        
         private void SearchForResxFiles(Projects projects, List<GlobalTranslateProjectItem> resxFiles) {
             if (projects == null) return;
             foreach (Project item in projects) {
@@ -173,6 +189,10 @@ namespace VisualLocalizer.Commands {
     /// Represents ResX file in the global translate process
     /// </summary>
     internal sealed class GlobalTranslateProjectItem {
+
+        /// <summary>
+        /// Creates new instance of ResX file in the global translate process
+        /// </summary>        
         public GlobalTranslateProjectItem(ProjectItem item) {
             if (item == null) throw new ArgumentNullException("item");
 
@@ -181,20 +201,39 @@ namespace VisualLocalizer.Commands {
             string filePath = item.GetFullPath();
 
             if (item.ContainingProject != null && VisualLocalizerPackage.Instance.DTE.Solution.ContainsProjectItem(item)) {                
-                this.path = Uri.UnescapeDataString(new Uri(VisualLocalizerPackage.Instance.DTE.Solution.FullName).MakeRelativeUri(new Uri(filePath)).ToString());
+                this.Path = Uri.UnescapeDataString(new Uri(VisualLocalizerPackage.Instance.DTE.Solution.FullName).MakeRelativeUri(new Uri(filePath)).ToString());
             } else {
-                this.path = filePath;
+                this.Path = filePath;
             }            
         }
 
+        /// <summary>
+        /// Media resources located in the file
+        /// </summary>
         public List<ResXDataNode> NonStringData { get; private set; }
+
+        /// <summary>
+        /// Original project item from which this object was created
+        /// </summary>
         public ProjectItem ProjectItem { get; private set; }
+
+        /// <summary>
+        /// True if the file is readonly or locked (disabled in the dialog list)
+        /// </summary>
         public bool Readonly { get; set; }
+
+        /// <summary>
+        /// Used in the dialog - true if the item was checked for translation
+        /// </summary>
         public bool Checked { get; set; }
-        private string path;
+
+        /// <summary>
+        /// Relative path of this file displayed in the dialog
+        /// </summary>
+        private string Path { get; set; }
 
         public override string ToString() {
-            return path + (Readonly ? " (readonly)":"");
+            return Path + (Readonly ? " (readonly)":"");
         }
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+/// Contains AspX-parser related types
 namespace VisualLocalizer.Library.AspxParser {
     
     /// <summary>

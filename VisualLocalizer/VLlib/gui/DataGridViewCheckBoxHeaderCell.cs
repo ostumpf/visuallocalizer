@@ -23,6 +23,9 @@ namespace VisualLocalizer.Library {
         /// </summary>
         public event Action<SortOrder> Sort;
 
+        /// <summary>
+        /// Check state of the checkbox
+        /// </summary>
         private CheckBoxState CheckBoxState { get; set; }
 
         public DataGridViewCheckBoxHeaderCell() {
@@ -124,6 +127,9 @@ namespace VisualLocalizer.Library {
             }
         }
 
+        /// <summary>
+        /// Change checkbox state        
+        /// </summary>
         protected virtual void ChangeValue() {
             if (Checked == true) {
                 CheckBoxState = CheckBoxState.CheckedNormal;

@@ -5,56 +5,15 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-namespace VLUnitTests {
+/// Contains unit tests for the VLlib project.
+namespace VLUnitTests.VLLibTests {
 
     /// <summary>
     /// Tests for the customized Aho-Corasick algorithm implemented in the Trie class
     /// </summary>
     [TestClass()]
     public class TrieTest {
-        private TestContext testContextInstance;
-
-        public TestContext TestContext {
-            get {
-                return testContextInstance;
-            }
-            set {
-                testContextInstance = value;
-            }
-        }
-
-        #region Additional test attributes
-        // 
-        //You can use the following additional attributes as you write your tests:
-        //
-        //Use ClassInitialize to run code before running the first test in the class
-        //[ClassInitialize()]
-        //public static void MyClassInitialize(TestContext testContext)
-        //{
-        //}
-        //
-        //Use ClassCleanup to run code after all tests in a class have run
-        //[ClassCleanup()]
-        //public static void MyClassCleanup()
-        //{
-        //}
-        //
-        //Use TestInitialize to run code before running each test
-        //[TestInitialize()]
-        //public void MyTestInitialize()
-        //{
-        //}
-        //
-        //Use TestCleanup to run code after each test has run
-        //[TestCleanup()]
-        //public void MyTestCleanup()
-        //{
-        //}
-        //
-        #endregion
-
-
-  
+       
         /// <summary>
         /// Tests the Trie
         /// </summary>
@@ -63,7 +22,7 @@ namespace VLUnitTests {
             Trie<TrieElement> trie = new Trie<TrieElement>();
             
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VLUnitTests.Resources.TrieTest.txt");
-            string text = stream.readAll(); // read all data from testing file
+            string text = stream.ReadAll(); // read all data from testing file
 
             // add "references" that will be searched
             trie.Add("id.aliquam.lorem"); 
@@ -109,17 +68,4 @@ namespace VLUnitTests {
         }        
     }
 
-    public static class Ext {
-        public static string readAll(this Stream stream) {
-            byte[] buffer = new byte[1024];
-            int count = 0;
-            StringBuilder b = new StringBuilder();
-
-            while ((count = stream.Read(buffer, 0, buffer.Length)) > 0) {
-                b.Append(Encoding.UTF8.GetString(buffer, 0, count));
-            }
-
-            return b.ToString();
-        }
-    }
 }

@@ -34,13 +34,25 @@ namespace VisualLocalizer.Editor {
         /// </summary>
         public event EventHandler ItemsStateChanged;
        
+        /// <summary>
+        /// Parent editor control
+        /// </summary>
         protected ResXEditorControl editorControl;        
+
+        /// <summary>
+        /// Key names conflict resolver common for the editor instance
+        /// </summary>
         protected KeyValueIdentifierConflictResolver conflictResolver;
+
         protected ListViewKeyItem CurrentlyEditedItem;
         protected ImageMenuItem renameContextMenuItem, editCommentContextMenuItem, openContextMenuItem, cutContextMenuItem,
             copyContextMenuItem, pasteContextMenuItem, deleteContextMenu, deleteContextMenuItem, deleteExcludeContextMenuItem,
             deleteRemoveContextMenuItem, makeEmbeddedMenuItem, makeExternalMenuItem, showResultItemsMenuItem;
-        Dictionary<string, ListViewKeyItem> externalizedResourcesMap = new Dictionary<string, ListViewKeyItem>();
+        
+        /// <summary>
+        /// Used during the "make resource linked" process
+        /// </summary>
+        private Dictionary<string, ListViewKeyItem> externalizedResourcesMap = new Dictionary<string, ListViewKeyItem>();
 
         /// <summary>
         /// True if existing items should be searched first and referenced on Add event; used in MakeResourcesExternal
@@ -158,6 +170,9 @@ namespace VisualLocalizer.Editor {
             InitializeColumns();
         }
 
+        /// <summary>
+        /// Parent editor control
+        /// </summary>
         public ResXEditorControl EditorControl {
             get {
                 return editorControl;
@@ -716,10 +731,16 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Makes selected embedded resources linked
+        /// </summary>        
         private void MakeExternalMenuItem_Click(object sender, EventArgs e) {
             MakeResourcesExternal((IEnumerable)SelectedItems, false, true);
         }
         
+        /// <summary>
+        /// Makes selected linked resources embedded
+        /// </summary>        
         private void MakeEmbeddedMenuItem_Click(object sender, EventArgs e) {            
             var result = System.Windows.Forms.MessageBox.Show("Do you also want to delete all referenced files?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             bool delete = result == DialogResult.Yes;
@@ -755,6 +776,9 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Opens selected item by standard VS editor
+        /// </summary>        
         protected void OpenContextMenuItem_Click(object sender, EventArgs e) {
             if (SelectedItems.Count == 0) {
                 OpenForEdit(null); // throws exception
@@ -783,8 +807,10 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Displays context menu
+        /// </summary>        
         protected void ContextMenu_Popup(object sender, EventArgs e) {
-            cutContextMenuItem.Font = this.Font;
             UpdateContextMenuItemsEnabled();
         }
 
@@ -973,11 +999,17 @@ namespace VisualLocalizer.Editor {
             }
         }
 
+        /// <summary>
+        /// Adds "items removed" undo unit
+        /// </summary>        
         protected void ItemsRemoved(List<ListViewKeyItem> list) {
             ListViewRemoveItemsUndoUnit unit = new ListViewRemoveItemsUndoUnit(editorControl, list, editorControl.conflictResolver);
             editorControl.Editor.AddUndoUnit(unit);
         }        
 
+        /// <summary>
+        /// Updates the view kind value
+        /// </summary>        
         protected void ViewKindChanged(View view) {
             this.View = view;
         }

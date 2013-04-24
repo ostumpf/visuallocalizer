@@ -33,11 +33,34 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Represents position of a block in a document
     /// </summary>
     public class BlockSpan {
+        /// <summary>
+        /// Number of the line where the span begins
+        /// </summary>
         public int StartLine { get; set; }
+
+        /// <summary>
+        /// Number of the column where the span begins
+        /// </summary>
         public int StartIndex { get; set; }
+
+        /// <summary>
+        /// Number of the line where the span ends
+        /// </summary>
         public int EndLine { get; set; }
+
+        /// <summary>
+        /// Number of the column where the span ends
+        /// </summary>
         public int EndIndex { get; set; }
+
+        /// <summary>
+        /// Absolute number of characters from the beginning of the text to the beginnning of this block
+        /// </summary>
         public int AbsoluteCharOffset { get; set; }
+
+        /// <summary>
+        /// Absolute length (number of the characters this span contains)
+        /// </summary>
         public int AbsoluteCharLength { get; set; }
 
         public BlockSpan() {
@@ -94,10 +117,24 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about element attribute
     /// </summary>
     public class AttributeInfo {
+        /// <summary>
+        /// Position of the attribute
+        /// </summary>
         public BlockSpan BlockSpan { get; set; }
+
+        /// <summary>
+        /// Name of the attribute
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Value of the attribute
+        /// </summary>
         public string Value { get; set; }
-        public bool IsMarkedWithUnlocalizableComment { get; set; }
+
+        /// <summary>
+        /// True if ASP tags are present with the attribute value
+        /// </summary>
         public bool ContainsAspTags { get; set; }
     }
 
@@ -105,9 +142,24 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about block of code
     /// </summary>
     public class CodeBlockContext {
+        /// <summary>
+        /// Literal content of the code block
+        /// </summary>
         public string BlockText { get; set; }
+
+        /// <summary>
+        /// Position of the inner content (not counting ASP tags)
+        /// </summary>
         public BlockSpan InnerBlockSpan { get; set; }
+
+        /// <summary>
+        /// Position of the whole block (including ASP tags)
+        /// </summary>
         public BlockSpan OuterBlockSpan { get; set; }
+
+        /// <summary>
+        /// True if the code block is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
     }
 
@@ -115,9 +167,24 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about directive
     /// </summary>
     public class DirectiveContext {
+        /// <summary>
+        /// The name of the directive
+        /// </summary>
         public string DirectiveName { get; set; }
+
+        /// <summary>
+        /// List of attributes of the directive
+        /// </summary>
         public List<AttributeInfo> Attributes { get; set; } 
+
+        /// <summary>
+        /// Position of the directive
+        /// </summary>
         public BlockSpan BlockSpan { get; set; }
+
+        /// <summary>
+        /// True if the directive is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
     }
 
@@ -125,11 +192,34 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about inline output element
     /// </summary>
     public class OutputElementContext {
+        /// <summary>
+        /// Kind of the output element
+        /// </summary>
         public OutputElementKind Kind { get; set; }
+
+        /// <summary>
+        /// Content of the output element
+        /// </summary>
         public string InnerText { get; set; }
+
+        /// <summary>
+        /// Position of the inner content (not counting ASP tags)
+        /// </summary>
         public BlockSpan InnerBlockSpan { get; set; }
+
+        /// <summary>
+        /// Position of the whole element (including ASP tags)
+        /// </summary>
         public BlockSpan OuterBlockSpan { get; set; } 
+
+        /// <summary>
+        /// True if the element is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
+
+        /// <summary>
+        /// True if the element is located within an attribute's value
+        /// </summary>
         public bool WithinElementsAttribute { get; set; }
     }
 
@@ -137,11 +227,34 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about beginnig element tag
     /// </summary>
     public class ElementContext {
+        /// <summary>
+        /// Prefix of the element name
+        /// </summary>
         public string Prefix { get; set; }
+
+        /// <summary>
+        /// Name of the element
+        /// </summary>
         public string ElementName { get; set; }
+
+        /// <summary>
+        /// List of the attribute's elements
+        /// </summary>
         public List<AttributeInfo> Attributes { get; set; }
+
+        /// <summary>
+        /// Position of the element
+        /// </summary>
         public BlockSpan BlockSpan { get; set; }
+
+        /// <summary>
+        /// True if the element is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
+
+        /// <summary>
+        /// True if the element includes the end tag (&lt;br/>)
+        /// </summary>
         public bool IsEnd { get; set; }
     }
 
@@ -149,9 +262,24 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about end element tag
     /// </summary>
     public class EndElementContext {
+        /// <summary>
+        /// Prefix of the element name
+        /// </summary>
         public string Prefix { get; set; }
+
+        /// <summary>
+        /// Name of the element
+        /// </summary>
         public string ElementName { get; set; }
+
+        /// <summary>
+        /// Position of the element
+        /// </summary>
         public BlockSpan BlockSpan { get; set; }
+
+        /// <summary>
+        /// True if the element is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
     }
 
@@ -159,8 +287,19 @@ namespace VisualLocalizer.Library.AspxParser {
     /// Information about plain text between elements
     /// </summary>
     public class PlainTextContext {
-        public string Text { get; set; } 
+        /// <summary>
+        /// The literal text
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Position of the plain text
+        /// </summary>
         public BlockSpan BlockSpan { get; set; }
+
+        /// <summary>
+        /// True if the element is commented out using client-side comment
+        /// </summary>
         public bool WithinClientSideComment { get; set; }
     }
 }

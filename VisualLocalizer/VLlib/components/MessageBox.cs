@@ -11,6 +11,9 @@ using System.IO;
 
 namespace VisualLocalizer.Library {
 
+    /// <summary>
+    /// Flags for the "open file" dialog
+    /// </summary>
     public static class OPENFILENAME {
         public static uint OFN_ALLOWMULTISELECT = 0x00000200;
         public static uint OFN_CREATEPROMPT = 0x00002000;
@@ -32,31 +35,52 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public static class MessageBox {
 
+        /// <summary>
+        /// Initializes the services
+        /// </summary>
         static MessageBox() {
             UIShell = (IVsUIShell)Package.GetGlobalService(typeof(SVsUIShell));
         }
 
+        /// <summary>
+        /// Instance of the IVsUIShell service
+        /// </summary>
         public static IVsUIShell UIShell {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Displays info dialog with the OK button and specified message
+        /// </summary>
         public static DialogResult Show(string message) {
             return Show(message, null, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO);
         }
 
+        /// <summary>
+        /// Displays info dialog with the OK button, specified message and title
+        /// </summary>
         public static DialogResult Show(string message,string title) {
             return Show(message, title, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO);
         }
 
+        /// <summary>
+        /// Displays error dialog with the OK button and specified message
+        /// </summary>
         public static DialogResult ShowError(string message) {            
             return Show(message, null, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_CRITICAL);
         }
 
+        /// <summary>
+        /// Displays error dialog with detailed information about the exception
+        /// </summary>        
         public static DialogResult ShowException(Exception ex) {
             return ShowException(ex, null);
         }
 
+        /// <summary>
+        /// Displays error dialog with detailed information about the exception
+        /// </summary>   
         public static DialogResult ShowException(Exception ex, Dictionary<string,string> specialInfo) {
             if (ex == null) throw new ArgumentNullException("ex");
 
@@ -68,6 +92,9 @@ namespace VisualLocalizer.Library {
             return d.ShowDialog(NativeWindow.FromHandle(hwnd));
         }
 
+        /// <summary>
+        /// Displays message box with provided values
+        /// </summary>
         public static DialogResult Show(string message,string title,OLEMSGBUTTON buttons,OLEMSGDEFBUTTON defaultButton,OLEMSGICON icon) {
             if (UIShell == null) throw new InvalidOperationException("MessageBox is not sufficiently initialized.");
 
@@ -79,6 +106,9 @@ namespace VisualLocalizer.Library {
             return ConvertFromIntToDialogResult(result);
         }
 
+        /// <summary>
+        /// Converts Visual Studio dialog result to the Windows Forms dialog result
+        /// </summary>
         private static DialogResult ConvertFromIntToDialogResult(int code) {
             switch (code) {
                 case 1:

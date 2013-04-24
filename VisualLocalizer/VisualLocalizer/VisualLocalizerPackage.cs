@@ -17,6 +17,13 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Gui;
 using VisualLocalizer.Settings;
 
+/**
+\mainpage Visual Localizer Overview
+
+This is auto-generated documentation for the Visual Localizer project describing types and structures used within the project
+and supporting libraries. More comments can be found directly in the source code.
+*/
+  
 namespace VisualLocalizer
 {
     /// <summary>
@@ -111,6 +118,9 @@ namespace VisualLocalizer
             }
         }
 
+        /// <summary>
+        /// Obtains services essential for the package to work properly
+        /// </summary>
         private void InitBaseServices() {                       
             DTE = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
             try {
@@ -126,14 +136,20 @@ namespace VisualLocalizer
                 throw new Exception("Error during initialization of base services.");
         }
        
+        /// <summary>
+        /// Returns instance of this package
+        /// </summary>
         public static VisualLocalizerPackage Instance {
             get {
                 return instance;
             }
         }
-
-        /// <returns>Visual Studio version determined from registry values.</returns>
+        
         private static VS_VERSION? version = null;
+
+        /// <summary>
+        /// Returns version of hosting Visual Studio instance, calculated from registry values
+        /// </summary>
         public static VS_VERSION VisualStudioVersion {
             get {
                 if (!version.HasValue) {
@@ -180,12 +196,15 @@ namespace VisualLocalizer
         }
 
         public int ProductID(out string pbstrPID) {
-            pbstrPID = "1.0";
+            pbstrPID = "1.3";
             return VSConstants.S_OK;
         }
 
         #endregion
     }
 
+    /// <summary>
+    /// Possible versions of Visual Studio
+    /// </summary>
     public enum VS_VERSION { VS2008, VS2010, VS2012, UNKNOWN }
 }

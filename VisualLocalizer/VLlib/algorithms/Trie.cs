@@ -11,7 +11,9 @@ namespace VisualLocalizer.Library {
     /// <typeparam name="ElementType">Type of inner nodes of the trie</typeparam>
     public class Trie<ElementType> where ElementType : TrieElement, new() {
 
-        // root element
+        /// <summary>
+        /// Trie root element
+        /// </summary>
         public ElementType Root { get; private set; }
 
         public Trie() {
@@ -113,15 +115,37 @@ namespace VisualLocalizer.Library {
     /// </summary>
     public class TrieElement {
 
+        /// <summary>
+        /// Successor nodes specific for characters
+        /// </summary>
         public Dictionary<char, TrieElement> Successors {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Previous element
+        /// </summary>
         public TrieElement Predecessor { get; set; }
+
+        /// <summary>
+        /// Last output element
+        /// </summary>
         public TrieElement Shortcut { get; set; }
+
+        /// <summary>
+        /// True if this node represents a terminal state
+        /// </summary>
         public bool IsTerminal { get; set; }
-        public bool CanBeFollowedByWhitespace { get; set; }        
+
+        /// <summary>
+        /// True if this node can be followed by optional amount of whitespace
+        /// </summary>
+        public bool CanBeFollowedByWhitespace { get; set; }    
+    
+        /// <summary>
+        /// The word of this prefix node
+        /// </summary>
         public string Word { get; set; }      
 
         public TrieElement() {

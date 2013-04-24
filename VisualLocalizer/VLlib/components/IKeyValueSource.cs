@@ -10,7 +10,14 @@ namespace VisualLocalizer.Library {
     /// ResX editor lists...)
     /// </summary>
     public interface IKeyValueSource {
+        /// <summary>
+        /// Resource key
+        /// </summary>
         string Key { get; }
+
+        /// <summary>
+        /// Resource value
+        /// </summary>
         string Value { get; }
 
         /// <summary>

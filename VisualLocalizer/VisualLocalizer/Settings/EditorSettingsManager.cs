@@ -130,7 +130,7 @@ namespace VisualLocalizer.Settings {
         }
 
         /// <summary>
-        /// Never called (bug?)
+        /// Never called by VS (bug?)
         /// </summary>
         public override void ResetSettings() {
             SettingsObject.Instance.IgnorePropertyChanges = true;
@@ -450,6 +450,9 @@ namespace VisualLocalizer.Settings {
 
         #region listeners
 
+        /// <summary>
+        /// Updates enabled state of the remove, up and down buttons
+        /// </summary>        
         private void LanguagePairsBox_SelectedIndexChanged(object sender, EventArgs e) {
             try {
                 bool selected = languagePairsBox.SelectedIndex != -1;
@@ -518,6 +521,9 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        /// <summary>
+        /// Exchanges items with specified indices in language pairs box
+        /// </summary>        
         private void SwitchItems(int originalIndex, int newIndex) {
             object upperItem = languagePairsBox.Items[newIndex];
             languagePairsBox.Items[newIndex] = languagePairsBox.Items[originalIndex];

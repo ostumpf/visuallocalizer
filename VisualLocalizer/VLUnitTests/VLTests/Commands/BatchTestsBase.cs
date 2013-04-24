@@ -255,39 +255,40 @@ namespace VLUnitTests.VLTests {
         /// <param name="getExpected">Function that returns list of expected result items for specified file</param>
         protected void GenericTest(AbstractBatchCommand target, string[] itemsToSelect, string[] expectedFiles, Func<string, List<AbstractResultItem>> getExpected) {
             Agent.EnsureSolutionOpen();
+            try {
+                // select the items in Solution Explorer
+                UIHierarchyItem[] selectedItems = new UIHierarchyItem[itemsToSelect.Length];
+                for (int i = 0; i < itemsToSelect.Length; i++) {
+                    selectedItems[i] = Agent.FindUIHierarchyItem(Agent.GetUIHierarchy().UIHierarchyItems, itemsToSelect[i]);
+                    Assert.IsNotNull(selectedItems[i]);
+                }
 
-            // select the items in Solution Explorer
-            UIHierarchyItem[] selectedItems = new UIHierarchyItem[itemsToSelect.Length];
-            for (int i = 0; i < itemsToSelect.Length; i++) {
-                selectedItems[i] = Agent.FindUIHierarchyItem(Agent.GetUIHierarchy().UIHierarchyItems, itemsToSelect[i]);
-                Assert.IsNotNull(selectedItems[i]);
-            }
-            
-            // run the command on the selection
-            target.Process(selectedItems, true);
+                // run the command on the selection
+                target.Process(selectedItems, true);
 
-            // test if all expected files were processed
-            for (int i = 0; i < expectedFiles.Length; i++) {
-                Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
-            }
+                // test if all expected files were processed
+                for (int i = 0; i < expectedFiles.Length; i++) {
+                    Assert.IsTrue(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
+                }
 
-            // create the list of expected results
-            List<AbstractResultItem> list = new List<AbstractResultItem>();
-            for (int i = 0; i < expectedFiles.Length; i++) {
-                list.AddRange(getExpected(expectedFiles[i]));
-            }
+                // create the list of expected results
+                List<AbstractResultItem> list = new List<AbstractResultItem>();
+                for (int i = 0; i < expectedFiles.Length; i++) {
+                    list.AddRange(getExpected(expectedFiles[i]));
+                }
 
-            // compare the results
-            if (target is BatchMoveCommand) {
-                ValidateResults(list, (target as BatchMoveCommand).Results);
-            } else if (target is BatchInlineCommand) {
-                ValidateResults(list, (target as BatchInlineCommand).Results);
-            } else Assert.Fail("Unkown parent command type");
+                // compare the results
+                if (target is BatchMoveCommand) {
+                    ValidateResults(list, (target as BatchMoveCommand).Results);
+                } else if (target is BatchInlineCommand) {
+                    ValidateResults(list, (target as BatchInlineCommand).Results);
+                } else Assert.Fail("Unkown parent command type");
 
-
-            VLDocumentViewsManager.ReleaseLocks();
-            for (int i = 0; i < expectedFiles.Length; i++) {
-                Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
+            } finally {
+                VLDocumentViewsManager.ReleaseLocks();
+                for (int i = 0; i < expectedFiles.Length; i++) {
+                    Assert.IsFalse(VLDocumentViewsManager.IsFileLocked(expectedFiles[i]));
+                }
             }
         }     
 
