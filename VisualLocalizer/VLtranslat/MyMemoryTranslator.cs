@@ -11,24 +11,25 @@ namespace VisualLocalizer.Translate {
     /// <summary>
     /// Singleton implementation of translation service for My Memory.
     /// </summary>
-    public class MyMemoryTranslator : ITranslatorService {
+    public class MyMemoryTranslator : AbstractTranslatorService {
 
         // URI where requests are sent
         private const string APP_URI = "http://mymemory.translated.net/api/get?q={0}&langpair={1}|{2}&of=tmx";
-        private static ITranslatorService instance;
+        private static AbstractTranslatorService instance;
 
-        public static ITranslatorService GetService() {
+        public static AbstractTranslatorService GetService() {
             if (instance == null) instance = new MyMemoryTranslator();            
             return instance;
         }
 
         /// <summary>
-        /// Translates the specified from language.
+        /// Translates source text from one language to another.
         /// </summary>
-        /// <param name="fromLanguage">From language.</param>
-        /// <param name="toLanguage">To language.</param>
-        /// <param name="untranslatedText">The untranslated text.</param>
-        public string Translate(string fromLanguage, string toLanguage, string untranslatedText) {
+        /// <param name="fromLanguage">Two letter ISO code of the source language or null - in that case, source language gets detected by the translation service</param>
+        /// <param name="toLanguage">Two letter ISO code of the target language</param>
+        /// <param name="unstranslatedText">Text to be translated</param>
+        /// <returns>Text translated from source language to target language</returns>
+        protected override string InternalTranslate(string fromLanguage, string toLanguage, string untranslatedText) {
             if (string.IsNullOrEmpty(untranslatedText)) return untranslatedText;
             if (string.IsNullOrEmpty(toLanguage)) throw new ArgumentNullException("toLanguage");
 

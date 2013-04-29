@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using VisualLocalizer.Components;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace VisualLocalizer.Settings {
 
@@ -260,6 +261,13 @@ namespace VisualLocalizer.Settings {
             style.Name = Path.GetRandomFileName();
             style.Regex = @"^style$(?# CSS)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(style);
+
+            var names = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_DISABLE, 0);
+            names.Predicate = LocalizationCriterionPredicate.MATCHES;
+            names.Target = LocalizationCriterionTarget.LINE;
+            names.Name = Path.GetRandomFileName();
+            names.Regex = @".+\.Name =(?# something.Name = <string>)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(names);
 
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
@@ -734,6 +742,7 @@ namespace VisualLocalizer.Settings {
                         if (targetBox.SelectedIndex == -1) throw new Exception("Error on custom rule no. " + (i + 1) + " - must select target.");
                         crit.Target = (LocalizationCriterionTarget)targetBox.SelectedIndex;
 
+                        new Regex(regexBox.Text); // throws exception if regex is not valid
                         crit.Regex = regexBox.Text;
 
                         SettingsObject.Instance.CustomLocalizabilityCriteria.Add(crit);

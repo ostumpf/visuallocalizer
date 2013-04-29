@@ -180,6 +180,21 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        private bool _OptimizeSpecialSequencesInTranslation;
+
+        /// <summary>
+        /// Identification necessary to consume the Bing translation service
+        /// </summary>
+        public bool OptimizeSpecialSequencesInTranslation {
+            get {
+                return _OptimizeSpecialSequencesInTranslation;
+            }
+            set {
+                _OptimizeSpecialSequencesInTranslation = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
+            }
+        }
+
         private int _ReferenceUpdateInterval;
 
         /// <summary>

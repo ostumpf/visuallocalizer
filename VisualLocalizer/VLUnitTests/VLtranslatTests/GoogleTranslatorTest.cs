@@ -33,14 +33,31 @@ namespace VLUnitTests.VLtranslatTests {
             string toLanguage = "en";
             string untranslatedText = "Tohle je testovací překlad.\nDalší řádek.";
             string expected = "This is a test translation.\nAnother row .";
-            string actual = target.Translate(fromLanguage, toLanguage, untranslatedText);
+            string actual = target.Translate(fromLanguage, toLanguage, untranslatedText, true);
             
             Assert.AreEqual(expected, actual);
 
             fromLanguage = "cs";
-            actual = target.Translate(fromLanguage, toLanguage, untranslatedText);
+            actual = target.Translate(fromLanguage, toLanguage, untranslatedText, true);
 
             Assert.AreEqual(expected, actual);            
+        }
+
+        [TestMethod()]
+        public void TranslateTest2() {
+            GoogleTranslator target = new GoogleTranslator();
+            string fromLanguage = string.Empty;
+            string toLanguage = "cs";
+            string untranslatedText = "In this year ({0,2}), {1:d} were produced.";
+            string expected = "V tomto roce ({0,2}) , bylo vyrobeno {1:d} .";
+            string actual = target.Translate(fromLanguage, toLanguage, untranslatedText, true);
+
+            Assert.AreEqual(expected, actual);
+
+            fromLanguage = "en";
+            actual = target.Translate(fromLanguage, toLanguage, untranslatedText, true);
+
+            Assert.AreEqual(expected, actual);
         }
     }
 }

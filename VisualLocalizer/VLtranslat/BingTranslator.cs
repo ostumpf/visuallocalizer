@@ -11,7 +11,7 @@ namespace VisualLocalizer.Translate {
     /// <summary>
     /// Singleton implementation of translation service for Microsoft Bing.
     /// </summary>
-    public class BingTranslator : ITranslatorService {
+    public class BingTranslator : AbstractTranslatorService {
 
         private static BingTranslator instance;        
 
@@ -24,7 +24,7 @@ namespace VisualLocalizer.Translate {
         // URL from where AppID can be obtained
         public const string GET_BING_APPID_URL = "https://datamarket.azure.com/dataset/bing/microsofttranslator";
 
-        public static ITranslatorService GetService(string appid) {
+        public static AbstractTranslatorService GetService(string appid) {
             if (instance == null) instance = new BingTranslator();
             instance.AppId = appid;
             return instance;
@@ -39,12 +39,13 @@ namespace VisualLocalizer.Translate {
         }
 
         /// <summary>
-        /// Translates the specified from language.
+        /// Translates source text from one language to another.
         /// </summary>
-        /// <param name="fromLanguage">From language.</param>
-        /// <param name="toLanguage">To language.</param>
-        /// <param name="untranslatedText">The untranslated text.</param>  
-        public string Translate(string fromLanguage, string toLanguage, string untranslatedText) {
+        /// <param name="fromLanguage">Two letter ISO code of the source language or null - in that case, source language gets detected by the translation service</param>
+        /// <param name="toLanguage">Two letter ISO code of the target language</param>
+        /// <param name="unstranslatedText">Text to be translated</param>
+        /// <returns>Text translated from source language to target language</returns>
+        protected override string InternalTranslate(string fromLanguage, string toLanguage, string untranslatedText) {
             if (string.IsNullOrEmpty(AppId)) throw new InvalidOperationException("Cannot perform this operations with AppId being empty.");
             if (string.IsNullOrEmpty(untranslatedText)) return untranslatedText;
             if (string.IsNullOrEmpty(toLanguage)) throw new ArgumentNullException("toLanguage");

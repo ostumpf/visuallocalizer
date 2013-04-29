@@ -102,7 +102,12 @@ namespace VisualLocalizer.Settings {
         /// <summary>
         /// Name of the attribute, if the result item comes from ASP .NET element
         /// </summary>
-        ATTRIBUTE_NAME
+        ATTRIBUTE_NAME,
+
+        /// <summary>
+        /// Line in which the result item occurs
+        /// </summary>
+        LINE
     }
     
     /// <summary>
@@ -422,6 +427,15 @@ namespace VisualLocalizer.Settings {
                         testString = aResItem.AttributeName;
                     } else return null;
                     break;
+                case LocalizationCriterionTarget.LINE:
+                    if (resultItem.Context == null)  return null;
+                    string[] lines = resultItem.Context.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+
+                    if (resultItem.ContextRelativeLine >= 0 && resultItem.ContextRelativeLine < lines.Length) {
+                        relevant = true;
+                        testString = lines[resultItem.ContextRelativeLine];
+                    } else return null;
+                    break;
             }
             return testString;
         }
@@ -546,6 +560,8 @@ namespace VisualLocalizer.Settings {
                     return "variable name";
                 case LocalizationCriterionTarget.ATTRIBUTE_NAME:
                     return "attribute name";
+                case LocalizationCriterionTarget.LINE:
+                    return "line";
                 default:
                     throw new Exception("Unknown LocalizationCriterionTarget: " + target);
             }            

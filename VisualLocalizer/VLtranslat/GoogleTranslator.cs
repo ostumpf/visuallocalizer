@@ -10,28 +10,28 @@ namespace VisualLocalizer.Translate {
     /// <summary>
     /// Singleton implementation of translation service for Google Translate.
     /// </summary>
-    public class GoogleTranslator : ITranslatorService {
-
-        private static ITranslatorService service;
-
+    public class GoogleTranslator : AbstractTranslatorService {
+        
         // URI where requests are sent
         private const string APP_URI = "http://translate.google.com/translate_a/t?client=t&text={0}&sl={1}&tl={2}&ie=UTF-8&oe=UTF-8";
+        private static GoogleTranslator instance;
 
-        public static ITranslatorService GetService() {
-            if (service == null) service = new GoogleTranslator();
-            return service;
+        public static AbstractTranslatorService GetService() {
+            if (instance == null) instance = new GoogleTranslator();            
+            return instance;
         }
 
         /// <summary>
-        /// Translates the specified from language.
+        /// Translates source text from one language to another.
         /// </summary>
-        /// <param name="fromLanguage">From language.</param>
-        /// <param name="toLanguage">To language.</param>
-        /// <param name="untranslatedText">The untranslated text.</param> 
-        public string Translate(string fromLanguage, string toLanguage, string untranslatedText) {
+        /// <param name="fromLanguage">Two letter ISO code of the source language or null - in that case, source language gets detected by the translation service</param>
+        /// <param name="toLanguage">Two letter ISO code of the target language</param>
+        /// <param name="unstranslatedText">Text to be translated</param>
+        /// <returns>Text translated from source language to target language</returns>
+        protected override string InternalTranslate(string fromLanguage, string toLanguage, string untranslatedText) {
             if (string.IsNullOrEmpty(untranslatedText)) return untranslatedText;
-            if (string.IsNullOrEmpty(toLanguage)) throw new ArgumentNullException("toLanguage");
-            
+            if (string.IsNullOrEmpty(toLanguage)) throw new ArgumentNullException("toLanguage");                       
+
             // when source language is null, correspoding field in the URI should be blank
             string realUri = string.Format(APP_URI, Uri.EscapeUriString(untranslatedText), fromLanguage, toLanguage);
 

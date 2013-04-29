@@ -243,7 +243,7 @@ namespace VisualLocalizer.Gui {
                 this.OnResize(null);
 
                 parentToolPanel.ResetFilterSettings(); // reset filter according to settings
-                UpdateCheckHeader();              
+                UpdateCheckHeader();                
 
                 // perform sorting
                 if (SortedColumn != null) {

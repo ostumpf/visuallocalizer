@@ -279,12 +279,13 @@ namespace VisualLocalizer.Commands {
         }
 
         /// <summary>
-        /// Lookups the in C sharp ASP net.
+        /// Searches given C# code block located in an ASP .NET document
         /// </summary>
-        /// <param name="functionText">The function text.</param>
-        /// <param name="blockSpan">The block span.</param>
-        /// <param name="declaredNamespaces">The declared namespaces.</param>
-        /// <param name="className">Name of the class.</param>   
+        /// <param name="functionText">Text to search</param>
+        /// <param name="blockSpan">Information about position of the block (line, column...</param>
+        /// <param name="declaredNamespaces">Namespaces imported in the document</param>
+        /// <param name="fileName">Name of the ASP .NET document</param>
+        /// <returns>List of result items</returns>     
         public override IList LookupInCSharpAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
             if (functionText == null) throw new ArgumentNullException("functionText");
             if (blockSpan == null) throw new ArgumentNullException("blockSpan");
@@ -301,12 +302,13 @@ namespace VisualLocalizer.Commands {
         }
 
         /// <summary>
-        /// Lookups the in VB ASP net.
+        /// Searches given VB code block located in an ASP .NET document
         /// </summary>
-        /// <param name="functionText">The function text.</param>
-        /// <param name="blockSpan">The block span.</param>
-        /// <param name="declaredNamespaces">The declared namespaces.</param>
-        /// <param name="className">Name of the class.</param>   
+        /// <param name="functionText">Text to search</param>
+        /// <param name="blockSpan">Information about position of the block (line, column...</param>
+        /// <param name="declaredNamespaces">Namespaces imported in the document</param>
+        /// <param name="fileName">Name of the ASP .NET document</param>
+        /// <returns>List of result items</returns>
         public override IList LookupInVBAspNet(string functionText, BlockSpan blockSpan, NamespacesList declaredNamespaces, string className) {
             if (functionText == null) throw new ArgumentNullException("functionText");
             if (blockSpan == null) throw new ArgumentNullException("blockSpan");

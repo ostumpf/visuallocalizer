@@ -43,7 +43,8 @@ namespace VisualLocalizer.Settings {
     internal sealed class EditorSettingsManager : AbstractSettingsManager {
 
         private TableLayoutPanel tablePanel, langTable;
-        private Label bingLabel, languagePairsLabel;
+        private Label bingLabel, languagePairsLabel, optimizeLabel;
+        private CheckBox optimizeBox;
         private TextBox bingBox;
         private ListBox languagePairsBox;
         private Button addButton, removeButton, moveUpButton, moveDownButton;
@@ -70,6 +71,8 @@ namespace VisualLocalizer.Settings {
 
                         SettingsObject.Instance.ReferenceUpdateInterval = ReadIntFromRegKey(editorKey, "ReferenceUpdateInterval", 15 * 1000);
                         SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)ReadIntFromRegKey(editorKey, "BadKeyNamePolicy", 1);
+                        SettingsObject.Instance.OptimizeSpecialSequencesInTranslation = ReadBoolFromRegKey(editorKey, "OptimizeSpecialSequencesInTranslation");
+                        
                         SettingsObject.Instance.LanguagePairs.Clear();
                         int count = ReadIntFromRegKey(editorKey, "LanguagesCount");
 
@@ -104,6 +107,8 @@ namespace VisualLocalizer.Settings {
 
             SettingsObject.Instance.ReferenceUpdateInterval = ReadIntFromXml(reader, "ReferenceUpdateInterval");
             SettingsObject.Instance.BadKeyNamePolicy = (BAD_KEY_NAME_POLICY)ReadIntFromXml(reader, "BadKeyNamePolicy");
+            SettingsObject.Instance.OptimizeSpecialSequencesInTranslation = ReadBoolFromXml(reader, "OptimizeSpecialSequencesInTranslation");
+
             int count = ReadIntFromXml(reader, "LanguagesCount");
             for (int i = 0; i < count; i++) {
                 string pair;
@@ -139,6 +144,7 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.LanguagePairs.Clear();
             SettingsObject.Instance.BingAppId = null;
             SettingsObject.Instance.BadKeyNamePolicy = BAD_KEY_NAME_POLICY.IGNORE_ON_NO_DESIGNER;
+            SettingsObject.Instance.OptimizeSpecialSequencesInTranslation = false;
 
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.EDITOR);
@@ -158,6 +164,8 @@ namespace VisualLocalizer.Settings {
 
                 WriteIntToRegKey(editorKey, "ReferenceUpdateInterval", SettingsObject.Instance.ReferenceUpdateInterval);
                 WriteIntToRegKey(editorKey, "BadKeyNamePolicy",(int)SettingsObject.Instance.BadKeyNamePolicy);
+                WriteBoolToRegKey(editorKey, "OptimizeSpecialSequencesInTranslation", SettingsObject.Instance.OptimizeSpecialSequencesInTranslation);
+
                 WriteIntToRegKey(editorKey, "LanguagesCount", SettingsObject.Instance.LanguagePairs.Count);
                 for (int i = 0; i < SettingsObject.Instance.LanguagePairs.Count; i++) {
                     editorKey.SetValue("Language" + i, SettingsObject.Instance.LanguagePairs[i].FromLanguage + ":" + SettingsObject.Instance.LanguagePairs[i].ToLanguage);
@@ -176,6 +184,7 @@ namespace VisualLocalizer.Settings {
         public override void SaveSettingsToXml(IVsSettingsWriter writer) {
             WriteIntToXml(writer, "ReferenceUpdateInterval", SettingsObject.Instance.ReferenceUpdateInterval);
             WriteIntToXml(writer, "BadKeyNamePolicy", (int)SettingsObject.Instance.BadKeyNamePolicy);
+            WriteBoolToXml(writer, "OptimizeSpecialSequencesInTranslation", SettingsObject.Instance.OptimizeSpecialSequencesInTranslation);
             WriteIntToXml(writer, "LanguagesCount", SettingsObject.Instance.LanguagePairs.Count);
 
             for (int i = 0; i < SettingsObject.Instance.LanguagePairs.Count; i++) {
@@ -220,6 +229,7 @@ namespace VisualLocalizer.Settings {
                 tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
                 tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
                 tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tablePanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
                 tablePanel.ColumnCount = 1;
                 tablePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -251,6 +261,15 @@ namespace VisualLocalizer.Settings {
                 keyBehaviorBox.Items.Add("Ignore when no designer class is generated");
                 keyBehaviorBox.Items.Add("Always issue error");
 
+                optimizeLabel = new Label();
+                optimizeLabel.AutoSize = true;
+                optimizeLabel.Margin = new Padding(0, 6, 0, 0);
+                optimizeLabel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+                optimizeLabel.Text = "Optimize format strings for translation:";                
+
+                optimizeBox = new CheckBox();
+
+
                 GroupBox intervalGroup = new GroupBox();
                 intervalGroup.AutoSize = true;
                 intervalGroup.Dock = DockStyle.Fill;
@@ -270,6 +289,8 @@ namespace VisualLocalizer.Settings {
                 intervalInnerPanel.Controls.Add(intervalBox, 1, 0);
                 intervalInnerPanel.Controls.Add(keyBehaviorLabel, 0, 1);
                 intervalInnerPanel.Controls.Add(keyBehaviorBox, 1, 1);
+                intervalInnerPanel.Controls.Add(optimizeLabel, 0, 2);
+                intervalInnerPanel.Controls.Add(optimizeBox, 1, 2);
 
                 intervalGroup.Controls.Add(intervalInnerPanel);
 
@@ -378,6 +399,7 @@ namespace VisualLocalizer.Settings {
         private void PopulateTable() {
             intervalBox.Value = SettingsObject.Instance.ReferenceUpdateInterval;
             bingBox.Text = SettingsObject.Instance.BingAppId;
+            optimizeBox.Checked = SettingsObject.Instance.OptimizeSpecialSequencesInTranslation;
 
             languagePairsBox.Items.Clear();
             foreach (var pair in SettingsObject.Instance.LanguagePairs) {
@@ -424,6 +446,8 @@ namespace VisualLocalizer.Settings {
 
                     SettingsObject.Instance.ReferenceUpdateInterval = (int)intervalBox.Value;
                     SettingsObject.Instance.BingAppId = string.IsNullOrEmpty(bingBox.Text) ? null : bingBox.Text;
+                    SettingsObject.Instance.OptimizeSpecialSequencesInTranslation = optimizeBox.Checked;
+
                     SettingsObject.Instance.LanguagePairs.Clear();
                     foreach (SettingsObject.LanguagePair newPair in languagePairsBox.Items) {
                         SettingsObject.Instance.LanguagePairs.Add(newPair);
