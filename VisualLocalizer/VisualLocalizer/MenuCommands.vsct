@@ -1,0 +1,430 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h"/>
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h"/>  
+  
+  <!-- definition of batch inline toolbar -->
+  <Commands>
+    <Groups>
+      <Group guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID" priority="0x0000">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarID"/>
+      </Group>
+      <Group guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID" priority="0x0000">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuID"/>
+      </Group>
+    </Groups>
+
+    <Menus>
+      <!-- the toolbar -->
+      <Menu guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarID" type="ToolWindowToolbar">
+        <CommandFlag>TextChanges</CommandFlag>        
+        <Strings>
+          <ButtonText>Batch Inline Tool Window Toolbar</ButtonText>
+          <CommandName>Batch Inline Tool Window Toolbar</CommandName>
+        </Strings>
+      </Menu>
+      
+      <!-- placeholder for remove/restore unchecked menu -->
+      <Menu guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuID" type="MenuController" priority="2">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextIsAnchorCommand</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>        
+        <Strings>
+          <ButtonText></ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\execute.png" resID="execute"/>      
+    </Bitmaps>
+    
+    <Buttons>
+      <!-- restore button -->
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarPutBackUncheckedID" priority="3" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>        
+        <Strings>
+          <CommandName>BatchInlineRemoveUnchecked</CommandName>
+          <ButtonText>Restore unchecked rows</ButtonText>
+          <ToolTipText>Puts all previusly removed rows back to table</ToolTipText>
+        </Strings>
+      </Button>
+
+      <!-- remove unchecked button -->
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRemoveUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarUncheckedMenuGroupID"/>        
+        <CommandFlag>TextOnly</CommandFlag>        
+        <Strings>
+          <CommandName>BatchInlineRemoveUnchecked</CommandName>
+          <ButtonText>Remove unchecked rows</ButtonText>
+          <ToolTipText>Removes unchecked rows from table for better clarity</ToolTipText>
+        </Strings>
+      </Button>
+
+      <!-- run button -->
+      <Button guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarRunID" priority="1" type="Button">
+        <Parent guid="BatchInlineToolbarCmdSet" id="BatchInlineToolbarGroupID"/>
+        <Icon guid="guidImages" id="execute"/>
+        <CommandFlag>IconAndText</CommandFlag>        
+        <Strings>
+          <CommandName>BatchInlineRun</CommandName>
+          <ButtonText>Execute</ButtonText>
+          <ToolTipText>Inlines all checked rows from tables</ToolTipText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+  
+  <!-- definition of batch move to resources toolbar -->
+  <Commands>
+    <Groups>
+      <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID" priority="0x0000">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID"/>
+      </Group>
+      <Group guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID" priority="0x0000">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID"/>
+      </Group>
+    </Groups>
+
+    <Menus>
+      <!-- the toolbar itself -->
+      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarID" type="ToolWindowToolbar">
+        <CommandFlag>AlwaysCreate</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Batch Move Tool Window Toolbar</ButtonText>
+          <CommandName>Batch Move Tool Window Toolbar</CommandName>
+        </Strings>
+      </Menu>
+      
+      <!-- remove/restore unchecked placeholder -->
+      <Menu guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuID" type="MenuController" priority="2">        
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>        
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextIsAnchorCommand</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings>
+          <ButtonText></ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Combos>
+      <!-- namespace policy combobox - values are initialized in BatchMoveToResourcesToolWindow -->
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarModeID" priority="5" type="DropDownCombo" idCommandList="BatchMoveToolbarModesListID" defaultWidth="290">        
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>CaseSensitive</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings>
+          <ButtonText>Namespace policy:</ButtonText>        
+        </Strings>
+      </Combo>
+
+      <!-- "remember unchecked" combobox - values are initialized in BatchMoveToResourcesToolWindow -->
+      <Combo guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRememberUncheckedID" priority="6" type="DropDownCombo" idCommandList="BatchMoveToolbarRememberUncheckedListID" defaultWidth="325">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>
+        <CommandFlag>CaseSensitive</CommandFlag>
+        <CommandFlag>IconAndText</CommandFlag>
+        <Strings>
+          <ButtonText>Remember unchecked strings:</ButtonText>
+        </Strings>
+      </Combo>
+    </Combos>
+
+    <Buttons>      
+      <!-- restore button -->
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRestoreUncheckedID" priority="3" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveToResourcesRestoreUnchecked</CommandName>
+          <ButtonText>Restore unchecked rows</ButtonText>
+          <ToolTipText>Puts all previously removed rows back to the table</ToolTipText>
+        </Strings>
+      </Button>
+
+      <!-- remove button -->
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRemoveUncheckedID" priority="2" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarUncheckedMenuGroupID"/>
+        <CommandFlag>TextOnly</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveToResourcesRemoveUnchecked</CommandName>
+          <ButtonText>Remove unchecked rows</ButtonText>
+          <ToolTipText>Removes unchecked rows from the table for better clarity</ToolTipText>
+        </Strings>
+      </Button>
+
+      <!-- show filter button -->
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarShowFilterID" priority="4" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>                
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>TextOnly</CommandFlag>        
+        <Strings>
+          <CommandName>BatchMoveToResourcesShowHideFilter</CommandName>
+          <ButtonText>Show filter</ButtonText>          
+        </Strings>
+      </Button>
+
+      <!-- execute button -->
+      <Button guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarRunID" priority="1" type="Button">
+        <Parent guid="BatchMoveToolbarCmdSet" id="BatchMoveToolbarGroupID"/>        
+        <Icon guid="guidImages" id="execute"/>        
+        <CommandFlag>IconAndText</CommandFlag>        
+        <Strings>
+          <CommandName>BatchMoveToResourcesRun</CommandName>
+          <ButtonText>Execute</ButtonText>          
+        </Strings>                   
+      </Button>      
+
+    </Buttons>    
+  </Commands>
+
+  <!-- definition of new context menu items -->
+  <Commands package="VLPackageGuid">
+
+   
+
+    <!-- add the items to context menus -->
+    <Groups>    
+      <Group guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+      </Group>
+      
+      <Group guid="VLCommandSetGuid" id="solutionExpSubmenuGroup" priority="0x001">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenu"/>        
+      </Group>
+    
+      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x500">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>       
+      </Group>
+
+      <Group guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup" priority="0x001">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenu"/>
+      </Group>
+    </Groups>   
+    
+    <Buttons>
+      <Button guid="VLCommandSetGuid" id="batchMoveMenuItem" type="Button" priority="1">
+        <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>        
+        <Strings>
+          <CommandName>BatchMoveSolExp</CommandName>
+          <ButtonText>Batch move to resources...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchInlineMenuItem" type="Button" priority="2">
+        <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchTranslateMenuItem" type="Button" priority="3">
+        <Parent guid="VLCommandSetGuid" id="solutionExpSubmenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchTranslate</CommandName>
+          <ButtonText>Translate resources...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button" priority="1">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>MoveTo</CommandName>
+          <ButtonText>Move to resources...</ButtonText>
+        </Strings>
+      </Button>
+   
+      <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button" priority="2">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>Inline</CommandName>
+          <ButtonText>Inline</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchInlineCodeMenuItem" type="Button" priority="4">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline (document)...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchMoveCodeMenuItem" type="Button" priority="3">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <Strings>
+          <CommandName>BatchMoveTo</CommandName>
+          <ButtonText>Batch move to resources (document)...</ButtonText>
+        </Strings>
+      </Button>
+      
+
+      <Button guid="VLCommandSetGuid" id="batchMoveSelectionCodeMenuItem" type="Button" priority="5">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <CommandName>BatchMoveTo</CommandName>
+          <ButtonText>Batch move to resources (selection)...</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="VLCommandSetGuid" id="batchInlineSelectionCodeMenuItem" type="Button" priority="6">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <CommandName>BatchInline</CommandName>
+          <ButtonText>Batch inline (selection)...</ButtonText>
+        </Strings>
+      </Button>        
+    </Buttons>
+    
+    <Menus>
+      <Menu guid="VLCommandSetGuid" id="visualLocalizerTopMenu" type="Menu" priority="1000">        
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>        
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>        
+      </Menu>
+
+      <Menu guid="VLCommandSetGuid" id="visualLocalizerCodeMenu" type="Menu" priority="1000">
+        <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup"></Parent>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <CommandName>Visual Localizer</CommandName>
+          <ButtonText>Visual Localizer</ButtonText>
+        </Strings>
+      </Menu>          
+    </Menus>           
+  </Commands>
+
+
+  <!-- other placements for context menu items -->
+  <CommandPlacements>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_SOURCE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_CSHARP_CODEBLOCK"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerCodeMenuGroup" priority="0x900">
+      <Parent guid="guidAspEditorMenu" id="IDM_ASP_VB_CODEBLOCK"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x200">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIPROJ"/>
+    </CommandPlacement>    
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x500">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_XPROJ_MULTIITEM"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBITEMNODE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBPROJECT"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBFOLDER"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x300">
+      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x100">
+      <Parent guid="solutionExplorerContext" id="IDM_VS_CTXT_CROSS_PROJECT_ITEM"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x100">
+      <Parent guid="solutionExplorerContext" id="IDM_VS_CTXT_SOLUTION_ITEM"/>
+    </CommandPlacement>
+    <CommandPlacement guid="VLCommandSetGuid" id="visualLocalizerTopMenuGroup" priority="0x100">
+      <Parent guid="solutionExplorerContext" id="IDM_VS_CTXT_PROPERTIES_ITEM"/>
+    </CommandPlacement>
+  </CommandPlacements>
+  
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="VLPackageGuid" value="{68c95c48-9295-49a0-a2ed-81da6e651374}" />
+    
+    <GuidSymbol name="solutionExplorerContext" value="{D309F791-903F-11D0-9EFC-00A0C911004F}">
+      <IDSymbol name="IDM_VS_CTXT_CROSS_PROJECT_ITEM" value="1047"/>
+      <IDSymbol name="IDM_VS_CTXT_SOLUTION_ITEM" value="1043"/>
+      <IDSymbol name="IDM_VS_CTXT_PROPERTIES_ITEM" value="1107"/>
+    </GuidSymbol>
+    
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="VLCommandSetGuid" value="{42b49eb8-7690-46f2-8267-52939c5e642f}">
+
+      <IDSymbol name="visualLocalizerTopMenuGroup" value="0x0001" />
+      <IDSymbol name="visualLocalizerTopMenu" value="0x0005" />
+
+      <IDSymbol name="solutionExpSubmenuGroup" value="0x0004" />
+      <IDSymbol name="batchMoveMenuItem" value="0x0003" />
+      <IDSymbol name="batchInlineMenuItem" value="0x0016" />
+      <IDSymbol name="batchTranslateMenuItem" value="0x0019" />
+
+      <IDSymbol name="moveMenuItem" value="0x0007" />
+      <IDSymbol name="inlineMenuItem" value="0x0008" />
+      <IDSymbol name="visualLocalizerCodeMenu" value="0x0009" />
+      <IDSymbol name="visualLocalizerCodeMenuGroup" value="0x0010" />
+      <IDSymbol name="visualLocalizerCodeSubMenuGroup" value="0x0011" />
+      <IDSymbol name="batchInlineSelectionCodeMenuItem" value="0x0017" />
+      <IDSymbol name="batchMoveSelectionCodeMenuItem" value="0x0018" />
+      
+      <IDSymbol name="batchMoveCodeMenuItem" value="0x0014" />
+      <IDSymbol name="batchInlineCodeMenuItem" value="0x0015" />
+    </GuidSymbol>
+
+    <GuidSymbol name="BatchMoveToolbarCmdSet" value="{41896b92-0335-4522-b75f-35dc0a64d5a3}">
+      <IDSymbol name="BatchMoveToolbarID" value="0x1001" />
+      <IDSymbol name="BatchMoveToolbarGroupID" value="0x1002" />
+      <IDSymbol name="BatchMoveToolbarRunID" value="0x1003" />
+      <IDSymbol name="BatchMoveToolbarModesListID" value="0x1004" />
+      <IDSymbol name="BatchMoveToolbarModeID" value="0x1005" />
+      <IDSymbol name="BatchMoveToolbarShowFilterID" value="0x1006" />
+      <IDSymbol name="BatchMoveToolbarRunMenuID" value="0x1009" />
+      <IDSymbol name="BatchMoveToolbarRunMenuGroupID" value="0x1010" />
+      <IDSymbol name="BatchMoveToolbarRemoveUncheckedID" value="0x1014" />
+      <IDSymbol name="BatchMoveToolbarRestoreUncheckedID" value="0x1015" />
+      <IDSymbol name="BatchMoveToolbarUncheckedMenuID" value="0x1016" />
+      <IDSymbol name="BatchMoveToolbarUncheckedMenuGroupID" value="0x1017" />
+      
+      <IDSymbol name="BatchMoveToolbarRememberUncheckedListID" value="0x1012" />
+      <IDSymbol name="BatchMoveToolbarRememberUncheckedID" value="0x1013" />
+    </GuidSymbol>
+
+    <GuidSymbol name="BatchInlineToolbarCmdSet" value="{F2983E9C-E545-4d2f-A5F2-D04683356AD0}">
+      <IDSymbol name="BatchInlineToolbarID" value="0x2001" />
+      <IDSymbol name="BatchInlineToolbarGroupID" value="0x2003" />
+      <IDSymbol name="BatchInlineToolbarRunID" value="0x2002" />
+      <IDSymbol name="BatchInlineToolbarRemoveUncheckedID" value="0x2004" />
+      <IDSymbol name="BatchInlineToolbarPutBackUncheckedID" value="0x2005" />
+      <IDSymbol name="BatchInlineToolbarUncheckedMenuID" value="0x2006" />
+      <IDSymbol name="BatchInlineToolbarUncheckedMenuGroupID" value="0x2007" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidImages" value="{5F1C1F70-98C7-4769-AC4F-10BD4EC4344D}" >
+      <IDSymbol name="execute" value="1" />      
+    </GuidSymbol>
+
+    <GuidSymbol name="guidAspEditorMenu" value="{D7E8C5E1-BDB8-11D0-9C88-0000F8040A53}">
+      <IDSymbol name="IDM_ASP_SOURCE" value ="0x0035"/>
+      <IDSymbol name="IDM_ASP_CSHARP_CODEBLOCK" value ="0x036"/>
+      <IDSymbol name="IDM_ASP_VB_CODEBLOCK" value ="0x037"/>
+    </GuidSymbol>
+
+    
+  </Symbols>
+
+</CommandTable>
