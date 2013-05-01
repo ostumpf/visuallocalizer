@@ -13,12 +13,12 @@ namespace VisualLocalizer.Editor.UndoUnits {
     /// Represents un-undoable action of inlining a string resource from editor (code part)
     /// </summary>
     [Guid("AA762234-2BD9-4dc6-A19B-356A3D4357E0")]
-    internal sealed class StringRenameKeyInCodeUndoUnit : AbstractUndoUnit {
+    internal sealed class GridRenameKeyInCodeUndoUnit : AbstractUndoUnit {
 
         private string OldKey { get; set; }
         private string NewKey { get; set; }
 
-        public StringRenameKeyInCodeUndoUnit(string oldKey, string newKey) {
+        public GridRenameKeyInCodeUndoUnit(string oldKey, string newKey) {
             this.OldKey = oldKey;
             this.NewKey = newKey;
         }

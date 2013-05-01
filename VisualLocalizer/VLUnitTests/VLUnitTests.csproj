@@ -69,7 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\TrieTest.txt" />
-    <Compile Include="TestExtensions.cs" />
     <Compile Include="VLTests\Commands\AspNetBatchInlineTests.cs" />
     <Compile Include="VLTests\Commands\AspNetBatchMoveTests.cs" />
     <Compile Include="VLTests\Commands\BatchTestsBase.cs" />
@@ -103,6 +102,10 @@
     <ProjectReference Include="..\VisualLocalizer\VisualLocalizer.csproj">
       <Project>{2E057DF9-29EA-4F3D-B162-5121C4EC0547}</Project>
       <Name>VisualLocalizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\VLlib\VLlib.csproj">
+      <Project>{3B87EC9A-D56C-4225-9323-CA157901244F}</Project>
+      <Name>VLlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\VLtranslat\VLtranslat.csproj">
       <Project>{1CC2F57A-2299-418C-9E4B-D8375EBA4712}</Project>

@@ -1,80 +1,80 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="VisualLocalizer.Components.AbstractCodeLookuper&lt;T&gt;" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.AbstractCodeLookuper&lt;T&gt;" Collapsed="true">
     <Position X="4.75" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>ACIwIAAIAMCBhJAQAAAAiAQAAkRAAAQIEAFUggCyAgA=</HashCode>
       <FileName>Components\Code\AbstractCodeLookuper.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CSharpLookuper&lt;T&gt;" Collapsed="true">
-    <Position X="7" Y="0.5" Width="2.25" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAIAAAAAAAAAIAAAAAAQAEAAAAAAAAAA=</HashCode>
-      <FileName>Components\Code\CSharpLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.VBLookuper&lt;T&gt;" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.VBLookuper&lt;T&gt;" Collapsed="true">
     <Position X="4.75" Y="2" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAEAAAAAAAAAIAAAAAAAAAAAAAAAAQAEAAAAgAAABA=</HashCode>
       <FileName>Components\Code\VBLookuper.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CSharpStringLookuper" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.CSharpLookuper&lt;T&gt;" Collapsed="true">
+    <Position X="7" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAIAAAAAAAAAIAAAAAAQAEAAAAAAAAAA=</HashCode>
+      <FileName>Components\Code\CSharpLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.CSharpStringLookuper" Collapsed="true">
     <Position X="9.5" Y="0.5" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAQAAAAAAAAAAAAAERAAAAAQABAAAAgQAA=</HashCode>
       <FileName>Components\Code\CSharpStringLookuper.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CSharpReferenceLookuper" Collapsed="true">
-    <Position X="9.5" Y="2.75" Width="3.25" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
-      <FileName>Components\Code\CSharpReferenceLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.VBCodeReferenceLookuper" Collapsed="true">
-    <Position X="6.75" Y="6" Width="3" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
-      <FileName>Components\Code\VBCodeReferenceLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.VBStringLookuper" Collapsed="true">
-    <Position X="6.75" Y="3.75" Width="3" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAQAAAAAAAAAAAAAERAAAAAQABAAAAgQAA=</HashCode>
-      <FileName>Components\Code\VBStringLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.AspNetVBStringLookuper" Collapsed="true">
-    <Position X="6.75" Y="4.5" Width="3" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAQABAAAAgAAA=</HashCode>
-      <FileName>Components\Code\AspNetVBStringLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.AspNetVBReferenceLookuper" Collapsed="true">
-    <Position X="6.75" Y="5.25" Width="3" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
-      <FileName>Components\Code\AspNetVBReferenceLookuper.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="VisualLocalizer.Components.AspNetCSharpStringLookuper" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.AspNetCSharpStringLookuper" Collapsed="true">
     <Position X="9.5" Y="1.25" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAQABAAAAgAAA=</HashCode>
       <FileName>Components\Code\AspNetCSharpStringLookuper.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.AspNetCSharpReferenceLookuper" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.AspNetCSharpReferenceLookuper" Collapsed="true">
     <Position X="9.5" Y="2" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
       <FileName>Components\Code\AspNetCSharpReferenceLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.CSharpReferenceLookuper" Collapsed="true">
+    <Position X="9.5" Y="2.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Components\Code\CSharpReferenceLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.VBStringLookuper" Collapsed="true">
+    <Position X="6.75" Y="3.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAAAAAAAAAAAAAERAAAAAQABAAAAgQAA=</HashCode>
+      <FileName>Components\Code\VBStringLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.AspNetVBStringLookuper" Collapsed="true">
+    <Position X="6.75" Y="4.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAQABAAAAgAAA=</HashCode>
+      <FileName>Components\Code\AspNetVBStringLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.AspNetVBReferenceLookuper" Collapsed="true">
+    <Position X="6.75" Y="5.25" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Components\Code\AspNetVBReferenceLookuper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Components.Code.VBCodeReferenceLookuper" Collapsed="true">
+    <Position X="6.75" Y="6" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Components\Code\VBCodeReferenceLookuper.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Font Name="Tahoma" Size="11" />

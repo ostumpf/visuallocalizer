@@ -1,79 +1,79 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="VisualLocalizer.Components.AbstractResultItem">
+  <Class Name="VisualLocalizer.Components.Code.AbstractResultItem">
     <Position X="4.75" Y="0.5" Width="2.5" />
     <TypeIdentifier>
       <HashCode>AAEAAABACgAAAUQSCAAgAAAAAiAAAAACAAAgAAAAAEA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CodeStringResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.CodeStringResultItem" Collapsed="true">
     <Position X="7.5" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAIAEAAQAABACAAAUAAAAAAAABQAAQKAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.NetStringResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.NetStringResultItem" Collapsed="true">
     <Position X="7.5" Y="1.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAIAEAAUAAAAABAAQAAAAAAAAAABAQIAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAIAEAAUAAAAABAAAAAAAAAAAAABAQIAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CSharpStringResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.CSharpStringResultItem" Collapsed="true">
     <Position X="9.75" Y="1.5" Width="2.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAQAAAAAAAAAAAAACAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.VBStringResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.VBStringResultItem" Collapsed="true">
     <Position X="9.75" Y="2.25" Width="2.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAQAAAAAAAAAAAAACAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.AspNetStringResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.AspNetStringResultItem" Collapsed="true">
     <Position X="9.75" Y="0.5" Width="2.5" />
     <TypeIdentifier>
       <HashCode>AAQBAAAACABIAMABQAiAAAQAAQAgAAAAAAIAAAQKIAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CodeReferenceResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.CodeReferenceResultItem" Collapsed="true">
     <Position X="7.5" Y="3.25" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAIAACEAAAAAAgEAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAIACCEAAAAAAgEAAAAAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.NetCodeReferenceResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.NetCodeReferenceResultItem" Collapsed="true">
     <Position X="7.5" Y="4.25" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAIACAAAAAAAAAEAAAAAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.CSharpCodeReferenceResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.CSharpCodeReferenceResultItem" Collapsed="true">
     <Position X="9.75" Y="4.25" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.VBCodeReferenceResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.VBCodeReferenceResultItem" Collapsed="true">
     <Position X="9.75" Y="5" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VisualLocalizer.Components.AspNetCodeReferenceResultItem" Collapsed="true">
+  <Class Name="VisualLocalizer.Components.Code.AspNetCodeReferenceResultItem" Collapsed="true">
     <Position X="9.75" Y="3.25" Width="3.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAKAAAAAABAAAAAAQIAAAgAAAAAAgEAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAKAAAAAABAAAAAAQIACAgAAAAAAgEAAAAAAA=</HashCode>
       <FileName>Components\Code\CodeResultItems.cs</FileName>
     </TypeIdentifier>
   </Class>

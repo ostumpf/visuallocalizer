@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.IO;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using System.ComponentModel.Design;
 
 namespace VisualLocalizer.Editor {
 
@@ -26,7 +27,8 @@ namespace VisualLocalizer.Editor {
         /// </summary>
         public override bool CanContainItem(ResXDataNode node) {
             if (node == null) throw new ArgumentNullException("node");
-            return true; // everything is allowed
+            object val=node.GetValue((ITypeResolutionService)null);
+            return node.HasLinkedFileContent() || val == null || val.GetType() == typeof(byte[]); // everything is allowed
         }
 
         /// <summary>

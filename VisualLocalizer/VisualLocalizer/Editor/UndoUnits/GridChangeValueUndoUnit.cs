@@ -7,6 +7,7 @@ using VisualLocalizer.Library;
 using System.Resources;
 using VisualLocalizer.Components;
 using VisualLocalizer.Library.Components;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 
@@ -14,16 +15,16 @@ namespace VisualLocalizer.Editor.UndoUnits {
     /// Undo unit for modifying value of a string resource
     /// </summary>
     [Guid("9F4FDA14-9B4C-4151-9FC9-194FF0A90705")]
-    internal sealed class StringChangeValueUndoUnit : AbstractUndoUnit {
+    internal sealed class GridChangeValueUndoUnit : AbstractUndoUnit {
 
         public string Key { get; private set; }
         public string OldValue { get; private set; }
         public string NewValue { get; private set; }
         public string Comment { get; private set; }
         public ResXStringGridRow SourceRow { get; private set; }
-        public ResXStringGrid Grid { get; private set; }
+        public AbstractResXEditorGrid Grid { get; private set; }
 
-        public StringChangeValueUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldValue,string newValue, string comment) {
+        public GridChangeValueUndoUnit(ResXStringGridRow sourceRow, AbstractResXEditorGrid grid, string key, string oldValue, string newValue, string comment) {
             if (sourceRow == null) throw new ArgumentNullException("sourceRow");
             if (grid == null) throw new ArgumentNullException("grid");
 
@@ -55,7 +56,17 @@ namespace VisualLocalizer.Editor.UndoUnits {
                     newKey = "A";
                     SourceRow.Status = KEY_STATUS.ERROR;
                 }
-                SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
+
+                if (Grid is ResXStringGrid) {
+                    SourceRow.DataSourceItem = new ResXDataNode(newKey, to);
+                } else {
+                    ResXDataNode newNode = null;
+                    try {
+                        newNode = new ResXDataNode(newKey, TypeDescriptor.GetConverter(((ResXOthersGridRow)SourceRow).DataType).ConvertFromString(to));
+                    } catch { }
+                    if (newNode != null) SourceRow.DataSourceItem = newNode;
+                }
+
                 SourceRow.DataSourceItem.Comment = Comment;
                 SourceRow.Cells[Grid.ValueColumnName].Tag = from;
                 SourceRow.Cells[Grid.ValueColumnName].Value = to;

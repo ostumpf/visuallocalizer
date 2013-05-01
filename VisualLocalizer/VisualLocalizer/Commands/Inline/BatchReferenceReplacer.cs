@@ -41,7 +41,7 @@ namespace VisualLocalizer.Commands {
         /// Returns new undo unit for the item
         /// </summary>  
         public override AbstractUndoUnit GetUndoUnit(CodeReferenceResultItem item, bool externalChange) {
-            return new StringRenameKeyInCodeUndoUnit(item.Key, item.KeyAfterRename);
+            return new GridRenameKeyInCodeUndoUnit(item.Key, item.KeyAfterRename);
         }
     }
 }

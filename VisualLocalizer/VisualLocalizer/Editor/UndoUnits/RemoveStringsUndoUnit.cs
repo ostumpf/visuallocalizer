@@ -18,11 +18,11 @@ namespace VisualLocalizer.Editor.UndoUnits {
     internal sealed class RemoveStringsUndoUnit : AbstractUndoUnit {
 
         private List<ResXStringGridRow> Elements { get; set; }
-        private ResXStringGrid Grid { get; set; }
+        private AbstractResXEditorGrid Grid { get; set; }
         private KeyValueIdentifierConflictResolver ConflictResolver { get; set; }
         private ResXEditorControl Control { get; set; }
 
-        public RemoveStringsUndoUnit(ResXEditorControl control, List<ResXStringGridRow> elements, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
+        public RemoveStringsUndoUnit(ResXEditorControl control, List<ResXStringGridRow> elements, AbstractResXEditorGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
             if (control == null) throw new ArgumentNullException("control");
             if (elements == null) throw new ArgumentNullException("elements");
             if (grid == null) throw new ArgumentNullException("grid");

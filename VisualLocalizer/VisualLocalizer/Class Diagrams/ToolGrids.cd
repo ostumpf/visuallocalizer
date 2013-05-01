@@ -2,42 +2,26 @@
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="VisualLocalizer.Gui.BatchInlineToolGrid" Collapsed="true">
     <Position X="0.75" Y="1.75" Width="3.75" />
-    <InheritanceLine Type="VisualLocalizer.Library.AbstractCheckedGridView&lt;ItemType&gt;" FixedToPoint="true">
-      <Path>
-        <Point X="2" Y="1.191" />
-        <Point X="2" Y="1.45" />
-        <Point X="2.25" Y="1.45" />
-        <Point X="2.25" Y="1.75" />
-      </Path>
-    </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AQAAAAABAAAAAAAAAAAAAgAAAARAAAAABAAAAAAAAAA=</HashCode>
+      <HashCode>AQAACAABAAAAAAAAAAIQAiAAAARQAIAARAAAAABAAAA=</HashCode>
       <FileName>Gui\BatchInlineToolGrid.cs</FileName>
     </TypeIdentifier>
     <Lollipop Orientation="Bottom" Position="1.44" />
   </Class>
   <Class Name="VisualLocalizer.Gui.BatchMoveToResourcesToolGrid" Collapsed="true">
     <Position X="4.75" Y="1.75" Width="3.5" />
-    <InheritanceLine Type="VisualLocalizer.Library.AbstractKeyValueGridView&lt;ItemType&gt;" FixedToPoint="true">
-      <Path>
-        <Point X="5.875" Y="1.191" />
-        <Point X="5.875" Y="1.45" />
-        <Point X="6.125" Y="1.45" />
-        <Point X="6.125" Y="1.75" />
-      </Path>
-    </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AQACAAIBAACBIAGEAANgAgSAoIRAAAAABAAAEQACIBI=</HashCode>
+      <HashCode>AQACAAIBAACBIAGEAANwAgSAoIRAAAAARAAAEQBCIBI=</HashCode>
       <FileName>Gui\BatchMoveToResourcesToolGrid.cs</FileName>
     </TypeIdentifier>
     <Lollipop Orientation="Bottom" Position="0.823" />
   </Class>
-  <Class Name="VisualLocalizer.Library.AbstractKeyValueGridView&lt;ItemType&gt;" Collapsed="true">
-    <Position X="4.5" Y="0.5" Width="2.75" />
+  <Class Name="VisualLocalizer.Library.Gui.AbstractCheckedGridView&lt;ItemType&gt;" Collapsed="true">
+    <Position X="0.75" Y="0.5" Width="2.5" />
     <TypeIdentifier />
   </Class>
-  <Class Name="VisualLocalizer.Library.AbstractCheckedGridView&lt;ItemType&gt;" Collapsed="true">
-    <Position X="0.75" Y="0.5" Width="2.5" />
+  <Class Name="VisualLocalizer.Library.Gui.AbstractKeyValueGridView&lt;ItemType&gt;" Collapsed="true">
+    <Position X="4.5" Y="0.5" Width="2.75" />
     <TypeIdentifier />
   </Class>
   <Font Name="Tahoma" Size="11" />

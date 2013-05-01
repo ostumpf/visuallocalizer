@@ -115,7 +115,8 @@ namespace VisualLocalizer.Editor {
         private ResXIconsList iconsListView;
         private ResXSoundsList soundsListView;
         private ResXFilesList filesListView;
-        private TabPage stringTab, imagesTab, iconsTab, soundsTab, filesTab;
+        private ResXOthersGrid othersGrid;
+        private TabPage stringTab, imagesTab, iconsTab, soundsTab, filesTab, othersTab;
         private ToolStripComboBox codeGenerationBox;
         private bool readOnly;
 
@@ -413,6 +414,15 @@ namespace VisualLocalizer.Editor {
             filesListView = new ResXFilesList(this);
             filesTab = CreateItemTabPage("Files", filesListView);
             tabs.TabPages.Add(filesTab);
+
+            othersTab = new TabPage("Others");
+            othersTab.BorderStyle = BorderStyle.None;
+            othersGrid = new ResXOthersGrid(this);
+            othersGrid.DataChanged += new EventHandler((o, args) => { DataChanged(o, args); });
+            othersGrid.ItemsStateChanged += new EventHandler(UpdateToolStripButtonsEnable);
+            othersGrid.Name = "Content";
+            othersTab.Controls.Add(othersGrid);
+            tabs.TabPages.Add(othersTab);
         }        
 
         #region public members
@@ -447,6 +457,7 @@ namespace VisualLocalizer.Editor {
             if (data == null) throw new ArgumentNullException("data");
 
             conflictResolver.Clear(); // clear cached conflict items info
+            Editor.ClearUndoRedoStack();
 
             // disable "Access modifier" checkbox if file is not a part of solution
             if (Editor.ProjectItem ==null || (Editor.ProjectItem.InternalProjectItem.ContainingProject != null && Editor.ProjectItem.InternalProjectItem.ContainingProject.Kind.ToUpper() == StringConstants.WebSiteProject))
@@ -627,14 +638,29 @@ namespace VisualLocalizer.Editor {
                     } else {
                         text = o.ToString();
                     }
-
-                    stringGrid.AddClipboardText(text, true);
-                    tabs.SelectedTab = stringTab;
+                    
+                    int columnsCount = GetColumnsCountForText(text, true);
+                    if (columnsCount == 4) {
+                        othersGrid.AddClipboardText(text, true);
+                        tabs.SelectedTab = othersTab;
+                    } else {
+                        stringGrid.AddClipboardText(text, true);
+                        tabs.SelectedTab = stringTab;
+                    }
+                    
                     return true;
                 } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
                     // contains plain text
-                    stringGrid.AddClipboardText((string)iData.GetData("Text"), false);
-                    tabs.SelectedTab = stringTab;
+
+                    string text = (string)iData.GetData("Text");
+                    int columnsCount = GetColumnsCountForText(text, false);
+                    if (columnsCount == 4) {
+                        othersGrid.AddClipboardText(text, true);
+                        tabs.SelectedTab = othersTab;
+                    } else {
+                        stringGrid.AddClipboardText(text, true);
+                        tabs.SelectedTab = stringTab;
+                    }                    
                     return true;
                 } else {                    
                     List<AbstractListView> dataTabItems = new List<AbstractListView>();
@@ -658,7 +684,7 @@ namespace VisualLocalizer.Editor {
                 VisualLocalizer.Library.Components.MessageBox.ShowException(ex);
             } 
             return false;
-        }            
+        }        
 
         /// <summary>
         /// Executes Copy operation on selected tab
@@ -872,7 +898,7 @@ namespace VisualLocalizer.Editor {
                     if (newItem != null) newItems.Add(newItem); // add the file
                     tabs.SelectedTab = soundsTab;
                 } else {
-                    if (filesFolder == null && project != null) filesFolder = project.AddResourceDir("Others"); // create Resources/Others folder
+                    if (filesFolder == null && project != null) filesFolder = project.AddResourceDir("Misc"); // create Resources/Misc folder
                     if (StringConstants.TEXT_FILE_EXT.Contains(extension)) { // is text file
                         var newItem = AddExistingItem(filesListView, filesFolder, file, typeof(string), origin);
                         if (newItem != null) newItems.Add(newItem); // add the file
@@ -1310,10 +1336,15 @@ namespace VisualLocalizer.Editor {
                 row.Cells[stringGrid.KeyColumnName].Tag = row.Cells[stringGrid.KeyColumnName].Value;
                 stringGrid.ValidateRow(row);
             }
+            foreach (ResXStringGridRow row in othersGrid.Rows) {
+                if (row.IsNewRow) continue;
+                row.Cells[othersGrid.KeyColumnName].Tag = row.Cells[othersGrid.KeyColumnName].Value;
+                othersGrid.ValidateRow(row);
+            }
             ValidateListView(imagesListView);
             ValidateListView(soundsListView);
             ValidateListView(iconsListView);
-            ValidateListView(filesListView);
+            ValidateListView(filesListView);            
         }
 
         /// <summary>
@@ -1361,7 +1392,7 @@ namespace VisualLocalizer.Editor {
                         ResXDataNode newNode = new ResXDataNode(newKey, newValue);
                         newNode.Comment = newComment;
                         ResXStringGridRow newRow = (ResXStringGridRow)stringGrid.Add(newKey, newNode);
-                        stringGrid.StringRowAdded(newRow);
+                        stringGrid.NewRowAdded(newRow);
                         rowsAdded++;
                     }
                 }
@@ -1651,12 +1682,14 @@ namespace VisualLocalizer.Editor {
 
             foreach (ResXStringGridRow row in stringGrid.Rows)
                 if (!row.IsNewRow) list.Add(row);
+            foreach (ResXStringGridRow row in othersGrid.Rows)
+                if (!row.IsNewRow) list.Add(row);
 
             filesListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, filesListView.Items);
             imagesListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, imagesListView.Items);
             iconsListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, iconsListView.Items);
             soundsListView.Invoke(new Action<IList, IEnumerable>((l, s) => AddRange(l, s)), list, soundsListView.Items);
-
+            
             UpdateReferencesCount(list);
         }
 
@@ -1769,8 +1802,12 @@ namespace VisualLocalizer.Editor {
                         // select propert tab for the new node
                         if (item.CanContainItem(node)) {
                             IKeyValueSource newItem = item.Add(key, node);
-                            if (newItem is ResXStringGridRow) {
-                                StringRowAddUndoUnit undoUnit = new StringRowAddUndoUnit(this,
+                            if (newItem is ResXOthersGridRow) {
+                                GridRowAddUndoUnit undoUnit = new GridRowAddUndoUnit(this,
+                                    new List<ResXStringGridRow>() { newItem as ResXOthersGridRow }, othersGrid, conflictResolver);
+                                units.Push(undoUnit);
+                            } else if (newItem is ResXStringGridRow) {
+                                GridRowAddUndoUnit undoUnit = new GridRowAddUndoUnit(this,
                                     new List<ResXStringGridRow>() { newItem as ResXStringGridRow }, stringGrid, conflictResolver);
                                 units.Push(undoUnit);
                             } else {
@@ -1812,6 +1849,23 @@ namespace VisualLocalizer.Editor {
         private void NotifyViewKindChanged(View newView) {
             if (ViewKindChanged != null) ViewKindChanged(newView);
         }
+        
+        /// <summary>
+        /// Returns columns count in given newline-separated text
+        /// </summary>
+        /// <param name="text">Text to explore</param>
+        /// <param name="isCSV">True if ; should be used as separeted, false for \t</param>        
+        private int GetColumnsCountForText(string text, bool isCSV) {
+            if (text == null) return 0;
+
+            string[] rows = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            if (rows.Length == 0) return 0;
+
+            string row = rows[0];
+            char columnSeparator = isCSV ? ';' : '\t';
+
+            return row.Split(columnSeparator).Length;
+        }            
 
         /// <summary>
         /// Updates state (enabled/disabled) of the toolstrip buttons
@@ -1819,6 +1873,7 @@ namespace VisualLocalizer.Editor {
         private void UpdateToolStripButtonsEnable(object sender, EventArgs e) {
             try {
                 bool selectedString = stringGrid.Visible;
+                bool selectedOthers = othersGrid.Visible;
                 IDataTabItem item = GetContentFromTabPage(tabs.SelectedTab);
 
                 bool allSelectedResourcesExternal = false;                
@@ -1830,10 +1885,10 @@ namespace VisualLocalizer.Editor {
                 }                
 
                 inlineButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && stringGrid.AreReferencesKnownOnSelected;
-                removeDeleteItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
-                removeExcludeItem.Enabled = !selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
+                removeDeleteItem.Enabled = !selectedString && !selectedOthers && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
+                removeExcludeItem.Enabled = !selectedString && !selectedOthers && item.HasSelectedItems && !item.IsEditing && !readOnly && allSelectedResourcesExternal;
                 removeButton.Enabled = item.HasSelectedItems && !item.IsEditing && !readOnly;
-                viewButton.Enabled = !selectedString && !item.IsEditing;
+                viewButton.Enabled = !selectedString && !selectedOthers && !item.IsEditing;
                 addButton.Enabled = !readOnly;
                 translateButton.Enabled = selectedString && item.HasSelectedItems && !item.IsEditing && !readOnly;
                 mergeButton.Enabled = !readOnly;                

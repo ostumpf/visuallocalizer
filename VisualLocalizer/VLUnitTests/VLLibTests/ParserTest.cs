@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using VisualLocalizer.Library.Extensions;
 
 namespace VLUnitTests.VLLibTests {
 

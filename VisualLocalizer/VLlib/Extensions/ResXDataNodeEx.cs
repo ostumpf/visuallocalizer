@@ -7,6 +7,8 @@ using System.ComponentModel.Design;
 using System.Reflection;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.ComponentModel;
 
 namespace VisualLocalizer.Library.Extensions {
 
@@ -14,7 +16,14 @@ namespace VisualLocalizer.Library.Extensions {
     /// Container for extension methods working with ResXDataNode objects. 
     /// </summary>
     public static class ResXDataNodeEx {
-
+        /// <summary>
+        /// Returns true if given node has a non-empty file reference
+        /// </summary>        
+        public static bool HasLinkedFileContent(this ResXDataNode node) {
+            if (node == null) throw new ArgumentNullException("node");
+            return node.FileRef != null;
+        }
+        
         /// <summary>
         /// Returns true if given node contains value of type T.
         /// </summary>        
@@ -24,7 +33,7 @@ namespace VisualLocalizer.Library.Extensions {
             string type = node.GetValueTypeName((ITypeResolutionService)null);
             bool hasType = !string.IsNullOrEmpty(type) && Type.GetType(type) == typeof(T);
 
-            return hasType && (typeof(T) != typeof(string) || node.FileRef == null);
+            return hasType;
         }
 
         /// <summary>
@@ -35,7 +44,16 @@ namespace VisualLocalizer.Library.Extensions {
 
             string type = node.GetValueTypeName((ITypeResolutionService)null);
             bool exists = node.FileRef == null || File.Exists(node.FileRef.FileName);
-            return (string.IsNullOrEmpty(type) || !exists) ? null : (T)node.GetValue((ITypeResolutionService)null);
+            if (string.IsNullOrEmpty(type) || !exists) {
+                return null;
+            } else {
+                if (typeof(T) == typeof(string)) {
+                    object o = node.GetValue((ITypeResolutionService)null);
+                    return o == null ? null : (T)(object)TypeDescriptor.GetConverter(o.GetType()).ConvertToString(o);
+                } else {
+                    return (T)node.GetValue((ITypeResolutionService)null);
+                }
+            }            
         }
     }
 }

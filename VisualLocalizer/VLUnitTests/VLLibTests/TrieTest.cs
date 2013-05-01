@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using VisualLocalizer.Library.Algorithms;
+using VisualLocalizer.Library.Extensions;
 
 /// Contains unit tests for the VLlib project.
 namespace VLUnitTests.VLLibTests {

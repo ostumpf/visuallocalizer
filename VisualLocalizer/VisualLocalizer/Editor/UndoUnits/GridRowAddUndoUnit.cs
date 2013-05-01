@@ -13,14 +13,14 @@ namespace VisualLocalizer.Editor.UndoUnits {
     /// Represents undo unit for adding new string resources
     /// </summary>
     [Guid("A7F756F0-2926-4103-A4EA-0C5D3E8522C7")]
-    internal sealed class StringRowAddUndoUnit : AbstractUndoUnit {
+    internal sealed class GridRowAddUndoUnit : AbstractUndoUnit {
 
         private List<ResXStringGridRow> Rows { get; set; }
-        private ResXStringGrid Grid { get; set; }
+        private AbstractResXEditorGrid Grid { get; set; }
         private KeyValueIdentifierConflictResolver ConflictResolver { get; set; }
         private ResXEditorControl Control { get; set; }
 
-        public StringRowAddUndoUnit(ResXEditorControl control, List<ResXStringGridRow> rows, ResXStringGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
+        public GridRowAddUndoUnit(ResXEditorControl control, List<ResXStringGridRow> rows, AbstractResXEditorGrid grid, KeyValueIdentifierConflictResolver conflictResolver) {
             if (control == null) throw new ArgumentNullException("control");
             if (grid == null) throw new ArgumentNullException("grid");
             if (rows == null) throw new ArgumentNullException("rows");

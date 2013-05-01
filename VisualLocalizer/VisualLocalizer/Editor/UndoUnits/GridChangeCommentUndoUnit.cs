@@ -14,15 +14,15 @@ namespace VisualLocalizer.Editor.UndoUnits {
     /// Represents undo unit for changing comment of a string resource
     /// </summary>
     [Guid("E00A8D51-409A-453b-83AB-B63B5B79AC76")]
-    internal sealed class StringChangeCommentUndoUnit : AbstractUndoUnit {
+    internal sealed class GridChangeCommentUndoUnit : AbstractUndoUnit {
 
         public string Key { get; private set; }
         public string OldComment { get; private set; }
         public string NewComment { get; private set; }        
         public ResXStringGridRow SourceRow { get; private set; }
-        public ResXStringGrid Grid { get; private set; }
+        public AbstractResXEditorGrid Grid { get; private set; }
 
-        public StringChangeCommentUndoUnit(ResXStringGridRow sourceRow, ResXStringGrid grid, string key, string oldComment, string newComment) {
+        public GridChangeCommentUndoUnit(ResXStringGridRow sourceRow, AbstractResXEditorGrid grid, string key, string oldComment, string newComment) {
             if (sourceRow == null) throw new ArgumentNullException("sourceRow");
             if (grid == null) throw new ArgumentNullException("grid");
             

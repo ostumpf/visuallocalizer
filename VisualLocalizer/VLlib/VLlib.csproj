@@ -155,6 +155,7 @@
     <Compile Include="Extensions\ResXDataNodeEx.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Extensions\TextEx.cs">
       <SubType>Code</SubType>
     </Compile>

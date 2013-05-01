@@ -284,7 +284,7 @@ namespace VisualLocalizer.Commands {
             Row.DataSourceItem.Comment = comment;
 
             // adds undo unit
-            grid.StringValueChanged(Row, oldValue, (string)Row.Cells[ValueColumnName].Value);
+            grid.ValueChanged(Row, oldValue, (string)Row.Cells[ValueColumnName].Value);
             
             // marks the document dirty
             grid.NotifyDataChanged();

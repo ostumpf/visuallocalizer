@@ -15,7 +15,7 @@ namespace VisualLocalizer.Editor {
     /// <summary>
     /// Represents one row in the ResX editor string grid
     /// </summary>
-    internal sealed class ResXStringGridRow : DataGridViewKeyValueRow<ResXDataNode>, IReferencableKeyValueSource {
+    internal class ResXStringGridRow : DataGridViewKeyValueRow<ResXDataNode>, IReferencableKeyValueSource {
         
         /// <summary>
         /// Index of this row at the moment it was deleted (for undo items)
@@ -45,11 +45,11 @@ namespace VisualLocalizer.Editor {
         public void UpdateReferenceCount(bool determinated) {
             if (DataGridView == null) return;
 
-            ResXStringGrid stringGrid = (ResXStringGrid)DataGridView;
+            AbstractResXEditorGrid grid = (AbstractResXEditorGrid)DataGridView;
             if (determinated) {
-                Cells[stringGrid.ReferencesColumnName].Value = CodeReferences.Count;
+                Cells[grid.ReferencesColumnName].Value = CodeReferences.Count;
             } else {
-                Cells[stringGrid.ReferencesColumnName].Value = "?";
+                Cells[grid.ReferencesColumnName].Value = "?";
             }
         }
 
@@ -77,6 +77,13 @@ namespace VisualLocalizer.Editor {
                 }
                 return readonlyExists;
             }
+        }
+    }
+
+    internal sealed class ResXOthersGridRow : ResXStringGridRow {       
+        public Type DataType {
+            get;
+            set;
         }
     }
 }

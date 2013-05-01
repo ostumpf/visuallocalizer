@@ -111,6 +111,12 @@
     <Compile Include="Editor\AbstractListView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editor\AbstractResXEditorGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Editor\ResXOthersGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Editor\Editor.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -134,11 +140,13 @@
     <Compile Include="Editor\ResXStringGrid.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Editor\ResXStringGridRow.cs" />
+    <Compile Include="Editor\ResXStringGridRow.cs">
+    </Compile>
     <Compile Include="Editor\ResXTabControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Editor\UndoUnits\AccessModifierChangeUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\OthersChangeTypeUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewChangeCommentUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewMakeEmbeddedUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\ListViewMakeExternalUndoUnit.cs" />
@@ -148,12 +156,12 @@
     <Compile Include="Editor\UndoUnits\MergeUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\RemoveStringsUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\RenameKeyUndoUnit.cs" />
-    <Compile Include="Editor\UndoUnits\StringChangeCommentUndoUnit.cs" />
-    <Compile Include="Editor\UndoUnits\StringChangeValueUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\GridChangeCommentUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\GridChangeValueUndoUnit.cs" />
     <Compile Include="Editor\UndoUnits\StringInlinedUndoItem.cs" />
-    <Compile Include="Editor\UndoUnits\StringRenameKeyInCodeUndoUnit.cs" />
-    <Compile Include="Editor\UndoUnits\StringRenameKeyUndoUnit.cs" />
-    <Compile Include="Editor\UndoUnits\StringRowAddUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\GridRenameKeyInCodeUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\GridRenameKeyUndoUnit.cs" />
+    <Compile Include="Editor\UndoUnits\GridRowAddUndoUnit.cs" />
     <Compile Include="Editor\VsColorTable.cs" />
     <Compile Include="Extensions\ResXItemsEx.cs" />
     <Compile Include="Gui\AbstractCodeToolWindow.cs" />
@@ -212,6 +220,12 @@
     <Compile Include="Components\VLOutputWindow.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Commands\MenuManager.cs" />
+    <Compile Include="Gui\TypeSelectorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\TypeSelectorForm.Designer.cs">
+      <DependentUpon>TypeSelectorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Settings\EditorSettingsManager.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -265,6 +279,10 @@
       <DependentUpon>SelectResourceFileForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Gui\TypeSelectorForm.resx">
+      <DependentUpon>TypeSelectorForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <SubType>Designer</SubType>
@@ -304,6 +322,10 @@
     <None Include="vlkey.snk" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\VLlib\VLlib.csproj">
+      <Project>{3B87EC9A-D56C-4225-9323-CA157901244F}</Project>
+      <Name>VLlib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\VLtranslat\VLtranslat.csproj">
       <Project>{1CC2F57A-2299-418C-9E4B-D8375EBA4712}</Project>
       <Name>VLtranslat</Name>

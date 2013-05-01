@@ -16,9 +16,9 @@ namespace VisualLocalizer.Editor.UndoUnits {
     /// Represents action of renaming key of string resource in editor
     /// </summary>
     [Guid("A524A5E7-EF67-4b42-BBB1-25706700A1AD")]
-    internal sealed class StringRenameKeyUndoUnit : RenameKeyUndoUnit {
+    internal sealed class GridRenameKeyUndoUnit : RenameKeyUndoUnit {
 
-        public StringRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXEditorControl control, string oldKey, string newKey) 
+        public GridRenameKeyUndoUnit(ResXStringGridRow sourceRow, ResXEditorControl control, string oldKey, string newKey) 
             : base(oldKey, newKey) {
             if (sourceRow == null) throw new ArgumentNullException("sourceRow");
             if (control == null) throw new ArgumentNullException("control");
@@ -77,7 +77,7 @@ namespace VisualLocalizer.Editor.UndoUnits {
         }
 
         private void ChangeColumnValue(string from, string to) {
-            ResXStringGrid grid = (ResXStringGrid)SourceRow.DataGridView;
+            AbstractResXEditorGrid grid = (AbstractResXEditorGrid)SourceRow.DataGridView;
             SourceRow.Cells[grid.KeyColumnName].Tag = from;
             SourceRow.Cells[grid.KeyColumnName].Value = to;
             grid.ValidateRow(SourceRow);
