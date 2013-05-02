@@ -134,7 +134,7 @@ namespace VisualLocalizer.Gui {
         /// Provider combobox value changed
         /// </summary>        
         private void ProviderBox_SelectedIndexChanged(object sender, EventArgs e) {
-            Provider = (TRANSLATE_PROVIDER)providerBox.SelectedIndex;
+            Provider = ((ProviderItem)providerBox.SelectedItem).Provider;
         }
 
         /// <summary>
@@ -188,14 +188,14 @@ namespace VisualLocalizer.Gui {
         /// Item in the list of translation providers
         /// </summary>
         private class ProviderItem {
-            private TRANSLATE_PROVIDER prov;
+            public TRANSLATE_PROVIDER Provider;
 
             public ProviderItem(TRANSLATE_PROVIDER prov) {
-                this.prov = prov;
+                this.Provider = prov;
             }
 
             public override string ToString() {
-                return prov.ToHumanForm();
+                return Provider.ToHumanForm();
             }
         }
 
