@@ -157,23 +157,24 @@ namespace VisualLocalizer.Editor {
         }
 
         /// <summary>
-        /// Copies selected rows to clipboard, using both CSV format and tab-separated format in order to cooperate with Excel and text editors
+        /// Copies selected rows to clipboard, using tab-separated format in order to cooperate with Excel and text editors
         /// </summary>
         public virtual bool Copy() {
             DataObject dataObject = new DataObject();
 
-            StringBuilder tabbedContent = new StringBuilder();
-            StringBuilder csvContent = new StringBuilder();
+            StringBuilder tabbedContent = new StringBuilder();            
             foreach (DataGridViewRow row in SelectedRows) {
                 if (row.IsNewRow) continue;
-                tabbedContent.AppendFormat("{0}\t{1}\t{2}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
-                csvContent.AppendFormat("{0};{1};{2}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
+
+                // duplicate " 
+                string key = ((string)row.Cells[KeyColumnName].Value).ConvertVBUnescapeSequences(); 
+                string value = ((string)row.Cells[ValueColumnName].Value).ConvertVBUnescapeSequences(); 
+                string comment = ((string)row.Cells[CommentColumnName].Value).ConvertVBUnescapeSequences(); 
+                
+                tabbedContent.AppendFormat("\"{0}\"\t\"{1}\"\t\"{2}\"" + Environment.NewLine, key, value, comment);
             }
             dataObject.SetText(tabbedContent.ToString());
-
-            MemoryStream ms = new MemoryStream(Encoding.Default.GetBytes(csvContent.ToString()));
-            dataObject.SetData(DataFormats.CommaSeparatedValue, ms);
-
+            
             Clipboard.SetDataObject(dataObject, true);
             return true;
         }
@@ -583,18 +584,16 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Adds given clipboard text to the grid - values separated with , and rows separated with ; format is expected
         /// </summary>        
-        public virtual void AddClipboardText(string text, bool isCsv) {
-            if (text == null) throw new ArgumentNullException("text");
+        public virtual void AddClipboardText(List<List<string>> data) {
+            if (data == null) throw new ArgumentNullException("data");
 
-            string[] rows = text.Split(new string[] { Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries); // get the rows
             List<ResXStringGridRow> addedRows = new List<ResXStringGridRow>();
-            foreach (string row in rows) {
-                string[] columns = row.Split(isCsv ? ';' : '\t'); // get the columns
-                if (columns.Length == 0) continue;
+            foreach (List<string> columns in data) {
+                if (columns.Count == 0) continue;
 
-                string key = columns.Length >= 1 ? columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage) : ""; // modify key so that is a valid identifier
-                string value = columns.Length >= 2 ? columns[1] : "";
-                string comment = columns.Length >= 3 ? columns[2] : "";
+                string key = columns.Count >= 1 ? columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage) : ""; // modify key so that is a valid identifier
+                string value = columns.Count >= 2 ? columns[1] : "";
+                string comment = columns.Count >= 3 ? columns[2] : "";
 
                 ResXDataNode node = new ResXDataNode(key, value); // create new resource
                 node.Comment = comment;
@@ -611,6 +610,7 @@ namespace VisualLocalizer.Editor {
                 VLOutputWindow.VisualLocalizerPane.WriteLine("Added {0} new rows from clipboard", addedRows.Count);
             }
         }
+
 
         /// <summary>
         /// Public wrapper for Validate(ResXStringGridRow) method

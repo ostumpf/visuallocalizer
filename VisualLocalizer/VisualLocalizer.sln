@@ -16,7 +16,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0054A6EB-7BFC-411E-9E03-C8D6A323BAA6}"
 	ProjectSection(SolutionItems) = preProject
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
-		VisualLocalizer4.vsmdi = VisualLocalizer4.vsmdi
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLlib", "VLlib\VLlib.csproj", "{3B87EC9A-D56C-4225-9323-CA157901244F}"

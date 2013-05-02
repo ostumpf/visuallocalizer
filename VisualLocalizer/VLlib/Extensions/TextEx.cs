@@ -228,7 +228,7 @@ namespace VisualLocalizer.Library.Extensions {
         /// Returns text modified that way, so it can be displayed as string literal in VB code
         /// </summary>  
         public static string ConvertVBUnescapeSequences(this string text) {
-            if (text == null) throw new ArgumentNullException("text");
+            if (text == null) return null;
             return text.Replace("\"", "\"\""); 
         }
 
@@ -236,7 +236,7 @@ namespace VisualLocalizer.Library.Extensions {
         /// Removes escape sequences from VB string literal
         /// </summary>  
         public static string ConvertVBEscapeSequences(this string text) {
-            if (text == null) throw new ArgumentNullException("text");
+            if (text == null) return null;
             return text.Replace("\"\"", "\"");
         }
 
@@ -322,6 +322,86 @@ namespace VisualLocalizer.Library.Extensions {
             foreach (string ext in extensions)
                 if (text.EndsWith(ext)) return true;
             return false;
+        }
+
+        /// <summary>
+        /// Parses given text separated by newlines and tabs into lines and columns. Respects quoted content.
+        /// </summary>        
+        public static List<List<string>> ParseTabbedText(this string text) {
+            if (text == null) throw new ArgumentNullException("text");
+
+            List<List<string>> result = new List<List<string>>();
+            List<string> row = new List<string>();
+            int i=0;
+            bool lineChanged=false;
+
+            while (i < text.Length) {
+                string field = ReadField(text, ref i, out lineChanged);
+                if (lineChanged) {
+                    result.Add(row);
+                    row = new List<string>();
+                }
+                if (field != null) row.Add(field);
+            }
+            result.Add(row);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads and returns single field from the tab-separated text. 
+        /// </summary>
+        /// <param name="text">Text to read from</param>
+        /// <param name="i">Position where to start</param>
+        /// <param name="lineChanged">True, if newline character appeared before the field</param>
+        /// <returns>Escaped text of the field</returns>
+        private static string ReadField(string text, ref int i, out bool lineChanged) {
+            lineChanged = false;            
+            int continuosQuoteCount = 0;
+            StringBuilder b = null;
+
+            if (text[i] == '\r' || text[i] == '\n') {
+                lineChanged = true;
+                i++;
+            }
+            if (lineChanged && text[i] == '\n') i++;
+
+            bool dataEscaped = false;
+            if (i < text.Length && text[i] == '"') {
+                dataEscaped = true;
+                i++;
+            }
+
+            while (i < text.Length) {
+                if (dataEscaped && continuosQuoteCount % 2 == 1 && text[i] != '"') {                    
+                    if (text[i] == '\t') i++;
+                    break;
+                }
+
+                if (text[i] == '\t' && !dataEscaped) {
+                    i++;
+                    break;
+                }
+                if (text[i] == '\r' && !dataEscaped) {                    
+                    break;
+                }
+                if (text[i] == '"' && dataEscaped) {
+                    continuosQuoteCount++;
+                    if (continuosQuoteCount % 2 == 0) {
+                        if (b == null) b = new StringBuilder();
+                        b.Append('"');
+                    }
+                } else {
+                    if (b == null) b = new StringBuilder();
+                    continuosQuoteCount = 0;
+                    b.Append(text[i]);
+                }
+
+                i++;
+            }
+
+
+            return b == null ? null : b.ToString();
         }
     }
 }

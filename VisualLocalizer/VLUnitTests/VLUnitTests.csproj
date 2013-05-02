@@ -86,6 +86,7 @@
     <Compile Include="VLTests\Commands\RunCommandsTestsBase.cs" />
     <Compile Include="VLTests\Commands\VBBatchInlineTest.cs" />
     <Compile Include="VLTests\Commands\VBBatchMoveTest.cs" />
+    <Compile Include="VLTests\TabbedFormatTests.cs" />
     <Compile Include="VLtranslatTests\BingTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\GoogleTranslatorTest.cs" />
     <Compile Include="VLtranslatTests\MyMemoryTranslatorTest.cs" />

@@ -269,6 +269,13 @@ namespace VisualLocalizer.Settings {
             names.Regex = @".+\.Name =(?# something.Name = <string>)";
             SettingsObject.Instance.CustomLocalizabilityCriteria.Add(names);
 
+            var diacritics = new LocalizationCustomCriterion(LocalizationCriterionAction.FORCE_ENABLE, 0);
+            diacritics.Predicate = LocalizationCriterionPredicate.MATCHES;
+            diacritics.Target = LocalizationCriterionTarget.VALUE;
+            diacritics.Name = Path.GetRandomFileName();
+            diacritics.Regex = @"[ěščřžýáíéúůďťňóĚŠČŘŽÝÁÍÉÚŮĎŤÓöüäëÖÜÄËľĽĹĺôÔ](?# common culture-specific characters)";
+            SettingsObject.Instance.CustomLocalizabilityCriteria.Add(diacritics);
+
             SettingsObject.Instance.IgnorePropertyChanges = false;
             SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
             SettingsObject.Instance.NotifySettingsLoaded();

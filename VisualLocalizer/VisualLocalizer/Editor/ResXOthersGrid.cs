@@ -166,19 +166,17 @@ namespace VisualLocalizer.Editor {
         /// <summary>
         /// Adds given clipboard text to the grid - values separated with , and rows separated with ; format is expected
         /// </summary>
-        public override void AddClipboardText(string text, bool isCsv) {
-            if (text == null) throw new ArgumentNullException("text");
+        public override void AddClipboardText(List<List<string>> data) {
+            if (data == null) throw new ArgumentNullException("data");
 
-            string[] rows = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries); // get the rows
             List<ResXStringGridRow> addedRows = new List<ResXStringGridRow>();
-            foreach (string row in rows) {
-                string[] columns = row.Split(isCsv ? ';' : '\t'); // get the columns
-                if (columns.Length == 0) continue;
+            foreach (List<string> columns in data) {
+                if (columns.Count < 2) continue;
 
-                string key = columns.Length >= 1 ? columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage) : ""; // modify key so that is a valid identifier
-                string assemblyQualifiedTypeName = columns.Length >= 2 ? columns[1] : "";
-                string value = columns.Length >= 3 ? columns[2] : "";
-                string comment = columns.Length >= 4 ? columns[3] : "";
+                string key = columns[0].CreateIdentifier(editorControl.Editor.ProjectItem.DesignerLanguage); // modify key so that is a valid identifier
+                string assemblyQualifiedTypeName = columns[1];
+                string value = columns.Count >= 3 ? columns[2] : "";
+                string comment = columns.Count >= 4 ? columns[3] : "";
 
                 Type type = Type.GetType(assemblyQualifiedTypeName);
                 ResXDataNode node = new ResXDataNode(key, TypeDescriptor.GetConverter(type).ConvertFromString(value)); // create new resource
@@ -199,22 +197,24 @@ namespace VisualLocalizer.Editor {
         }
 
         /// <summary>
-        /// Copies selected rows to clipboard, using both CSV format and tab-separated format in order to cooperate with Excel and text editors
+        /// Copies selected rows to clipboard, using tab-separated format in order to cooperate with Excel and text editors
         /// </summary>
         public override bool Copy() {
             DataObject dataObject = new DataObject();
 
             StringBuilder tabbedContent = new StringBuilder();
-            StringBuilder csvContent = new StringBuilder();
             foreach (ResXOthersGridRow row in SelectedRows) {
                 if (row.IsNewRow) continue;
-                tabbedContent.AppendFormat("{0}\t{1}\t{2}\t{3}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, row.DataType.AssemblyQualifiedName, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
-                csvContent.AppendFormat("{0};{1};{2};{3}" + Environment.NewLine, (string)row.Cells[KeyColumnName].Value, row.DataType.AssemblyQualifiedName, (string)row.Cells[ValueColumnName].Value, (string)row.Cells[CommentColumnName].Value);
+            
+                // duplicate " 
+                string key = ((string)row.Cells[KeyColumnName].Value).ConvertVBUnescapeSequences();
+                string value = ((string)row.Cells[ValueColumnName].Value).ConvertVBUnescapeSequences();
+                string comment = ((string)row.Cells[CommentColumnName].Value).ConvertVBUnescapeSequences();
+                string type = row.DataType.AssemblyQualifiedName.ConvertVBUnescapeSequences();
+
+                tabbedContent.AppendFormat("\"{0}\"\t\"{1}\"\t\"{2}\"\t\"{3}\"" + Environment.NewLine, key, type, value, comment);
             }
             dataObject.SetText(tabbedContent.ToString());
-
-            MemoryStream ms = new MemoryStream(Encoding.Default.GetBytes(csvContent.ToString()));
-            dataObject.SetData(DataFormats.CommaSeparatedValue, ms);
 
             Clipboard.SetDataObject(dataObject, true);
             return true;

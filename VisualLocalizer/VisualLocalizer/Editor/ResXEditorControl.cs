@@ -625,42 +625,29 @@ namespace VisualLocalizer.Editor {
                     string[] files = (string[])iData.GetData(StringConstants.FILE_LIST);                    
                     AddExistingFiles(files, FILES_ORIGIN.CLIPBOARD_REF);
                     return true;
-                } else if (iData.GetDataPresent(DataFormats.CommaSeparatedValue) && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
-                    // contains plain text
-                    object o = iData.GetData(DataFormats.CommaSeparatedValue);
-                    string text;
-
-                    if (o is MemoryStream) {
-                        MemoryStream ms = (MemoryStream)o;
-                        byte[] buffer = new byte[ms.Length];
-                        ms.Read(buffer, 0, buffer.Length);
-                        text = Encoding.Default.GetString(buffer);
-                    } else {
-                        text = o.ToString();
-                    }
-                    
-                    int columnsCount = GetColumnsCountForText(text, true);
-                    if (columnsCount == 4) {
-                        othersGrid.AddClipboardText(text, true);
-                        tabs.SelectedTab = othersTab;
-                    } else {
-                        stringGrid.AddClipboardText(text, true);
-                        tabs.SelectedTab = stringTab;
-                    }
-                    
-                    return true;
                 } else if (iData.GetDataPresent("Text") && !iData.GetDataPresent(StringConstants.SOLUTION_EXPLORER_FILE_LIST)) {
                     // contains plain text
 
                     string text = (string)iData.GetData("Text");
-                    int columnsCount = GetColumnsCountForText(text, false);
-                    if (columnsCount == 4) {
-                        othersGrid.AddClipboardText(text, true);
+                    var parsed = text.ParseTabbedText();
+                    if (parsed.Count == 0) return true;
+
+                    int columnsCount = parsed[0].Count;
+                    if (tabs.SelectedTab == othersTab) {
+                        othersGrid.AddClipboardText(parsed);
                         tabs.SelectedTab = othersTab;
-                    } else {
-                        stringGrid.AddClipboardText(text, true);
+                    } else if (tabs.SelectedTab == stringTab) {
+                        stringGrid.AddClipboardText(parsed);
                         tabs.SelectedTab = stringTab;
-                    }                    
+                    } else {
+                        if (columnsCount == 4) {
+                            othersGrid.AddClipboardText(parsed);
+                            tabs.SelectedTab = othersTab;
+                        } else {
+                            stringGrid.AddClipboardText(parsed);
+                            tabs.SelectedTab = stringTab;
+                        }
+                    }
                     return true;
                 } else {                    
                     List<AbstractListView> dataTabItems = new List<AbstractListView>();
@@ -1849,23 +1836,7 @@ namespace VisualLocalizer.Editor {
         private void NotifyViewKindChanged(View newView) {
             if (ViewKindChanged != null) ViewKindChanged(newView);
         }
-        
-        /// <summary>
-        /// Returns columns count in given newline-separated text
-        /// </summary>
-        /// <param name="text">Text to explore</param>
-        /// <param name="isCSV">True if ; should be used as separeted, false for \t</param>        
-        private int GetColumnsCountForText(string text, bool isCSV) {
-            if (text == null) return 0;
-
-            string[] rows = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-            if (rows.Length == 0) return 0;
-
-            string row = rows[0];
-            char columnSeparator = isCSV ? ';' : '\t';
-
-            return row.Split(columnSeparator).Length;
-        }            
+                  
 
         /// <summary>
         /// Updates state (enabled/disabled) of the toolstrip buttons
