@@ -100,5 +100,14 @@ namespace CSharpTests {
         private string b_4 = Properties.Resources.Key1;
         private string b_5 = CSharpLib.Resource1.Key1;
         private string b_6 = al.Resource1.Key1;
+
+        private string b_7 = CustomNamespace.Resource2.KeyA;        
+    }
+}
+
+namespace CustomNamespace {
+    class X {
+        private string b_8 = Resource2.KeyA;
+        private string b_9 = CustomNamespace.Resource2.KeyA;        
     }
 }

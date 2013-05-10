@@ -56,6 +56,16 @@ My.Resources _
 .Resource1 _
 . _
 Key1
+            Dim e_10 As String = CustomNamespace.Resource2.KeyA
+            Dim e_11 As String = VBLib.CustomVB.Resource2.KeyB
+            Dim e_12 As String = VBLib.Resource3.KeyC
         End Sub
     End Class
-End NameSpace
+End Namespace
+
+Namespace CustomVB
+    Class X
+        Dim e_13 As String = VBLib.CustomVB.Resource2.KeyB
+        Dim e_14 As String = Resource1.Key1
+    End Class
+End Namespace
