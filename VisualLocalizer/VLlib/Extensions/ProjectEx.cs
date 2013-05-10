@@ -260,6 +260,19 @@ namespace VisualLocalizer.Library.Extensions {
             } catch (Exception) {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Returns value of "CustomToolNamespace" property, if present, null otherwise
+        /// </summary>
+        public static string GetCustomToolNamespace(this ProjectItem item) {
+            if (item == null) throw new ArgumentNullException("item");
+
+            try {
+                return (string)item.Properties.Item("CustomToolNamespace").Value;
+            } catch (Exception) {
+                return null;
+            }
         }   
 
         /// <summary>

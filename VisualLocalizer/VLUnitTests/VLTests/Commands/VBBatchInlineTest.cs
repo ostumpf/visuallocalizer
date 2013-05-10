@@ -264,6 +264,44 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(54, 32, 57, 4)
             });
 
+            list.Add(new VBCodeReferenceResultItem() {
+                Value = "a",
+                SourceItem = projectItem,
+                FullReferenceText = "CustomNamespace.Resource2.KeyA",
+                OriginalReferenceText = "CustomNamespace.Resource2.KeyA",
+                ReplaceSpan = CreateTextSpan(58, 33, 58, 63)
+            });
+            list.Add(new VBCodeReferenceResultItem() {
+                Value = "b",
+                SourceItem = projectItem,
+                FullReferenceText = "VBLib.CustomVB.Resource2.KeyB",
+                OriginalReferenceText = "VBLib.CustomVB.Resource2.KeyB",
+                ReplaceSpan = CreateTextSpan(59, 33, 59, 62)
+            });
+            list.Add(new VBCodeReferenceResultItem() {
+                Value = "c",
+                SourceItem = projectItem,
+                FullReferenceText = "VBLib.Resource3.KeyC",
+                OriginalReferenceText = "VBLib.Resource3.KeyC",
+                ReplaceSpan = CreateTextSpan(60, 33, 60, 53)
+            });
+
+
+            list.Add(new VBCodeReferenceResultItem() {
+                Value = "b",
+                SourceItem = projectItem,
+                FullReferenceText = "VBLib.CustomVB.Resource2.KeyB",
+                OriginalReferenceText = "VBLib.CustomVB.Resource2.KeyB",
+                ReplaceSpan = CreateTextSpan(67, 29, 67, 58)
+            });
+            list.Add(new VBCodeReferenceResultItem() {
+                Value = "value2",
+                SourceItem = projectItem,
+                FullReferenceText = "CSharpLib.Resource1.Key1",
+                OriginalReferenceText = "Resource1.Key1",
+                ReplaceSpan = CreateTextSpan(68, 29, 68, 43)
+            });
+
             foreach (var item in list) CalculateAbsolutePosition(item);
             validResults.Add(Agent.VBReferencesTestFile1, list);
         }

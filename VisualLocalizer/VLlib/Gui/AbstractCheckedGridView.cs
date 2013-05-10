@@ -387,10 +387,12 @@ namespace VisualLocalizer.Library.Gui {
         protected void SetCheckStateOfSelected(bool check) {
             if (string.IsNullOrEmpty(CheckBoxColumnName) || !Columns.Contains(CheckBoxColumnName)) return; // this grid does not contain checkbox column
 
+            EndEdit();
+
             foreach (DataGridViewRow row in SelectedRows) {
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value;
                 row.Cells[CheckBoxColumnName].Value = check;
-                OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));
+                OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));                
             }
             UpdateCheckHeader();
         }

@@ -515,22 +515,29 @@ namespace VisualLocalizer.Components {
                 // select first namespace in the designer file
                 CodeElement nmspcElemet = null;
                 bool fileOpened;
+                var rootCodeElements = DesignerItem.GetCodeModel(true, false, out fileOpened).CodeElements;
 
-                foreach (CodeElement element in DesignerItem.GetCodeModel(true, false, out fileOpened).CodeElements) {
+                foreach (CodeElement element in rootCodeElements) {
                     if (element.Kind == vsCMElement.vsCMElementNamespace) {
                         Namespace = element.FullName;
                         nmspcElemet = element;
                         break;
                     }                    
                 }
-                if (nmspcElemet != null) { // namespace found
-                    // select first class/module in the namespace
-                    foreach (CodeElement child in nmspcElemet.Children) {
+
+                var nestedCodeElements = nmspcElemet == null ? rootCodeElements : nmspcElemet.Children;
+                // select first class/module in the namespace
+                if (nestedCodeElements != null) {
+                    foreach (CodeElement child in nestedCodeElements) {
                         if (child.Kind == vsCMElement.vsCMElementClass || child.Kind == vsCMElement.vsCMElementModule) {
                             Class = child.Name;
                             break;
                         }
                     }
+                }
+
+                if (Namespace == null && DesignerLanguage == LANGUAGE.VB) {
+                    Namespace = InternalProjectItem.ContainingProject.GetRootNamespace();
                 }
             } else { // designer file doesn't exist   
 

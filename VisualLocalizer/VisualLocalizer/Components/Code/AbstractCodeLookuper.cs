@@ -626,7 +626,7 @@ namespace VisualLocalizer.Components.Code {
         /// <summary>
         /// Selects that code reference from given list of options, that best matches given namespace.
         /// </summary>        
-        protected CodeReferenceInfo GetInfoWithNamespace(List<CodeReferenceInfo> list, string nmspc) {
+        protected virtual CodeReferenceInfo GetInfoWithNamespace(List<CodeReferenceInfo> list, string nmspc) {
             CodeReferenceInfo nfo = null;
             foreach (var item in list)
                 if (item.Origin.Namespace == nmspc) {

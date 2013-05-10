@@ -102,14 +102,34 @@ namespace VisualLocalizer.Components.Code {
             }
        
             // try various combinations to lookup the reference
-
-            info = TryResolve(prefix, className, trieElementInfos);
+            info = TryResolve(prefix, className, trieElementInfos);            
             if (info == null && !string.IsNullOrEmpty(prefix)) info = TryResolve(prefix + "." + className, className, trieElementInfos);
             if (info == null && newPrefix != null) info = TryResolve(newPrefix, className, trieElementInfos);
             if (info == null && string.IsNullOrEmpty(prefix)) info = TryResolve(className, className, trieElementInfos);            
             if (info == null && newPrefix != null) info = TryResolve(newPrefix + "." + className, className, trieElementInfos);
             
             return info;
+        }
+
+        /// <summary>
+        /// Selects that code reference from given list of options, that best matches given namespace.
+        /// </summary>        
+        protected override CodeReferenceInfo GetInfoWithNamespace(List<CodeReferenceInfo> list, string nmspc) {
+            CodeReferenceInfo nfo = null;
+            foreach (var item in list)
+                if (item.Origin.Namespace == nmspc) {
+                    if (prefferedResXItem != null) {
+                        if (nfo == null || prefferedResXItem == item.Origin) {
+                            nfo = item;
+                        }
+                    } else {
+                        if (nfo == null || nfo.Origin.IsCultureSpecific()) {
+                            nfo = item;
+                        }
+                    }
+
+                }
+            return nfo;
         }
 
         /// <summary>
@@ -220,7 +240,7 @@ namespace VisualLocalizer.Components.Code {
                 if (m.Groups.Count != 2 && m.Groups.Count != 3) return false;
 
                 int val = int.Parse(m.Groups[m.Groups.Count - 1].Value);
-                ReplaceChar = ((char)val).ToString();
+                ReplaceChar = Microsoft.VisualBasic.Strings.Chr(val).ToString();
 
                 return true;
             }

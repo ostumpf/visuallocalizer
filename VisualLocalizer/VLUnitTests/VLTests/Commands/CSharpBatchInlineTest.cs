@@ -301,6 +301,30 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(101, 29, 101, 46)
             });
 
+
+            list.Add(new CSharpCodeReferenceResultItem() {
+                Value = "a",
+                SourceItem = projectItem,
+                FullReferenceText = "CustomNamespace.Resource2.KeyA",
+                OriginalReferenceText = "CustomNamespace.Resource2.KeyA",
+                ReplaceSpan = CreateTextSpan(103, 29, 103, 59)
+            });
+            list.Add(new CSharpCodeReferenceResultItem() {
+                Value = "a",
+                SourceItem = projectItem,
+                FullReferenceText = "CustomNamespace.Resource2.KeyA",
+                OriginalReferenceText = "Resource2.KeyA",
+                ReplaceSpan = CreateTextSpan(109, 29, 109, 43)
+            });
+            list.Add(new CSharpCodeReferenceResultItem() {
+                Value = "a",
+                SourceItem = projectItem,
+                FullReferenceText = "CustomNamespace.Resource2.KeyA",
+                OriginalReferenceText = "CustomNamespace.Resource2.KeyA",
+                ReplaceSpan = CreateTextSpan(110, 29, 110, 59)
+            });
+
+
             foreach (var item in list) CalculateAbsolutePosition(item);
             validResults.Add(Agent.CSharpReferencesTestFile1, list);
         }
