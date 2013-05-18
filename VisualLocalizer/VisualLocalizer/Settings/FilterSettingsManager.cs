@@ -137,7 +137,7 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.MarkNotLocalizableStringsIndex = 0;
             SettingsObject.Instance.NamespacePolicyIndex = 0;
             SettingsObject.Instance.BatchMoveSplitterDistance = 130;
-            SettingsObject.Instance.ShowContextColumn = true;
+            SettingsObject.Instance.ShowContextColumn = false;
             SettingsObject.Instance.UseReflectionInAsp = true;
 
             SettingsObject.Instance.ResetCriteria();

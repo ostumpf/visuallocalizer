@@ -7,6 +7,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Editor.UndoUnits {
 

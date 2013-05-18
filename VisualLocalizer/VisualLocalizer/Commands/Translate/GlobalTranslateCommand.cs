@@ -15,7 +15,7 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Components;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Translate {
 
     /// <summary>
     /// Represents "Global translate" command invokeable from Solution Explorer's context menu. It searches for ResX files and

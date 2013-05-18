@@ -16,7 +16,7 @@ using VisualLocalizer.Library.Algorithms;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Represents "Batch inline" command, invokeable either from code context menu or Solution Explorer's context menu. It scans

@@ -9,6 +9,7 @@ using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Move;
 
 namespace VLUnitTests.VLTests {
 

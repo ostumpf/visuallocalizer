@@ -7,6 +7,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Commands;
 using System.IO;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
     

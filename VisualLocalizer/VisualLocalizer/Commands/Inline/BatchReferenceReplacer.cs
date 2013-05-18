@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Used to perform rename operation with a resource reference.

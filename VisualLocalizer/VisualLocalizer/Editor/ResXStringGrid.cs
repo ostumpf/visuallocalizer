@@ -24,6 +24,8 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Gui;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Translate;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Editor {    
 
@@ -227,7 +229,7 @@ namespace VisualLocalizer.Editor {
                             newNode.Comment = (string)row.Cells[CommentColumnName].Value;
                             row.DataSourceItem = newNode;
                         }
-                    } else { // comment was edited
+                    } else if (Columns[e.ColumnIndex].Name == CommentColumnName) { // comment was edited
                         string newComment = (string)row.Cells[CommentColumnName].Value;
                         if (isNewRow) {
                             row.Status = KEY_STATUS.ERROR;

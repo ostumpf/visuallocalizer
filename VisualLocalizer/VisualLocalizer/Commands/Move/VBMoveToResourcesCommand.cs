@@ -11,7 +11,7 @@ using VisualLocalizer.Library;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Move {
 
     /// <summary>
     /// Represents "move to resources" command on a VB .NET source code.

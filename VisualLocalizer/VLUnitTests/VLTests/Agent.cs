@@ -10,6 +10,8 @@ using System.IO;
 using VSLangProj;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 /// Contains tests of the Visual Localizer project.
 namespace VLUnitTests.VLTests {

@@ -11,6 +11,7 @@ using VisualLocalizer.Translate;
 using System.Globalization;
 using VisualLocalizer.Settings;
 using VisualLocalizer.Components;
+using VisualLocalizer.Commands.Translate;
 
 namespace VisualLocalizer.Gui {
     

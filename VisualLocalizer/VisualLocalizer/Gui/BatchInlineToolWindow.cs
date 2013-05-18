@@ -14,6 +14,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using System.IO;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Gui {
 

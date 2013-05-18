@@ -10,6 +10,7 @@ using EnvDTE;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Move;
 
 namespace VLUnitTests.VLTests {
 

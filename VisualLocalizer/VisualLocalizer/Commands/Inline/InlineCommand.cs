@@ -16,8 +16,9 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Components.UndoUnits;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
    
     /// <summary>
     /// Handles the process of ad-hoc inlining from the moment the result item has already been located. Ancestor of C#, VB and ASP .NET

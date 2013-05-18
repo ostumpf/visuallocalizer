@@ -271,15 +271,36 @@ namespace VisualLocalizer.Editor {
                     DialogResult result = form.ShowDialog();
                     if (result == DialogResult.OK) {   
                         // update underlying data
-                        Type oldType=row.DataType;
-                        row.DataType = form.ResultType;
-                        row.Cells[TypeColumnName].Value = form.ResultType.FullName;
-                        TypeColumnChanged(row, oldType, row.DataType);
+                        bool isNewRow = false;
+                        if (row.DataSourceItem == null) { // last empty row was edited, new row has been added
+                            isNewRow = true;
+                            row.DataSourceItem = new ResXDataNode("(new)", string.Empty);
+                        }
 
-                        NotifyItemsStateChanged();
-                        NotifyDataChanged();
+                        if (isNewRow) {
+                            row.Status = KEY_STATUS.ERROR;
+                            row.Cells[ReferencesColumnName].Value = "?";
+                            row.DataType = form.ResultType;
+                            row.Cells[TypeColumnName].Value = form.ResultType.FullName;
 
-                        // check for errors and update node
+                            NotifyCurrentCellDirty(true);
+
+                            NewRowAdded(row);
+                            NotifyItemsStateChanged();
+                            NotifyDataChanged();                            
+                        } else {
+                            Type oldType = row.DataType;                            
+                            if (oldType != form.ResultType) {
+                                row.DataType = form.ResultType;
+                                row.Cells[TypeColumnName].Value = form.ResultType.FullName;
+                                TypeColumnChanged(row, oldType, row.DataType);
+
+                                NotifyItemsStateChanged();
+                                NotifyDataChanged();
+                            }
+                        }
+                        
+                        // check for errors and update node                        
                         Validate(row);
                     }
                 } else { // call standard cell edit procedure

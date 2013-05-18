@@ -11,6 +11,7 @@ using EnvDTE80;
 using VisualLocalizer.Commands;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
 

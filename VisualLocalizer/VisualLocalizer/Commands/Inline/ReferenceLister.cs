@@ -17,7 +17,7 @@ using VisualLocalizer.Library.Algorithms;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Used by ResX editor to track references to particular resource file.

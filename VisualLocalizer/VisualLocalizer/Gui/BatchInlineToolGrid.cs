@@ -280,6 +280,7 @@ namespace VisualLocalizer.Gui {
         public void Clear() {
             Rows.Clear();
             if (errorRows != null) errorRows.Clear();
+            if (removedRows != null) removedRows.Clear();
         }
     }
 }

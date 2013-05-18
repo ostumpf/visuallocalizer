@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.Components;
 
-namespace VisualLocalizer.Components {
+namespace VisualLocalizer.Components.UndoUnits {
 
     /// <summary>
     /// Represents undo unit for "move to resources" operation, in which new resource key was created

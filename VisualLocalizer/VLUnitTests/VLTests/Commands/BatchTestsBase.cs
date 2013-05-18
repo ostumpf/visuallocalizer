@@ -14,6 +14,8 @@ using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Library.AspX;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
 

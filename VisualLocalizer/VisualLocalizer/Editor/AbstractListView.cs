@@ -21,6 +21,7 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Gui;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Editor {
 
@@ -132,7 +133,7 @@ namespace VisualLocalizer.Editor {
             deleteExcludeContextMenuItem.Shortcut = Shortcut.CtrlE;
 
             deleteRemoveContextMenuItem = new ImageMenuItem("Remove & delete resource(s)");
-            deleteRemoveContextMenuItem.Click+=new EventHandler((o, e) => { EditorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.DELETE_FILE | REMOVEKIND.EXCLUDE); });
+            deleteRemoveContextMenuItem.Click+=new EventHandler((o, e) => { EditorControl_RemoveRequested(REMOVEKIND.REMOVE | REMOVEKIND.DELETE_FILE); });
             deleteRemoveContextMenuItem.Shortcut = Shortcut.ShiftDel;
 
             makeEmbeddedMenuItem = new ImageMenuItem("Make this resource(s) embedded");
@@ -935,7 +936,7 @@ namespace VisualLocalizer.Editor {
         }
 
         /// <summary>
-        /// Removes selected items from the list
+        /// Removes selected items from the list. The "Exclude" flag is not valid in ASP .NET website environment.
         /// </summary>
         /// <param name="remove">Bitmask of REMOVEKIND parameters</param>
         protected void EditorControl_RemoveRequested(REMOVEKIND remove) {
@@ -954,8 +955,8 @@ namespace VisualLocalizer.Editor {
                         string file = item.DataNode.FileRef.FileName;
                         ProjectItem projectItem = VisualLocalizerPackage.Instance.DTE.Solution.FindProjectItem(file);
                         if (projectItem != null) {
-                            item.NeighborItems = projectItem.Collection;
-                            projectItem.Remove();
+                            item.NeighborItems = projectItem.Collection;                                                        
+                            projectItem.Remove();                            
                         }
                     }
                 }

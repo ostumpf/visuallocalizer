@@ -10,6 +10,7 @@ using VisualLocalizer.Commands;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
 

@@ -14,7 +14,7 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {  
+namespace VisualLocalizer.Commands.Move {  
   
     /// <summary>
     /// Represents "Batch move to resources" command, invokeable either from code context menu or Solution Explorer's context menu. It scans

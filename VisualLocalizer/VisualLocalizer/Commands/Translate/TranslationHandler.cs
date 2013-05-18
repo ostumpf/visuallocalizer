@@ -8,7 +8,7 @@ using VisualLocalizer.Components;
 using VisualLocalizer.Library;
 using VisualLocalizer.Library.Components;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Translate {
 
     /// <summary>
     /// Provides functionality for translation large amounts of data using given translation provider.

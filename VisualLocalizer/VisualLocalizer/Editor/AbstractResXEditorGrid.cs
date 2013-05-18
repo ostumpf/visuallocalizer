@@ -24,6 +24,7 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Gui;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Editor {    
 

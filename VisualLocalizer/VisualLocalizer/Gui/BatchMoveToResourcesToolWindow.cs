@@ -20,6 +20,7 @@ using System.IO;
 using VisualLocalizer.Settings;
 using System.Collections;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Move;
 
 namespace VisualLocalizer.Gui {
 

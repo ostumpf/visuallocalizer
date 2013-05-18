@@ -21,6 +21,7 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Commands;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Commands.Translate;
 
 namespace VisualLocalizer.Components {
 

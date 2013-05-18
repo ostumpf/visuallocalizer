@@ -19,6 +19,8 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Gui;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
 

@@ -15,7 +15,7 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Base class for BatchReferenceReplacer and BatchInliner. Both these classes operate with references to the resource files,

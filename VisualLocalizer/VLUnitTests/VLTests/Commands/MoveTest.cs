@@ -11,6 +11,7 @@ using System.Diagnostics;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Move;
 
 namespace VLUnitTests.VLTests {
     

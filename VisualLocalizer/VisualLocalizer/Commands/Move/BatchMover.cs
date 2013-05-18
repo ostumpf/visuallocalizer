@@ -16,8 +16,9 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Components.UndoUnits;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Move {
 
     /// <summary>
     /// Used to perform actual "Batch move to resources" command with list of result items (found string literals).

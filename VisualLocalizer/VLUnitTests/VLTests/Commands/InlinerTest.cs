@@ -16,6 +16,8 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Gui;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
     
@@ -122,8 +124,8 @@ namespace VLUnitTests.VLTests {
                 // check correct value was inlined
                 int i = 0, j = 0;
                 for (; i < checkedCount;) {
-                    while (!moveList[j].Value.StartsWith("value")) j++;
                     while (!inlineList[i].MoveThisItem) i++;
+                    while (moveList[j].Value != inlineList[i].Value) j++;                    
 
                     Assert.AreEqual(inlineList[i].Value, moveList[j].Value);
                     i++;

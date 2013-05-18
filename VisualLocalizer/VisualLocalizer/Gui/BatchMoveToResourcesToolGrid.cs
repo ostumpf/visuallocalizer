@@ -725,7 +725,8 @@ namespace VisualLocalizer.Gui {
             if (errorRows != null) errorRows.Clear();
             if (destinationItemsCache != null) destinationItemsCache.Clear();
             if (resxItemsCache != null) resxItemsCache.Clear();
-            if (loadedItems != null) loadedItems.Clear(); 
+            if (loadedItems != null) loadedItems.Clear();
+            if (removedRows != null) removedRows.Clear();
         }        
     }
 

@@ -33,6 +33,8 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Algorithms;
+using VisualLocalizer.Commands.Translate;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Editor {
 

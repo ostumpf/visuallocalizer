@@ -87,6 +87,8 @@
             // 
             // assemblyBox
             // 
+            this.assemblyBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.assemblyBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.assemblyBox.Dock = System.Windows.Forms.DockStyle.Top;
             this.assemblyBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.assemblyBox.DropDownWidth = 500;

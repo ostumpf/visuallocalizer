@@ -8,6 +8,7 @@ using VisualLocalizer.Components;
 using Microsoft.VisualStudio.TextManager.Interop;
 using EnvDTE;
 using VisualLocalizer.Components.Code;
+using VisualLocalizer.Commands.Inline;
 
 namespace VLUnitTests.VLTests {
 

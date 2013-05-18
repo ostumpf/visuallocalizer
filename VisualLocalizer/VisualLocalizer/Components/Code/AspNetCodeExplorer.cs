@@ -16,6 +16,8 @@ using System.Collections;
 using VisualLocalizer.Extensions;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Components.Code {
 

@@ -11,7 +11,7 @@ using VisualLocalizer.Extensions;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Represents "inline" command on a VB source code

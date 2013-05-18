@@ -23,8 +23,9 @@ using System.Drawing;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Components.UndoUnits;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Move {
 
     /// <summary>
     /// Ancestor of C#, VB and ASP .NET "move to resources" commands. It provides functionality from the moment where

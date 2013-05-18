@@ -18,6 +18,9 @@ using VisualLocalizer.Translate;
 using System.Collections;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Commands.Translate;
+using VisualLocalizer.Commands.Move;
+using VisualLocalizer.Commands.Inline;
 
 namespace VisualLocalizer.Commands {
 

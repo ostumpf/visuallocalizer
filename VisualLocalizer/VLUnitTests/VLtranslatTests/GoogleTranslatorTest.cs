@@ -49,7 +49,7 @@ namespace VLUnitTests.VLtranslatTests {
             string fromLanguage = string.Empty;
             string toLanguage = "cs";
             string untranslatedText = "In this year ({0,2}), {1:d} were produced.";
-            string expected = "V tomto roce ({0,2}) , bylo vyrobeno {1:d} .";
+            string expected = "V tomto roce ( {0,2} ) , bylo vyrobeno {1:d} .";
             string actual = target.Translate(fromLanguage, toLanguage, untranslatedText, true);
 
             Assert.AreEqual(expected, actual);

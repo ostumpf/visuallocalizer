@@ -10,8 +10,9 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
+using VisualLocalizer.Components.UndoUnits;
 
-namespace VisualLocalizer.Commands {
+namespace VisualLocalizer.Commands.Inline {
 
     /// <summary>
     /// Used to perform actual Batch inline command.

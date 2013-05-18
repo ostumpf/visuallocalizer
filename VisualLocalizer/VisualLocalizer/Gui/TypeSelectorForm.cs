@@ -52,7 +52,7 @@ namespace VisualLocalizer.Gui {
         /// </summary>        
         private void TypeSelectorForm_Load(object sender, EventArgs e) {
             try {
-                assemblyBox.Items.AddRange(AppDomain.CurrentDomain.GetAssemblies());
+                assemblyBox.Items.AddRange(AppDomain.CurrentDomain.GetAssemblies().OrderBy((assembly) => { return assembly.ToString(); }).ToArray());
 
                 ResultType = OriginalType;
 
@@ -75,7 +75,7 @@ namespace VisualLocalizer.Gui {
                 if (a == null) ResultType = null;
 
                 typeBox.Items.Clear();
-                typeBox.Items.AddRange(a.GetTypes());
+                typeBox.Items.AddRange(a.GetTypes().OrderBy((type) => { return type.ToString(); }).ToArray());
 
                 ResultType = null;
             } catch (Exception ex) {
