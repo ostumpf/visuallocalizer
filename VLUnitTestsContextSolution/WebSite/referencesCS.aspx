@@ -50,7 +50,7 @@ Key1;
             //string a_7 = Resources.Resource2.Key11;
         %>     
         <%-- <asp:Button runat="server" ID="button1" Text="<%$ Resources:Resource1,Key1 %>" /> --%>
-        <!-- <asp:Button runat="server" ID="button1" Text="<%$ Resources:Resource1,Key11 %>" /> -->
+        <!-- <asp:Button runat="server" ID="buttonX" Text="<%$ Resources:Resource1,Key11 %>" /> -->
         <asp:Button runat="server" ID="button8" Text="<%$ Resources:Resource1,Key11 %>" /> 
         <asp:Button runat="server" ID="button6" Text="<%$ Resources:Resource2,Key1 %>" /> 
     </div>
