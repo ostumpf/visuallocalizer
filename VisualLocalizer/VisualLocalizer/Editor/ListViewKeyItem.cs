@@ -155,6 +155,7 @@ namespace VisualLocalizer.Editor {
         /// </summary>
         /// <param name="determinated">True if number of references was successfuly calculated</param>
         public void UpdateReferenceCount(bool determinated) {
+            if (ListView == null) return;
             ListView.Invoke(new Action<string>((s) => SubItems["References"].Text = s),
                 ErrorMessages.Count == 0 && determinated ? CodeReferences.Count.ToString() : "?");             
         }

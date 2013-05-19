@@ -392,7 +392,8 @@ namespace VisualLocalizer.Library.Gui {
             foreach (DataGridViewRow row in SelectedRows) {
                 row.Cells[CheckBoxColumnName].Tag = row.Cells[CheckBoxColumnName].Value;
                 row.Cells[CheckBoxColumnName].Value = check;
-                OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));                
+                OnCellEndEdit(new DataGridViewCellEventArgs(Columns[CheckBoxColumnName].Index, row.Index));
+                NotifyCurrentCellDirty(true);
             }
             UpdateCheckHeader();
         }
