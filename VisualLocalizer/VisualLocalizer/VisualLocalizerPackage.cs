@@ -203,7 +203,7 @@ namespace VisualLocalizer {
         /// Returns product version
         /// </summary>        
         public int ProductID(out string pbstrPID) {
-            pbstrPID = "1.3.1";
+            pbstrPID = "1.3.2";
             return VSConstants.S_OK;
         }
 

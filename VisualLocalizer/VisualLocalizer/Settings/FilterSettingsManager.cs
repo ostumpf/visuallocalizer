@@ -53,6 +53,9 @@ namespace VisualLocalizer.Settings {
                         SettingsObject.Instance.NamespacePolicyIndex = ReadIntFromRegKey(filtersKey, "NamespacePolicyIndex");
                         SettingsObject.Instance.MarkNotLocalizableStringsIndex = ReadIntFromRegKey(filtersKey, "MarkNotLocalizableStringsIndex");
                         SettingsObject.Instance.BatchMoveSplitterDistance = ReadIntFromRegKey(filtersKey, "BatchMoveSplitterDistance", 110);
+                        SettingsObject.Instance.SelectedKeyIndex = ReadIntFromRegKey(filtersKey, "SelectedKeyIndex", 0);
+                        SettingsObject.Instance.SelectedUseFullName = ReadBoolFromRegKey(filtersKey, "SelectedUseFullName");
+                        SettingsObject.Instance.SelectedResourceFilePath = (string)filtersKey.GetValue("SelectedResourceFilePath", null);
 
                         foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                             LocalizationCommonCriterion crit = pair.Value;
@@ -94,8 +97,15 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.MarkNotLocalizableStringsIndex = ReadIntFromXml(reader, "MarkNotLocalizableStringsIndex");
             SettingsObject.Instance.NamespacePolicyIndex = ReadIntFromXml(reader, "NamespacePolicyIndex");
             SettingsObject.Instance.BatchMoveSplitterDistance = ReadIntFromXml(reader, "BatchMoveSplitterDistance");
+            SettingsObject.Instance.SelectedKeyIndex = ReadIntFromXml(reader, "SelectedKeyIndex");
+            SettingsObject.Instance.SelectedUseFullName = ReadBoolFromXml(reader, "SelectedUseFullName");
 
             int hr;
+            string tmp;
+            hr = reader.ReadSettingString("SelectedResourceFilePath", out tmp);
+            SettingsObject.Instance.SelectedResourceFilePath = tmp;
+            Marshal.ThrowExceptionForHR(hr);
+            
             foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                 LocalizationCommonCriterion crit = pair.Value;
                 
@@ -139,7 +149,10 @@ namespace VisualLocalizer.Settings {
             SettingsObject.Instance.BatchMoveSplitterDistance = 130;
             SettingsObject.Instance.ShowContextColumn = false;
             SettingsObject.Instance.UseReflectionInAsp = true;
-
+            SettingsObject.Instance.SelectedKeyIndex = 0;
+            SettingsObject.Instance.SelectedResourceFilePath = null;
+            SettingsObject.Instance.SelectedUseFullName = false;
+    
             SettingsObject.Instance.ResetCriteria();
 
             // create list of default criteria
@@ -297,6 +310,9 @@ namespace VisualLocalizer.Settings {
                 WriteIntToRegKey(filterKey, "NamespacePolicyIndex", SettingsObject.Instance.NamespacePolicyIndex);
                 WriteIntToRegKey(filterKey, "MarkNotLocalizableStringsIndex", SettingsObject.Instance.MarkNotLocalizableStringsIndex);
                 WriteIntToRegKey(filterKey, "BatchMoveSplitterDistance", SettingsObject.Instance.BatchMoveSplitterDistance);
+                WriteIntToRegKey(filterKey, "SelectedKeyIndex", SettingsObject.Instance.SelectedKeyIndex);
+                WriteBoolToRegKey(filterKey, "SelectedUseFullName", SettingsObject.Instance.SelectedUseFullName);
+                filterKey.SetValue("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
 
                 foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                     LocalizationCommonCriterion crit = pair.Value;
@@ -325,6 +341,9 @@ namespace VisualLocalizer.Settings {
             WriteIntToXml(writer, "MarkNotLocalizableStringsIndex", SettingsObject.Instance.MarkNotLocalizableStringsIndex);
             WriteIntToXml(writer, "NamespacePolicyIndex", SettingsObject.Instance.NamespacePolicyIndex);
             WriteIntToXml(writer, "BatchMoveSplitterDistance", SettingsObject.Instance.BatchMoveSplitterDistance);
+            WriteIntToXml(writer, "SelectedKeyIndex", SettingsObject.Instance.SelectedKeyIndex);
+            WriteBoolToXml(writer, "SelectedUseFullName", SettingsObject.Instance.SelectedUseFullName);
+            writer.WriteSettingString("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
 
             foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                 LocalizationCommonCriterion crit = pair.Value;

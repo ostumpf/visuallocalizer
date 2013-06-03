@@ -83,16 +83,34 @@ namespace VisualLocalizer.Gui {
             foreach (string s in resultItem.GetKeyNameSuggestions())
                 keyBox.Items.Add(s);
 
-            keyBox.SelectedIndex = 0;
+            if (SettingsObject.Instance.SelectedKeyIndex >= 0 && SettingsObject.Instance.SelectedKeyIndex < keyBox.Items.Count) {
+                keyBox.SelectedIndex = SettingsObject.Instance.SelectedKeyIndex;
+            } else {
+                keyBox.SelectedIndex = 0;
+            }            
            
-            valueBox.Text = resultItem.Value;
+            valueBox.Text = resultItem.Value;            
             // add possible destination files
+
+            int selectedPathIndex = -1;
+            int i = 0;
             foreach (var item in sourceItem.ContainingProject.GetResXItemsAround(true, false)) {
                 comboBox.Items.Add(item);
+                if (string.Compare(item.InternalProjectItem.GetFullPath(), SettingsObject.Instance.SelectedResourceFilePath, true) == 0) {
+                    selectedPathIndex = i;
+                }
+                i++;
             }
 
-            if (comboBox.Items.Count > 0)
-                comboBox.SelectedIndex = 0;
+            if (selectedPathIndex >= 0 && selectedPathIndex < comboBox.Items.Count) {
+                comboBox.SelectedIndex = selectedPathIndex;
+            } else {
+                if (comboBox.Items.Count > 0)
+                    comboBox.SelectedIndex = 0;
+            }
+
+            usingBox.Checked = !SettingsObject.Instance.SelectedUseFullName;
+            fullBox.Checked = SettingsObject.Instance.SelectedUseFullName;
 
             overwriteButton.Visible = false;
             inlineButton.Visible = false;
@@ -112,6 +130,13 @@ namespace VisualLocalizer.Gui {
             SelectedItem = comboBox.SelectedItem as ResXProjectItem;
             UsingFullName = fullBox.Checked;
             OverwrittenValue = existingValueBox.Text;
+
+            SettingsObject.Instance.IgnorePropertyChanges = true;
+            SettingsObject.Instance.SelectedUseFullName = fullBox.Checked;
+            SettingsObject.Instance.SelectedResourceFilePath = (comboBox.SelectedItem == null ? null : ((ResXProjectItem)comboBox.SelectedItem).InternalProjectItem.GetFullPath());
+            SettingsObject.Instance.SelectedKeyIndex = keyBox.SelectedIndex;
+            SettingsObject.Instance.IgnorePropertyChanges = false;
+            SettingsObject.Instance.NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
 
             // in case of conflict
             if (Result == SELECT_RESOURCE_FILE_RESULT.INLINE || Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE)

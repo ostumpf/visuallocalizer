@@ -114,6 +114,52 @@ namespace VisualLocalizer.Settings {
             }
         }
 
+        private string _SelectedResourceFilePath;
+
+        /// <summary>
+        /// Last resource file path selected in the "Move to resources" dialog
+        /// </summary>
+        public string SelectedResourceFilePath {
+            get {
+                return _SelectedResourceFilePath;
+            }
+            set {
+                _SelectedResourceFilePath = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private bool _SelectedUseFullName;
+
+        /// <summary>
+        /// True if during last "Move to resources" dialog, "Use full class name" policy was applied
+        /// </summary>
+        public bool SelectedUseFullName {
+            get {
+                return _SelectedUseFullName;
+            }
+            set {
+                _SelectedUseFullName = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+        private int _SelectedKeyIndex;
+
+        /// <summary>
+        /// Index of suggested key name in last instance of "Move to resources" dialog
+        /// </summary>
+        public int SelectedKeyIndex {
+            get {
+                return _SelectedKeyIndex;
+            }
+            set {
+                _SelectedKeyIndex = value;
+                NotifyPropertyChanged(CHANGE_CATEGORY.FILTER);
+            }
+        }
+
+
         private int _BatchMoveSplitterDistance;
 
         /// <summary>

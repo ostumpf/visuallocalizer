@@ -237,7 +237,7 @@
       <Button guid="VLCommandSetGuid" id="moveMenuItem" type="Button" priority="1">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
-          <CommandName>MoveTo</CommandName>
+          <CommandName>VisualLocalizer.MoveTo</CommandName>
           <ButtonText>Move to resources...</ButtonText>
         </Strings>
       </Button>
@@ -245,7 +245,7 @@
       <Button guid="VLCommandSetGuid" id="inlineMenuItem" type="Button" priority="2">
         <Parent guid="VLCommandSetGuid" id="visualLocalizerCodeSubMenuGroup"></Parent>
         <Strings>
-          <CommandName>Inline</CommandName>
+          <CommandName>VisualLocalizer.Inline</CommandName>
           <ButtonText>Inline</ButtonText>
         </Strings>
       </Button>
