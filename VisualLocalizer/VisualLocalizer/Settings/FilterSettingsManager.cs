@@ -312,7 +312,10 @@ namespace VisualLocalizer.Settings {
                 WriteIntToRegKey(filterKey, "BatchMoveSplitterDistance", SettingsObject.Instance.BatchMoveSplitterDistance);
                 WriteIntToRegKey(filterKey, "SelectedKeyIndex", SettingsObject.Instance.SelectedKeyIndex);
                 WriteBoolToRegKey(filterKey, "SelectedUseFullName", SettingsObject.Instance.SelectedUseFullName);
-                filterKey.SetValue("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
+
+                if (SettingsObject.Instance.SelectedResourceFilePath != null) {
+                    filterKey.SetValue("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
+                }
 
                 foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                     LocalizationCommonCriterion crit = pair.Value;
@@ -343,7 +346,10 @@ namespace VisualLocalizer.Settings {
             WriteIntToXml(writer, "BatchMoveSplitterDistance", SettingsObject.Instance.BatchMoveSplitterDistance);
             WriteIntToXml(writer, "SelectedKeyIndex", SettingsObject.Instance.SelectedKeyIndex);
             WriteBoolToXml(writer, "SelectedUseFullName", SettingsObject.Instance.SelectedUseFullName);
-            writer.WriteSettingString("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
+
+            if (SettingsObject.Instance.SelectedResourceFilePath != null) {
+                writer.WriteSettingString("SelectedResourceFilePath", SettingsObject.Instance.SelectedResourceFilePath);
+            }
 
             foreach (var pair in SettingsObject.Instance.CommonLocalizabilityCriteria) {
                 LocalizationCommonCriterion crit = pair.Value;
