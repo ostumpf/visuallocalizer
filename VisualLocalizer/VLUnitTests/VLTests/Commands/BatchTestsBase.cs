@@ -120,7 +120,9 @@ namespace VLUnitTests.VLTests {
             Assert.AreEqual(a.ReplaceSpan.iEndIndex, b.ReplaceSpan.iEndIndex, "iEndIndex are not equal, " + a.Value + " on line " + a.ReplaceSpan.iStartLine);
 
             Assert.AreEqual(a.AbsoluteCharOffset, b.AbsoluteCharOffset, "Offsets are not equal, " + a.Value + " on line " + a.ReplaceSpan.iStartLine);
-            Assert.AreEqual(a.AbsoluteCharLength, b.AbsoluteCharLength, "AbsoluteLengths are not equal, " + a.Value + " on line " + a.ReplaceSpan.iStartLine);             
+            Assert.AreEqual(a.AbsoluteCharLength, b.AbsoluteCharLength, "AbsoluteLengths are not equal, " + a.Value + " on line " + a.ReplaceSpan.iStartLine);
+
+            Assert.AreEqual(a.IsConst, b.IsConst, "IsConst are not equal on line " + a.ReplaceSpan.iStartLine);     
         }
 
         /// <summary>

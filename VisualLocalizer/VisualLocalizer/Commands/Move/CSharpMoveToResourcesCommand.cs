@@ -31,9 +31,11 @@ namespace VisualLocalizer.Commands.Move {
             string codeVariableName;
             CodeElement2 codeClass;
             TextSpan selectionSpan;
+            bool isConst;
+            object codeModelSource;
 
             // get current code block
-            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan);
+            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan, out isConst, out codeModelSource);
             CSharpStringResultItem result = null;            
             if (ok) {
                 // parses the code block text and returns list of all found result items                
@@ -45,6 +47,8 @@ namespace VisualLocalizer.Commands.Move {
                     if (item.ReplaceSpan.Contains(selectionSpan)) {
                         result = item;
                         result.SourceItem = currentDocument.ProjectItem;
+                        result.IsConst = isConst;
+                        result.CodeModelSource = codeModelSource;;
                         break;
                     }
                 }

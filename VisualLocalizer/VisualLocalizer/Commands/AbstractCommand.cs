@@ -95,7 +95,7 @@ namespace VisualLocalizer.Commands {
         /// <param name="codeClass">Name of the class, where the code block is located.</param>
         /// <param name="selectionSpan">Current selection span.</param>
         /// <returns>True, if all necessary information was succesfully obtained, false otherwise.</returns>
-        protected bool GetCodeBlockFromSelection(out string text, out TextPoint startPoint, out string codeFunctionName, out string codeVariableName, out CodeElement2 codeClass, out TextSpan selectionSpan) {
+        protected bool GetCodeBlockFromSelection(out string text, out TextPoint startPoint, out string codeFunctionName, out string codeVariableName, out CodeElement2 codeClass, out TextSpan selectionSpan, out bool isConst, out object codeModelSource) {
             // get current selection span
             TextSpan[] spans = new TextSpan[1];
             int hr = textView.GetSelectionSpan(spans);
@@ -114,7 +114,9 @@ namespace VisualLocalizer.Commands {
             codeFunctionName = null;
             codeVariableName = null;
             codeClass = null;
-            
+            isConst = false;
+            codeModelSource = null;
+
             // It is impossible to find out the code block, where right-click was performed. Following code
             // assumes that valid string literals or references can only be found in a method, in a class variable (as initializers)
             // or in a property code. C# syntax permits more locations (attributes, default argument values in .NET 4+) but we can ignore
@@ -125,7 +127,8 @@ namespace VisualLocalizer.Commands {
                 CodeFunction2 codeFunction = (CodeFunction2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementFunction);
                 codeFunctionName = codeFunction.Name;
                 codeClass = codeFunction.GetClass(); // extension
-                
+                codeModelSource = codeFunction;
+
                 text = codeFunction.GetText();
                 if (!string.IsNullOrEmpty(text)) {
                     startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
@@ -137,10 +140,10 @@ namespace VisualLocalizer.Commands {
                     CodeProperty codeProperty = (CodeProperty)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementProperty);
                     codeFunctionName = codeProperty.Name;
                     codeClass = codeProperty.GetClass();
-
+                    codeModelSource = codeProperty;
                     text = codeProperty.GetText();
                     
-                    if (!string.IsNullOrEmpty(text)) {
+                    if (!string.IsNullOrEmpty(text)) {                        
                         startPoint = codeProperty.GetStartPoint(vsCMPart.vsCMPartBody);
                         ok = true;
                     }                    
@@ -148,13 +151,14 @@ namespace VisualLocalizer.Commands {
                     // not a property, either. It must be a variable - or there's no valid code block
                     try {
                         CodeVariable2 codeVariable = (CodeVariable2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementVariable);
-                        if (codeVariable.ConstKind != vsCMConstKind.vsCMConstKindConst &&
-                            codeVariable.Type.TypeKind == vsCMTypeRef.vsCMTypeRefString &&
+                        if (codeVariable.Type.TypeKind == vsCMTypeRef.vsCMTypeRefString &&
                             codeVariable.InitExpression != null) {
                         
                             codeVariableName = codeVariable.Name;
                             codeClass = codeVariable.GetClass();
-                            
+                            isConst = codeVariable.ConstKind == vsCMConstKind.vsCMConstKindConst;
+                            codeModelSource = codeVariable;    
+
                             startPoint = codeVariable.StartPoint;
                             text = codeVariable.GetText();
                             if ((codeClass.Kind == vsCMElement.vsCMElementStruct && codeVariable.IsShared)

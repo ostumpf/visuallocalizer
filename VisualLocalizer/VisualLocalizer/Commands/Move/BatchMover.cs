@@ -17,6 +17,7 @@ using VisualLocalizer.Components.Code;
 using VisualLocalizer.Library.Components;
 using VisualLocalizer.Library.Extensions;
 using VisualLocalizer.Components.UndoUnits;
+using EnvDTE80;
 
 namespace VisualLocalizer.Commands.Move {
 
@@ -64,7 +65,12 @@ namespace VisualLocalizer.Commands.Move {
         /// List of ResX items that were loaded to memory
         /// </summary>
         private HashSet<ResXProjectItem> loadedResxItems;
-        
+
+        /// <summary>
+        /// List of class fields with const modifier, which must be removed
+        /// </summary>
+        private List<CodeVariable2> fieldsToRemoveConst;
+
         public BatchMover(bool useFullName, bool markUncheckedStringsWithComment) {
             this.MarkUncheckedStringsWithComment = markUncheckedStringsWithComment;
             this.UseFullName = useFullName;
@@ -75,6 +81,7 @@ namespace VisualLocalizer.Commands.Move {
             filesCache = new Dictionary<string, StringBuilder>();
             newUsingsPlan = new Dictionary<string, List<string>>();            
             loadedResxItems = new HashSet<ResXProjectItem>();
+            fieldsToRemoveConst = new List<CodeVariable2>();
         }        
 
         public void Move(List<CodeStringResultItem> dataList, ref int errorRows) {
@@ -144,7 +151,12 @@ namespace VisualLocalizer.Commands.Move {
                         if (resultItem.MoveThisItem) {
                             // perform the text replacement
                             MoveToResource(buffersCache[path], resultItem, referenceText);
-                            
+
+                            if (resultItem.IsConst) {
+                                CodeVariable2 codeVar = (CodeVariable2)resultItem.CodeModelSource;
+                                codeVar.ConstKind = vsCMConstKind.vsCMConstKindNone;
+                            }
+
                             if (addUsingBlock) {
                                 // add using block to the source file
                                 int beforeLines, afterLines;
@@ -168,7 +180,8 @@ namespace VisualLocalizer.Commands.Move {
                             }
 
                             // previous step (replace and possibly new using block) caused undo unit to be added - remove it
-                            List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(addUsingBlock ? 2 : 1);
+                            int unitsToRemoveCount = (resultItem.IsConst && addUsingBlock ? 3 : (resultItem.IsConst || addUsingBlock ? 2 : 1));
+                            List<IOleUndoUnit> units = undoManagersCache[path].RemoveTopFromUndoStack(unitsToRemoveCount);
                             
                             // and add custom undo unit
                             AbstractUndoUnit newUnit = null;
@@ -203,6 +216,11 @@ namespace VisualLocalizer.Commands.Move {
                             if (!filesCache.ContainsKey(path)) {
                                 filesCache.Add(path, new StringBuilder(File.ReadAllText(path)));
                             }
+                        }
+
+                        if (resultItem.IsConst) {                            
+                            CodeVariable2 codeVar = (CodeVariable2)resultItem.CodeModelSource;
+                            fieldsToRemoveConst.Add(codeVar);                            
                         }
 
                         if (resultItem.MoveThisItem) {
@@ -260,6 +278,17 @@ namespace VisualLocalizer.Commands.Move {
                     File.WriteAllText(pair.Key, pair.Value.ToString());
                 }
             }
+
+            // remove 'const' modifier from fields in closed files
+            HashSet<ProjectItem> itemsToSave = new HashSet<ProjectItem>();
+            foreach (CodeVariable2 codeVar in fieldsToRemoveConst) {
+                codeVar.ConstKind = vsCMConstKind.vsCMConstKindNone;
+                itemsToSave.Add(codeVar.ProjectItem);
+            }
+            foreach (ProjectItem item in itemsToSave) {
+                item.Save(null);
+            }
+
             foreach (ResXProjectItem item in loadedResxItems) {
                 if (item.IsInBatchMode) {
                     item.EndBatch();                    

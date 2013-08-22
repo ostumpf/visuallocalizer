@@ -315,6 +315,22 @@ namespace VisualLocalizer.Gui {
             int rowCount = panel.ToolGrid.Rows.Count;
             int rowErrors = 0;
 
+            List<CodeStringResultItem> data = null;
+            try {
+                data = panel.ToolGrid.GetData();
+                bool containsConst = data.Any(item => { return item.IsConst && item.MoveThisItem; });
+                if (containsConst && !(sender == null && args == null)) { // not running in test mode
+                    var result = VisualLocalizer.Library.Components.MessageBox.Show("Some of the checked items are decorated with the 'const' modifier. In order to this operation process successfully, these modifiers must be removed. Continue?", null, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_WARNING);
+                    if (result != DialogResult.Yes) {
+                        return;
+                    }
+                }
+            } catch (Exception ex) {
+                VLOutputWindow.VisualLocalizerPane.WriteException(ex);
+                VisualLocalizer.Library.Components.MessageBox.ShowException(ex);
+                return;
+            }
+
             try {
                 VLDocumentViewsManager.ReleaseLocks(); // unlock the documents
                 MenuManager.OperationInProgress = false; // permit other operations
@@ -323,8 +339,8 @@ namespace VisualLocalizer.Gui {
                 bool markUncheckedStringsWithComment = currentRememberOption == REMEMBER_OPTIONS[1]; // whether unchecked strings will be marked with "no-localization" comment
 
                 BatchMover mover = new BatchMover(usingFullName, markUncheckedStringsWithComment);
-
-                mover.Move(panel.ToolGrid.GetData(), ref rowErrors); // run the mover
+                
+                mover.Move(data, ref rowErrors); // run the mover
       
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);

@@ -61,6 +61,16 @@ namespace VisualLocalizer.Commands.Move {
                 resultItem.DestinationItem = f.SelectedItem; // set destination project item - ResX file
 
                 if (result == System.Windows.Forms.DialogResult.OK) {
+                    bool removeConst = false;
+                    if (resultItem.IsConst) {
+                        var deleteConst = VisualLocalizer.Library.Components.MessageBox.Show("This field is marked as 'const'. In order to continue with this operation, this modifier must be removed. Continue?", "Const", OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_WARNING);
+                        if (deleteConst == DialogResult.Yes) {
+                            removeConst = true;
+                        } else {
+                            return;
+                        }
+                    }
+
                     bool unitsFromStackRemoved = false;
                     bool unitMovedToResource = false;
                     ReferenceString referenceText;
@@ -96,24 +106,29 @@ namespace VisualLocalizer.Commands.Move {
                         hr = textView.SetSelection(replaceSpan.iStartLine, replaceSpan.iStartIndex,
                             replaceSpan.iStartLine, replaceSpan.iStartIndex + newText.Length);
                         Marshal.ThrowExceptionForHR(hr);
-                                                
+
+                        if (removeConst) {
+                            CodeVariable2 codeVar = (CodeVariable2)resultItem.CodeModelSource;
+                            codeVar.ConstKind = vsCMConstKind.vsCMConstKindNone;
+                        }
+
                         if (addUsing) {
                             resultItem.AddUsingBlock(textLines);
                         }                        
 
                         if (f.Result == SELECT_RESOURCE_FILE_RESULT.INLINE) {
                             // conflict -> user chooses to reference existing key
-                            unitsFromStackRemoved = CreateMoveToResourcesReferenceUndoUnit(f.Key, addUsing);
+                            unitsFromStackRemoved = CreateMoveToResourcesReferenceUndoUnit(f.Key, addUsing, removeConst);
                         } else if (f.Result == SELECT_RESOURCE_FILE_RESULT.OVERWRITE) {
                             // conflict -> user chooses to overwrite existing key and reference the new one
                             f.SelectedItem.AddString(f.Key, f.Value);
-                            unitMovedToResource = true;                            
-                            unitsFromStackRemoved = CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addUsing);                            
+                            unitMovedToResource = true;
+                            unitsFromStackRemoved = CreateMoveToResourcesOverwriteUndoUnit(f.Key, f.Value, f.OverwrittenValue, f.SelectedItem, addUsing, removeConst);                            
                         } else {
                             // no conflict occured
                             f.SelectedItem.AddString(f.Key, f.Value);
-                            unitMovedToResource = true;                            
-                            unitsFromStackRemoved = CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addUsing);                            
+                            unitMovedToResource = true;
+                            unitsFromStackRemoved = CreateMoveToResourcesUndoUnit(f.Key, f.Value, f.SelectedItem, addUsing, removeConst);                            
                         }
                 
                     } catch (Exception) {
@@ -121,7 +136,8 @@ namespace VisualLocalizer.Commands.Move {
 
                         VLOutputWindow.VisualLocalizerPane.WriteLine("Exception caught, rolling back...");
                         if (!unitsFromStackRemoved) {
-                            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addUsing ? 2 : 1);                            
+                            int unitsToRemoveCount = (addUsing && removeConst) ? 3 : (addUsing || removeConst ? 2 : 1);
+                            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(unitsToRemoveCount);                            
                             foreach (var unit in units) {
                                 unit.Do(undoManager);                                
                             }
@@ -151,9 +167,10 @@ namespace VisualLocalizer.Commands.Move {
         /// <param name="resXProjectItem">Destination ResX project item</param>
         /// <param name="addNamespace">Whether new using block has been added</param>
         /// <returns>True, if original undo units has been successfully removed from the undo stack</returns>
-        private bool CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace) {
+        private bool CreateMoveToResourcesUndoUnit(string key,string value, ResXProjectItem resXProjectItem,bool addNamespace, bool removeConst) {
             bool unitsRemoved = false;
-            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            int unitsToRemoveCount = (addNamespace && removeConst) ? 3 : (addNamespace || removeConst ? 2 : 1);
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(unitsToRemoveCount);
             unitsRemoved = true;
 
             MoveToResourcesUndoUnit newUnit = new MoveToResourcesUndoUnit(key, value, resXProjectItem);
@@ -172,9 +189,10 @@ namespace VisualLocalizer.Commands.Move {
         /// <param name="resXProjectItem">Destination ResX project item</param>
         /// <param name="addNamespace">Whether new using block has been added</param>
         /// <returns>True, if original undo units has been successfully removed from the undo stack</returns>
-        private bool CreateMoveToResourcesOverwriteUndoUnit(string key, string newValue, string oldValue, ResXProjectItem resXProjectItem, bool addNamespace) {
+        private bool CreateMoveToResourcesOverwriteUndoUnit(string key, string newValue, string oldValue, ResXProjectItem resXProjectItem, bool addNamespace, bool removeConst) {
             bool unitsRemoved = false;
-            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            int unitsToRemoveCount = (addNamespace && removeConst) ? 3 : (addNamespace || removeConst ? 2 : 1);
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(unitsToRemoveCount);
             unitsRemoved = true;
 
             MoveToResourcesOverwriteUndoUnit newUnit = new MoveToResourcesOverwriteUndoUnit(key, oldValue, newValue, resXProjectItem);
@@ -190,9 +208,10 @@ namespace VisualLocalizer.Commands.Move {
         /// <param name="key">Key that it being referenced</param>
         /// <param name="addNamespace">Whether new using block has been added</param>
         /// <returns>True, if original undo units has been successfully removed from the undo stack</returns>
-        private bool CreateMoveToResourcesReferenceUndoUnit(string key, bool addNamespace) {
+        private bool CreateMoveToResourcesReferenceUndoUnit(string key, bool addNamespace, bool removeConst) {
             bool unitsRemoved = false;
-            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(addNamespace ? 2 : 1);
+            int unitsToRemoveCount = (addNamespace && removeConst) ? 3 : (addNamespace || removeConst ? 2 : 1);
+            List<IOleUndoUnit> units = undoManager.RemoveTopFromUndoStack(unitsToRemoveCount);
             unitsRemoved = true;
 
             MoveToResourcesReferenceUndoUnit newUnit = new MoveToResourcesReferenceUndoUnit(key);

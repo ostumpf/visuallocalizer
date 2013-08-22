@@ -98,7 +98,6 @@ namespace VisualLocalizer.Components.Code {
         /// Explores given variable initializer using C# lookuper
         /// </summary>   
         protected virtual void Explore(AbstractBatchCommand parentCommand, CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
-            if (codeVariable.ConstKind == vsCMConstKind.vsCMConstKindConst) return; // const variables cannot be initialized from resources
             if (codeVariable.Type.TypeKind != vsCMTypeRef.vsCMTypeRefString) return; // variable must have string type
             if (codeVariable.InitExpression == null) return; // variable must have an initializer
             if (codeClassOrStruct.Kind == vsCMElement.vsCMElementStruct && !codeVariable.IsShared) return; // instance variable of structs cannot have initializers
@@ -117,8 +116,11 @@ namespace VisualLocalizer.Components.Code {
 
             // add context to result items (surounding few lines of code)
             EditPoint2 editPoint = (EditPoint2)startPoint.CreateEditPoint();
-            foreach (AbstractResultItem item in list)
+            foreach (AbstractResultItem item in list) {
+                item.IsConst = codeVariable.ConstKind == vsCMConstKind.vsCMConstKindConst;
+                item.CodeModelSource = codeVariable;
                 AddContextToItem(item, editPoint);
+            }
         }
 
         /// <summary>
@@ -144,8 +146,10 @@ namespace VisualLocalizer.Components.Code {
             
             // add context to result items (surounding few lines of code)
             EditPoint2 editPoint = (EditPoint2)startPoint.CreateEditPoint();
-            foreach (AbstractResultItem item in list)
+            foreach (AbstractResultItem item in list) {
+                item.CodeModelSource = codeFunction;
                 AddContextToItem(item, editPoint);
+            }
         }
 
         /// <summary>

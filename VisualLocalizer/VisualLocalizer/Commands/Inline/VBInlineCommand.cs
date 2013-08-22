@@ -30,8 +30,11 @@ namespace VisualLocalizer.Commands.Inline {
             string codeVariableName;
             CodeElement2 codeClass;
             TextSpan selectionSpan;
+            bool isConst;
+            object codeModelSource;
+
             // get code block in which current selection point is located
-            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan);
+            bool ok = GetCodeBlockFromSelection(out text, out startPoint, out codeFunctionName, out codeVariableName, out codeClass, out selectionSpan, out isConst, out codeModelSource);
             VBCodeReferenceResultItem result = null;
 
             if (ok) {
@@ -46,6 +49,7 @@ namespace VisualLocalizer.Commands.Inline {
                     if (item.ReplaceSpan.Contains(selectionSpan)) {
                         result = item;
                         result.SourceItem = currentDocument.ProjectItem;
+                        result.CodeModelSource = codeModelSource;
                         break;
                     }
                 }

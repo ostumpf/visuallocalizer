@@ -332,6 +332,20 @@ namespace VLUnitTests.VLTests {
                 ReplaceSpan = CreateTextSpan(31, 30, 31, 36)
             });
             ValidResultsForStrings1.Add(new TestCSharpStringResultItem() {
+                Value = "const",
+                WasVerbatim = false,
+                SourceItem = projectItem,
+                VariableElementName = "a_13",
+                ClassOrStructElementName = "A",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                IsMarkedWithUnlocalizableComment = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = "CSharpTests",
+                ReplaceSpan = CreateTextSpan(33, 36, 33, 43),
+                IsConst = true
+            });
+            ValidResultsForStrings1.Add(new TestCSharpStringResultItem() {
                 Value = "readonly",
                 WasVerbatim = false,
                 SourceItem = projectItem,

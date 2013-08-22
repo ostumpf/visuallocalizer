@@ -47,7 +47,17 @@ namespace VisualLocalizer.Components.Code {
         /// <summary>
         /// True if result item is marked with "no-localization" comment
         /// </summary>
-        public bool IsMarkedWithUnlocalizableComment { get; set; }        
+        public bool IsMarkedWithUnlocalizableComment { get; set; }
+
+        /// <summary>
+        /// True if result item is decorated with the 'const' modifier
+        /// </summary>
+        public bool IsConst { get; set; }
+
+        /// <summary>
+        /// Contains the code model object (CodeVariable, CodeFunction...) from which this result item originated
+        /// </summary>
+        public object CodeModelSource { get; set; }     
 
         /// <summary>
         /// Set during toolwindow's editing - value of checkbox column
@@ -130,10 +140,16 @@ namespace VisualLocalizer.Components.Code {
                 LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.IsMarkedWithUnlocalizableComment; });
 
+            var constPredicate = new LocalizationCommonCriterion("IsConst",
+                "String field is decorated with the 'const' modifier",
+                LocalizationCriterionAction.VALUE, 20,
+                (item) => { return item.IsConst; });
+
             localizationCriteriaList.Add(designerFilePredicate.Name, designerFilePredicate);
             localizationCriteriaList.Add(clientCommentPredicate.Name, clientCommentPredicate);
             localizationCriteriaList.Add(localizableFalsePredicate.Name, localizableFalsePredicate);
-            localizationCriteriaList.Add(unlocalizableCommentPredicate.Name, unlocalizableCommentPredicate);            
+            localizationCriteriaList.Add(unlocalizableCommentPredicate.Name, unlocalizableCommentPredicate);
+            localizationCriteriaList.Add(constPredicate.Name, constPredicate);            
 
             return localizationCriteriaList;
         }

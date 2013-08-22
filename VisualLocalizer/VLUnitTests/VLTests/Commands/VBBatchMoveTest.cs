@@ -404,7 +404,19 @@ namespace VLUnitTests.VLTests {
                 IsWithinLocalizableFalse = false,
                 ComesFromDesignerFile = false,
                 NamespaceElementName = null,
-                ReplaceSpan = CreateTextSpan(57, 29, 57, 35)
+                ReplaceSpan = CreateTextSpan(57, 29, 57, 35)                
+            });
+            list.Add(new TestVBStringResultItem() {
+                Value = "a_30",
+                SourceItem = projectItem,
+                VariableElementName = "a_30",
+                ClassOrStructElementName = "R",
+                MethodElementName = null,
+                IsWithinLocalizableFalse = false,
+                ComesFromDesignerFile = false,
+                NamespaceElementName = null,
+                ReplaceSpan = CreateTextSpan(58, 31, 58, 37),
+                IsConst = true
             });
 
 
