@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="VisualLocalizer.Gui.AbstractCodeToolWindow&lt;T&gt;" Collapsed="true">
+    <Position X="1" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAQAAAAAAQAAAACAQAAAAAAAAKQABAAA=</HashCode>
+      <FileName>Gui\AbstractCodeToolWindow.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Gui.BatchInlineToolWindow" Collapsed="true">
+    <Position X="4" Y="1.25" Width="4.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAAACAAAAAAAAAAAAAAAAAAAEAAQAAAABAAA=</HashCode>
+      <FileName>Gui\BatchInlineToolWindow.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Gui.BatchMoveToResourcesToolWindow" Collapsed="true">
+    <Position X="4" Y="0.5" Width="4.25" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAIBBAAGApAAAAgCAAQAAAAAAAAEAAQBAAABIAA=</HashCode>
+      <FileName>Gui\BatchMoveToResourcesToolWindow.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Gui.ShowReferencesToolWindow" Collapsed="true">
+    <Position X="4" Y="2" Width="4.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>Gui\ShowReferencesToolWindow.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="11" />
+</ClassDiagram>
