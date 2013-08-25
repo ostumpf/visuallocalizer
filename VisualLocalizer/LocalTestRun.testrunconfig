@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<TestRunConfiguration name="Local Test Run" id="23b0cd6d-8908-4b73-b36a-24d5bb51fdfe" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2006">
-  <Description>This is a default test run configuration for a local test run.</Description>
-  
-  <Hosts type="VS IDE" skipUnhostableTests="false">
-    <VSSDKTestHostRunConfig name="VS IDE" HiveName="9.0Exp" IsRANU="true" xmlns="http://microsoft.com/schemas/VisualStudio/SDK/Tools/IdeHostAdapter/2006/06" />
-  </Hosts>
-  <TestTypeSpecific />
-</TestRunConfiguration>
