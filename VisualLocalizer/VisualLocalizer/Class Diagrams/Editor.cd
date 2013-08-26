@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="VisualLocalizer.Editor.AbstractListView" Collapsed="true">
+    <Position X="0.75" Y="3.25" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>EAeFQiGAUkCUAoEMhAEAAgAgYgOkEYCKQAzSsGAaJBI=</HashCode>
+      <FileName>Editor\AbstractListView.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXFilesList" Collapsed="true">
+    <Position X="3.5" Y="5.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAEAAAAAAAAAAAAAAgAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Editor\ResXFilesList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXIconsList" Collapsed="true">
+    <Position X="3.5" Y="4" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAEAAAAAAAAAAAAAAgAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Editor\ResXIconsList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXImagesList" Collapsed="true">
+    <Position X="3.5" Y="3.25" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAEAAAAAAAAAAAAAAgAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Editor\ResXImagesList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXSoundsList" Collapsed="true">
+    <Position X="3.5" Y="4.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>CAIAAAEAAAAAAAAAAAAAAgAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Editor\ResXSoundsList.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXStringGrid" Collapsed="true">
+    <Position X="3.5" Y="2" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAFAEAJIAIAAIAAAAAAAYAAAAAAAAAgAEBAAAgA=</HashCode>
+      <FileName>Editor\ResXStringGrid.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VisualLocalizer.Library.Gui.AbstractCheckedGridView&lt;ItemType&gt;" Collapsed="true">
+    <Position X="0.75" Y="0.5" Width="2.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VisualLocalizer.Library.Gui.AbstractKeyValueGridView&lt;ItemType&gt;" Collapsed="true">
+    <Position X="3.5" Y="0.5" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VisualLocalizer.Editor.AbstractResXEditorGrid" Collapsed="true">
+    <Position X="6.5" Y="0.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>mAfEQjEDUAiUAAisBAAkBoQAbgcEEABgBAiAIHIIBBI=</HashCode>
+      <FileName>Editor\AbstractResXEditorGrid.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VisualLocalizer.Editor.ResXOthersGrid" Collapsed="true">
+    <Position X="6.5" Y="2" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAEAEACAAAAAAACEAoAAAgAAAAAAAgAAEBIAAAA=</HashCode>
+      <FileName>Editor\ResXOthersGrid.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="11" />
+</ClassDiagram>
