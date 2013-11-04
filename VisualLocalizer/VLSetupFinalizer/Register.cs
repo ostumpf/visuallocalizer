@@ -43,7 +43,7 @@ namespace VLSetupFinalizer {
             base.Install(stateSaver);
             List<string> devenvPaths = new List<string>();
 
-            // parameters contain data sent from GUI - key can be either "checkbox2008", "checkbox2010" and "checkbox2012"
+            // parameters contain data sent from GUI - key can be either "checkbox2008", "checkbox2010", "checkbox2012" and "checkbox2013"
             foreach (DictionaryEntry param in this.Context.Parameters) {
                 string key = (param.Key == null ? "0" : param.Key.ToString());
                 string value = (param.Value == null ? "0" : param.Value.ToString());
@@ -79,7 +79,7 @@ namespace VLSetupFinalizer {
         /// <summary>
         /// Registers VL in VS specified by param - executes "devenv /setup /nosetupvstemplates"
         /// </summary>
-        /// <param name="param">checkbox2008, checkbox2010 or checkbox2012</param>
+        /// <param name="param">checkbox2008, checkbox2010, checkbox2012 or checkbox2013</param>
         private void RegisterToVS(string param, List<string> devenvPaths) {
             string key;
             string subpath;            
@@ -102,7 +102,7 @@ namespace VLSetupFinalizer {
         /// <summary>
         /// Gets well-known information about VS installations.
         /// </summary>
-        /// <param name="param">Passed from installer GUI - either checkbox2008, checkbox2010 or checkbox2012</param>
+        /// <param name="param">Passed from installer GUI - either checkbox2008, checkbox2010, checkbox2012 or checkbox2013</param>
         /// <param name="key">Output param - registry key path</param>
         /// <param name="subpath">Output param - subfolder, where devenv is located</param>
         private void GetInstallKey(string param, out string key, out string subpath) {
@@ -117,6 +117,10 @@ namespace VLSetupFinalizer {
                     break;
                 case "checkbox2012":
                     key = @"SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VS";
+                    subpath = @"Common7\IDE\devenv.exe";
+                    break;
+                case "checkbox2013":
+                    key = @"SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VS";
                     subpath = @"Common7\IDE\devenv.exe";
                     break;                
                 default: throw new ArgumentException("Error during installation - unknown version of Visual Studio.");

@@ -33,6 +33,11 @@ namespace VisualLocalizer.Editor {
                     middleColor = ColorTranslator.FromHtml("#D0D2D3");
                     endColor = ColorTranslator.FromHtml("#D0D2D3");
                     break;
+                case VS_VERSION.VS2013:
+                    beginColor = ColorTranslator.FromHtml("#CFD6E5");
+                    middleColor = ColorTranslator.FromHtml("#CFD6E5");
+                    endColor = ColorTranslator.FromHtml("#CFD6E5");
+                    break;
                 case VS_VERSION.UNKNOWN:
                     beginColor = ToolStripGradientBegin;
                     middleColor = ToolStripGradientMiddle;

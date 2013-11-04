@@ -157,6 +157,8 @@ namespace VisualLocalizer {
                         version = VS_VERSION.VS2010;
                     } else if (registry.EndsWith("11.0\\SQM")) {
                         version = VS_VERSION.VS2012;
+                    } else if (registry.EndsWith("12.0\\SQM")) {
+                        version = VS_VERSION.VS2013;
                     } else {
                         version = VS_VERSION.UNKNOWN;
                     }
@@ -203,7 +205,7 @@ namespace VisualLocalizer {
         /// Returns product version
         /// </summary>        
         public int ProductID(out string pbstrPID) {
-            pbstrPID = "1.3.3";
+            pbstrPID = "1.3.4";
             return VSConstants.S_OK;
         }
 
@@ -228,6 +230,11 @@ namespace VisualLocalizer {
         /// Microsoft Visual Studio 2012
         /// </summary>
         VS2012,
+
+        /// <summary>
+        /// Microsoft Visual Studio 2013
+        /// </summary>
+        VS2013,
 
         /// <summary>
         /// Not possible to determine Visual Studio version
