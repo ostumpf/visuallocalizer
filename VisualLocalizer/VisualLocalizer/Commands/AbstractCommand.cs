@@ -151,8 +151,7 @@ namespace VisualLocalizer.Commands {
                     // not a property, either. It must be a variable - or there's no valid code block
                     try {
                         CodeVariable2 codeVariable = (CodeVariable2)currentCodeModel.CodeElementFromPoint(selectionPoint, vsCMElement.vsCMElementVariable);
-                        if (codeVariable.Type.TypeKind == vsCMTypeRef.vsCMTypeRefString &&
-                            codeVariable.InitExpression != null) {
+                        if (codeVariable.InitExpression != null) {
                         
                             codeVariableName = codeVariable.Name;
                             codeClass = codeVariable.GetClass();

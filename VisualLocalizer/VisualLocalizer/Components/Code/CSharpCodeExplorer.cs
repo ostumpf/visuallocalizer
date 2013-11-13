@@ -98,7 +98,6 @@ namespace VisualLocalizer.Components.Code {
         /// Explores given variable initializer using C# lookuper
         /// </summary>   
         protected virtual void Explore(AbstractBatchCommand parentCommand, CodeVariable2 codeVariable, CodeNamespace parentNamespace, CodeElement2 codeClassOrStruct, Predicate<CodeElement> exploreable, bool isLocalizableFalse) {
-            if (codeVariable.Type.TypeKind != vsCMTypeRef.vsCMTypeRefString) return; // variable must have string type
             if (codeVariable.InitExpression == null) return; // variable must have an initializer
             if (codeClassOrStruct.Kind == vsCMElement.vsCMElementStruct && !codeVariable.IsShared) return; // instance variable of structs cannot have initializers
             if (!exploreable(codeVariable as CodeElement)) return; // predicate must evaluate to true
