@@ -32,6 +32,26 @@ namespace VisualLocalizer.Library.Extensions {
         }
 
         /// <summary>
+        /// Returns header text of the function
+        /// </summary>        
+        public static string GetHeaderText(this CodeFunction2 codeFunction) {
+            if (codeFunction == null) throw new ArgumentNullException("codeFunction");
+
+            TextPoint startPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartHeader);
+            TextPoint endPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartBody);
+
+            EditPoint ep = startPoint.CreateEditPoint();
+            if (ep == null)
+            {
+                return null;
+            }
+            else
+            {
+                return ep.GetText(endPoint);
+            }
+        }
+
+        /// <summary>
         /// Returns inner text of the variable (modifiers, name and initializer)
         /// </summary> 
         public static string GetText(this CodeVariable2 codeVariable) {

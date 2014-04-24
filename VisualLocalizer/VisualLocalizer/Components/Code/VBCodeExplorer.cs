@@ -52,6 +52,21 @@ namespace VisualLocalizer.Components.Code {
                 item.CodeModelSource = codeFunction;
                 AddContextToItem(item, editPoint);
             }
+
+            // read optional arguments initializers (just to show them - they cannot be moved)
+            TextPoint headerStartPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartHeader);
+            string headerText = codeFunction.GetHeaderText();
+
+            // search method header
+            var headerList = parentCommand.LookupInVB(headerText, headerStartPoint, parentNamespace, codeClassOrStruct, codeFunction.Name, null, isLocalizableFalse || functionLocalizableFalse);
+
+            // add to list
+            editPoint = (EditPoint2)startPoint.CreateEditPoint();
+            foreach (AbstractResultItem item in headerList) {
+                item.IsConst = true;
+                item.CodeModelSource = codeFunction;
+                AddContextToItem(item, editPoint);
+            }
         }
 
         /// <summary>

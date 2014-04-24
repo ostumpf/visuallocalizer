@@ -142,7 +142,7 @@ namespace VisualLocalizer.Components.Code {
 
             var constPredicate = new LocalizationCommonCriterion("IsConst",
                 "String field is decorated with the 'const' modifier",
-                LocalizationCriterionAction.VALUE, 20,
+                LocalizationCriterionAction.FORCE_DISABLE, 0,
                 (item) => { return item.IsConst; });
 
             localizationCriteriaList.Add(designerFilePredicate.Name, designerFilePredicate);

@@ -152,7 +152,7 @@ namespace VisualLocalizer.Commands.Move {
                             // perform the text replacement
                             MoveToResource(buffersCache[path], resultItem, referenceText);
 
-                            if (resultItem.IsConst) {
+                            if (resultItem.IsConst && resultItem.CodeModelSource is CodeVariable2) {
                                 CodeVariable2 codeVar = (CodeVariable2)resultItem.CodeModelSource;
                                 codeVar.ConstKind = vsCMConstKind.vsCMConstKindNone;
                             }
@@ -218,7 +218,7 @@ namespace VisualLocalizer.Commands.Move {
                             }
                         }
 
-                        if (resultItem.IsConst) {                            
+                        if (resultItem.IsConst && resultItem.CodeModelSource is CodeVariable2) {                            
                             CodeVariable2 codeVar = (CodeVariable2)resultItem.CodeModelSource;
                             fieldsToRemoveConst.Add(codeVar);                            
                         }

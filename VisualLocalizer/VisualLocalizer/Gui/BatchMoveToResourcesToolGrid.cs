@@ -200,6 +200,12 @@ namespace VisualLocalizer.Gui {
                         if (keyCell.Value == null) // add first suggestion as default value
                             keyCell.Value = key;
                     }
+
+                    if (SettingsObject.Instance.SelectedKeyIndex >= 0 && SettingsObject.Instance.SelectedKeyIndex < keyCell.Items.Count)
+                    {
+                        keyCell.Value = keyCell.Items[SettingsObject.Instance.SelectedKeyIndex];
+                    }                   
+
                     row.Cells.Add(keyCell);
 
                     DataGridViewTextBoxCell valueCell = new DataGridViewTextBoxCell();
