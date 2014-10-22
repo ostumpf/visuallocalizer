@@ -54,7 +54,12 @@ namespace VisualLocalizer.Components.Code {
             }
 
             // read optional arguments initializers (just to show them - they cannot be moved)
-            TextPoint headerStartPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartHeader);
+            TextPoint headerStartPoint = null;
+            try {
+                headerStartPoint = codeFunction.GetStartPoint(vsCMPart.vsCMPartHeader);
+            } catch (Exception) { }
+            if (headerStartPoint == null) return;
+            
             string headerText = codeFunction.GetHeaderText();
 
             // search method header
