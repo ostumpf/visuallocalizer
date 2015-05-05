@@ -17,6 +17,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using VisualLocalizer.Gui;
 using VisualLocalizer.Settings;
 using VisualLocalizer.Library.Components;
+using System.IO;
 
 
 namespace VisualLocalizer {
@@ -107,7 +108,7 @@ namespace VisualLocalizer {
                 VLOutputWindow.General.WriteLine("Visual Localizer is up and running");
             } catch (Exception ex) {
                 VLOutputWindow.VisualLocalizerPane.WriteException(ex);
-                MessageBox.ShowException(ex);
+                MessageBox.ShowException(ex);                
             }
         }
 
@@ -159,6 +160,8 @@ namespace VisualLocalizer {
                         version = VS_VERSION.VS2012;
                     } else if (registry.EndsWith("12.0\\SQM")) {
                         version = VS_VERSION.VS2013;
+                    } else if (registry.EndsWith("14.0\\SQM")) {
+                        version = VS_VERSION.VS2015;
                     } else {
                         version = VS_VERSION.UNKNOWN;
                     }
@@ -205,7 +208,7 @@ namespace VisualLocalizer {
         /// Returns product version
         /// </summary>        
         public int ProductID(out string pbstrPID) {
-            pbstrPID = "1.3.6";
+            pbstrPID = "1.3.8";
             return VSConstants.S_OK;
         }
 
@@ -235,6 +238,11 @@ namespace VisualLocalizer {
         /// Microsoft Visual Studio 2013
         /// </summary>
         VS2013,
+
+        /// <summary>
+        /// Microsoft Visual Studio 2015
+        /// </summary>
+        VS2015,
 
         /// <summary>
         /// Not possible to determine Visual Studio version

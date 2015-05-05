@@ -122,6 +122,10 @@ namespace VLSetupFinalizer {
                 case "checkbox2013":
                     key = @"SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VS";
                     subpath = @"Common7\IDE\devenv.exe";
+                    break;
+                case "checkbox2015":
+                    key = @"SOFTWARE\Microsoft\VisualStudio\14.0\Setup\VS";
+                    subpath = @"Common7\IDE\devenv.exe";
                     break;                
                 default: throw new ArgumentException("Error during installation - unknown version of Visual Studio.");
             }
