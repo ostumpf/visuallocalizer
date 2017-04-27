@@ -15,9 +15,14 @@ Download [installation binary](https://github.com/ostumpf/visuallocalizer/blob/m
 
 ### [Donate - PayPal or credit card](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=YY7U267D6DRA2)
 
+## Docs
+* [installation requirements](https://github.com/ostumpf/visuallocalizer/blob/master/requirements.md)
+* [manual installation guidelines](https://github.com/ostumpf/visuallocalizer/blob/master/Manual%20Installation.md)
+* [full documentation](https://github.com/ostumpf/visuallocalizer/blob/master/Documentation.md)
+
 ## Used Technologies
 * implemented as VSPackage, distributed as MSI
-* works in Microsoft Visual Studio 2008, 2010, 2012 and 2013 - NOT the Express editions (as any Visual Studio extension)
+* works in Microsoft Visual Studio 2008, 2010, 2012, 2013, 2015 - NOT the Express editions (as any Visual Studio extension)
 * requires .NET 3.5 or higher
 
 ## Source Code Window
@@ -36,7 +41,7 @@ Visual Localizer provides new menu items in the context menu of code windows - u
 
 **Batch inline (document)** and **Batch inline (selection)** do what their names suggest - they parse given code files looking for references to resources and display results in a tool window, letting user select which references  will be replaced with string literals. The tool window for these commands is a lot simpler than the tool window for *batch move* commands, because there is not much to change or set up. The *batch inline* command can also be invoked  from Solution Explorer's context menu with the same effect as in *batch move*.
 
-![batch inline tool window](https://github.com/ostumpf/visuallocalizer/blob/master/images/batchInlineToolWindow.png)
+![batch inline tool window](https://github.com/ostumpf/visuallocalizer/blob/master/images/batcInlineToolWindow.png)
 
 ## Solution Explorer
 New menu item is added to the context menu of projects and project items. It enables user to perform the *Batch move* and *Batch inline* operations on selected item(s).
